@@ -69,7 +69,7 @@ export default function VendorDashboard() {
       // Find vendor row
       let v: VendorProfile | null = null;
 
-      const cols = 'id, business_name, category, location, description, logo_url, is_published, contact, portfolio_urls';
+      const cols = 'id, business_name, category, location, description, logo_url, is_published, onboarding_completed, contact, portfolio_urls';
       const { data: v1 } = await supabase.from('vendors').select(cols).eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
       if (v1) { v = v1 as unknown as VendorProfile; } else {
         const { data: v2 } = await supabase.from('vendors').select(cols).eq('id', user.id).maybeSingle();
@@ -259,11 +259,12 @@ export default function VendorDashboard() {
               </div>
             )}
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-sm text-gray-600 mt-0.5">
-                {vendor?.business_name || 'Your vendor hub'}
-              </p>
-            </div>
+                <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-sm text-gray-600 mt-0.5">{vendor?.business_name || 'Your vendor hub'}</p>
+              </div>
+              <div className="ml-auto">
+                <Link href="/vendor/profile/edit" className="px-3 py-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200">Edit Profile</Link>
+              </div>
           </div>
         </div>
 
@@ -271,7 +272,8 @@ export default function VendorDashboard() {
         <div className="flex-1 px-4 py-5 space-y-6 overflow-y-auto pb-24">
 
           {/* ── Profile Completion / Publish state ─────────────── */}
-          {!profileComplete ? (
+          {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
+          {(!vendor?.is_published && !(vendor as any)?.onboarding_completed) && !profileComplete ? (
             <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-4 py-5 text-white shadow-lg">
               <h2 className="text-lg font-bold mb-1">Profile Completion</h2>
               <div className="flex items-center justify-between mb-2">

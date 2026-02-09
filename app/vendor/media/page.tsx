@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
@@ -92,7 +93,9 @@ export default function VendorMedia() {
 
   const hasAtLeastOneSocialLink = Object.values(socialLinks).some(link => link.trim() !== '');
   const canContinue = Boolean(logoUrl) && (portfolioUrls.length >= 3 || hasAtLeastOneSocialLink);
-  const editMode = Boolean(isPublished || onboardingCompleted);
+  const searchParams = useSearchParams();
+  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
   const backHref = editMode ? '/vendor/dashboard' : '/vendor/packages';
   const primaryLabel = saving ? 'Saving...' : editMode ? 'Save' : 'Save & Continue';
 

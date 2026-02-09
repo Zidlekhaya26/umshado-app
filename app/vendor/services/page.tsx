@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -121,7 +122,9 @@ export default function VendorServices() {
 
   const totalSelected = selectedServiceIds.length;
   const canContinue = totalSelected > 0;
-  const editMode = Boolean(isPublished || onboardingCompleted);
+  const searchParams = useSearchParams();
+  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
   const backHref = editMode ? '/vendor/dashboard' : '/vendor/onboarding';
   const primaryLabel = saving ? 'Saving...' : editMode ? 'Save' : 'Continue';
 

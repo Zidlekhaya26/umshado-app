@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateVendorForUser, getVendorSelectedServices, getServicesCatalog, type Service } from "@/lib/vendorServices";
@@ -22,6 +23,8 @@ interface PackageItem {
 export default function VendorPackagesPage() {
   const [availableServices, setAvailableServices] = useState<string[]>([]);
   const [vendorCategory, setVendorCategory] = useState<string>("");
+  const [isPublished, setIsPublished] = useState<boolean>(false);
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
   const [defaultPricingMode, setDefaultPricingMode] = useState<PricingMode>("guest-based");
 
   const [packages, setPackages] = useState<PackageItem[]>([]);
@@ -45,11 +48,15 @@ export default function VendorPackagesPage() {
       if (!vId) return;
 
       try {
-        const { data: vendorRow } = await supabase.from("vendors").select("category").eq("id", vId).maybeSingle();
+        const { data: vendorRow } = await supabase.from("vendors").select("category,is_published,onboarding_completed").eq("id", vId).maybeSingle();
         if (vendorRow?.category) {
           setVendorCategory(vendorRow.category);
           const catPricing = getPricingType(vendorRow.category);
           setDefaultPricingMode(catPricing as PricingMode);
+        }
+        if (vendorRow) {
+          if (typeof vendorRow.is_published === 'boolean') setIsPublished(Boolean(vendorRow.is_published));
+          if (typeof vendorRow.onboarding_completed === 'boolean') setOnboardingCompleted(Boolean(vendorRow.onboarding_completed));
         }
       } catch (err) {
         console.warn("Unable to load vendor category:", err);
@@ -91,6 +98,10 @@ export default function VendorPackagesPage() {
   };
 
   const canContinue = packages.length >= 2;
+  const searchParams = useSearchParams();
+  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
+  const modeQuery = forcedEdit ? '?mode=edit' : '';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -143,8 +154,8 @@ export default function VendorPackagesPage() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="max-w-md mx-auto flex gap-3">
-          <Link href="/vendor/services" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
-          <Link href="/vendor/media" className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'}`}>Continue</Link>
+          <Link href={`/vendor/services${modeQuery}`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
+          <Link href={editMode ? `/vendor/dashboard` : `/vendor/media${modeQuery}`} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'}`}>{editMode ? 'Save' : 'Continue'}</Link>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -140,7 +141,7 @@ export default function VendorReview() {
         setUserEmail(user.email || null);
 
         // Fetch vendor row (try user_id first, fallback to id)
-        const cols = 'id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, social_links, contact, is_published';
+        const cols = 'id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, social_links, contact, is_published, onboarding_completed';
         let v: VendorRow | null = null;
 
         const { data: v1 } = await supabase
@@ -224,31 +225,27 @@ export default function VendorReview() {
   };
   const isComplete = Object.values(checks).every(Boolean);
 
+  const searchParams = useSearchParams();
+  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const editMode = Boolean(forcedEdit || vendor?.is_published || (vendor as any)?.onboarding_completed);
+
   /* ── Publish handler ────────────────────────────────────────── */
 
   const handlePublish = async () => {
     if (!vendorId) return;
     setIsPublishing(true);
     try {
+      // Directly update Supabase to set published + onboarding_completed
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      if (!session) {
         alert('Please sign in to publish.');
         return;
       }
 
-      const res = await fetch('/api/vendor/publish', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ vendorId }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        console.error('Publish error:', err);
-        alert(err.error || 'Failed to publish. Please try again.');
+      const { error } = await supabase.from('vendors').update({ is_published: true, onboarding_completed: true }).eq('id', vendorId);
+      if (error) {
+        console.error('Publish error:', error);
+        alert('Failed to publish. Please try again.');
         return;
       }
 
@@ -557,23 +554,27 @@ export default function VendorReview() {
       {/* ── Sticky bottom bar ────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="max-w-md mx-auto flex gap-3">
-          <Link
-            href="/vendor/media"
-            className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors"
-          >
-            Back
-          </Link>
-          <button
-            onClick={handlePublish}
-            disabled={!isComplete || isPublishing || vendor?.is_published}
-            className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${
-              isComplete && !isPublishing && !vendor?.is_published
-                ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {isPublishing ? 'Publishing…' : vendor?.is_published ? 'Already Published' : 'Publish Profile'}
-          </button>
+          {editMode ? (
+            <>
+              <Link href="/vendor/dashboard" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back to Dashboard</Link>
+              <Link href="/vendor/profile/edit" className="flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200">Edit Profile</Link>
+            </>
+          ) : (
+            <>
+              <Link href="/vendor/media" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
+              <button
+                onClick={handlePublish}
+                disabled={!isComplete || isPublishing || vendor?.is_published}
+                className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${
+                  isComplete && !isPublishing && !vendor?.is_published
+                    ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isPublishing ? 'Publishing…' : vendor?.is_published ? 'Already Published' : 'Publish Profile'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
