@@ -1,15 +1,42 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #fbf6f0;
+  --card: #ffffff;
+  --primary: #6b1f3a;
+  --primary-foreground: #ffffff;
+  --secondary: #f4c0c9;
+  --muted: #5a4e46;
+  --border: #eadfd6;
+  --shadow: 0 12px 30px rgba(70, 32, 46, 0.12);
+
+  --background: var(--bg);
+  --foreground: #2b1b1b;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Override gray palette for warm brand tones & strong readability */
+  --color-gray-50: #fbf6f0;
+  --color-gray-100: #f3ebe3;
+  --color-gray-200: #eadfd6;
+  --color-gray-300: #b5a99e;
+  --color-gray-400: #6f6259;
+  --color-gray-500: #5a4e46;
+  --color-gray-600: #4a3f38;
+  --color-gray-700: #3d3430;
+  --color-gray-800: #2b1b1b;
+  --color-gray-900: #1a1010;
+  --color-gray-950: #0f0808;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +49,97 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Force form controls to use dark text instead of browser-default grey */
+input,
+textarea,
+select {
+  color: var(--color-gray-900, #1a1010) !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-gray-400, #6f6259) !important;
+}
+
+/* Theme overrides for common Tailwind utility classes */
+.bg-white {
+  background-color: var(--card) !important;
+}
+
+.bg-purple-600,
+.bg-purple-700,
+.bg-purple-500,
+.bg-purple-800 {
+  background-color: var(--primary) !important;
+}
+
+.text-purple-600,
+.text-purple-700,
+.text-purple-500 {
+  color: var(--primary) !important;
+}
+
+.border-purple-600,
+.border-purple-500,
+.border-purple-300,
+.border-purple-200 {
+  border-color: var(--primary) !important;
+}
+
+.bg-pink-500,
+.bg-pink-600,
+.bg-pink-400 {
+  background-color: var(--secondary) !important;
+}
+
+.text-pink-500,
+.text-pink-600 {
+  color: var(--primary) !important;
+}
+
+.bg-purple-50,
+.bg-pink-50,
+.bg-rose-50 {
+  background-color: color-mix(in srgb, var(--secondary) 25%, var(--card)) !important;
+}
+
+.shadow-lg,
+.shadow-xl,
+.shadow-2xl,
+.shadow-md {
+  box-shadow: var(--shadow) !important;
+}
+
+/* Tailwind gradient helpers */
+.from-purple-500 {
+  --tw-gradient-from: var(--primary) !important;
+  --tw-gradient-to: color-mix(in srgb, var(--primary) 0%, transparent) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.via-purple-600 {
+  --tw-gradient-via: color-mix(in srgb, var(--primary) 80%, var(--secondary)) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+}
+
+.to-pink-500 {
+  --tw-gradient-to: var(--secondary) !important;
+}
+
+/* ── uMshado brand animations ── */
+@keyframes umshado-fade-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes umshado-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.animate-umshado-in {
+  animation: umshado-fade-in 300ms ease-out both;
+}
+.animate-umshado-pulse {
+  animation: umshado-pulse 1.8s ease-in-out infinite;
 }
