@@ -1,36 +1,29 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import type React from 'react';
 import type { Service } from '@/lib/vendorServices';
 
-/* ------------------------------------------------------------------ */
-/*  Props                                                              */
-/* ------------------------------------------------------------------ */
-
-interface ServicePickerProps {
-  /** The vendor's category name (used for header display) */
-  categoryKey: string;
-  /** Emoji icon for the category */
-  categoryIcon?: string;
-  /** All available services grouped by category */
-  allServices: Service[];
-  /** Currently selected service IDs */
-  selectedServiceIds: string[];
-  /** Callback when selection changes */
-  onChangeSelected: (ids: string[]) => void;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+export type ServicePickerProps = {
+  category: string;
+  services: Service[];
+  selectedIds: string[];
+  onChange: React.Dispatch<React.SetStateAction<string[]>> | ((ids: string[]) => void);
+};
 
 export default function ServicePicker({
-  categoryKey,
-  categoryIcon,
-  allServices,
-  selectedServiceIds,
-  onChangeSelected,
+  category,
+  services,
+  selectedIds,
+  onChange,
 }: ServicePickerProps) {
+  const categoryKey = category;
+  const categoryIcon = undefined;
+  const allServices = services;
+  const selectedServiceIds = selectedIds;
+  const onChangeSelected = (ids: string[]) => {
+    (onChange as (ids: string[]) => void)(ids);
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +32,8 @@ export default function ServicePicker({
   // Track draft selection inside the modal (only committed on "Add selected")
   const [draftIds, setDraftIds] = useState<string[]>([]);
 
-  // Services for the displayed category
-  const categoryServices = useMemo(
-    () => allServices.filter((s) => s.category === categoryKey),
-    [allServices, categoryKey],
-  );
+  // Services for the displayed category (prop `services` is already category-specific)
+  const categoryServices = useMemo(() => allServices, [allServices]);
 
   // Filtered by search
   const filtered = useMemo(() => {
@@ -53,10 +43,7 @@ export default function ServicePicker({
   }, [categoryServices, search]);
 
   // Selected services (for chip display)
-  const selectedServices = useMemo(
-    () => allServices.filter((s) => selectedServiceIds.includes(s.id)),
-    [allServices, selectedServiceIds],
-  );
+  const selectedServices = useMemo(() => categoryServices.filter((s) => selectedServiceIds.includes(s.id)), [categoryServices, selectedServiceIds]);
 
   /* ── Open / close helpers ─────────────────────────────────────── */
 
@@ -90,9 +77,7 @@ export default function ServicePicker({
 
   const clearAll = () => {
     // Only clear services in this category from the draft
-    const otherCategoryIds = draftIds.filter(
-      (id) => !categoryServices.some((s) => s.id === id),
-    );
+    const otherCategoryIds = draftIds.filter((id) => !categoryServices.some((s) => s.id === id));
     setDraftIds(otherCategoryIds);
   };
 
@@ -130,9 +115,7 @@ export default function ServicePicker({
   };
 
   /* ── Draft count for this category ───────────────────────────── */
-  const draftCountForCategory = draftIds.filter((id) =>
-    categoryServices.some((s) => s.id === id),
-  ).length;
+  const draftCountForCategory = draftIds.filter((id) => categoryServices.some((s) => s.id === id)).length;
 
   /* ── Render ─────────────────────────────────────────────────── */
   return (

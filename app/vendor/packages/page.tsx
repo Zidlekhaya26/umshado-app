@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getOrCreateVendorForUser, getVendorSelectedServices, getServicesCatalog, type Service } from "@/lib/vendorServices";
@@ -98,8 +97,13 @@ export default function VendorPackagesPage() {
   };
 
   const canContinue = packages.length >= 2;
-  const searchParams = useSearchParams();
-  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const [forcedEdit, setForcedEdit] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      setForcedEdit(sp.get('mode') === 'edit');
+    }
+  }, []);
   const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
   const modeQuery = forcedEdit ? '?mode=edit' : '';
 

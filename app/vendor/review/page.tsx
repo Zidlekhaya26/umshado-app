@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -225,8 +224,14 @@ export default function VendorReview() {
   };
   const isComplete = Object.values(checks).every(Boolean);
 
-  const searchParams = useSearchParams();
-  const forcedEdit = Boolean(searchParams?.get('mode') === 'edit');
+  const [forcedEdit, setForcedEdit] = useState(false);
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      setForcedEdit(sp.get('mode') === 'edit');
+    }
+  }, []);
+
   const editMode = Boolean(forcedEdit || vendor?.is_published || (vendor as any)?.onboarding_completed);
 
   /* ── Publish handler ────────────────────────────────────────── */
