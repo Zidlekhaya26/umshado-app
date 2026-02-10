@@ -55,15 +55,15 @@ export default function ProfileCompletionIndicator({ className = '' }: { classNa
   if (loading || !profileChecks) return null;
 
   return (
-    <div className={`rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-3 text-white shadow mb-4 ${className}`}>
+    <div className={`rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 text-amber-800 shadow-sm mb-4 ${className}`}>
       <div className="flex items-center justify-between mb-1">
-        <span className="font-bold text-sm">Profile Completion</span>
-        <span className="text-xs text-amber-100">{percentComplete}% complete</span>
+        <span className="font-semibold text-sm">Profile Completion</span>
+        <span className="text-xs text-amber-700">{percentComplete}%</span>
       </div>
-      <div className="w-full bg-white/30 rounded-full h-2 mb-2">
-        <div className="bg-white rounded-full h-2 transition-all" style={{ width: `${percentComplete}%` }} />
+      <div className="w-full bg-amber-100 rounded-full h-2 mb-2">
+        <div className="bg-amber-500 rounded-full h-2 transition-all" style={{ width: `${percentComplete}%` }} />
       </div>
-      <ul className="space-y-1 text-xs">
+      <ul className="space-y-1 text-xs text-amber-700">
         {!profileChecks.businessInfo && (
           <li><Link href="/vendor/onboarding" className="underline hover:text-white">Business info</Link> <span className="ml-1 text-amber-200">(name, category, location, description)</span></li>
         )}
