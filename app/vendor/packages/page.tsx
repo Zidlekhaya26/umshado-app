@@ -21,6 +21,7 @@ interface PackageItem {
 
 export default function VendorPackagesPage() {
   const [availableServices, setAvailableServices] = useState<string[]>([]);
+  const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
   const [vendorCategory, setVendorCategory] = useState<string>("");
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
@@ -28,6 +29,18 @@ export default function VendorPackagesPage() {
 
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [vendorId, setVendorId] = useState<string | null>(null);
+  const [formData, setFormData] = useState<{
+    name: string;
+    fromPrice: number;
+    pricingMode: PricingMode;
+    guestRange?: { min: number; max: number };
+    hours?: number;
+    includedServices: string[];
+    isPopular: boolean;
+  }>({ name: '', fromPrice: 0, pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
 
   useEffect(() => {
     loadVendorAndPackages();
@@ -45,6 +58,7 @@ export default function VendorPackagesPage() {
 
       const vId = await getOrCreateVendorForUser();
       if (!vId) return;
+      setVendorId(vId);
 
       try {
         const { data: vendorRow } = await supabase.from("vendors").select("category,is_published,onboarding_completed").eq("id", vId).maybeSingle();
@@ -63,9 +77,10 @@ export default function VendorPackagesPage() {
 
       try {
         const [selections, catalog] = await Promise.all([getVendorSelectedServices(vId), getServicesCatalog()]);
-        const catalogMap = new Map<string, Service>(catalog.map((s) => [s.id, s]));
-        const serviceNames = selections.selectedServiceIds.map((id) => catalogMap.get(id)?.name).filter(Boolean) as string[];
-        setAvailableServices(serviceNames.length > 0 ? serviceNames : catalog.map((s) => s.name));
+        setServicesCatalog(catalog || []);
+        const catalogMap = new Map<string, Service>((catalog || []).map((s) => [s.id, s]));
+        const serviceNames = (selections?.selectedServiceIds || []).map((id) => catalogMap.get(id)?.name).filter(Boolean) as string[];
+        setAvailableServices(serviceNames.length > 0 ? serviceNames : (catalog || []).map((s) => s.name));
       } catch (err) {
         console.warn("Unable to load vendor services for packages:", err);
       }
@@ -93,7 +108,56 @@ export default function VendorPackagesPage() {
   }
 
   const openForm = (_pkg?: PackageItem) => {
-    console.log("open form", _pkg?.id);
+    if (_pkg) {
+      setEditingId(_pkg.id);
+      setFormData({
+        name: _pkg.name,
+        fromPrice: _pkg.fromPrice,
+        pricingMode: _pkg.pricingMode,
+        guestRange: _pkg.guestRange,
+        hours: _pkg.hours,
+        includedServices: _pkg.includedServices,
+        isPopular: _pkg.isPopular,
+      });
+    } else {
+      setEditingId(null);
+      setFormData({ name: '', fromPrice: 0, pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+    }
+    setIsFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingId(null);
+  };
+
+  const savePackage = async () => {
+    if (!vendorId) {
+      alert('Vendor profile not loaded');
+      return;
+    }
+    if (!formData.name || formData.fromPrice <= 0) {
+      alert('Please fill in package name and price');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (editingId) {
+        const { error } = await supabase.from('vendor_packages').update({ name: formData.name, base_price: formData.fromPrice, pricing_mode: formData.pricingMode, base_guests: formData.guestRange?.min, base_hours: formData.hours, included_services: formData.includedServices, is_popular: formData.isPopular }).eq('id', editingId);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('vendor_packages').insert({ vendor_id: vendorId, name: formData.name, base_price: formData.fromPrice, pricing_mode: formData.pricingMode, base_guests: formData.guestRange?.min || null, base_hours: formData.hours || null, included_services: formData.includedServices, is_popular: formData.isPopular });
+        if (error) throw error;
+      }
+      await loadVendorAndPackages();
+      closeForm();
+    } catch (err) {
+      console.error('Error saving package:', err);
+      alert('Failed to save package. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const canContinue = packages.length >= 2;
@@ -117,6 +181,14 @@ export default function VendorPackagesPage() {
         </div>
 
         <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
+          {/* DEBUG BANNER - temporary for Vercel troubleshooting */}
+          <div className="mb-3 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-sm text-yellow-800">
+            <span className="font-semibold">DEBUG:</span>
+            <span className="ml-2">isFormOpen: {String(isFormOpen)}</span>
+            <span className="ml-2">vendorId: {vendorId ?? 'null'}</span>
+            <span className="ml-2">packages: {packages.length}</span>
+            <span className="ml-2">servicesCatalog: {servicesCatalog.length}</span>
+          </div>
           <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3.5">
             <p className="text-sm text-purple-900"><span className="font-semibold">{packages.length} package{packages.length !== 1 ? 's' : ''}</span> created{packages.length < 2 && <span className="block mt-1 text-purple-700">Add at least 2 packages to continue</span>}</p>
           </div>
@@ -151,6 +223,58 @@ export default function VendorPackagesPage() {
           ))}
 
           {!loading && <button onClick={() => openForm()} disabled={loading} className="w-full py-5 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 font-semibold hover:border-purple-400 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Package</button>}
+
+          {/* Package Form Modal - Bottom Sheet */}
+          {isFormOpen && (
+            <div className="fixed inset-0 z-[100] flex items-end justify-center">
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black bg-opacity-50" onClick={closeForm} />
+
+              {/* Bottom Sheet */}
+              <div className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[90vh] mx-auto">
+                {/* Sticky Header */}
+                <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between rounded-t-3xl z-10">
+                  <h2 className="text-lg font-bold text-gray-900">{editingId ? 'Edit Package' : 'Add Package'}</h2>
+                  <button onClick={closeForm} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors" aria-label="Close">✕</button>
+                </div>
+
+                {(!vendorId || servicesCatalog.length === 0) ? (
+                  <div className="px-5 py-6 text-center">
+                    <p className="text-sm text-gray-600">Loading vendor data…</p>
+                  </div>
+                ) : (
+                  <div className="px-5 py-4 space-y-3 overflow-y-auto">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Package name</label>
+                      <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">From price (R)</label>
+                      <input type="number" value={formData.fromPrice} onChange={(e) => setFormData({ ...formData, fromPrice: Number(e.target.value) })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
+                      <div className="flex flex-wrap gap-2">
+                        {availableServices.map((s) => {
+                          const selected = formData.includedServices.includes(s);
+                          return (
+                            <button key={s} type="button" onClick={() => setFormData({ ...formData, includedServices: selected ? formData.includedServices.filter(x => x !== s) : [...formData.includedServices, s] })} className={`px-2.5 py-1 rounded-md text-sm ${selected ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
+                              {s}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-gray-200 px-4 py-3 flex gap-3">
+                  <button onClick={closeForm} className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-sm">Cancel</button>
+                  <button onClick={savePackage} disabled={loading} className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm">{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {!loading && packages.length === 0 && <div className="text-center py-8"><p className="text-sm text-gray-500">Start by adding your first package</p></div>}
         </div>
