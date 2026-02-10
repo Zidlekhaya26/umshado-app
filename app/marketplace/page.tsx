@@ -300,80 +300,74 @@ export default function Marketplace() {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="px-4 pt-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search vendors..."
-              className="w-full pl-11 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
-            />
-            <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Filters Row */}
-        <div className="px-4 py-4 space-y-3">
-          {/* Category Filter */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 min-w-[70px]">Category:</label>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="">All Categories</option>
-              {LOCKED_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Sort Dropdown */}
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 min-w-[70px]">Sort by:</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm text-gray-900 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              <option value="recommended">Recommended</option>
-              <option value="price_low">Lowest Price</option>
-              <option value="price_high">Highest Price</option>
-              <option value="newest">Newest</option>
-            </select>
-          </div>
-
-          {/* Service Filter Chips */}
-          {displayedServices.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Filter by service:</p>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {displayedServices.map((service) => (
-                  <button
-                    key={service}
-                    onClick={() => toggleServiceFilter(service)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      serviceFilter.includes(service)
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 border border-gray-300 hover:border-purple-300'
-                    }`}
-                  >
-                    {service}
-                  </button>
-                ))}
+        {/* Consolidated Sticky Filter/Search */}
+        <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
+          <div className="px-4 pt-3 pb-3">
+            <div className="flex flex-col gap-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search vendors..."
+                  className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400 bg-white text-gray-800"
+                />
+                <svg
+                  className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
               </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                  className="w-full sm:flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="">All Categories</option>
+                  {LOCKED_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="w-full sm:w-48 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                >
+                  <option value="recommended">Recommended</option>
+                  <option value="price_low">Lowest Price</option>
+                  <option value="price_high">Highest Price</option>
+                  <option value="newest">Newest</option>
+                </select>
+              </div>
+
+              {displayedServices.length > 0 && (
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-2">Filter by service</p>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {displayedServices.map((service) => (
+                      <button
+                        key={service}
+                        onClick={() => toggleServiceFilter(service)}
+                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                          serviceFilter.includes(service)
+                            ? 'bg-purple-600 text-white shadow'
+                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-purple-50'
+                        }`}
+                      >
+                        {service}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
 
         {/* Vendor Cards List */}
