@@ -345,6 +345,25 @@ export default function VendorPackagesPage() {
                             className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
                           />
                         </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing type</label>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={formData.pricingMode}
+                              onChange={(e) => setFormData({ ...formData, pricingMode: e.target.value as any })}
+                              className="px-3 py-2 border-2 border-gray-200 rounded-xl bg-white"
+                            >
+                              <option value="guest-based">Guest-based (per guest)</option>
+                              <option value="time-based">Time-based (per hour)</option>
+                              <option value="package-based">Package-based (fixed)</option>
+                            </select>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formData.pricingMode === 'guest-based' && 'Used for catering, decor, equipment.'}
+                            {formData.pricingMode === 'time-based' && 'Used for DJ, photography/video, MC.'}
+                            {formData.pricingMode === 'package-based' && 'Fixed price package.'}
+                          </p>
+                        </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
                         <div className="flex flex-wrap gap-2">
