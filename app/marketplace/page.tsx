@@ -405,9 +405,11 @@ export default function Marketplace() {
                       <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
                         {vendor.name}
                       </h3>
-                      <VerifiedBadge verified={vendor.verified} />
                     </div>
                     <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
+                  </div>
+                  <div className="flex-shrink-0 ml-3 self-start">
+                    <VerifiedBadge verified={vendor.verified} className="" />
                   </div>
                 </div>
 
