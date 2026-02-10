@@ -72,20 +72,22 @@ export default function CoupleOnboarding() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex-1 px-4 pt-6 pb-32 space-y-5 overflow-y-auto">
         {/* Wedding Date */}
-        <div className="w-full max-w-full overflow-hidden">
+        <div className="w-full max-w-full">
           <label htmlFor="weddingDate" className="block text-sm font-semibold text-gray-700 mb-2">
             Wedding Date <span className="text-red-500 ml-1">*</span>
           </label>
-          <input
-            type="date"
-            id="weddingDate"
-            name="weddingDate"
-            value={formData.weddingDate}
-            onChange={handleChange}
-            required
-            placeholder="Select date"
-            className="w-full max-w-full overflow-hidden px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
-          />
+          <div className="relative w-full max-w-full rounded-xl border-2 border-gray-300 bg-white overflow-hidden">
+            <input
+              type="date"
+              id="weddingDate"
+              name="weddingDate"
+              value={formData.weddingDate}
+              onChange={handleChange}
+              required
+              placeholder="Select date"
+              className="w-full h-12 pl-4 pr-10 bg-transparent appearance-none focus:outline-none text-base placeholder:text-gray-400"
+            />
+          </div>
         </div>
 
         {/* Partner's Name */}
