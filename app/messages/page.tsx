@@ -60,6 +60,7 @@ export default function MessagesIndex() {
       setIsVendor(activeRole === 'vendor');
 
       // If vendor, fetch vendor ID and publish status for CTAs
+      let myVendorId: string | null = null;
       if (activeRole === 'vendor') {
         const { data: vRow } = await supabase
           .from('vendors')
@@ -69,14 +70,15 @@ export default function MessagesIndex() {
           .limit(1)
           .maybeSingle();
         if (vRow) {
+          myVendorId = vRow.id;
           setVendorId(vRow.id);
           setIsPublished(vRow.is_published || false);
         }
       }
 
-      // Filter conversations by role: couple sees couple_id matches, vendor sees vendor_id matches
+      // Filter conversations by role: couple sees couple_id matches, vendor sees vendor_id matches (use vendor row id)
       const roleFilter = activeRole === 'vendor'
-        ? `vendor_id.eq.${user.id}`
+        ? `vendor_id.eq.${myVendorId ?? user.id}`
         : `couple_id.eq.${user.id}`;
 
       // Fetch conversations the user participates in (based on their active role)
@@ -109,7 +111,24 @@ export default function MessagesIndex() {
             .maybeSingle();
 
           if (iAmVendor) {
-            // I'm the vendor → show the couple's name
+            // I'm the vendor → prefer the public `couples` table for display (partner_name + avatar), fallback to profile
+            const { data: couple } = await supabase
+              .from('couples')
+              .select('partner_name, avatar_url')
+              .eq('id', row.couple_id)
+              .maybeSingle();
+
+            if (couple && (couple.partner_name || couple.avatar_url)) {
+              return {
+                id: row.id,
+                otherName: couple.partner_name || 'Couple',
+                otherRole: 'couple' as const,
+                logoUrl: couple.avatar_url || null,
+                lastMessageAt: row.last_message_at || row.created_at,
+                lastMessagePreview: lastMsg?.message_text || null,
+              };
+            }
+
             const { data: profile } = await supabase
               .from('profiles')
               .select('full_name')
@@ -126,7 +145,24 @@ export default function MessagesIndex() {
             };
           }
 
-          // I'm the couple → show the vendor's business name + logo
+          // I'm the couple → try marketplace view first (public), fallback to vendors table
+          const { data: mv } = await supabase
+            .from('marketplace_vendors')
+            .select('business_name, logo_url')
+            .eq('vendor_id', row.vendor_id)
+            .maybeSingle();
+
+          if (mv && (mv.business_name || mv.logo_url)) {
+            return {
+              id: row.id,
+              otherName: mv.business_name || 'Vendor',
+              otherRole: 'vendor' as const,
+              logoUrl: mv.logo_url || null,
+              lastMessageAt: row.last_message_at || row.created_at,
+              lastMessagePreview: lastMsg?.message_text || null,
+            };
+          }
+
           const { data: vendorData } = await supabase
             .from('vendors')
             .select('business_name, logo_url')
@@ -152,6 +188,41 @@ export default function MessagesIndex() {
       setLoading(false);
     }
   };
+
+  // Realtime: keep conversation list in sync for incoming updates/creates
+  useEffect(() => {
+    let convChannelA: any = null;
+    let convChannelB: any = null;
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Listen for conversation INSERT/UPDATE where couple_id == user.id
+      convChannelA = supabase
+        .channel(`conversations_user_${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => {
+          loadConversations();
+        })
+        .subscribe();
+
+      // If vendor, also listen for vendor_id changes (use vendorId state if available)
+      const vid = vendorId;
+      if (vid) {
+        convChannelB = supabase
+          .channel(`conversations_vendor_${vid}`)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `vendor_id=eq.${vid}` }, () => {
+            loadConversations();
+          })
+          .subscribe();
+      }
+    })();
+
+    return () => {
+      if (convChannelA) supabase.removeChannel(convChannelA);
+      if (convChannelB) supabase.removeChannel(convChannelB);
+    };
+  }, [vendorId]);
 
   /* ── Time-ago helper ────────────────────────────────────────────── */
   const timeAgo = (dateStr: string) => {

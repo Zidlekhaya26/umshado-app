@@ -238,6 +238,19 @@ export default function ChatThread() {
         return;
       }
 
+      // Append optimistically so the sender sees the message immediately
+      const json = await res.json().catch(() => ({ success: true }));
+      const createdAt = json.createdAt || new Date().toISOString();
+      const messageId = json.messageId || `local-${Date.now()}`;
+
+      setMessages((prev) => ([...prev, {
+        id: messageId,
+        sender_id: session.user.id,
+        message_text: newMessage.trim(),
+        created_at: createdAt,
+        attachments: [],
+      }]));
+
       setNewMessage('');
     } catch (err) {
       console.error('Unexpected error sending message:', err);
