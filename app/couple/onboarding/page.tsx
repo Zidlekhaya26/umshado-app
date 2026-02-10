@@ -56,7 +56,7 @@ export default function CoupleOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-5">
@@ -72,9 +72,9 @@ export default function CoupleOnboarding() {
       {/* Form */}
       <form onSubmit={handleSubmit} className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
         {/* Wedding Date */}
-        <div>
+        <div className="w-full max-w-full overflow-hidden">
           <label htmlFor="weddingDate" className="block text-sm font-semibold text-gray-700 mb-2">
-            Wedding Date <span className="text-red-500">*</span>
+            Wedding Date <span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="date"
@@ -83,14 +83,15 @@ export default function CoupleOnboarding() {
             value={formData.weddingDate}
             onChange={handleChange}
             required
-            className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base"
+            placeholder="Select date"
+            className="w-full max-w-full overflow-hidden px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
           />
         </div>
 
         {/* Partner's Name */}
         <div>
           <label htmlFor="partnerName" className="block text-sm font-semibold text-gray-700 mb-2">
-            Partner&apos;s Name <span className="text-red-500">*</span>
+            Partner&apos;s Name <span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
@@ -100,14 +101,14 @@ export default function CoupleOnboarding() {
             onChange={handleChange}
             required
             placeholder="Enter your partner's name"
-            className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
+            className="w-full max-w-full px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
           />
         </div>
 
         {/* Wedding Location */}
         <div>
           <label htmlFor="weddingLocation" className="block text-sm font-semibold text-gray-700 mb-2">
-            Wedding Location <span className="text-red-500">*</span>
+            Wedding Location <span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
@@ -117,14 +118,14 @@ export default function CoupleOnboarding() {
             onChange={handleChange}
             required
             placeholder="City or venue"
-            className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
+            className="w-full max-w-full px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
           />
         </div>
 
         {/* Country */}
         <div>
           <label htmlFor="country" className="block text-sm font-semibold text-gray-700 mb-2">
-            Country <span className="text-red-500">*</span>
+            Country <span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
@@ -134,7 +135,7 @@ export default function CoupleOnboarding() {
             onChange={handleChange}
             required
             placeholder="e.g. South Africa"
-            className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
+            className="w-full max-w-full px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
           />
         </div>
 
@@ -150,7 +151,7 @@ export default function CoupleOnboarding() {
             onChange={handleChange}
             rows={4}
             placeholder="Tell us about any cultural or traditional elements you'd like to include"
-            className="w-full px-4 py-3.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400 resize-none"
+            className="w-full max-w-full px-4 py-3.5 min-h-[96px] border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400 resize-none"
           />
         </div>
 
