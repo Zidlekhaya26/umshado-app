@@ -21,7 +21,7 @@ interface IconProps {
 }
 
 export function UmshadoIcon({ size = 40, className = '' }: IconProps) {
-  /* eslint-disable-next-line @next/next/no-img-element */
+   
   return (
     <img
       src="/logo-icon.png"

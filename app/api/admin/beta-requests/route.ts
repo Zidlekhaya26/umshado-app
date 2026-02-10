@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
 
     // Build a set of registered emails for the "Already registered?" badge
     // Fetch auth users with service role
-    let registeredEmails: Set<string> = new Set();
+    const registeredEmails: Set<string> = new Set();
     try {
       // Paginate through all auth users (50 per page is default)
       let page = 1;

@@ -146,6 +146,20 @@ export default function VendorPackagesPage() {
     setEditingId(null);
   };
 
+  // Prevent background scrolling while the bottom-sheet modal is open
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const prev = document.body.style.overflow;
+    if (isFormOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = prev || '';
+    }
+    return () => {
+      document.body.style.overflow = prev || '';
+    };
+  }, [isFormOpen]);
+
   const savePackage = async () => {
     if (!vendorId) {
       alert('Vendor profile not loaded');
@@ -193,6 +207,27 @@ export default function VendorPackagesPage() {
     } catch (err) {
       console.error('Unexpected savePackage error', { err, payload, vendorId });
       alert('Unexpected error while saving package. See console for details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deletePackage = async () => {
+    if (!editingId) return;
+    if (!confirm('Delete this package? This action cannot be undone.')) return;
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('vendor_packages').delete().eq('id', editingId);
+      if (error) {
+        console.error('deletePackage error', error);
+        alert(`${error.message}${error.code ? ` (code ${error.code})` : ''}`);
+        return;
+      }
+      await loadVendorAndPackages();
+      closeForm();
+    } catch (err) {
+      console.error('Unexpected deletePackage error', err);
+      alert('Unexpected error while deleting package. See console for details.');
     } finally {
       setLoading(false);
     }
@@ -327,6 +362,9 @@ export default function VendorPackagesPage() {
                 )}
 
                 <div className="border-t border-gray-200 px-4 py-3 flex gap-3">
+                  {editingId ? (
+                    <button onClick={deletePackage} disabled={loading} className="px-4 py-3 border-2 border-red-200 text-red-700 bg-red-50 rounded-xl font-semibold text-sm">{loading ? 'Deleting...' : 'Delete'}</button>
+                  ) : null}
                   <button onClick={closeForm} className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-sm">Cancel</button>
                   <button onClick={savePackage} disabled={loading} className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm">{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
                 </div>

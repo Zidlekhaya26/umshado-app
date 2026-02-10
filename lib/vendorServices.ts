@@ -110,7 +110,7 @@ export async function saveVendorProfile(profile: {
 
     if (existingVendor && existingVendor.id) {
       // Update — retry removing unsupported columns reported by PostgREST.
-      let updatePayload: any = {
+      const updatePayload: any = {
         business_name: profile.business_name,
         category: profile.category || null,
         location: profile.location || null,
@@ -155,7 +155,7 @@ export async function saveVendorProfile(profile: {
 
     // Insert new vendor (use user's id)
     // Insert new vendor — retry removing unsupported columns if PostgREST complains.
-    let insertPayload: any = {
+    const insertPayload: any = {
       user_id: user.id,
       business_name: profile.business_name,
       category: profile.category || null,
