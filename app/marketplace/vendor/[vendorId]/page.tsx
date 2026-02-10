@@ -176,7 +176,7 @@ export default function VendorProfile() {
       try {
         const { data, error } = await supabase
           .from('vendors')
-          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, portfolio_images, portfolio_urls, contact, social_links')
+          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, description, portfolio_images, portfolio_urls, contact, social_links')
           .eq('id', vendorId)
           .maybeSingle();
 
@@ -261,7 +261,7 @@ export default function VendorProfile() {
             reviewCount: data.review_count || 0,
             verified: data.verified || false,
             topRated: data.top_rated || false,
-            about: data.about || '',
+            about: (data.description || data.about) || '',
             services: serviceNames,
             packages: vendorPackages,
             portfolioImages: data.portfolio_images || 0,
