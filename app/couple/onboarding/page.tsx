@@ -56,8 +56,8 @@ export default function CoupleOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col">
+    <div className="min-h-[100dvh] bg-gray-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="max-w-md mx-auto min-h-[100dvh] bg-white shadow-lg flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-5">
         <div className="flex items-center gap-3">
@@ -70,7 +70,7 @@ export default function CoupleOnboarding() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
+      <form onSubmit={handleSubmit} className="flex-1 px-4 pt-6 pb-32 space-y-5 overflow-y-auto">
         {/* Wedding Date */}
         <div className="w-full max-w-full overflow-hidden">
           <label htmlFor="weddingDate" className="block text-sm font-semibold text-gray-700 mb-2">
