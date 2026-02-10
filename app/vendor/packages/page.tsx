@@ -346,23 +346,73 @@ export default function VendorPackagesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Pricing type</label>
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={formData.pricingMode}
-                              onChange={(e) => setFormData({ ...formData, pricingMode: e.target.value as any })}
-                              className="px-3 py-2 border-2 border-gray-200 rounded-xl bg-white"
-                            >
-                              <option value="guest-based">Guest-based (per guest)</option>
-                              <option value="time-based">Time-based (per hour)</option>
-                              <option value="package-based">Package-based (fixed)</option>
-                            </select>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Pricing type</label>
+                          <div className="inline-flex rounded-xl bg-gray-100 p-1 gap-1">
+                            {([{
+                              key: 'guest-based', label: 'Guest-based'
+                            }, {
+                              key: 'time-based', label: 'Time-based'
+                            }, {
+                              key: 'package-based', label: 'Package-based'
+                            }] as {key: string; label: string;}[]).map(opt => {
+                              const active = formData.pricingMode === opt.key;
+                              return (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() => setFormData({ ...formData, pricingMode: opt.key as any })}
+                                  aria-pressed={active}
+                                  className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${active ? 'bg-white border border-gray-200 text-gray-900' : 'text-gray-600'}`}
+                                >
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-2">
                             {formData.pricingMode === 'guest-based' && 'Used for catering, decor, equipment.'}
                             {formData.pricingMode === 'time-based' && 'Used for DJ, photography/video, MC.'}
                             {formData.pricingMode === 'package-based' && 'Fixed price package.'}
                           </p>
+
+                          {/* Conditional fields */}
+                          {formData.pricingMode === 'guest-based' && (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Min guests</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={formData.guestRange?.min ?? ''}
+                                  onChange={(e) => setFormData({ ...formData, guestRange: { ...(formData.guestRange || { min: 0, max: 0 }), min: Number(e.target.value || 0) } })}
+                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">Max guests</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={formData.guestRange?.max ?? ''}
+                                  onChange={(e) => setFormData({ ...formData, guestRange: { ...(formData.guestRange || { min: 0, max: 0 }), max: Number(e.target.value || 0) } })}
+                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {formData.pricingMode === 'time-based' && (
+                            <div className="mt-3">
+                              <label className="block text-xs text-gray-600 mb-1">Hours coverage</label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={formData.hours ?? ''}
+                                onChange={(e) => setFormData({ ...formData, hours: Number(e.target.value || 0) })}
+                                className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
+                              />
+                            </div>
+                          )}
                         </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
