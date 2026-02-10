@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
+import FilterSelect from '@/components/ui/FilterSelect';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
@@ -328,27 +329,23 @@ export default function Marketplace() {
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => setCategoryFilter(e.target.value)}
-                  className="w-full sm:flex-1 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="">All Categories</option>
-                  {LOCKED_CATEGORIES.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                <div className="sm:flex-1">
+                  <FilterSelect value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                    <option value="">All Categories</option>
+                    {LOCKED_CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </FilterSelect>
+                </div>
 
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="w-full sm:w-48 px-3 py-2 border-2 border-gray-200 rounded-lg text-sm text-gray-800 bg-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                >
-                  <option value="recommended">Recommended</option>
-                  <option value="price_low">Lowest Price</option>
-                  <option value="price_high">Highest Price</option>
-                  <option value="newest">Newest</option>
-                </select>
+                <div className="sm:w-48 w-full">
+                  <FilterSelect value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
+                    <option value="recommended">Recommended</option>
+                    <option value="price_low">Lowest Price</option>
+                    <option value="price_high">Highest Price</option>
+                    <option value="newest">Newest</option>
+                  </FilterSelect>
+                </div>
               </div>
 
               {displayedServices.length > 0 && (
