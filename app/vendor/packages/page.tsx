@@ -34,17 +34,29 @@ export default function VendorPackagesPage() {
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [formData, setFormData] = useState<{
     name: string;
-    fromPrice: number;
+    fromPrice: string; // store as string while typing to avoid mobile quirks
     pricingMode: PricingMode;
     guestRange?: { min: number; max: number };
     hours?: number;
     includedServices: string[];
     isPopular: boolean;
-  }>({ name: '', fromPrice: 0, pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+  }>({ name: '', fromPrice: '', pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     loadVendorAndPackages();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Determine whether to show debug banner: dev builds or explicit url flag
+    try {
+      const isDev = process.env.NODE_ENV === 'development';
+      const urlFlag = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debugPackages') === '1';
+      setShowDebug(Boolean(isDev || urlFlag));
+    } catch (e) {
+      setShowDebug(false);
+    }
   }, []);
 
   const dbToAppMode = (mode: string): PricingMode =>
@@ -112,7 +124,7 @@ export default function VendorPackagesPage() {
       setEditingId(_pkg.id);
       setFormData({
         name: _pkg.name,
-        fromPrice: _pkg.fromPrice,
+        fromPrice: String(_pkg.fromPrice ?? ''),
         pricingMode: _pkg.pricingMode,
         guestRange: _pkg.guestRange,
         hours: _pkg.hours,
@@ -121,7 +133,7 @@ export default function VendorPackagesPage() {
       });
     } else {
       setEditingId(null);
-      setFormData({ name: '', fromPrice: 0, pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+      setFormData({ name: '', fromPrice: '', pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
     }
     setIsFormOpen(true);
   };
@@ -136,25 +148,48 @@ export default function VendorPackagesPage() {
       alert('Vendor profile not loaded');
       return;
     }
-    if (!formData.name || formData.fromPrice <= 0) {
-      alert('Please fill in package name and price');
+
+    // Normalize and validate price string -> integer
+    const priceInt = parseInt(formData.fromPrice === '' ? '0' : formData.fromPrice, 10) || 0;
+    if (!formData.name || priceInt <= 0) {
+      alert('Please fill in package name and a valid price (> 0)');
       return;
     }
+
+    const payload = {
+      vendor_id: vendorId,
+      name: formData.name,
+      base_price: priceInt,
+      pricing_mode: formData.pricingMode,
+      base_guests: formData.guestRange?.min || null,
+      base_hours: formData.hours || null,
+      included_services: formData.includedServices,
+      is_popular: formData.isPopular,
+    };
 
     try {
       setLoading(true);
       if (editingId) {
-        const { error } = await supabase.from('vendor_packages').update({ name: formData.name, base_price: formData.fromPrice, pricing_mode: formData.pricingMode, base_guests: formData.guestRange?.min, base_hours: formData.hours, included_services: formData.includedServices, is_popular: formData.isPopular }).eq('id', editingId);
-        if (error) throw error;
+        const { data, error } = await supabase.from('vendor_packages').update({ name: payload.name, base_price: payload.base_price, pricing_mode: payload.pricing_mode, base_guests: payload.base_guests, base_hours: payload.base_hours, included_services: payload.included_services, is_popular: payload.is_popular }).eq('id', editingId).select();
+        if (error) {
+          console.error('savePackage error (update)', { error, payload, vendorId });
+          alert(`${error.message}${error.code ? ` (code ${error.code})` : ''}`);
+          return;
+        }
       } else {
-        const { error } = await supabase.from('vendor_packages').insert({ vendor_id: vendorId, name: formData.name, base_price: formData.fromPrice, pricing_mode: formData.pricingMode, base_guests: formData.guestRange?.min || null, base_hours: formData.hours || null, included_services: formData.includedServices, is_popular: formData.isPopular });
-        if (error) throw error;
+        const { data, error } = await supabase.from('vendor_packages').insert(payload).select();
+        if (error) {
+          console.error('savePackage error (insert)', { error, payload, vendorId });
+          alert(`${error.message}${error.code ? ` (code ${error.code})` : ''}`);
+          return;
+        }
       }
+
       await loadVendorAndPackages();
       closeForm();
     } catch (err) {
-      console.error('Error saving package:', err);
-      alert('Failed to save package. Please try again.');
+      console.error('Unexpected savePackage error', { err, payload, vendorId });
+      alert('Unexpected error while saving package. See console for details.');
     } finally {
       setLoading(false);
     }
@@ -181,14 +216,18 @@ export default function VendorPackagesPage() {
         </div>
 
         <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
-          {/* DEBUG BANNER - temporary for Vercel troubleshooting */}
-          <div className="mb-3 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-sm text-yellow-800">
-            <span className="font-semibold">DEBUG:</span>
-            <span className="ml-2">isFormOpen: {String(isFormOpen)}</span>
-            <span className="ml-2">vendorId: {vendorId ?? 'null'}</span>
-            <span className="ml-2">packages: {packages.length}</span>
-            <span className="ml-2">servicesCatalog: {servicesCatalog.length}</span>
-          </div>
+          {showDebug && (
+            <div className="mb-3 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-sm text-yellow-800">
+              <span className="font-semibold">DEBUG:</span>
+              <span className="ml-2">isFormOpen: {String(isFormOpen)}</span>
+              <span className="ml-2">vendorId: {vendorId ?? 'null'}</span>
+              <span className="ml-2">packages: {packages.length}</span>
+              <span className="ml-2">servicesCatalog: {servicesCatalog.length}</span>
+              {(!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) && (
+                <div className="mt-2 text-xs text-red-700">Missing Supabase env vars (NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY)</div>
+              )}
+            </div>
+          )}
           <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3.5">
             <p className="text-sm text-purple-900"><span className="font-semibold">{packages.length} package{packages.length !== 1 ? 's' : ''}</span> created{packages.length < 2 && <span className="block mt-1 text-purple-700">Add at least 2 packages to continue</span>}</p>
           </div>
@@ -248,10 +287,26 @@ export default function VendorPackagesPage() {
                       <label className="block text-sm font-medium text-gray-700 mb-1">Package name</label>
                       <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">From price (R)</label>
-                      <input type="number" value={formData.fromPrice} onChange={(e) => setFormData({ ...formData, fromPrice: Number(e.target.value) })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
-                    </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">From price (R)</label>
+                        <input
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="e.g. 2000"
+                          value={formData.fromPrice}
+                          onChange={(e) => {
+                            // Keep as string while typing; strip non-digits and remove leading zeros
+                            const raw = String(e.target.value || "");
+                            const digits = raw.replace(/\D+/g, "");
+                            let normalized = digits.replace(/^0+(?=\d)/, "");
+                            if (normalized === "") normalized = digits === "" ? "" : "0";
+                            // If user cleared input, keep empty string
+                            if (raw === "") normalized = "";
+                            setFormData({ ...formData, fromPrice: normalized });
+                          }}
+                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                        />
+                      </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
                       <div className="flex flex-wrap gap-2">
