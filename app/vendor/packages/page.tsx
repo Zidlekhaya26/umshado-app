@@ -42,6 +42,8 @@ export default function VendorPackagesPage() {
     isPopular: boolean;
   }>({ name: '', fromPrice: '', pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
   const [formErrors, setFormErrors] = useState<{ guestRange?: string; hours?: string }>({});
+  const [prevGuestRange, setPrevGuestRange] = useState<{ min: number; max: number } | null>(null);
+  const [prevHours, setPrevHours] = useState<number | null>(null);
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
@@ -143,15 +145,22 @@ export default function VendorPackagesPage() {
   };
 
   const handlePricingModeChange = (mode: PricingMode) => {
-    // sensible defaults when switching modes
+    // remember current values for restore when switching back
+    if (formData.pricingMode === 'guest-based') setPrevGuestRange(formData.guestRange ?? null);
+    if (formData.pricingMode === 'time-based') setPrevHours(formData.hours ?? null);
+
     const next = { ...formData, pricingMode: mode } as typeof formData;
     if (mode === 'time-based') {
-      if (!next.hours || next.hours <= 0) next.hours = 4;
+      // restore previous hours if present, otherwise sensible default
+      next.hours = prevHours && prevHours > 0 ? prevHours : (next.hours && next.hours > 0 ? next.hours : 4);
+      next.guestRange = next.guestRange || { min: 0, max: 0 };
     }
     if (mode === 'guest-based') {
-      if (!next.guestRange || (next.guestRange?.min === 0 && next.guestRange?.max === 0)) next.guestRange = { min: 1, max: 50 };
+      next.guestRange = prevGuestRange ?? (next.guestRange && next.guestRange.min > 0 ? next.guestRange : { min: 1, max: 50 });
+      next.hours = next.hours || 0;
     }
     if (mode === 'package-based') {
+      // clear mode-specific fields but remember them in prev states
       next.hours = 0;
       next.guestRange = { min: 0, max: 0 };
     }
@@ -487,8 +496,15 @@ export default function VendorPackagesPage() {
                   {editingId ? (
                     <button onClick={deletePackage} disabled={loading} className="px-4 py-3 border-2 border-red-200 text-red-700 bg-red-50 rounded-xl font-semibold text-sm">{loading ? 'Deleting...' : 'Delete'}</button>
                   ) : null}
-                  <button onClick={closeForm} className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-sm">Cancel</button>
-                  <button onClick={savePackage} disabled={loading} className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm">{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
+                  <button onClick={closeForm} className="px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-sm">Cancel</button>
+                  {/* Disable Save when form invalid */}
+                  <button onClick={savePackage} disabled={loading || !(
+                    (formData.name && formData.name.trim().length > 0) &&
+                    (formData.fromPrice && Number(formData.fromPrice) > 0) &&
+                    (formData.pricingMode !== 'guest-based' || ((formData.guestRange?.min || 0) > 0 && (formData.guestRange?.min || 0) <= (formData.guestRange?.max || 0))) &&
+                    (formData.pricingMode !== 'time-based' || (formData.hours && formData.hours > 0)) &&
+                    !Object.values(formErrors).some(Boolean)
+                  )} className={`flex-1 px-4 py-3 ${loading ? 'bg-gray-300 text-gray-700' : 'bg-purple-600 text-white'} rounded-xl font-semibold text-sm`}>{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
                 </div>
               </div>
             </div>
