@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
@@ -46,8 +47,10 @@ interface Metrics {
 /* ------------------------------------------------------------------ */
 
 export default function VendorDashboard() {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [vendor, setVendor] = useState<VendorProfile | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
   const [metrics, setMetrics] = useState<Metrics>({ profileViews: 0, savedByCouples: 0, chatsStarted: 0, quotesReceived: 0 });
   const [quoteRequests, setQuoteRequests] = useState<Quote[]>([]);
   const [negotiations, setNegotiations] = useState<Quote[]>([]);
@@ -262,9 +265,43 @@ export default function VendorDashboard() {
                 <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
                 <p className="text-sm text-gray-600 mt-0.5">{vendor?.business_name || 'Your vendor hub'}</p>
               </div>
-              <div className="ml-auto">
-                <Link href="/vendor/profile/edit" className="px-3 py-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200">Edit Profile</Link>
-              </div>
+              <div className="ml-auto flex items-center gap-2 relative">
+                  <Link href="/vendor/profile/edit" className="px-3 py-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200">Edit Profile</Link>
+
+                  {/* Vendor menu: includes logout */}
+                  <div className="relative">
+                    <button
+                      aria-label="Vendor menu"
+                      onClick={() => setShowMenu(prev => !prev)}
+                      className="ml-2 w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                    >
+                      <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                    </button>
+
+                    {showMenu && (
+                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-30">
+                        <button
+                          onClick={async () => {
+                            // lightweight confirmation
+                            const ok = confirm('Log out from vendor account?');
+                            if (!ok) return;
+                            try {
+                              const { error } = await supabase.auth.signOut();
+                              if (error) console.error('Sign out error:', error);
+                            } catch (err) {
+                              console.error('Sign out failed:', err);
+                            }
+                            router.push('/auth/sign-in');
+                          }}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
+                        >
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+                          Log out
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
           </div>
         </div>
 
