@@ -44,6 +44,10 @@ export default function VendorPackagesPage() {
   const [formErrors, setFormErrors] = useState<{ guestRange?: string; hours?: string }>({});
   const [prevGuestRange, setPrevGuestRange] = useState<{ min: number; max: number } | null>(null);
   const [prevHours, setPrevHours] = useState<number | null>(null);
+  // transient raw input values to avoid leading-zero UX issues while typing
+  const [guestMinRaw, setGuestMinRaw] = useState<string>('');
+  const [guestMaxRaw, setGuestMaxRaw] = useState<string>('');
+  const [hoursRaw, setHoursRaw] = useState<string>('');
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
@@ -137,9 +141,14 @@ export default function VendorPackagesPage() {
         includedServices: _pkg.includedServices,
         isPopular: _pkg.isPopular,
       });
+      // initialize raw inputs
+      setGuestMinRaw(_pkg.guestRange?.min ? String(_pkg.guestRange.min) : '');
+      setGuestMaxRaw(_pkg.guestRange?.max ? String(_pkg.guestRange.max) : '');
+      setHoursRaw(_pkg.hours ? String(_pkg.hours) : '');
     } else {
       setEditingId(null);
       setFormData({ name: '', fromPrice: '', pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+      setGuestMinRaw(''); setGuestMaxRaw(''); setHoursRaw('');
     }
     setIsFormOpen(true);
   };
@@ -422,17 +431,23 @@ export default function VendorPackagesPage() {
                                   type="number"
                                   min={0}
                                   value={formData.guestRange?.min ?? ''}
-                                  onChange={(e) => {
-                                    const newMin = Number(e.target.value || 0);
-                                    const curMax = formData.guestRange?.max ?? 0;
-                                    const nextGuest = { ...(formData.guestRange || { min: 0, max: 0 }), min: newMin };
-                                    setFormData({ ...formData, guestRange: nextGuest });
-                                    if (newMin <= 0) setFormErrors(f => ({ ...f, guestRange: 'Min guests must be greater than 0' }));
-                                    else if (curMax && newMin > curMax) setFormErrors(f => ({ ...f, guestRange: 'Min must be less than or equal to Max' }));
-                                    else setFormErrors(f => ({ ...f, guestRange: undefined }));
-                                  }}
-                                  className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
-                                />
+                              onChange={(e) => {
+                                // normalize digits and strip leading zeros
+                                const raw = String(e.target.value || '');
+                                const digits = raw.replace(/\D+/g, '');
+                                const normalized = digits.replace(/^0+(?=\d)/, '');
+                                setGuestMinRaw(normalized);
+                                const newMin = normalized === '' ? 0 : Number(normalized);
+                                const curMax = formData.guestRange?.max ?? 0;
+                                const nextGuest = { ...(formData.guestRange || { min: 0, max: 0 }), min: newMin };
+                                setFormData({ ...formData, guestRange: nextGuest });
+                                if (newMin <= 0) setFormErrors(f => ({ ...f, guestRange: 'Min guests must be greater than 0' }));
+                                else if (curMax && newMin > curMax) setFormErrors(f => ({ ...f, guestRange: 'Min must be less than or equal to Max' }));
+                                else setFormErrors(f => ({ ...f, guestRange: undefined }));
+                              }}
+                              className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
+                              value={guestMinRaw}
+                            />
                               </div>
                               <div>
                                 <label className="block text-xs text-gray-600 mb-1">Max guests</label>
@@ -441,7 +456,11 @@ export default function VendorPackagesPage() {
                                   min={0}
                                   value={formData.guestRange?.max ?? ''}
                                   onChange={(e) => {
-                                    const newMax = Number(e.target.value || 0);
+                                    const raw = String(e.target.value || '');
+                                    const digits = raw.replace(/\D+/g, '');
+                                    const normalized = digits.replace(/^0+(?=\d)/, '');
+                                    setGuestMaxRaw(normalized);
+                                    const newMax = normalized === '' ? 0 : Number(normalized);
                                     const curMin = formData.guestRange?.min ?? 0;
                                     const nextGuest = { ...(formData.guestRange || { min: 0, max: 0 }), max: newMax };
                                     setFormData({ ...formData, guestRange: nextGuest });
@@ -450,6 +469,7 @@ export default function VendorPackagesPage() {
                                     else setFormErrors(f => ({ ...f, guestRange: undefined }));
                                   }}
                                   className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
+                                  value={guestMaxRaw}
                                 />
                                 {formErrors.guestRange && <p className="text-xs text-red-600 mt-1">{formErrors.guestRange}</p>}
                               </div>
@@ -460,11 +480,16 @@ export default function VendorPackagesPage() {
                             <div className="mt-3">
                               <label className="block text-xs text-gray-600 mb-1">Hours coverage</label>
                               <input
-                                type="number"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 min={0}
-                                value={formData.hours ?? ''}
+                                value={hoursRaw}
                                 onChange={(e) => {
-                                  const newHours = Number(e.target.value || 0);
+                                  const raw = String(e.target.value || '');
+                                  const digits = raw.replace(/\D+/g, '');
+                                  const normalized = digits.replace(/^0+(?=\d)/, '');
+                                  setHoursRaw(normalized);
+                                  const newHours = normalized === '' ? 0 : Number(normalized);
                                   setFormData({ ...formData, hours: newHours });
                                   if (newHours <= 0) setFormErrors(f => ({ ...f, hours: 'Hours must be greater than 0' }));
                                   else setFormErrors(f => ({ ...f, hours: undefined }));
