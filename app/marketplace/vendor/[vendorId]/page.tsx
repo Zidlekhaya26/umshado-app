@@ -64,6 +64,11 @@ export default function VendorProfile() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const hasTrackedProfileView = useRef(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const initialPinchDistance = useRef<number | null>(null);
+  const lastPan = useRef<{ x: number; y: number } | null>(null);
+  const lastTap = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -74,6 +79,76 @@ export default function VendorProfile() {
     }
     return () => { document.body.style.overflow = ''; };
   }, [lightboxOpen]);
+
+  const shareCurrentImage = async () => {
+    if (!vendor) return;
+    const url = vendor.portfolioUrls[lightboxIndex];
+    const title = `${vendor.name} — Image ${lightboxIndex + 1}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        alert('Image URL copied to clipboard');
+      }
+    } catch (err) {
+      console.warn('Share failed', err);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+      lastPan.current = { x: pan.x, y: pan.y };
+    } else if (e.touches.length === 2) {
+      initialPinchDistance.current = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+    // double-tap to reset/zoom
+    const now = Date.now();
+    if (lastTap.current && now - lastTap.current < 300) {
+      // double tap
+      setZoomScale(s => s > 1 ? 1 : 2);
+      setPan({ x: 0, y: 0 });
+      lastTap.current = null;
+    } else {
+      lastTap.current = now;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && initialPinchDistance.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = Math.min(3, Math.max(1, (zoomScale * (dist / initialPinchDistance.current))));
+      setZoomScale(scale);
+    } else if (e.touches.length === 1 && zoomScale > 1) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - (touchStartX.current ?? touch.clientX);
+      const base = lastPan.current || { x: 0, y: 0 };
+      setPan({ x: base.x + dx, y: base.y });
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    // swipe detection when not zoomed
+    if (zoomScale <= 1 && e.changedTouches.length === 1 && touchStartX.current != null) {
+      const endX = e.changedTouches[0].clientX;
+      const dx = endX - touchStartX.current;
+      if (dx > 50) setLightboxIndex(i => Math.max(0, i - 1));
+      else if (dx < -50 && vendor) setLightboxIndex(i => Math.min((vendor.portfolioUrls || []).length - 1, i + 1));
+      touchStartX.current = null;
+    }
+    // reset pinch reference
+    initialPinchDistance.current = null;
+    lastPan.current = { x: pan.x, y: pan.y };
+    // clamp scale
+    setZoomScale(s => Math.min(3, Math.max(1, s)));
+  };
 
   useEffect(() => {
     if (!vendorId) return;
@@ -605,19 +680,34 @@ export default function VendorProfile() {
 
           {/* Lightbox modal */}
           {lightboxOpen && (
-            <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center" onTouchStart={(e) => { touchStartX.current = e.touches?.[0]?.clientX ?? null; }} onTouchEnd={(e) => {
-              const endX = e.changedTouches?.[0]?.clientX ?? null;
-              if (touchStartX.current != null && endX != null) {
-                const dx = endX - touchStartX.current;
-                if (dx > 50) setLightboxIndex(i => Math.max(0, i - 1));
-                else if (dx < -50) setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1));
-              }
-              touchStartX.current = null;
-            }}>
-              <button aria-label="Close" onClick={() => setLightboxOpen(false)} className="absolute top-4 right-4 p-3 text-white bg-black/30 rounded-full">✕</button>
-              <button aria-label="Prev" onClick={() => setLightboxIndex(i => Math.max(0, i - 1))} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">‹</button>
-              <img src={vendor.portfolioUrls[lightboxIndex]} alt={`Full ${lightboxIndex+1}`} className="max-h-[90vh] max-w-[95vw] object-contain" />
-              <button aria-label="Next" onClick={() => setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1))} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">›</button>
+            <div
+              className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
+              onTouchStart={(e) => handleTouchStart(e)}
+              onTouchMove={(e) => handleTouchMove(e)}
+              onTouchEnd={(e) => handleTouchEnd(e)}
+            >
+              <button aria-label="Close" onClick={() => { setLightboxOpen(false); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute top-4 right-4 p-3 text-white bg-black/30 rounded-full">✕</button>
+              <div className="absolute left-4 top-4 flex gap-2">
+                <button aria-label="Share" onClick={() => shareCurrentImage()} className="p-2 text-white bg-black/30 rounded-full">⤴</button>
+                <a aria-label="Download" href={vendor.portfolioUrls[lightboxIndex]} download className="p-2 text-white bg-black/30 rounded-full">↓</a>
+              </div>
+              <button aria-label="Prev" onClick={() => { setLightboxIndex(i => Math.max(0, i - 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">‹</button>
+              <div className="max-h-[90vh] max-w-[95vw] flex items-center justify-center">
+                <img
+                  src={vendor.portfolioUrls[lightboxIndex]}
+                  alt={`Full ${lightboxIndex + 1}`}
+                  className="object-contain touch-none"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomScale})`,
+                    transition: 'transform 0ms'
+                  }}
+                />
+              </div>
+              <button aria-label="Next" onClick={() => { setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">›</button>
+
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white text-sm">
+                <div className="text-center">Image {lightboxIndex + 1} of {vendor.portfolioUrls.length}</div>
+              </div>
             </div>
           )}
 
