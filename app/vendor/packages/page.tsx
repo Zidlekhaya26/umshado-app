@@ -308,59 +308,61 @@ export default function VendorPackagesPage() {
               <div className="absolute inset-0 bg-black bg-opacity-50" onClick={closeForm} />
 
               {/* Bottom Sheet */}
-              <div className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl flex flex-col max-h-[90vh] mx-auto">
-                {/* Sticky Header */}
-                <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between rounded-t-3xl z-10">
-                  <h2 className="text-lg font-bold text-gray-900">{editingId ? 'Edit Package' : 'Add Package'}</h2>
-                  <button onClick={closeForm} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors" aria-label="Close">✕</button>
+              <div className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl max-h-[90vh] mx-auto overflow-hidden flex flex-col">
+                {/* Scrollable area that contains the header + content (so sticky header is scoped to modal) */}
+                <div className="overflow-y-auto">
+                  {/* Sticky Header (now inside scrollable area) */}
+                  <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between z-10">
+                    <h2 className="text-lg font-bold text-gray-900">{editingId ? 'Edit Package' : 'Add Package'}</h2>
+                    <button onClick={closeForm} className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors" aria-label="Close">✕</button>
+                  </div>
+
+                  {(!vendorId || servicesCatalog.length === 0) ? (
+                    <div className="px-5 py-6 text-center">
+                      <p className="text-sm text-gray-600">Loading vendor data…</p>
+                    </div>
+                  ) : (
+                    <div className="px-5 py-4 space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Package name</label>
+                        <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
+                      </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">From price (R)</label>
+                          <input
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                            placeholder="e.g. 2000"
+                            value={formData.fromPrice}
+                            onChange={(e) => {
+                              const raw = String(e.target.value || "");
+                              const digits = raw.replace(/\D+/g, "");
+                              let normalized = digits.replace(/^0+(?=\d)/, "");
+                              if (normalized === "") normalized = digits === "" ? "" : "0";
+                              if (raw === "") normalized = "";
+                              setFormData({ ...formData, fromPrice: normalized });
+                            }}
+                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
+                          />
+                        </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
+                        <div className="flex flex-wrap gap-2">
+                          {availableServices.map((s) => {
+                            const selected = formData.includedServices.includes(s);
+                            return (
+                              <button key={s} type="button" onClick={() => setFormData({ ...formData, includedServices: selected ? formData.includedServices.filter(x => x !== s) : [...formData.includedServices, s] })} className={`px-2.5 py-1 rounded-md text-sm ${selected ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
+                                {s}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {(!vendorId || servicesCatalog.length === 0) ? (
-                  <div className="px-5 py-6 text-center">
-                    <p className="text-sm text-gray-600">Loading vendor data…</p>
-                  </div>
-                ) : (
-                  <div className="px-5 py-4 space-y-3 overflow-y-auto">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Package name</label>
-                      <input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl" />
-                    </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">From price (R)</label>
-                        <input
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="e.g. 2000"
-                          value={formData.fromPrice}
-                          onChange={(e) => {
-                            // Keep as string while typing; strip non-digits and remove leading zeros
-                            const raw = String(e.target.value || "");
-                            const digits = raw.replace(/\D+/g, "");
-                            let normalized = digits.replace(/^0+(?=\d)/, "");
-                            if (normalized === "") normalized = digits === "" ? "" : "0";
-                            // If user cleared input, keep empty string
-                            if (raw === "") normalized = "";
-                            setFormData({ ...formData, fromPrice: normalized });
-                          }}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl"
-                        />
-                      </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Included services</label>
-                      <div className="flex flex-wrap gap-2">
-                        {availableServices.map((s) => {
-                          const selected = formData.includedServices.includes(s);
-                          return (
-                            <button key={s} type="button" onClick={() => setFormData({ ...formData, includedServices: selected ? formData.includedServices.filter(x => x !== s) : [...formData.includedServices, s] })} className={`px-2.5 py-1 rounded-md text-sm ${selected ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
-                              {s}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
+                {/* Footer stays fixed at modal bottom */}
                 <div className="border-t border-gray-200 px-4 py-3 flex gap-3">
                   {editingId ? (
                     <button onClick={deletePackage} disabled={loading} className="px-4 py-3 border-2 border-red-200 text-red-700 bg-red-50 rounded-xl font-semibold text-sm">{loading ? 'Deleting...' : 'Delete'}</button>
