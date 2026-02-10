@@ -17,6 +17,7 @@ interface MarketplaceVendor {
   city: string;
   country: string;
   description: string;
+  verified?: boolean;
   created_at: string;
   updated_at: string;
   featured?: boolean | null;
@@ -48,6 +49,7 @@ interface Vendor {
   services: string[];
   score: number;
   logoUrl?: string | null;
+  verified?: boolean;
 }
 
 type SortOption = 'recommended' | 'price_low' | 'price_high' | 'newest';
@@ -151,6 +153,8 @@ export default function Marketplace() {
           services: v.services || [],
           score: calculateScore(v, couplePreferences, activity),
           logoUrl: v.logo_url || null
+          ,
+          verified: !!v.verified
         };
       });
 
@@ -399,9 +403,19 @@ export default function Marketplace() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-bold text-gray-900 leading-tight">
-                      {vendor.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+                        {vendor.name}
+                      </h3>
+                      {vendor.verified && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
+                          <svg className="w-3 h-3 text-blue-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <span>Verified</span>
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                   </div>
                 </div>
