@@ -17,6 +17,7 @@ CREATE OR REPLACE VIEW public.marketplace_vendors AS
 SELECT 
   v.id AS vendor_id,
   v.business_name,
+  v.logo_url,
   v.verified,
   v.category,
   v.location AS city,
