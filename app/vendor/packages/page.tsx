@@ -62,6 +62,9 @@ export default function VendorPackagesPage() {
   const dbToAppMode = (mode: string): PricingMode =>
     ({ guest: "guest-based", time: "time-based", "per-person": "per-person", package: "package-based", event: "event-based", quantity: "quantity-based" } as any)[mode] || "guest-based";
 
+  const appToDbMode = (mode: PricingMode): string =>
+    ({ "guest-based": 'guest', "time-based": 'time', 'per-person': 'per-person', 'package-based': 'package', 'event-based': 'event', 'quantity-based': 'quantity' } as any)[mode] || 'guest';
+
   async function loadVendorAndPackages() {
     try {
       setLoading(true);
@@ -160,7 +163,7 @@ export default function VendorPackagesPage() {
       vendor_id: vendorId,
       name: formData.name,
       base_price: priceInt,
-      pricing_mode: formData.pricingMode,
+      pricing_mode: appToDbMode(formData.pricingMode), // convert UI mode -> DB value
       base_guests: formData.guestRange?.min || null,
       base_hours: formData.hours || null,
       included_services: formData.includedServices,
