@@ -105,14 +105,26 @@ export default function ChatThread() {
       const iAmVendor = conv.vendor_id === currentUserId;
 
       if (iAmVendor) {
-        // Show couple's name
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name')
+        // Prefer the public `couples` table (partner_name + avatar) for vendor-facing display.
+        // Fallback to profiles.full_name if no public couple record exists.
+        const { data: couple } = await supabase
+          .from('couples')
+          .select('partner_name, avatar_url')
           .eq('id', conv.couple_id)
           .maybeSingle();
-        setOtherPartyName(profile?.full_name || 'Couple');
-        setOtherPartyLogo(null);
+
+        if (couple && (couple.partner_name || couple.avatar_url)) {
+          setOtherPartyName(couple.partner_name || 'Couple');
+          setOtherPartyLogo(couple.avatar_url || null);
+        } else {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', conv.couple_id)
+            .maybeSingle();
+          setOtherPartyName(profile?.full_name || 'Couple');
+          setOtherPartyLogo(null);
+        }
       } else {
         // Show vendor's business name + logo
         const { data: vendorData } = await supabase

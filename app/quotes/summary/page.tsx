@@ -72,15 +72,32 @@ function QuoteSummaryContent() {
     }
 
     try {
-      // Fetch vendor
-      const { data: vendorData, error: vendorError } = await supabase
+      // Fetch vendor (try direct vendors row first, then fall back to the marketplace view)
+      let vendorData: any = null;
+      const { data: vd, error: vErr } = await supabase
         .from('vendors')
         .select('id, business_name, category, city, country')
         .eq('id', vendorId)
-        .single();
+        .maybeSingle();
 
-      if (vendorError) {
-        console.error('Error fetching vendor:', vendorError);
+      if (vd) {
+        vendorData = vd;
+      } else {
+        // Some deployments / RLS configurations restrict direct access to `vendors`.
+        // The `marketplace_vendors` view exposes public vendor info — try that next.
+        const { data: mv } = await supabase
+          .from('marketplace_vendors')
+          .select('vendor_id, business_name, category, city, country')
+          .eq('vendor_id', vendorId)
+          .maybeSingle();
+
+        if (mv) {
+          vendorData = { id: mv.vendor_id, business_name: mv.business_name, category: mv.category, city: mv.city, country: mv.country };
+        }
+      }
+
+      if (!vendorData) {
+        console.error('Error fetching vendor:', vErr);
         setError('Vendor not found');
         setLoading(false);
         return;
