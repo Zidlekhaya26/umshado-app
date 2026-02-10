@@ -390,26 +390,36 @@ export default function Marketplace() {
             <Link
               key={vendor.id}
               href={`/marketplace/vendor/${vendor.id}`}
-              className="block bg-white rounded-xl border-2 border-gray-200 p-4 hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
+              className="block bg-white rounded-xl border-2 border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
             >
               <div className="space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3">
-                  {vendor.logoUrl && (
-                    <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 flex-shrink-0">
-                      <img src={vendor.logoUrl} alt="" className="w-full h-full object-cover" />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex-shrink-0">
+                      {vendor.logoUrl ? (
+                        <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white">
+                          <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
+                          {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-                        {vendor.name}
-                      </h3>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+                          {vendor.name}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                     </div>
-                    <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                   </div>
+
                   <div className="flex-shrink-0 ml-3 self-start">
-                    <VerifiedBadge verified={vendor.verified} className="" />
+                    <VerifiedBadge verified={vendor.verified} />
                   </div>
                 </div>
 
