@@ -41,6 +41,7 @@ export default function VendorPackagesPage() {
     includedServices: string[];
     isPopular: boolean;
   }>({ name: '', fromPrice: '', pricingMode: defaultPricingMode, guestRange: { min: 0, max: 0 }, hours: 0, includedServices: [], isPopular: false });
+  const [formErrors, setFormErrors] = useState<{ guestRange?: string; hours?: string }>({});
   const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
@@ -141,6 +142,23 @@ export default function VendorPackagesPage() {
     setIsFormOpen(true);
   };
 
+  const handlePricingModeChange = (mode: PricingMode) => {
+    // sensible defaults when switching modes
+    const next = { ...formData, pricingMode: mode } as typeof formData;
+    if (mode === 'time-based') {
+      if (!next.hours || next.hours <= 0) next.hours = 4;
+    }
+    if (mode === 'guest-based') {
+      if (!next.guestRange || (next.guestRange?.min === 0 && next.guestRange?.max === 0)) next.guestRange = { min: 1, max: 50 };
+    }
+    if (mode === 'package-based') {
+      next.hours = 0;
+      next.guestRange = { min: 0, max: 0 };
+    }
+    setFormErrors({});
+    setFormData(next);
+  };
+
   const closeForm = () => {
     setIsFormOpen(false);
     setEditingId(null);
@@ -173,13 +191,24 @@ export default function VendorPackagesPage() {
       return;
     }
 
+    // Client-side validation for conditional fields
+    if (formData.pricingMode === 'guest-based') {
+      const min = formData.guestRange?.min || 0;
+      const max = formData.guestRange?.max || 0;
+      if (min <= 0) { alert('Please set a valid minimum guests (> 0)'); return; }
+      if (min > max) { alert('Minimum guests must be less than or equal to Maximum guests'); return; }
+    }
+    if (formData.pricingMode === 'time-based') {
+      if (!formData.hours || formData.hours <= 0) { alert('Please set hours coverage (> 0)'); return; }
+    }
+
     const payload = {
       vendor_id: vendorId,
       name: formData.name,
       base_price: priceInt,
       pricing_mode: appToDbMode(formData.pricingMode), // convert UI mode -> DB value
-      base_guests: formData.guestRange?.min || null,
-      base_hours: formData.hours || null,
+      base_guests: formData.pricingMode === 'guest-based' ? (formData.guestRange?.min || null) : null,
+      base_hours: formData.pricingMode === 'time-based' ? (formData.hours || null) : null,
       included_services: formData.includedServices,
       is_popular: formData.isPopular,
     };
@@ -360,7 +389,7 @@ export default function VendorPackagesPage() {
                                 <button
                                   key={opt.key}
                                   type="button"
-                                  onClick={() => setFormData({ ...formData, pricingMode: opt.key as any })}
+                                  onClick={() => handlePricingModeChange(opt.key as PricingMode)}
                                   aria-pressed={active}
                                   className={`px-3 py-2 text-sm font-semibold rounded-lg transition-colors ${active ? 'bg-white border border-gray-200 text-gray-900' : 'text-gray-600'}`}
                                 >
@@ -384,7 +413,15 @@ export default function VendorPackagesPage() {
                                   type="number"
                                   min={0}
                                   value={formData.guestRange?.min ?? ''}
-                                  onChange={(e) => setFormData({ ...formData, guestRange: { ...(formData.guestRange || { min: 0, max: 0 }), min: Number(e.target.value || 0) } })}
+                                  onChange={(e) => {
+                                    const newMin = Number(e.target.value || 0);
+                                    const curMax = formData.guestRange?.max ?? 0;
+                                    const nextGuest = { ...(formData.guestRange || { min: 0, max: 0 }), min: newMin };
+                                    setFormData({ ...formData, guestRange: nextGuest });
+                                    if (newMin <= 0) setFormErrors(f => ({ ...f, guestRange: 'Min guests must be greater than 0' }));
+                                    else if (curMax && newMin > curMax) setFormErrors(f => ({ ...f, guestRange: 'Min must be less than or equal to Max' }));
+                                    else setFormErrors(f => ({ ...f, guestRange: undefined }));
+                                  }}
                                   className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
                                 />
                               </div>
@@ -394,9 +431,18 @@ export default function VendorPackagesPage() {
                                   type="number"
                                   min={0}
                                   value={formData.guestRange?.max ?? ''}
-                                  onChange={(e) => setFormData({ ...formData, guestRange: { ...(formData.guestRange || { min: 0, max: 0 }), max: Number(e.target.value || 0) } })}
+                                  onChange={(e) => {
+                                    const newMax = Number(e.target.value || 0);
+                                    const curMin = formData.guestRange?.min ?? 0;
+                                    const nextGuest = { ...(formData.guestRange || { min: 0, max: 0 }), max: newMax };
+                                    setFormData({ ...formData, guestRange: nextGuest });
+                                    if (newMax <= 0) setFormErrors(f => ({ ...f, guestRange: 'Max guests must be greater than 0' }));
+                                    else if (curMin && curMin > newMax) setFormErrors(f => ({ ...f, guestRange: 'Max must be greater than or equal to Min' }));
+                                    else setFormErrors(f => ({ ...f, guestRange: undefined }));
+                                  }}
                                   className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
                                 />
+                                {formErrors.guestRange && <p className="text-xs text-red-600 mt-1">{formErrors.guestRange}</p>}
                               </div>
                             </div>
                           )}
@@ -408,7 +454,12 @@ export default function VendorPackagesPage() {
                                 type="number"
                                 min={0}
                                 value={formData.hours ?? ''}
-                                onChange={(e) => setFormData({ ...formData, hours: Number(e.target.value || 0) })}
+                                onChange={(e) => {
+                                  const newHours = Number(e.target.value || 0);
+                                  setFormData({ ...formData, hours: newHours });
+                                  if (newHours <= 0) setFormErrors(f => ({ ...f, hours: 'Hours must be greater than 0' }));
+                                  else setFormErrors(f => ({ ...f, hours: undefined }));
+                                }}
                                 className="w-full px-3 py-2 border-2 border-gray-200 rounded-xl"
                               />
                             </div>
