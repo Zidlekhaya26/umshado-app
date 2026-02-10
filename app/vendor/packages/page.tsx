@@ -430,7 +430,6 @@ export default function VendorPackagesPage() {
                                 <input
                                   type="number"
                                   min={0}
-                                  value={formData.guestRange?.min ?? ''}
                               onChange={(e) => {
                                 // normalize digits and strip leading zeros
                                 const raw = String(e.target.value || '');
@@ -454,7 +453,6 @@ export default function VendorPackagesPage() {
                                 <input
                                   type="number"
                                   min={0}
-                                  value={formData.guestRange?.max ?? ''}
                                   onChange={(e) => {
                                     const raw = String(e.target.value || '');
                                     const digits = raw.replace(/\D+/g, '');
