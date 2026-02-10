@@ -9,6 +9,7 @@ import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendor
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 interface MarketplaceVendor {
   vendor_id: string;
@@ -407,14 +408,7 @@ export default function Marketplace() {
                       <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
                         {vendor.name}
                       </h3>
-                      {vendor.verified && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
-                          <svg className="w-3 h-3 text-blue-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          <span>Verified</span>
-                        </span>
-                      )}
+                      <VerifiedBadge verified={vendor.verified} />
                     </div>
                     <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                   </div>

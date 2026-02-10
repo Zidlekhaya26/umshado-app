@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { trackVendorEvent } from '@/lib/analytics';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 
 type PricingMode =
   | 'guest-based'
@@ -365,11 +366,7 @@ export default function VendorProfile() {
                   <h1 className="text-lg font-bold text-gray-900 truncate">{vendor.name}</h1>
                   <p className="text-xs text-gray-600 truncate mt-0.5">{vendor.category}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    {vendor.verified && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
-                        Verified
-                      </span>
-                    )}
+                    <VerifiedBadge verified={vendor.verified} />
                     {vendor.topRated && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md border border-amber-200">
                         Top Rated
