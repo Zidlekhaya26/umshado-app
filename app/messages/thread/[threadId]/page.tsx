@@ -61,6 +61,7 @@ export default function ChatThread() {
   const [isSending, setIsSending] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
 
   // Other party identity for the header
   const [otherPartyName, setOtherPartyName] = useState('');
@@ -234,6 +235,88 @@ export default function ChatThread() {
     }
   };
 
+  // Enhanced send: upload pending attachments first (if any), sending each as its own message via API,
+  // then send the text message (if present). This preserves notification behavior from /api/messages/send.
+  const handleSend = async () => {
+    if ((!newMessage.trim() && pendingAttachments.length === 0) || !conversationId || isSending) return;
+    setIsSending(true);
+    setIsUploading(true);
+    setUploadError(null);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { alert('You must be signed in to send messages.'); return; }
+
+      // 1) Upload and send attachments (each as its own message to keep existing behavior)
+      for (const file of pendingAttachments) {
+        try {
+          const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+          if (!allowedTypes.includes(file.type)) { alert(`File type not allowed: ${file.type}`); continue; }
+          if (file.size > 10 * 1024 * 1024) { alert(`File too large: ${file.name}. Max 10 MB.`); continue; }
+
+          const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          const filePath = `threads/${conversationId}/${Date.now()}-${sanitized}`;
+
+          const { error: uploadErr } = await supabase.storage.from('umshado-files').upload(filePath, file, { cacheControl: '3600', upsert: false });
+          if (uploadErr) { alert(`Failed to upload ${file.name}.`); continue; }
+
+          // Call server API to insert message + notify recipient
+          const attachRes = await fetch('/api/messages/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ conversationId, messageText: `Attachment: ${file.name}` }),
+          });
+
+          if (!attachRes.ok) {
+            const e = await attachRes.json().catch(() => ({}));
+            // cleanup uploaded file
+            await supabase.storage.from('umshado-files').remove([filePath]);
+            console.warn('Failed to create attachment message:', e);
+            continue;
+          }
+
+          const attachResult = await attachRes.json();
+          const messageId = attachResult.messageId;
+
+          // Link attachment to message
+          const { error: attErr } = await supabase.from('message_attachments').insert({ conversation_id: conversationId, message_id: messageId, uploader_id: currentUserId, file_path: filePath, file_name: file.name, mime_type: file.type, file_size: file.size });
+          if (attErr) {
+            console.warn('Failed to insert message_attachments:', attErr);
+          }
+
+          await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', conversationId);
+        } catch (err) {
+          console.warn('Attachment send error:', err);
+        }
+      }
+
+      // 2) Send text message if present
+      if (newMessage.trim()) {
+        const textRes = await fetch('/api/messages/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ conversationId, messageText: newMessage.trim() }),
+        });
+        if (!textRes.ok) {
+          const err = await textRes.json().catch(() => ({}));
+          alert('Failed to send message: ' + (err.error || 'Unknown error'));
+        } else {
+          setNewMessage('');
+        }
+      }
+
+      // clear pending attachments
+      setPendingAttachments([]);
+    } catch (err) {
+      console.error('Unexpected error sending message:', err);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setIsSending(false);
+      setIsUploading(false);
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
   };
@@ -303,41 +386,12 @@ export default function ChatThread() {
   };
 
   /* ── File attachment upload ─────────────────────────────────── */
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0 || !currentUserId || !conversationId) return;
-
-    setIsUploading(true);
-    setUploadError(null);
-
-    try {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
-
-      for (const file of Array.from(files)) {
-        if (!allowedTypes.includes(file.type)) { alert(`File type not allowed: ${file.type}`); continue; }
-        if (file.size > 10 * 1024 * 1024) { alert(`File too large: ${file.name}. Max 10 MB.`); continue; }
-
-        const sanitized = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-        const filePath = `threads/${conversationId}/${Date.now()}-${sanitized}`;
-
-        const { error: uploadErr } = await supabase.storage.from('umshado-files').upload(filePath, file, { cacheControl: '3600', upsert: false });
-        if (uploadErr) { alert(`Failed to upload ${file.name}.`); continue; }
-
-        const { data: msgData, error: msgErr } = await supabase.from('messages').insert({ conversation_id: conversationId, sender_id: currentUserId, message_text: `Attachment: ${file.name}`, read: false }).select().single();
-        if (msgErr) { await supabase.storage.from('umshado-files').remove([filePath]); continue; }
-
-        const { error: attErr } = await supabase.from('message_attachments').insert({ conversation_id: conversationId, message_id: msgData.id, uploader_id: currentUserId, file_path: filePath, file_name: file.name, mime_type: file.type, file_size: file.size });
-        if (attErr) { await supabase.storage.from('umshado-files').remove([filePath]); await supabase.from('messages').delete().eq('id', msgData.id); continue; }
-
-        await supabase.from('conversations').update({ last_message_at: new Date().toISOString() }).eq('id', conversationId);
-      }
-    } catch (err: any) {
-      setUploadError(err?.message || 'Failed to upload files.');
-      alert('Failed to upload files. Please try again.');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+    if (!files || files.length === 0) return;
+    // Queue selected files for user to review before sending
+    setPendingAttachments(prev => [...prev, ...Array.from(files)]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleDownloadAttachment = async (att: MessageAttachment) => {
@@ -464,6 +518,24 @@ export default function ChatThread() {
         )}
 
         {/* Input Bar */}
+        {pendingAttachments.length > 0 && (
+          <div className="px-4 pt-3 pb-2 bg-white border-t border-gray-200">
+            <div className="space-y-2">
+              {pendingAttachments.map((file, idx) => (
+                <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    <div className="text-sm text-gray-700 truncate">{file.name}</div>
+                  </div>
+                  <button onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))} className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors" aria-label="Remove attachment">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="border-t border-gray-200 bg-white px-4 py-3 flex items-end gap-2">
           <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
           <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2.5 rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 flex-shrink-0">
@@ -481,7 +553,7 @@ export default function ChatThread() {
             rows={1}
             placeholder="Type a message…"
           />
-          <button onClick={handleSendMessage} disabled={isSending || !newMessage.trim()} className={`p-2.5 rounded-xl flex-shrink-0 transition-all ${newMessage.trim() ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-200 text-gray-400'}`}>
+          <button onClick={handleSend} disabled={isSending || (pendingAttachments.length === 0 && !newMessage.trim())} className={`p-2.5 rounded-xl flex-shrink-0 transition-all ${ (pendingAttachments.length > 0 || newMessage.trim()) ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-200 text-gray-400'}`}>
             {isSending ? (
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
