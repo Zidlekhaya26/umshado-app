@@ -46,6 +46,7 @@ interface VendorProfile {
     phone: string;
     preferredContact: string;
   };
+    socialLinks?: { [key: string]: string };
 }
 
 export default function VendorProfile() {
@@ -59,7 +60,20 @@ export default function VendorProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isVendorRole, setIsVendorRole] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   const hasTrackedProfileView = useRef(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (lightboxOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [lightboxOpen]);
 
   useEffect(() => {
     if (!vendorId) return;
@@ -87,7 +101,7 @@ export default function VendorProfile() {
       try {
         const { data, error } = await supabase
           .from('vendors')
-          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, portfolio_images, portfolio_urls, contact')
+          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, portfolio_images, portfolio_urls, contact, social_links')
           .eq('id', vendorId)
           .maybeSingle();
 
@@ -177,7 +191,8 @@ export default function VendorProfile() {
             packages: vendorPackages,
             portfolioImages: data.portfolio_images || 0,
             portfolioUrls: data.portfolio_urls || [],
-            contact: data.contact || { whatsapp: '', phone: '', preferredContact: '' }
+              contact: data.contact || { whatsapp: '', phone: '', preferredContact: '' },
+              socialLinks: data.social_links || {}
           });
         } else {
           setVendor(null);
@@ -248,38 +263,67 @@ export default function VendorProfile() {
     <div className="min-h-screen bg-gray-50">
       {/* Mobile-first container wrapper */}
       <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col">
-        {/* Header with Back Button */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-3 -ml-1"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="text-sm font-medium">Back</span>
-          </button>
-          <h1 className="text-xl font-bold text-gray-900">{vendor.name}</h1>
-          <p className="text-sm text-gray-600 mt-1">{vendor.category}</p>
-          {hideCTAs ? (
-            (isPreview || isOwner) ? (
-            <span className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-amber-300 bg-amber-50 text-amber-700">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              Preview mode
-            </span>
-            ) : null
-          ) : (
-          <button
-            onClick={handleToggleSave}
-            className={`mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-              isSaved
-                ? 'bg-purple-600 text-white border-purple-600'
-                : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
-            }`}
-          >
-            {isSaved ? 'Saved' : 'Save vendor'}
-          </button>
-          )}
+        {/* Header with Back Button and Hero */}
+        <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 -ml-1"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <div className="flex items-center gap-3">
+                {/* Avatar / Logo */}
+                <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-gray-600 font-semibold">
+                  {vendor.portfolioUrls[0] ? (
+                    <img src={vendor.portfolioUrls[0]} alt="vendor" className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}</span>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <h1 className="text-lg font-bold text-gray-900 truncate">{vendor.name}</h1>
+                  <p className="text-xs text-gray-600 truncate mt-0.5">{vendor.category}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    {vendor.verified && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
+                        Verified
+                      </span>
+                    )}
+                    {vendor.topRated && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md border border-amber-200">
+                        Top Rated
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-lg font-semibold text-gray-900">{vendor.rating}</div>
+                <div className="text-xs text-gray-500">{vendor.reviewCount} reviews</div>
+              </div>
+              {!hideCTAs && (
+                <button
+                  onClick={handleToggleSave}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    isSaved
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
+                  }`}
+                >
+                  {isSaved ? 'Saved' : 'Save'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Content */}
@@ -350,6 +394,43 @@ export default function VendorProfile() {
               <p className="text-sm text-gray-500 italic">No services listed yet</p>
             )}
           </div>
+
+          {/* Connect / Social Links */}
+          {(() => {
+            const links = vendor.socialLinks || {};
+            const keys = ['instagram','tiktok','facebook','website','whatsapp'];
+            const present = keys.filter(k => links[k]);
+            if (present.length === 0) return null;
+            const normalize = (k: string, v: string) => {
+              let url = (v || '').trim();
+              if (!url) return null;
+              if (k === 'whatsapp') {
+                // if contains non-digits keep as-is, else use wa.me
+                const digits = url.replace(/[^0-9]/g, '');
+                if (digits.length > 6) return `https://wa.me/${digits}`;
+              }
+              if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+              return url;
+            };
+
+            return (
+              <div className="px-4 py-4 border-b border-gray-200">
+                <h2 className="text-base font-bold text-gray-900 mb-3">Connect</h2>
+                <div className="flex flex-wrap gap-2">
+                  {present.map(k => {
+                    const label = k === 'whatsapp' ? 'WhatsApp' : k.charAt(0).toUpperCase() + k.slice(1);
+                    const href = normalize(k, links[k]);
+                    if (!href) return null;
+                    return (
+                      <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-white border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                        {label}
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Packages Section */}
           <div className="px-4 py-5 border-b border-gray-200">
@@ -439,13 +520,48 @@ export default function VendorProfile() {
           {/* Portfolio Section */}
           <div className="px-4 py-5 border-b border-gray-200">
             <h2 className="text-base font-bold text-gray-900 mb-3">Portfolio</h2>
+            {/* Video showreel (if provided) */}
+            {(() => {
+              const videoUrl = vendor.socialLinks?.youtube || vendor.socialLinks?.video || '';
+              if (!videoUrl) return null;
+              const extractYouTubeId = (url: string): string | null => {
+                const patterns = [/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/];
+                for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+                return null;
+              };
+              const ytId = extractYouTubeId(videoUrl.trim());
+              if (ytId) {
+                return (
+                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${ytId}`} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    </div>
+                  </div>
+                );
+              }
+              // mp4 or other direct video
+              if (/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl.trim())) {
+                return (
+                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <video controls playsInline className="w-full h-auto max-h-[60vh] bg-black"> 
+                      <source src={videoUrl.trim()} />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             {vendor.portfolioUrls.length > 0 ? (
               <>
                 <div className="grid grid-cols-3 gap-2">
                   {vendor.portfolioUrls.slice(0, 9).map((url, index) => (
-                    <div
+                    <button
                       key={index}
-                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100"
+                      onClick={() => { setLightboxIndex(index); setLightboxOpen(true); }}
+                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 p-0"
+                      type="button"
                     >
                       <img
                         src={url}
@@ -453,7 +569,7 @@ export default function VendorProfile() {
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
                 {vendor.portfolioUrls.length > 9 && (
@@ -486,6 +602,24 @@ export default function VendorProfile() {
               <p className="text-sm text-gray-500 italic">No portfolio images yet</p>
             )}
           </div>
+
+          {/* Lightbox modal */}
+          {lightboxOpen && (
+            <div className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center" onTouchStart={(e) => { touchStartX.current = e.touches?.[0]?.clientX ?? null; }} onTouchEnd={(e) => {
+              const endX = e.changedTouches?.[0]?.clientX ?? null;
+              if (touchStartX.current != null && endX != null) {
+                const dx = endX - touchStartX.current;
+                if (dx > 50) setLightboxIndex(i => Math.max(0, i - 1));
+                else if (dx < -50) setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1));
+              }
+              touchStartX.current = null;
+            }}>
+              <button aria-label="Close" onClick={() => setLightboxOpen(false)} className="absolute top-4 right-4 p-3 text-white bg-black/30 rounded-full">✕</button>
+              <button aria-label="Prev" onClick={() => setLightboxIndex(i => Math.max(0, i - 1))} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">‹</button>
+              <img src={vendor.portfolioUrls[lightboxIndex]} alt={`Full ${lightboxIndex+1}`} className="max-h-[90vh] max-w-[95vw] object-contain" />
+              <button aria-label="Next" onClick={() => setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1))} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">›</button>
+            </div>
+          )}
 
           {/* Contact Section */}
           <div className="px-4 py-5">
