@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { trackVendorEvent } from '@/lib/analytics';
+import { getVendorSelectedServices, getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 
 interface VendorPackage {
   id: string;
@@ -31,7 +32,8 @@ interface Vendor {
 interface AddOn {
   id: string;
   name: string;
-  price: number;
+  // price is intentionally optional — we don't display mock prices here
+  price?: number | null;
 }
 
 function QuoteSummaryContent() {
@@ -52,13 +54,8 @@ function QuoteSummaryContent() {
   const [notes, setNotes] = useState('');
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
 
-  // Available add-ons (could come from vendor services)
-  const availableAddOns: AddOn[] = [
-    { id: 'cake', name: 'Wedding Cake', price: 2500 },
-    { id: 'decor', name: 'Decoration Package', price: 5000 },
-    { id: 'photography', name: 'Photography Add-on', price: 8000 },
-    { id: 'music', name: 'DJ/Music Service', price: 3500 }
-  ];
+  // Available add-ons will be populated from the vendor's declared services
+  const [availableAddOns, setAvailableAddOns] = useState<AddOn[]>([]);
 
   useEffect(() => {
     loadData();
@@ -124,6 +121,37 @@ function QuoteSummaryContent() {
       if (pkgData.base_guests) setGuestCount(pkgData.base_guests);
       if (pkgData.base_hours) setHours(pkgData.base_hours);
 
+      // Load vendor services and map to add-ons (exclude services already included in the package)
+      try {
+        const selections = await getVendorSelectedServices(vendorId);
+        const catalog = await getServicesCatalog();
+
+        const included = (pkgData.included_services || []).map((s: string) => s.toLowerCase());
+
+        // Map selected service IDs to catalog names
+        const catalogById = new Map<string, CatalogService>();
+        catalog.forEach(c => catalogById.set(c.id, c));
+
+        const fromCatalog: AddOn[] = selections.selectedServiceIds
+          .filter(Boolean)
+          .map((sid) => {
+            const svc = catalogById.get(sid);
+            return svc ? { id: `svc:${sid}`, name: svc.name } : null;
+          })
+          .filter(Boolean) as AddOn[];
+
+        // Custom services (free-text names) — prefix id to avoid collisions
+        const custom: AddOn[] = (selections.customServices || []).map((name, idx) => ({ id: `custom:${idx}`, name }));
+
+        // Combine and remove any that are already part of the package included services
+        const all = [...fromCatalog, ...custom].filter(a => !included.includes(a.name.toLowerCase()));
+
+        setAvailableAddOns(all);
+      } catch (svcErr) {
+        console.warn('Could not load vendor services for add-ons', svcErr);
+        setAvailableAddOns([]);
+      }
+
     } catch (err: any) {
       console.error('Error loading data:', err);
       setError(err.message || 'Failed to load data');
@@ -156,11 +184,7 @@ function QuoteSummaryContent() {
       total += extraHours * pkg.price_per_hour;
     }
 
-    // Add selected add-ons
-    selectedAddOns.forEach(addOnId => {
-      const addOn = availableAddOns.find(a => a.id === addOnId);
-      if (addOn) total += addOn.price;
-    });
+    // Note: add-on prices are not included here — vendor will confirm pricing in chat
 
     return total;
   };
@@ -198,7 +222,7 @@ function QuoteSummaryContent() {
       // Prepare add-ons data
       const addOnsData = selectedAddOns.map(addOnId => {
         const addOn = availableAddOns.find(a => a.id === addOnId);
-        return addOn ? { id: addOn.id, name: addOn.name, price: addOn.price } : null;
+        return addOn ? { id: addOn.id, name: addOn.name } : null;
       }).filter(Boolean);
 
       // Call server API route (handles quote + conversation + message + notifications)
@@ -367,9 +391,10 @@ function QuoteSummaryContent() {
                       onChange={() => toggleAddOn(addOn.id)}
                       className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
                     />
-                    <span className="text-sm font-medium text-gray-900">{addOn.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-purple-600">+R{addOn.price.toLocaleString()}</span>
+                      <span className="text-sm font-medium text-gray-900">{addOn.name}</span>
+                    </div>
+                    {/* No mock price shown for add-ons — vendors supply pricing during conversation */}
+                    <span className="text-sm text-gray-500">&nbsp;</span>
                 </label>
               ))}
             </div>
@@ -422,8 +447,8 @@ function QuoteSummaryContent() {
               const addOn = availableAddOns.find(a => a.id === addOnId);
               return addOn ? (
                 <div key={addOn.id} className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-600">{addOn.name}:</span>
-                  <span className="text-sm text-gray-900">R{addOn.price.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-gray-600">{addOn.name}</span>
+                  <span className="text-sm text-gray-500">Price to be confirmed</span>
                 </div>
               ) : null;
             })}
