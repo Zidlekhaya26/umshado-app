@@ -326,7 +326,7 @@ export default function VendorProfile() {
   if (!vendor) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex items-center justify-center">
+        <div className="w-full max-w-full sm:max-w-md mx-auto min-h-screen bg-white shadow-lg flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading vendor profile...</p>
