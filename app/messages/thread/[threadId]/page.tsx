@@ -103,9 +103,30 @@ export default function ChatThread() {
       setConversation(conv);
 
       // 2. Determine who the "other" person is
-      const iAmVendor = conv.vendor_id === currentUserId;
+      // Conversations store `vendor_id` as the vendor row id (not auth user id) in many deployments.
+      // Resolve whether the current user is the vendor by looking up their vendor row.
+      let iAmVendor = false;
+      try {
+        if (currentUserId) {
+          const { data: myVendor } = await supabase
+            .from('vendors')
+            .select('id, user_id')
+            .eq('user_id', currentUserId)
+            .maybeSingle();
 
-          if (iAmVendor) {
+          if (myVendor && myVendor.id) {
+            iAmVendor = myVendor.id === conv.vendor_id;
+          } else {
+            // fallback: some conversations use auth uid directly for vendor_id
+            iAmVendor = conv.vendor_id === currentUserId;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not resolve vendor identity for current user', err);
+        iAmVendor = conv.vendor_id === currentUserId;
+      }
+
+      if (iAmVendor) {
         // Prefer the public `couples` table (partner1/partner2, partner_name, avatar) via helper
           try {
             const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
