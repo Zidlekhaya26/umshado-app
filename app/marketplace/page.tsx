@@ -372,8 +372,8 @@ export default function Marketplace() {
           </div>
         </div>
 
-        {/* Vendor Cards List */}
-        <div className="flex-1 px-4 pb-28 space-y-3 overflow-y-auto">
+        {/* Vendor Cards List - responsive grid */}
+        <div className="flex-1 px-4 pb-28 overflow-y-auto">
           <p className="text-xs font-medium text-gray-500 mb-2">
             {loading ? 'Loading vendors...' : `${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}
           </p>
@@ -386,117 +386,121 @@ export default function Marketplace() {
             </div>
           )}
 
-          {vendors.slice(0, displayedCount).map((vendor) => (
-            <Link
-              key={vendor.id}
-              href={`/marketplace/vendor/${vendor.id}`}
-              className="block bg-white rounded-xl border-2 border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98]"
-            >
-              <div className="space-y-3">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex-shrink-0">
-                      {vendor.logoUrl ? (
-                        <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white">
-                          <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-cover" />
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {vendors.slice(0, displayedCount).map((vendor) => (
+              <Link
+                key={vendor.id}
+                href={`/marketplace/vendor/${vendor.id}`}
+                className="block bg-white rounded-xl border-2 border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98] h-full"
+              >
+                <div className="space-y-3 h-full flex flex-col justify-between">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex-shrink-0">
+                        {vendor.logoUrl ? (
+                          <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white">
+                            <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
+                            {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+                            {vendor.name}
+                          </h3>
                         </div>
-                      ) : (
-                        <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
-                          {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
-                        </div>
+                        <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0 ml-3 self-start">
+                      <VerifiedBadge verified={vendor.verified} />
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>{vendor.location}</span>
+                  </div>
+
+                  {/* Services Chips (top 4) */}
+                  {vendor.services.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {vendor.services.slice(0, 4).map((service, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-block px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200"
+                        >
+                          {service}
+                        </span>
+                      ))}
+                      {vendor.services.length > 4 && (
+                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
+                          +{vendor.services.length - 4} more
+                        </span>
                       )}
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-                          {vendor.name}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex-shrink-0 ml-3 self-start">
-                    <VerifiedBadge verified={vendor.verified} />
-                  </div>
-                </div>
-
-                {/* Location */}
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>{vendor.location}</span>
-                </div>
-
-                {/* Services Chips (top 4) */}
-                {vendor.services.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {vendor.services.slice(0, 4).map((service, idx) => (
-                      <span
-                        key={idx}
-                        className="inline-block px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200"
-                      >
-                        {service}
-                      </span>
-                    ))}
-                    {vendor.services.length > 4 && (
-                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
-                        +{vendor.services.length - 4} more
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* Price & CTA */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  {vendor.fromPrice > 0 ? (
-                    <p className="text-lg font-bold text-purple-600">
-                      From R{vendor.fromPrice.toLocaleString()}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-500">Contact for pricing</p>
                   )}
-                  <div className="flex items-center gap-2">
-                    {!isVendor && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          router.push(`/messages/new?vendorId=${vendor.id}`);
-                        }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 border-2 border-purple-200 text-purple-600 rounded-lg text-xs font-semibold hover:bg-purple-50 transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                        </svg>
-                        Chat
-                      </button>
+
+                  {/* Price & CTA */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                    {vendor.fromPrice > 0 ? (
+                      <p className="text-lg font-bold text-purple-600">
+                        From R{vendor.fromPrice.toLocaleString()}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-500">Contact for pricing</p>
                     )}
-                    <div className="flex items-center gap-1 text-purple-600">
-                      <span className="text-sm font-semibold">View</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
+                    <div className="flex items-center gap-2">
+                      {!isVendor && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            router.push(`/messages/new?vendorId=${vendor.id}`);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 border-2 border-purple-200 text-purple-600 rounded-lg text-xs font-semibold hover:bg-purple-50 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                          </svg>
+                          Chat
+                        </button>
+                      )}
+                      <div className="flex items-center gap-1 text-purple-600">
+                        <span className="text-sm font-semibold">View</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            ))}
+          </div>
 
           {/* Load More Button */}
           {!loading && vendors.length > displayedCount && (
-            <button
-              onClick={() => setDisplayedCount(prev => prev + 10)}
-              className="w-full py-3 mt-2 bg-purple-50 text-purple-700 rounded-xl font-semibold text-sm border-2 border-purple-200 hover:bg-purple-100 active:scale-[0.98] transition-all"
-            >
-              Load more ({vendors.length - displayedCount} remaining)
-            </button>
+            <div className="mt-4">
+              <button
+                onClick={() => setDisplayedCount(prev => prev + 10)}
+                className="w-full py-3 bg-purple-50 text-purple-700 rounded-xl font-semibold text-sm border-2 border-purple-200 hover:bg-purple-100 active:scale-[0.98] transition-all"
+              >
+                Load more ({vendors.length - displayedCount} remaining)
+              </button>
+            </div>
           )}
         </div>
 
