@@ -499,7 +499,20 @@ export default function VendorReview() {
               {contact.whatsapp && (
                 <div>
                   <p className="text-xs font-medium text-gray-500">WhatsApp</p>
-                  <p className="text-sm text-gray-900">{contact.whatsapp}</p>
+                  <p className="text-sm text-gray-900">
+                    {(() => {
+                      try {
+                        // lazy import helper
+                        // eslint-disable-next-line @typescript-eslint/no-var-requires
+                        const { formatWhatsappLink } = require('@/lib/whatsapp');
+                        const href = formatWhatsappLink(contact.whatsapp);
+                        if (href) return (<a href={href} target="_blank" rel="noopener noreferrer" className="text-purple-600">{contact.whatsapp}</a>);
+                      } catch {
+                        // fallback to plain text
+                      }
+                      return contact.whatsapp;
+                    })()}
+                  </p>
                 </div>
               )}
               {contact.phone && (
