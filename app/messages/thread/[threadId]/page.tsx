@@ -66,6 +66,7 @@ export default function ChatThread() {
   // Other party identity for the header
   const [otherPartyName, setOtherPartyName] = useState('');
   const [otherPartyLogo, setOtherPartyLogo] = useState<string | null>(null);
+  const [otherPartyLocation, setOtherPartyLocation] = useState<string | null>(null);
 
   // Quote management
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -104,27 +105,20 @@ export default function ChatThread() {
       // 2. Determine who the "other" person is
       const iAmVendor = conv.vendor_id === currentUserId;
 
-      if (iAmVendor) {
-        // Prefer the public `couples` table (partner_name + avatar) for vendor-facing display.
-        // Fallback to profiles.full_name if no public couple record exists.
-        const { data: couple } = await supabase
-          .from('couples')
-          .select('partner_name, avatar_url')
-          .eq('id', conv.couple_id)
-          .maybeSingle();
-
-        if (couple && (couple.partner_name || couple.avatar_url)) {
-          setOtherPartyName(couple.partner_name || 'Couple');
-          setOtherPartyLogo(couple.avatar_url || null);
-        } else {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', conv.couple_id)
-            .maybeSingle();
-          setOtherPartyName(profile?.full_name || 'Couple');
-          setOtherPartyLogo(null);
-        }
+          if (iAmVendor) {
+        // Prefer the public `couples` table (partner1/partner2, partner_name, avatar) via helper
+          try {
+            const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
+            const d = await getCoupleDisplayName(conv.couple_id);
+            setOtherPartyName(d.displayName || 'Couple (unknown)');
+            setOtherPartyLogo(d.avatarUrl || null);
+            setOtherPartyLocation(d.location || null);
+          } catch (err) {
+            console.warn('Failed to resolve couple display name', err);
+            setOtherPartyName('Couple (unknown)');
+            setOtherPartyLogo(null);
+            setOtherPartyLocation(null);
+          }
       } else {
         // Show vendor's business name + logo
         const { data: vendorData } = await supabase
@@ -459,9 +453,7 @@ export default function ChatThread() {
 
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold text-gray-900 truncate">{otherPartyName || 'Loading…'}</h1>
-              <p className="text-xs text-gray-500">
-                {userIsCouple ? 'Vendor' : userIsVendor ? 'Couple' : ''}
-              </p>
+              <p className="text-xs text-gray-500">{otherPartyLocation ? otherPartyLocation : ''}</p>
             </div>
           </div>
         </div>
@@ -479,6 +471,10 @@ export default function ChatThread() {
             return (
               <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${isMine ? 'bg-purple-600 text-white' : 'bg-white text-gray-900 border border-gray-200'}`}>
+                  {/* Show sender display name for incoming messages when vendor is viewing */}
+                  {!isMine && userIsVendor && otherPartyName && (
+                    <div className="text-xs font-semibold text-gray-700 mb-1">{otherPartyName}</div>
+                  )}
                   <div className="whitespace-pre-wrap">{msg.message_text}</div>
 
                   {/* Attachments */}

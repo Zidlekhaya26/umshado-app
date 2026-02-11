@@ -111,38 +111,29 @@ export default function MessagesIndex() {
             .maybeSingle();
 
           if (iAmVendor) {
-            // I'm the vendor → prefer the public `couples` table for display (partner_name + avatar), fallback to profile
-            const { data: couple } = await supabase
-              .from('couples')
-              .select('partner_name, avatar_url')
-              .eq('id', row.couple_id)
-              .maybeSingle();
-
-            if (couple && (couple.partner_name || couple.avatar_url)) {
+            // I'm the vendor → resolve couple display using helper (prefer partner1 & partner2, then partner_name, then profile)
+            try {
+              const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
+              const d = await getCoupleDisplayName(row.couple_id);
               return {
                 id: row.id,
-                otherName: couple.partner_name || 'Couple',
+                otherName: d.displayName || 'Couple (unknown)',
                 otherRole: 'couple' as const,
-                logoUrl: couple.avatar_url || null,
+                logoUrl: d.avatarUrl || null,
+                lastMessageAt: row.last_message_at || row.created_at,
+                lastMessagePreview: lastMsg?.message_text || null,
+              };
+            } catch (err) {
+              console.warn('Failed to resolve couple display name', err);
+              return {
+                id: row.id,
+                otherName: 'Couple (unknown)',
+                otherRole: 'couple' as const,
+                logoUrl: null,
                 lastMessageAt: row.last_message_at || row.created_at,
                 lastMessagePreview: lastMsg?.message_text || null,
               };
             }
-
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', row.couple_id)
-              .maybeSingle();
-
-            return {
-              id: row.id,
-              otherName: profile?.full_name || 'Couple',
-              otherRole: 'couple' as const,
-              logoUrl: null,
-              lastMessageAt: row.last_message_at || row.created_at,
-              lastMessagePreview: lastMsg?.message_text || null,
-            };
           }
 
           // I'm the couple → try marketplace view first (public), fallback to vendors table
