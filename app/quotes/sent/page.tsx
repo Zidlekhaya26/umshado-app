@@ -36,7 +36,7 @@ function QuoteSentContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col px-4">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-4">
         {/* Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
           {/* Success Icon */}

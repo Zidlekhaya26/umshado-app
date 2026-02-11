@@ -270,7 +270,7 @@ function LivePageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24 px-4">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-24 px-4">
 
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-4 py-5 shadow-lg">

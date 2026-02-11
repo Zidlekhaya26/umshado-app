@@ -283,7 +283,7 @@ function QuoteSummaryContent() {
 
     return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-20 px-4">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-20 px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <Link href={`/marketplace/vendor/${vendorId}`} className="inline-flex items-center text-purple-600 text-sm font-medium mb-3">
