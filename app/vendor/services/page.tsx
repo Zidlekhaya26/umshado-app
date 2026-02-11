@@ -120,6 +120,9 @@ export default function VendorServices() {
     return ordered;
   }, [groupedServices, vendorCategory]);
 
+  const showOnlyVendorCategory = Boolean(vendorCategory && !forcedEdit);
+  const displayedCategoryKeys = showOnlyVendorCategory ? [vendorCategory] : orderedCategoryKeys;
+
   const totalSelected = selectedServiceIds.length;
   const canContinue = totalSelected > 0;
   useEffect(() => {
@@ -155,7 +158,16 @@ export default function VendorServices() {
           )}
 
           {/* Service categories */}
-          {!loading && orderedCategoryKeys.map((cat) => (
+          {!loading && (
+            <>
+              {showOnlyVendorCategory && (
+                <div className="px-3 py-2 mb-3 bg-yellow-50 border border-yellow-100 rounded-lg text-sm text-gray-700 flex items-center justify-between">
+                  <div>Category: <span className="font-semibold text-gray-900">{vendorCategory}</span></div>
+                  <Link href="/vendor/onboarding" className="text-purple-600 font-medium">Change</Link>
+                </div>
+              )}
+
+              {displayedCategoryKeys.map((cat) => (
             <div key={cat}>
               <h3 className="text-sm font-semibold text-gray-700 mb-2">{cat}</h3>
               <ServicePicker
@@ -165,7 +177,9 @@ export default function VendorServices() {
                 onChange={setSelectedServiceIds}
               />
             </div>
-          ))}
+              ))}
+            </>
+          )}
 
           {/* Save / Continue */}
           <div className="pt-4">
