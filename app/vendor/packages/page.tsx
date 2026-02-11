@@ -355,7 +355,7 @@ export default function VendorPackagesPage() {
               <div className="absolute inset-0 bg-black bg-opacity-50" onClick={closeForm} />
 
               {/* Bottom Sheet */}
-              <div className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl max-h-[90vh] mx-auto overflow-hidden flex flex-col">
+              <div className="relative w-full max-w-full sm:max-w-md bg-white rounded-t-3xl shadow-2xl max-h-[90vh] mx-auto overflow-hidden flex flex-col">
                 {/* Scrollable area that contains the header + content (so sticky header is scoped to modal) */}
                 <div className="overflow-y-auto">
                   {/* Sticky Header (now inside scrollable area) */}
@@ -538,7 +538,7 @@ export default function VendorPackagesPage() {
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
-        <div className="max-w-md mx-auto flex gap-3">
+        <div className="w-full max-w-full sm:max-w-md mx-auto flex gap-3">
           <Link href={`/vendor/services${modeQuery}`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
           <Link href={editMode ? `/vendor/dashboard` : `/vendor/media${modeQuery}`} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'}`}>{editMode ? 'Save' : 'Continue'}</Link>
         </div>
