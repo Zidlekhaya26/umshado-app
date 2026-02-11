@@ -80,7 +80,7 @@ function SignUpContent() {
   if (BETA_INVITE_ONLY && inviteStatus === 'loading') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
           <div className="animate-umshado-pulse mx-auto mb-4"><UmshadoIcon size={48} /></div>
           <p className="text-gray-600 font-medium">Validating your invite…</p>
         </div>
@@ -92,7 +92,7 @@ function SignUpContent() {
   if (BETA_INVITE_ONLY && !inviteToken) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
           <div className="animate-umshado-pulse mx-auto mb-4"><UmshadoIcon size={48} /></div>
           <p className="text-gray-600 font-medium">Redirecting…</p>
         </div>
@@ -104,7 +104,7 @@ function SignUpContent() {
   if (BETA_INVITE_ONLY && inviteStatus === 'invalid') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
             <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
@@ -233,7 +233,7 @@ function SignUpContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8">
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-4">

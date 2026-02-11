@@ -28,7 +28,7 @@ export default function SupabaseTestPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-lg p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Supabase Connection Test</h1>
         
         <div className="space-y-4">

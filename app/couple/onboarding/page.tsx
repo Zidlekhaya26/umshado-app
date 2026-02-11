@@ -57,7 +57,7 @@ export default function CoupleOnboarding() {
 
   return (
     <div className="min-h-[100dvh] bg-gray-50" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="max-w-md mx-auto min-h-[100dvh] bg-white shadow-lg flex flex-col">
+      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 min-h-[100dvh] bg-white shadow-lg flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-5">
         <div className="flex items-center gap-3">

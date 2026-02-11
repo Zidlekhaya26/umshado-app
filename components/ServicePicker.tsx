@@ -174,7 +174,7 @@ export default function ServicePicker({
         >
           <div
             ref={modalRef}
-            className="w-full max-w-md bg-white rounded-t-2xl shadow-xl flex flex-col"
+            className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-t-2xl shadow-xl flex flex-col"
             style={{ maxHeight: '85vh' }}
           >
             {/* Modal header */}

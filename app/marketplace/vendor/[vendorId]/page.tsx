@@ -326,7 +326,7 @@ export default function VendorProfile() {
   if (!vendor) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="w-full max-w-full sm:max-w-md mx-auto min-h-screen bg-white shadow-lg flex items-center justify-center">
+        <div className="mx-auto w-full max-w-full sm:max-w-md lg:max-w-6xl lg:px-6 min-h-screen bg-white shadow-lg flex items-center justify-center">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium">Loading vendor profile...</p>
@@ -445,7 +445,7 @@ export default function VendorProfile() {
           {/* About Section */}
           <div className="px-4 py-5 border-b border-gray-200">
             <h2 className="text-base font-bold text-gray-900 mb-3">About</h2>
-            <p className="text-sm text-gray-700 leading-relaxed">{vendor.about}</p>
+            <p className="text-sm text-gray-700 leading-relaxed break-words">{vendor.about}</p>
           </div>
 
           {/* Services Section */}
@@ -456,7 +456,7 @@ export default function VendorProfile() {
                 {vendor.services.map((service) => (
                   <span
                     key={service}
-                    className="px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg border border-purple-100"
+                    className="px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg border border-purple-100 break-words max-w-full"
                   >
                     {service}
                   </span>
@@ -556,11 +556,11 @@ export default function VendorProfile() {
 
                   <div>
                     <p className="text-xs font-medium text-gray-500 mb-2">Included services:</p>
-                    <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5">
                       {pkg.includedServices.map((service) => (
                         <span
                           key={service}
-                          className="px-2 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded border border-gray-200"
+                          className="px-2 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded border border-gray-200 break-words max-w-full"
                         >
                           {service}
                         </span>

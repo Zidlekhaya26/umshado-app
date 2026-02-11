@@ -55,7 +55,7 @@ export default function RequestAccess() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
           {/* Success icon */}
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@ export default function RequestAccess() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8">
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/auth" className="inline-block mb-4">

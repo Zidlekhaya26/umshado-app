@@ -187,7 +187,7 @@ export default function VendorInsights() {
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-xl shadow-lg p-6">
           <h2 className="text-xl font-bold text-gray-900 text-center mb-2">Insights Unavailable</h2>
           <p className="text-gray-600 text-center">{error}</p>
         </div>

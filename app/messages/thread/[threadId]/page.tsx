@@ -591,7 +591,7 @@ export default function ChatThread() {
       {/* Final Quote Modal */}
       {showFinalQuoteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+          <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 rounded-2xl bg-white p-5 shadow-xl">
             <h2 className="text-lg font-bold text-gray-900">Send Final Quote</h2>
             <p className="mt-1 text-xs text-gray-600">Set your final price and optional message.</p>
             <div className="mt-4 space-y-3">

@@ -558,7 +558,7 @@ export default function VendorReview() {
 
       {/* ── Sticky bottom bar ────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
-        <div className="max-w-md mx-auto flex gap-3">
+        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 flex gap-3">
           {editMode ? (
             <>
               <Link href="/vendor/dashboard" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back to Dashboard</Link>
