@@ -26,6 +26,8 @@ function SignUpContent() {
     return r === 'vendor' ? 'vendor' : 'couple';
   }, [searchParams]);
 
+  const [role, setRole] = useState<'couple' | 'vendor'>(intendedRole);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -73,7 +75,16 @@ function SignUpContent() {
   // Get the effective role — invite role takes priority in beta mode
   const effectiveRole = useMemo(() => {
     if (inviteData?.role) return inviteData.role;
-    return intendedRole;
+    return role || intendedRole;
+  }, [inviteData, role, intendedRole]);
+
+  // Keep local role in sync when intended role or invite changes
+  useEffect(() => {
+    if (inviteData?.role) {
+      setRole(inviteData.role);
+    } else {
+      setRole(intendedRole);
+    }
   }, [inviteData, intendedRole]);
 
   // Show loading while validating invite
@@ -254,19 +265,38 @@ function SignUpContent() {
             </div>
           )}
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Create Your Account</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">{
+            effectiveRole === 'vendor' ? 'Create your Vendor account' : 'Create your Couple account'
+          }</h1>
           <p className="text-sm text-gray-600">
             {effectiveRole === 'vendor'
               ? 'Join uMshado and showcase your wedding services'
               : 'Join uMshado and start planning your perfect wedding'}
           </p>
 
-          {/* Role Indicator */}
-          <div className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-purple-50 rounded-xl border border-purple-200">
-            <span className="text-sm font-medium text-purple-700">
-              Signing up as: <span className="font-bold capitalize">{effectiveRole}</span>
-            </span>
-          </div>
+          {/* Role selector: show only when invite does not lock the role */}
+          {!inviteData?.role && (
+            <div className="mt-6 mb-4">
+              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
+                <button
+                  type="button"
+                  aria-pressed={role === 'couple'}
+                  onClick={() => setRole('couple')}
+                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'couple' ? 'bg-white shadow font-semibold' : 'text-gray-700'}`}
+                >
+                  Couple
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={role === 'vendor'}
+                  onClick={() => setRole('vendor')}
+                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'vendor' ? 'bg-white shadow font-semibold' : 'text-gray-700'}`}
+                >
+                  Vendor
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sign Up Form */}
@@ -354,18 +384,7 @@ function SignUpContent() {
           </p>
         </div>
 
-        {/* Role switch — only show in open registration mode */}
-        {!BETA_INVITE_ONLY && (
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-500">
-              {intendedRole === 'vendor' ? (
-                <>Planning a wedding instead? <Link href="/auth/sign-up?role=couple" className="text-purple-600 font-semibold hover:underline">Sign up as a couple</Link></>
-              ) : (
-                <>Are you a vendor? <Link href="/auth/sign-up?role=vendor" className="text-purple-600 font-semibold hover:underline">Sign up as a vendor</Link></>
-              )}
-            </p>
-          </div>
-        )}
+        {/* Role switch removed — replaced by the inline role selector above the form */}
       </div>
     </div>
   );
