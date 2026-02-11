@@ -83,7 +83,7 @@ export default function ReportProblemPage() {
   if (reportId) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24">
+        <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24 px-4">
           <div className="bg-white border-b border-gray-200 px-4 py-5">
             <div className="flex items-center gap-3">
               <Link href="/settings" className="p-1 -ml-1 rounded-full hover:bg-gray-100 transition-colors">

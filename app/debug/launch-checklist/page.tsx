@@ -138,7 +138,7 @@ export default function LaunchChecklist() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-16">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-16 px-4">
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <h1 className="text-xl font-bold text-gray-900">Launch Checklist</h1>
           <p className="text-sm text-gray-600 mt-1">Production readiness quick checks</p>

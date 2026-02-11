@@ -211,7 +211,7 @@ function StartChatContent() {
   /* ── Render ─────────────────────────────────────────────────────── */
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-20">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-20 px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5 sticky top-0 z-10">
           <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-3 -ml-1">

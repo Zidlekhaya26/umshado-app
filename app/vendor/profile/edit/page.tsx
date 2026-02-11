@@ -4,7 +4,7 @@ export default function VendorProfileEditHub() {
   const modeQuery = '?mode=edit';
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24 px-4">
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <h1 className="text-xl font-bold text-gray-900">Edit Profile</h1>
           <p className="text-sm text-gray-600 mt-1.5">Choose a section to edit your vendor profile</p>

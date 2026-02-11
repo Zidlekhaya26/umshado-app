@@ -273,7 +273,7 @@ function GuestPageContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto min-h-screen bg-white shadow-lg flex flex-col">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col px-4">
 
         {/* Header */}
         <div className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-4 py-5 shadow-lg">
