@@ -58,6 +58,9 @@ export default function VendorDashboard() {
   const [recentNotifications, setRecentNotifications] = useState<{ id: string; title: string; body: string; created_at: string; link: string | null }[]>([]);
   const [servicesCount, setServicesCount] = useState(0);
   const [packagesCount, setPackagesCount] = useState(0);
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadDashboard();
@@ -244,10 +247,6 @@ export default function VendorDashboard() {
   }
 
   /* ── Render ─────────────────────────────────────────────────── */
-
-  const [logoOpen, setLogoOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   return (
     <div className="min-h-screen bg-gray-50">
