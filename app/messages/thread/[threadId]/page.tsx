@@ -468,7 +468,7 @@ export default function ChatThread() {
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
               {otherPartyLogo ? (
-                <button type="button" onClick={() => { setLogoSrc(otherPartyLogo); setLogoAlt(otherPartyName || 'Logo'); setLogoOpen(true); }} className="w-full h-full flex items-center justify-center" aria-label="View logo">
+                <button type="button" onClick={() => { setLogoSrc(otherPartyLogo ?? null); setLogoAlt(otherPartyName || 'Logo'); setLogoOpen(true); }} className="w-full h-full flex items-center justify-center" aria-label="View logo">
                   <img src={otherPartyLogo} alt="" className="w-full h-full object-contain p-2" />
                 </button>
               ) : (

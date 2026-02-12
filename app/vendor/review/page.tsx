@@ -75,9 +75,7 @@ function extractYouTubeId(url: string): string | null {
 /* ------------------------------------------------------------------ */
 
 function CheckItem({ ok, label, href }: { ok: boolean; label: string; href: string }) {
-  const [logoOpen, setLogoOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
+  
 
   return (
     <div className="flex items-center justify-between gap-2">
@@ -134,6 +132,10 @@ export default function VendorReview() {
   const [vendor, setVendor] = useState<VendorRow | null>(null);
   const [services, setServices] = useState<string[]>([]);
   const [packages, setPackages] = useState<PkgRow[]>([]);
+  // Lightbox state for previewing images (logo / portfolio)
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   /* ── Load all data from Supabase ────────────────────────────── */
 
@@ -434,7 +436,7 @@ export default function VendorReview() {
                 {vendor?.logo_url ? (
                   <button
                     type="button"
-                    onClick={() => { setLogoSrc(vendor.logo_url); setLogoAlt('Business logo'); setLogoOpen(true); }}
+                    onClick={() => { setLogoSrc(vendor.logo_url ?? null); setLogoAlt('Business logo'); setLogoOpen(true); }}
                     className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 flex items-center justify-center"
                     aria-label="View business logo"
                   >
@@ -577,7 +579,10 @@ export default function VendorReview() {
         </div>
       </div>
 
-      {/* ── Sticky bottom bar ────────────────────────────────── */}
+        {/* Image lightbox for logo / portfolio previews */}
+        <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
+
+        {/* ── Sticky bottom bar ────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 flex gap-3">
           {editMode ? (

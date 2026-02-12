@@ -258,7 +258,7 @@ export default function VendorDashboard() {
             {vendor?.logo_url ? (
               <button
                 type="button"
-                onClick={() => { setLogoSrc(vendor.logo_url); setLogoAlt(vendor.business_name || 'Logo'); setLogoOpen(true); }}
+                onClick={() => { setLogoSrc(vendor.logo_url ?? null); setLogoAlt(vendor.business_name || 'Logo'); setLogoOpen(true); }}
                 className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center"
                 aria-label="View business logo"
               >

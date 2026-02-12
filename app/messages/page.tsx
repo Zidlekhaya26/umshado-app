@@ -320,7 +320,7 @@ export default function MessagesIndex() {
                 {item.logoUrl ? (
                   <button
                     type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(item.logoUrl); setLogoAlt(item.otherName || 'Logo'); setLogoOpen(true); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(item.logoUrl ?? null); setLogoAlt(item.otherName || 'Logo'); setLogoOpen(true); }}
                     className="w-full h-full flex items-center justify-center"
                     aria-label={`View ${item.otherName} logo`}
                   >

@@ -354,7 +354,7 @@ export default function Marketplace() {
                         {vendor.logoUrl ? (
                           <button
                             type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl ?? null); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
                             className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white"
                             aria-label={`View ${vendor.name || 'vendor'} logo`}
                           >
