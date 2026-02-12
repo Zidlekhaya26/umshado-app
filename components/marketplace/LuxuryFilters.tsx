@@ -27,43 +27,26 @@ export default function LuxuryFilters({
   toggleServiceFilter,
 }: Props) {
   return (
-    <div className="sticky top-0 z-20 px-3 py-3 sm:px-4 sm:py-4 bg-[#FBF6F0] border-b border-gray-100">
-      <div className="mx-auto max-w-screen-xl">
+    <div className="sticky top-0 z-20 px-4 py-3 sm:px-4 sm:py-4 lg:px-6 bg-[#FBF6F0] border-b border-gray-100">
+      <div className="w-full max-w-screen-xl mx-auto">
         <div className="relative bg-white border border-[#F1E6E6] shadow-[0_8px_30px_rgba(122,30,58,0.08)] rounded-2xl sm:rounded-3xl px-3 py-3 sm:px-4 sm:py-4 space-y-4">
-          {/* subtle gradient overlay */}
-          <div className="pointer-events-none absolute inset-0 rounded-3xl -z-10 opacity-40 bg-gradient-to-br from-[#FAF3F4] via-white to-[#F8F4F0]" />
+          <div className="pointer-events-none absolute inset-0 rounded-2xl sm:rounded-3xl -z-10 opacity-40 bg-gradient-to-br from-[#FAF3F4] via-white to-[#F8F4F0]" />
 
-          {/* Header row */}
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-lg sm:text-[22px] font-extrabold tracking-tight text-[#2B1B1B]">
                 Marketplace
               </h2>
-              <p className="text-sm text-[#6B5A5A] mt-0.5">
-                Discover exceptional wedding vendors
-              </p>
+              <p className="text-sm text-[#6B5A5A] mt-0.5">Discover exceptional wedding vendors</p>
             </div>
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-              <span className="text-xs font-semibold text-[#7B6A6A] uppercase tracking-wide">
-                Filters
-              </span>
+              <span className="text-xs font-semibold text-[#7B6A6A] uppercase tracking-wide">Filters</span>
             </div>
           </div>
 
-          {/* Search bar */}
           <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8E7B7B]"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8E7B7B]" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
 
             <input
@@ -71,17 +54,16 @@ export default function LuxuryFilters({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search vendors, services, or locations"
-              className="w-full h-10 pl-10 pr-4 rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] shadow-sm placeholder:text-[#B9A7A7] text-[15px] text-[#2B1B1B] focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
+              className="w-full pl-10 pr-4 py-2 sm:py-3 rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] shadow-sm placeholder:text-[#B9A7A7] text-[15px] leading-6 text-[#2B1B1B] focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
             />
           </div>
 
-          {/* Controls row (stack on mobile, 2 cols on sm+) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="min-w-0">
               <FilterSelect
                 value={categoryFilter}
                 onChange={(e) => setCategoryFilter(e.target.value)}
-                className="w-full h-10 rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] px-3 text-[15px] text-[#2B1B1B] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
+                className="w-full rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] px-3 text-[15px] leading-6 text-[#2B1B1B] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
               >
                 <option value="">All Categories</option>
                 {categories.map((c) => (
@@ -96,7 +78,7 @@ export default function LuxuryFilters({
               <FilterSelect
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full h-10 rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] px-3 text-[15px] text-[#2B1B1B] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
+                className="w-full rounded-lg sm:rounded-2xl bg-white border border-[#EFE2E2] px-3 text-[15px] leading-6 text-[#2B1B1B] shadow-sm focus:outline-none focus:ring-2 focus:ring-[#7A1E3A]/15"
               >
                 <option value="recommended">Recommended</option>
                 <option value="price_low">Lowest Price</option>
@@ -106,7 +88,6 @@ export default function LuxuryFilters({
             </div>
           </div>
 
-          {/* Service chips */}
           {displayedServices && displayedServices.length > 0 && (
             <div className="flex gap-2 overflow-x-auto px-1 pb-1 scrollbar-hide">
               {displayedServices.map((service) => {
