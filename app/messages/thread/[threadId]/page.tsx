@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -67,6 +68,9 @@ export default function ChatThread() {
   const [otherPartyName, setOtherPartyName] = useState('');
   const [otherPartyLogo, setOtherPartyLogo] = useState<string | null>(null);
   const [otherPartyLocation, setOtherPartyLocation] = useState<string | null>(null);
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   // Quote management
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -463,14 +467,17 @@ export default function ChatThread() {
 
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                {otherPartyLogo ? (
+              {otherPartyLogo ? (
+                <button type="button" onClick={() => { setLogoSrc(otherPartyLogo); setLogoAlt(otherPartyName || 'Logo'); setLogoOpen(true); }} className="w-full h-full flex items-center justify-center" aria-label="View logo">
                   <img src={otherPartyLogo} alt="" className="w-full h-full object-contain p-2" />
-                ) : (
+                </button>
+              ) : (
                 <span className="text-white font-bold text-base">
                   {otherPartyName.charAt(0).toUpperCase() || '?'}
                 </span>
               )}
             </div>
+            <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold text-gray-900 truncate">{otherPartyName || 'Loading…'}</h1>

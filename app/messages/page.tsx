@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -38,6 +39,9 @@ export default function MessagesIndex() {
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isVendor, setIsVendor] = useState(false);
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
 
@@ -314,7 +318,14 @@ export default function MessagesIndex() {
               {/* Avatar / Logo */}
               <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
                 {item.logoUrl ? (
-                  <img src={item.logoUrl} alt="" className="w-full h-full object-contain p-2" />
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(item.logoUrl); setLogoAlt(item.otherName || 'Logo'); setLogoOpen(true); }}
+                    className="w-full h-full flex items-center justify-center"
+                    aria-label={`View ${item.otherName} logo`}
+                  >
+                    <img src={item.logoUrl} alt="" className="w-full h-full object-contain p-2" />
+                  </button>
                 ) : (
                   <span className="text-white font-bold text-lg">
                     {item.otherName.charAt(0).toUpperCase()}

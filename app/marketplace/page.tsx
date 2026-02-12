@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
 import FilterSelect from '@/components/ui/FilterSelect';
 import LuxuryFilters from '@/components/marketplace/LuxuryFilters';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
@@ -71,6 +72,9 @@ export default function Marketplace() {
   const [couplePreferences, setCouplePreferences] = useState<{category?: string; services?: string[]}>({});
   const [displayedCount, setDisplayedCount] = useState(10);
   const [isVendor, setIsVendor] = useState(false);
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
@@ -348,9 +352,14 @@ export default function Marketplace() {
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex-shrink-0">
                         {vendor.logoUrl ? (
-                          <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white">
+                          <button
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
+                            className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white"
+                            aria-label={`View ${vendor.name || 'vendor'} logo`}
+                          >
                             <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-contain p-2" />
-                          </div>
+                          </button>
                         ) : (
                           <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
                             {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
@@ -454,6 +463,7 @@ export default function Marketplace() {
         </div>
 
         {isVendor ? <VendorBottomNav /> : <BottomNav />}
+        <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
       </div>
     </div>
   );

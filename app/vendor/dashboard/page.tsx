@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
@@ -244,6 +245,10 @@ export default function VendorDashboard() {
 
   /* ── Render ─────────────────────────────────────────────────── */
 
+  const [logoOpen, setLogoOpen] = useState(false);
+  const [logoSrc, setLogoSrc] = useState<string | null>(null);
+  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-4">
@@ -251,9 +256,14 @@ export default function VendorDashboard() {
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
             {vendor?.logo_url ? (
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => { setLogoSrc(vendor.logo_url); setLogoAlt(vendor.business_name || 'Logo'); setLogoOpen(true); }}
+                className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center"
+                aria-label="View business logo"
+              >
                 <img src={vendor.logo_url} alt="" className="w-full h-full object-contain p-2" />
-              </div>
+              </button>
             ) : (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
                 <span className="text-white font-bold text-lg">

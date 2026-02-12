@@ -356,11 +356,21 @@ export default function VendorProfile() {
               <div className="flex items-center gap-3">
                 {/* Avatar / Logo */}
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-gray-600 font-semibold">
-                  {vendor.portfolioUrls[0] ? (
-                    <img src={vendor.portfolioUrls[0]} alt="vendor" className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}</span>
-                  )}
+                  {(() => {
+                    const logo = (vendor as any).logo_url || vendor.portfolioUrls[0] || null;
+                    return logo ? (
+                      <button
+                        type="button"
+                        onClick={() => { (window as any).__vendorLogoPreview = logo; /* noop for SSR */ }}
+                        className="w-full h-full flex items-center justify-center"
+                        aria-label="View vendor logo"
+                      >
+                        <img src={logo} alt="vendor" className="w-full h-full object-contain p-2" />
+                      </button>
+                    ) : (
+                      <span>{vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}</span>
+                    );
+                  })()}
                 </div>
 
                 <div className="min-w-0">
