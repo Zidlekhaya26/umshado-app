@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
 import FilterSelect from '@/components/ui/FilterSelect';
+import LuxuryFilters from '@/components/marketplace/LuxuryFilters';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
@@ -306,71 +307,19 @@ export default function Marketplace() {
           </div>
         </div>
 
-        {/* Consolidated Sticky Filter/Search */}
-        <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
-          <div className="px-4 pt-3 pb-3">
-            <div className="flex flex-col gap-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search vendors..."
-                  className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400 bg-white text-gray-800"
-                />
-                <svg
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-                <div className="sm:flex-1">
-                  <FilterSelect value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                    <option value="">All Categories</option>
-                    {LOCKED_CATEGORIES.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </FilterSelect>
-                </div>
-
-                <div className="sm:w-48 w-full">
-                  <FilterSelect value={sortBy} onChange={(e) => setSortBy(e.target.value as SortOption)}>
-                    <option value="recommended">Recommended</option>
-                    <option value="price_low">Lowest Price</option>
-                    <option value="price_high">Highest Price</option>
-                    <option value="newest">Newest</option>
-                  </FilterSelect>
-                </div>
-              </div>
-
-              {displayedServices.length > 0 && (
-                <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-2">Filter by service</p>
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {displayedServices.map((service) => (
-                      <button
-                        key={service}
-                        onClick={() => toggleServiceFilter(service)}
-                        className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                          serviceFilter.includes(service)
-                            ? 'bg-purple-600 text-white shadow'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-purple-50'
-                        }`}
-                      >
-                        {service}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Luxury Filter Header (UI only) */}
+        <LuxuryFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={setCategoryFilter}
+          sortBy={sortBy}
+          setSortBy={(v) => setSortBy(v as SortOption)}
+          categories={LOCKED_CATEGORIES}
+          displayedServices={displayedServices}
+          serviceFilter={serviceFilter}
+          toggleServiceFilter={toggleServiceFilter}
+        />
 
         {/* Vendor Cards List - responsive grid */}
         <div className="flex-1 px-4 pb-28 overflow-y-auto">
