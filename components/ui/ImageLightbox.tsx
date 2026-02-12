@@ -55,7 +55,7 @@ export default function ImageLightbox({ src, alt = "Image", isOpen, onClose }: P
 
         <div className="px-4 pb-4">
           <a
-            href={src}
+            href={String(src)}
             target="_blank"
             rel="noreferrer"
             className="inline-flex text-sm font-semibold text-[#7A1E3A] hover:underline"
