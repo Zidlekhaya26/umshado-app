@@ -28,7 +28,7 @@ export default function LuxuryFilters({
 }: Props) {
   return (
     <div className="sticky top-0 z-20 px-4 py-3 sm:px-4 sm:py-4 lg:px-6 bg-[#FBF6F0] border-b border-gray-100">
-      <div className="w-full max-w-screen-xl mx-auto">
+      <div className="w-full">
         <div className="relative bg-white border border-[#F1E6E6] shadow-[0_8px_30px_rgba(122,30,58,0.08)] rounded-2xl sm:rounded-3xl px-3 py-3 sm:px-4 sm:py-4 space-y-4">
           <div className="pointer-events-none absolute inset-0 rounded-2xl sm:rounded-3xl -z-10 opacity-40 bg-gradient-to-br from-[#FAF3F4] via-white to-[#F8F4F0]" />
 
