@@ -463,9 +463,9 @@ export default function ChatThread() {
 
             {/* Avatar */}
             <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-              {otherPartyLogo ? (
-                <img src={otherPartyLogo} alt="" className="w-full h-full object-cover" />
-              ) : (
+                {otherPartyLogo ? (
+                  <img src={otherPartyLogo} alt="" className="w-full h-full object-contain p-2" />
+                ) : (
                 <span className="text-white font-bold text-base">
                   {otherPartyName.charAt(0).toUpperCase() || '?'}
                 </span>

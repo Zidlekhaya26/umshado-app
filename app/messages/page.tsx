@@ -314,7 +314,7 @@ export default function MessagesIndex() {
               {/* Avatar / Logo */}
               <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
                 {item.logoUrl ? (
-                  <img src={item.logoUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={item.logoUrl} alt="" className="w-full h-full object-contain p-2" />
                 ) : (
                   <span className="text-white font-bold text-lg">
                     {item.otherName.charAt(0).toUpperCase()}

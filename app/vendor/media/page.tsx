@@ -126,8 +126,8 @@ export default function VendorMedia() {
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">Business Logo <span className="text-red-500">*</span></label>
             {logoUrl ? (
-              <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-300">
-                <Image src={logoUrl} alt="Business logo" fill sizes="128px" className="object-cover" />
+              <div className="relative w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-300 flex items-center justify-center">
+                <Image src={logoUrl} alt="Business logo" fill sizes="128px" className="object-contain p-2" />
                 <button type="button" onClick={() => setLogoUrl(null)} className="absolute top-1 right-1 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg></button>
               </div>
             ) : (

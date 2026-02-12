@@ -251,8 +251,8 @@ export default function VendorDashboard() {
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
             {vendor?.logo_url ? (
-              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200">
-                <img src={vendor.logo_url} alt="" className="w-full h-full object-cover" />
+              <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center">
+                <img src={vendor.logo_url} alt="" className="w-full h-full object-contain p-2" />
               </div>
             ) : (
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">

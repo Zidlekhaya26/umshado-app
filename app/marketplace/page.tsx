@@ -349,7 +349,7 @@ export default function Marketplace() {
                       <div className="flex-shrink-0">
                         {vendor.logoUrl ? (
                           <div className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white">
-                            <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-cover" />
+                            <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-contain p-2" />
                           </div>
                         ) : (
                           <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">

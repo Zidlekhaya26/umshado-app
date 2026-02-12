@@ -427,8 +427,8 @@ export default function VendorReview() {
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-1.5">Business Logo</p>
                 {vendor?.logo_url ? (
-                  <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200">
-                    <Image src={vendor.logo_url} alt="Logo" width={80} height={80} className="object-cover w-full h-full" />
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 flex items-center justify-center">
+                    <Image src={vendor.logo_url} alt="Logo" width={80} height={80} className="object-contain p-2 w-full h-full" />
                   </div>
                 ) : (
                   <p className="text-sm text-gray-400 italic">No logo uploaded</p>

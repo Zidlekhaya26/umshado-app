@@ -1,26 +1,23 @@
 export function formatWhatsappLink(raw?: string | null): string | null {
   if (!raw) return null;
-  const trimmed = String(raw).trim();
-  if (!trimmed) return null;
 
-  // If already a full URL, return it (ensure https)
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  try {
+    const s = String(raw).trim();
 
-  // If starts with common whatsapp schemes, normalize to https
-  if (/^(?:wa\.me|api\.whatsapp\.com|whatsapp:)/i.test(trimmed)) {
-    return trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+    // If it's already a wa.me or whatsapp.com link, extract the phone
+    const waMatch = s.match(/wa\.me\/(\+?\d+)/i);
+    if (waMatch && waMatch[1]) return `https://wa.me/${waMatch[1].replace(/^\+/, '')}`;
+
+    const sendMatch = s.match(/[?&]phone=(\+?\d+)/i);
+    if (sendMatch && sendMatch[1]) return `https://wa.me/${sendMatch[1].replace(/^\+/, '')}`;
+
+    // Strip non-digits
+    const digits = s.replace(/[^\d+]/g, '');
+    // Remove leading plus for wa.me
+    const cleaned = digits.replace(/^\+/, '');
+    if (cleaned.length === 0) return null;
+    return `https://wa.me/${cleaned}`;
+  } catch (e) {
+    return null;
   }
-
-  // Extract digits only
-  const digits = trimmed.replace(/[^0-9]/g, '');
-  if (!digits) return null;
-
-  let normalized = digits;
-  // If starts with 0 and looks like a local SA number (10 digits), convert to +27
-  if (/^0[0-9]{8,9}$/.test(normalized)) {
-    normalized = `27${normalized.slice(1)}`;
-  }
-
-  // Return wa.me link
-  return `https://wa.me/${normalized}`;
 }
