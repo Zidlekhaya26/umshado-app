@@ -6,15 +6,12 @@ interface Props extends React.SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export default function FilterSelect({ children, className = '', ...rest }: Props) {
+  const base =
+    "appearance-none w-full px-3 py-2 sm:py-3 text-base rounded-xl border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 pr-12";
+
   return (
-    <div className={"relative w-full " + className}>
-      <select
-        {...rest}
-        className={
-          "appearance-none w-full px-4 py-3 text-base rounded-xl border-2 border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 " +
-          "pr-12"
-        }
-      >
+    <div className="relative w-full">
+      <select {...rest} className={[base, className].filter(Boolean).join(" ")}>
         {children}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">

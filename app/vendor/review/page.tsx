@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { formatWhatsappLink } from '@/lib/whatsapp';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -500,11 +501,8 @@ export default function VendorReview() {
                 <div>
                   <p className="text-xs font-medium text-gray-500">WhatsApp</p>
                   <p className="text-sm text-gray-900">
-                    {(() => {
+                        {(() => {
                       try {
-                        // lazy import helper
-                        // eslint-disable-next-line @typescript-eslint/no-var-requires
-                        const { formatWhatsappLink } = require('@/lib/whatsapp');
                         const href = formatWhatsappLink(contact.whatsapp);
                         if (href) return (<a href={href} target="_blank" rel="noopener noreferrer" className="text-purple-600">{contact.whatsapp}</a>);
                       } catch {

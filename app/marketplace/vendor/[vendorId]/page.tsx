@@ -8,6 +8,7 @@ import { trackVendorEvent } from '@/lib/analytics';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { formatWhatsappLink } from '@/lib/whatsapp';
 
 type PricingMode =
   | 'guest-based'
@@ -749,8 +750,6 @@ export default function VendorProfile() {
 
                   {(() => {
                     try {
-                      // eslint-disable-next-line @typescript-eslint/no-var-requires
-                      const { formatWhatsappLink } = require('@/lib/whatsapp');
                       const href = formatWhatsappLink(vendor.contact.whatsapp);
                       if (href) {
                         return (

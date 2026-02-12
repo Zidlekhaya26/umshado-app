@@ -315,7 +315,7 @@ export default function Marketplace() {
           setCategoryFilter={setCategoryFilter}
           sortBy={sortBy}
           setSortBy={(v) => setSortBy(v as SortOption)}
-          categories={LOCKED_CATEGORIES}
+          categories={Array.from(LOCKED_CATEGORIES)}
           displayedServices={displayedServices}
           serviceFilter={serviceFilter}
           toggleServiceFilter={toggleServiceFilter}
