@@ -275,10 +275,24 @@ function CouplePlannerContent() {
     if (!error) setGuests(prev => prev.filter(g => g.id !== id));
   };
 
-  const inviteViaWhatsapp = (guest: DbGuest) => {
-    if (!guest.phone) return;
-    const url = generateWhatsappInviteLink({ phone: guest.phone, guestId: guest.id, coupleName: null });
-    // open new tab to WhatsApp / RSVP link
+  const inviteViaWhatsapp = async (guest: DbGuest) => {
+    let phone = guest.phone;
+    if (!phone) {
+      const p = window.prompt('Enter guest phone number (e.g. +27831234567) to send WhatsApp invite');
+      if (!p) return;
+      phone = p.trim();
+      try {
+        const result = await supabase.from('couple_guests').update({ phone }).eq('id', guest.id).select().single();
+        if (!result.error && result.data) {
+          setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, phone: result.data.phone } : g));
+        }
+      } catch (e) {
+        console.error('Failed to save phone for guest', e);
+      }
+    }
+
+    if (!phone) return;
+    const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName: null });
     window.open(url, '_blank', 'noopener');
   };
 
@@ -501,11 +515,10 @@ function CouplePlannerContent() {
                             <button onClick={() => startEditGuest(guest)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            {guest.phone && (
-                              <button onClick={() => inviteViaWhatsapp(guest)} className="text-gray-400 hover:text-green-600 transition-colors p-1" aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0012 0C5.373 0 .057 5.316.004 11.94.002 12.57.338 13.13.88 13.47L2.9 14.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94a11.9 11.9 0 00-3.52-8.02zM12 22.5c-2.32 0-4.56-.64-6.56-1.84l-.46-.27-3.9 1.02 1.04-3.81-.3-.48A9.9 9.9 0 0112 2.1c5.5 0 9.96 4.46 9.96 9.96S17.5 22.5 12 22.5z"/></svg>
-                              </button>
-                            )}
+                            <button onClick={() => inviteViaWhatsapp(guest)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${guest.phone ? 'text-gray-400 hover:text-green-600' : 'text-gray-400 bg-gray-100 hover:bg-gray-200'}`} aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0012 0C5.373 0 .057 5.316.004 11.94.002 12.57.338 13.13.88 13.47L2.9 14.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94a11.9 11.9 0 00-3.52-8.02zM12 22.5c-2.32 0-4.56-.64-6.56-1.84l-.46-.27-3.9 1.02 1.04-3.81-.3-.48A9.9 9.9 0 0112 2.1c5.5 0 9.96 4.46 9.96 9.96S17.5 22.5 12 22.5z"/></svg>
+                              <span className="hidden sm:inline">Invite</span>
+                            </button>
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
