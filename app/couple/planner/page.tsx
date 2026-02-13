@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
+import { generateWhatsappInviteLink } from '@/lib/invite';
 
 // ─── DB row types ────────────────────────────────────────
 
@@ -274,6 +275,13 @@ function CouplePlannerContent() {
     if (!error) setGuests(prev => prev.filter(g => g.id !== id));
   };
 
+  const inviteViaWhatsapp = (guest: DbGuest) => {
+    if (!guest.phone) return;
+    const url = generateWhatsappInviteLink({ phone: guest.phone, guestId: guest.id, coupleName: null });
+    // open new tab to WhatsApp / RSVP link
+    window.open(url, '_blank', 'noopener');
+  };
+
   // ── Computed ───────────────────────────────────────────
   const totalBudget = budgetItems.reduce((s, b) => s + Number(b.amount), 0);
   const totalPaid = budgetItems.reduce((s, b) => s + Number(b.amount_paid || 0), 0);
@@ -482,6 +490,7 @@ function CouplePlannerContent() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900">{guest.full_name}</p>
+                            {guest.phone && <p className="text-xs text-gray-500 mt-1">{guest.phone}</p>}
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className={`text-xs font-semibold ${sideColor(guest.side)}`}>{sideLabel(guest.side)}</span>
                               {guest.plus_one && <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">+1</span>}
@@ -492,6 +501,11 @@ function CouplePlannerContent() {
                             <button onClick={() => startEditGuest(guest)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
+                            {guest.phone && (
+                              <button onClick={() => inviteViaWhatsapp(guest)} className="text-gray-400 hover:text-green-600 transition-colors p-1" aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
+                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0012 0C5.373 0 .057 5.316.004 11.94.002 12.57.338 13.13.88 13.47L2.9 14.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94a11.9 11.9 0 00-3.52-8.02zM12 22.5c-2.32 0-4.56-.64-6.56-1.84l-.46-.27-3.9 1.02 1.04-3.81-.3-.48A9.9 9.9 0 0112 2.1c5.5 0 9.96 4.46 9.96 9.96S17.5 22.5 12 22.5z"/></svg>
+                              </button>
+                            )}
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
@@ -587,6 +601,7 @@ function CouplePlannerContent() {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Guest</h3>
             <div className="space-y-3">
               <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} placeholder="e.g., John & Sarah Smith" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (optional)</label><input type="tel" value={newGuestPhone} onChange={e => setNewGuestPhone(e.target.value)} placeholder="e.g., +27831234567" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Side</label>
                 <div className="flex gap-2">
@@ -614,6 +629,7 @@ function CouplePlannerContent() {
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Guest</h3>
             <div className="space-y-3">
               <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={editGuestName} onChange={e => setEditGuestName(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (optional)</label><input type="tel" value={editGuestPhone} onChange={e => setEditGuestPhone(e.target.value)} placeholder="e.g., +27831234567" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Side</label>
                 <div className="flex gap-2">
