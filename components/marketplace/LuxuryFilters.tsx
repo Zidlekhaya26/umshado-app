@@ -109,6 +109,7 @@ export default function LuxuryFilters({
                 return (
                   <button
                     key={service}
+                    data-selected={selected}
                     onClick={() => toggleServiceFilter(service)}
                     style={{
                       backgroundColor: selected ? '#7A1E3A' : undefined,
@@ -116,7 +117,7 @@ export default function LuxuryFilters({
                       borderColor: selected ? '#7A1E3A' : undefined,
                     }}
                     className={[
-                      "px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap",
+                      "luxury-filter-chip px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap",
                       "border border-[#EFE2E2] bg-white text-[#4A3A3A]",
                       "shadow-[0_2px_10px_rgba(0,0,0,0.03)]",
                       selected
@@ -130,6 +131,15 @@ export default function LuxuryFilters({
               })}
             </div>
           )}
+          {/* High-specificity fallback to override any global cascade issues */}
+          <style dangerouslySetInnerHTML={{__html: `
+            .luxury-filter-chip[data-selected="true"]{
+              background-color: #7A1E3A !important;
+              color: #ffffff !important;
+              border-color: #7A1E3A !important;
+              box-shadow: 0 10px 20px rgba(122,30,58,0.18) !important;
+            }
+          `}} />
         </div>
       </div>
     </div>
