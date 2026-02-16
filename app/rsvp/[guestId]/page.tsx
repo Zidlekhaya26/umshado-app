@@ -1,10 +1,13 @@
 import { createServiceClient } from '@/lib/supabaseServer';
 import { notFound } from 'next/navigation';
+import RSVPClient from './RSVPClient';
 
-type Props = { params: { guestId: string } };
+type Props = { params: { guestId: string }, searchParams?: { t?: string } };
 
-export default async function RSVPPage({ params }: Props) {
+export default async function RSVPPage({ params, searchParams }: Props) {
   const { guestId } = params;
+  const token = searchParams?.t ?? null;
+
   const supabase = createServiceClient();
 
   // Basic validation
@@ -13,6 +16,9 @@ export default async function RSVPPage({ params }: Props) {
 
   const { data: guest } = await supabase.from('couple_guests').select('*').eq('id', guestId).maybeSingle();
   if (!guest) return notFound();
+
+  // token must match
+  if (!token || guest.rsvp_token !== token) return notFound();
 
   // Try to fetch couple profile name if available
   let coupleName: string | null = null;
@@ -30,11 +36,8 @@ export default async function RSVPPage({ params }: Props) {
         <h1 className="text-xl font-bold text-gray-900 mb-2">You're invited</h1>
         <p className="text-sm text-gray-600 mb-4">{coupleName ? `${coupleName} invited you to their wedding.` : `You've been invited.`}</p>
         <p className="text-sm text-gray-700 font-semibold mb-4">{guest.full_name}</p>
-        {/* Client component handles RSVP actions */}
-        <div>
-          {/* @ts-expect-error Server -> client import */}
-          <RSVPClient guestId={guestId} />
-        </div>
+
+        <RSVPClient guestId={guestId} token={token} />
       </div>
     </div>
   );

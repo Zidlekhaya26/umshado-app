@@ -14,6 +14,7 @@ import {
 import { LOCKED_CATEGORIES, LOCKED_CATEGORY_SET } from '@/lib/marketplaceCategories';
 import ServicePicker from '@/components/ServicePicker';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
+import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 
 export default function VendorServices() {
   const [services, setServices] = useState<Service[]>([]);
@@ -26,6 +27,8 @@ export default function VendorServices() {
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
   const [forcedEdit, setForcedEdit] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -62,6 +65,14 @@ export default function VendorServices() {
         console.warn('Unable to load vendor metadata for services page:', vendorErr);
       }
 
+      // determine onboarding status (single source of truth)
+      try {
+        const status = await getVendorSetupStatus(supabase, vId);
+        setNeedsOnboarding(Boolean(status.needsOnboarding));
+      } catch (e) {
+        console.warn('Unable to determine onboarding status:', e);
+      }
+
       const [catalog, selections] = await Promise.all([
         getServicesCatalog(),
         getVendorSelectedServices(vId),
@@ -94,8 +105,15 @@ export default function VendorServices() {
         return;
       }
 
-      const editMode = Boolean(isPublished || onboardingCompleted);
-      window.location.href = editMode ? '/vendor/dashboard' : '/vendor/packages';
+      const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
+      const isOnboarding = modeParamOnboarding || Boolean(needsOnboarding);
+
+      if (isOnboarding) {
+        window.location.href = '/vendor/packages?mode=onboarding';
+      } else {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2500);
+      }
     } catch (err: any) {
       console.error('Error saving services:', err);
       setError(err.message || 'Failed to save services');
@@ -132,9 +150,11 @@ export default function VendorServices() {
     }
   }, []);
 
-  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
+  const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
+  const isOnboarding = modeParamOnboarding || Boolean(needsOnboarding);
+  const editMode = !isOnboarding;
   const backHref = editMode ? '/vendor/dashboard' : '/vendor/onboarding';
-  const primaryLabel = saving ? 'Saving...' : editMode ? 'Save' : 'Continue';
+  const primaryLabel = saving ? 'Saving...' : isOnboarding ? 'Save & Continue' : 'Save changes';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -194,6 +214,7 @@ export default function VendorServices() {
                 {primaryLabel}
               </button>
             </div>
+            {saved && <p className="text-sm text-green-600 mt-2">Saved</p>}
           </div>
         </div>
       </div>

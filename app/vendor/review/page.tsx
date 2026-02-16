@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { supabase } from '@/lib/supabaseClient';
+import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -172,6 +173,13 @@ export default function VendorReview() {
         setVendorId(v.id);
         setVendor(v);
 
+        try {
+          const status = await getVendorSetupStatus(supabase, v.id);
+          (window as any).__vendorNeedsOnboarding = status.needsOnboarding;
+        } catch (e) {
+          console.warn('Unable to determine onboarding status on review page:', e);
+        }
+
         // Fetch services (join to services catalog for name)
         const { data: vsData } = await supabase
           .from('vendor_services')
@@ -239,8 +247,12 @@ export default function VendorReview() {
       setForcedEdit(sp.get('mode') === 'edit');
     }
   }, []);
+  const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
+  const needsOnboarding = typeof window !== 'undefined' ? Boolean((window as any).__vendorNeedsOnboarding) : false;
+  const isOnboarding = modeParamOnboarding || needsOnboarding;
 
-  const editMode = Boolean(forcedEdit || vendor?.is_published || (vendor as any)?.onboarding_completed);
+  const editMode = Boolean((!isOnboarding && forcedEdit) || vendor?.is_published || (vendor as any)?.onboarding_completed);
+  const actionQuery = isOnboarding ? '?mode=onboarding' : '?mode=edit';
 
   /* ── Publish handler ────────────────────────────────────────── */
 
@@ -327,17 +339,17 @@ export default function VendorReview() {
           {!vendor?.is_published && (
             <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-2.5">
               <h2 className="text-sm font-bold text-gray-900 mb-1">Publish Checklist</h2>
-              <CheckItem ok={checks.businessName} label="Business name" href="/vendor/onboarding" />
-              <CheckItem ok={checks.services} label="At least 1 service selected" href="/vendor/services" />
-              <CheckItem ok={checks.packages} label="At least 1 package created" href="/vendor/packages" />
-              <CheckItem ok={checks.media} label="Logo, cover, or portfolio uploaded" href="/vendor/media" />
-              <CheckItem ok={checks.contact} label="Contact method available" href="/vendor/media" />
+              <CheckItem ok={checks.businessName} label="Business name" href={`/vendor/onboarding${actionQuery}`} />
+              <CheckItem ok={checks.services} label="At least 1 service selected" href={`/vendor/services${actionQuery}`} />
+              <CheckItem ok={checks.packages} label="At least 1 package created" href={`/vendor/packages${actionQuery}`} />
+              <CheckItem ok={checks.media} label="Logo, cover, or portfolio uploaded" href={`/vendor/media${actionQuery}`} />
+              <CheckItem ok={checks.contact} label="Contact method available" href={`/vendor/media${actionQuery}`} />
             </div>
           )}
 
           {/* ── Section 1: Business Information ──────────────── */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Business Information" href="/vendor/onboarding" />
+            <SectionHeader title="Business Information" href={`/vendor/onboarding${actionQuery}`} />
             <div className="space-y-2.5">
               <div>
                 <p className="text-xs font-medium text-gray-500">Business Name</p>
@@ -368,7 +380,7 @@ export default function VendorReview() {
 
           {/* ── Section 2: Services ──────────────────────────── */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Services Offered" href="/vendor/services" />
+            <SectionHeader title="Services Offered" href={`/vendor/services${actionQuery}`} />
             {services.length > 0 ? (
               <>
                 <div className="flex flex-wrap gap-1.5">
@@ -385,7 +397,7 @@ export default function VendorReview() {
 
           {/* ── Section 3: Packages & Pricing ────────────────── */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Packages & Pricing" href="/vendor/packages" />
+            <SectionHeader title="Packages & Pricing" href={`/vendor/packages${actionQuery}`} />
             {packages.length > 0 ? (
               <div className="space-y-3">
                 {packages.map((pkg) => (
@@ -428,7 +440,7 @@ export default function VendorReview() {
 
           {/* ── Section 4: Media ─────────────────────────────── */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Media & Portfolio" href="/vendor/media" />
+            <SectionHeader title="Media & Portfolio" href={`/vendor/media${actionQuery}`} />
             <div className="space-y-3">
               {/* Logo */}
               <div>
@@ -500,7 +512,7 @@ export default function VendorReview() {
 
           {/* ── Section 5: Contact & Social ───────────────────── */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Contact & Social" href="/vendor/media" />
+            <SectionHeader title="Contact & Social" href={`/vendor/media${actionQuery}`} />
             <div className="space-y-2.5">
               {/* Contact details */}
               {userEmail && (

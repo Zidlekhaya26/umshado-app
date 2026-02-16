@@ -339,14 +339,18 @@ export default function Marketplace() {
             </div>
           )}
 
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="p-4 bg-white/60 rounded-2xl">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {vendors.slice(0, displayedCount).map((vendor) => (
               <Link
                 key={vendor.id}
                 href={`/marketplace/vendor/${vendor.id}`}
-                className="block bg-white rounded-xl border-2 border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98] h-full"
+                className="relative block bg-white rounded-xl border border-transparent p-4 shadow-sm hover:shadow-lg hover:border-purple-200 transition-transform active:scale-[0.98] h-full"
               >
-                <div className="space-y-3 h-full flex flex-col justify-between">
+                <div className="relative space-y-3 h-full flex flex-col justify-between">
+                  <div className="absolute top-3 right-3">
+                    <VerifiedBadge verified={vendor.verified} />
+                  </div>
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -355,13 +359,13 @@ export default function Marketplace() {
                           <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl ?? null); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
-                            className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white"
+                            className="w-12 h-12 rounded-full overflow-hidden ring-1 ring-purple-50 flex items-center justify-center bg-white"
                             aria-label={`View ${vendor.name || 'vendor'} logo`}
                           >
                             <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-contain p-2" />
                           </button>
                         ) : (
-                          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
                             {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
                           </div>
                         )}
@@ -377,9 +381,7 @@ export default function Marketplace() {
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0 ml-3 self-start">
-                      <VerifiedBadge verified={vendor.verified} />
-                    </div>
+                    {/* verified badge moved to top-right for a cleaner header */}
                   </div>
 
                   {/* Location */}
@@ -447,6 +449,7 @@ export default function Marketplace() {
                 </div>
               </Link>
             ))}
+            </div>
           </div>
 
           {/* Load More Button */}
