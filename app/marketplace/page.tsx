@@ -94,6 +94,23 @@ export default function Marketplace() {
     setDisplayedCount(10);
   }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
 
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('');
+    setServiceFilter([]);
+    setSortBy('recommended');
+    setDisplayedCount(10);
+  };
+
+  const activeFilterCount = () => {
+    let c = 0;
+    if (searchQuery && searchQuery.trim() !== '') c += 1;
+    if (categoryFilter && categoryFilter !== '') c += 1;
+    c += serviceFilter.length || 0;
+    if (sortBy && sortBy !== 'recommended') c += 1;
+    return c;
+  };
+
   // When category changes, clear service filter chips (old selections may not apply)
   useEffect(() => {
     setServiceFilter([]);
@@ -323,25 +340,63 @@ export default function Marketplace() {
           displayedServices={displayedServices}
           serviceFilter={serviceFilter}
           toggleServiceFilter={toggleServiceFilter}
+          onClear={clearAllFilters}
+          activeCount={activeFilterCount()}
         />
 
         {/* Vendor Cards List - responsive grid */}
         <div className="flex-1 px-4 pb-28 overflow-y-auto">
-          <p className="text-xs font-medium text-gray-500 mb-2">
-            {loading ? 'Loading vendors...' : `${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}
-          </p>
+          <div className="mb-2">
+            {!loading ? (
+              <p className="text-xs font-medium text-gray-500">{`${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}</p>
+            ) : (
+              <p className="sr-only">Loading vendors</p>
+            )}
+          </div>
 
           {!loading && vendors.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="opacity-15 mb-4"><UmshadoIcon size={64} /></div>
               <p className="text-sm text-gray-500 font-medium">No vendors found</p>
               <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or check back soon</p>
+              <div className="mt-4 flex gap-2">
+                <button onClick={clearAllFilters} className="px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-semibold">Clear filters</button>
+              </div>
+              <div className="mt-4 flex gap-2 flex-wrap justify-center">
+                {Array.from(LOCKED_CATEGORIES).slice(0,6).map((cat) => (
+                  <button key={cat} onClick={() => setCategoryFilter(cat)} className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200">{cat}</button>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="p-4 bg-white/60 rounded-2xl">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {vendors.slice(0, displayedCount).map((vendor) => (
+          {loading ? (
+            <div className="p-4 bg-white/60 rounded-2xl">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm h-44">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gray-200" />
+                        <div className="w-40 h-4 bg-gray-200 rounded-md" />
+                      </div>
+                      <div className="w-12 h-4 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <div className="w-32 h-3 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <div className="w-16 h-6 bg-gray-200 rounded-md" />
+                      <div className="w-10 h-6 bg-gray-200 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-white/60 rounded-2xl">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {vendors.slice(0, displayedCount).map((vendor) => (
               <Link
                 key={vendor.id}
                 href={`/marketplace/vendor/${vendor.id}`}
@@ -451,6 +506,8 @@ export default function Marketplace() {
             ))}
             </div>
           </div>
+
+          )}
 
           {/* Load More Button */}
           {!loading && vendors.length > displayedCount && (

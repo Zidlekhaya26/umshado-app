@@ -12,6 +12,8 @@ interface Props {
   displayedServices: string[];
   serviceFilter: string[];
   toggleServiceFilter: (s: string) => void;
+  onClear?: () => void;
+  activeCount?: number;
 }
 
 export default function LuxuryFilters({
@@ -25,6 +27,8 @@ export default function LuxuryFilters({
   displayedServices,
   serviceFilter,
   toggleServiceFilter,
+  onClear,
+  activeCount = 0,
 }: Props) {
   return (
     <div className="sticky top-0 z-20 px-4 py-3 sm:px-4 sm:py-4 lg:px-6 bg-[#FBF6F0] border-b border-gray-100">
@@ -37,10 +41,20 @@ export default function LuxuryFilters({
               <h2 className="text-lg sm:text-[22px] font-extrabold tracking-tight text-[#2B1B1B]">
                 Marketplace
               </h2>
-              <p className="text-sm text-[#6B5A5A] mt-0.5">Discover exceptional wedding vendors</p>
+              <p className="text-sm text-[#6B5A6A] mt-0.5">Discover exceptional wedding vendors</p>
             </div>
-            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
-              <span className="text-xs font-semibold text-[#7B6A6A] uppercase tracking-wide">Filters</span>
+            <div className="hidden sm:flex items-center gap-3 flex-shrink-0">
+              <span className="text-xs font-semibold text-[#7B6A6A] uppercase tracking-wide">
+                Filters{activeCount > 0 ? ` (${activeCount})` : ''}
+              </span>
+              {activeCount > 0 && onClear && (
+                <button
+                  onClick={onClear}
+                  className="text-xs px-3 py-1 rounded-md bg-[#FFF6F8] border border-[#F3D7DB] text-[#7A1E3A] font-semibold hover:bg-[#FFEFF4]"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </div>
 
