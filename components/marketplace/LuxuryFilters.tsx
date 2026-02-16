@@ -120,7 +120,7 @@ export default function LuxuryFilters({
                       "border border-[#EFE2E2] bg-white text-[#4A3A3A]",
                       "shadow-[0_2px_10px_rgba(0,0,0,0.03)]",
                       selected
-                        ? "shadow-[0_10px_20px_rgba(122,30,58,0.18)]"
+                        ? "bg-[#7A1E3A] text-white border-[#7A1E3A] shadow-[0_10px_20px_rgba(122,30,58,0.18)]"
                         : "hover:border-[#D9BABA] hover:bg-[#FFF9F9]",
                     ].join(" ")}
                   >
