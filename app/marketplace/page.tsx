@@ -316,7 +316,7 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-4">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-2 sm:px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
@@ -345,7 +345,7 @@ export default function Marketplace() {
         />
 
         {/* Vendor Cards List - responsive grid */}
-        <div className="flex-1 px-4 pb-28 overflow-y-auto">
+        <div className="flex-1 px-2 sm:px-4 pb-28 overflow-y-auto">
           <div className="mb-2">
             {!loading ? (
               <p className="text-xs font-medium text-gray-500">{`${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}</p>
@@ -401,11 +401,11 @@ export default function Marketplace() {
                 key={vendor.id}
                 href={`/marketplace/vendor/${vendor.id}`}
                 className={[
-                  "block rounded-xl p-4 transition-all active:scale-[0.98] h-full",
+                  "block bg-white rounded-xl p-3 sm:p-4 transition-all active:scale-[0.98] h-full w-full",
                   vendor.score > 200
-                    ? "bg-white border-2 border-purple-200 shadow-md"
-                    : "bg-white border-2 border-gray-100 shadow-sm",
-                  "hover:shadow-lg hover:border-purple-300 relative"
+                    ? "border-2 border-purple-200 shadow-md"
+                    : "border-2 border-gray-100 shadow-sm",
+                  "hover:shadow-md hover:border-purple-300 relative"
                 ].join(" ")}
               >
                 <div className="space-y-3 h-full flex flex-col justify-between relative">
