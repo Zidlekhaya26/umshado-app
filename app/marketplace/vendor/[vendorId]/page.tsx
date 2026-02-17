@@ -116,6 +116,22 @@ export default function VendorProfile() {
     }
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && initialPinchDistance.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const scale = Math.min(3, Math.max(1, zoomScale * (dist / (initialPinchDistance.current || 1))));
+      setZoomScale(scale);
+    } else if (e.touches.length === 1 && zoomScale > 1) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - (touchStartX.current ?? touch.clientX);
+      const base = lastPan.current || { x: 0, y: 0 };
+      setPan({ x: base.x + dx, y: base.y });
+    }
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     // swipe detection when not zoomed
     if (zoomScale <= 1 && e.changedTouches.length === 1 && touchStartX.current != null) {
