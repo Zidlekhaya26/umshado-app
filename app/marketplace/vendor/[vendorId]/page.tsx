@@ -107,28 +107,9 @@ export default function VendorProfile() {
       initialPinchDistance.current = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-      );
-    }
-    // double-tap to reset/zoom
-    const now = Date.now();
-    if (lastTap.current && now - lastTap.current < 300) {
-      // double tap
-      setZoomScale(s => s > 1 ? 1 : 2);
-      setPan({ x: 0, y: 0 });
-      lastTap.current = null;
-    } else {
-      lastTap.current = now;
-    }
-  };
+              </div>
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length === 2 && initialPinchDistance.current) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      const scale = Math.min(3, Math.max(1, (zoomScale * (dist / initialPinchDistance.current))));
-      setZoomScale(scale);
+            </div>
     } else if (e.touches.length === 1 && zoomScale > 1) {
       const touch = e.touches[0];
       const dx = touch.clientX - (touchStartX.current ?? touch.clientX);
@@ -475,6 +456,17 @@ export default function VendorProfile() {
                   </svg>
                   <span>{vendor.location}</span>
                 </div>
+                {!hideCTAs && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={handleToggleSave}
+                    className="px-4 py-2 rounded-xl border border-purple-300 text-purple-700 font-semibold text-sm bg-white hover:bg-purple-50 active:scale-[0.98] transition"
+                  >
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                </div>
+                )}
               </div>
             </div>
           </div>
