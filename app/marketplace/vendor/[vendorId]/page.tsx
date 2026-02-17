@@ -43,6 +43,7 @@ interface VendorProfile {
   packages: Package[];
   portfolioImages: number;
   portfolioUrls: string[];
+  coverUrl?: string | null;
   contact: {
     whatsapp: string;
     phone: string;
@@ -178,7 +179,7 @@ export default function VendorProfile() {
       try {
         const { data, error } = await supabase
           .from('vendors')
-          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, description, portfolio_images, portfolio_urls, contact, social_links')
+          .select('id, business_name, category, location, rating, review_count, verified, top_rated, about, description, cover_url, portfolio_images, portfolio_urls, contact, social_links')
           .eq('id', vendorId)
           .maybeSingle();
 
@@ -268,6 +269,7 @@ export default function VendorProfile() {
             packages: vendorPackages,
             portfolioImages: data.portfolio_images || 0,
             portfolioUrls: data.portfolio_urls || [],
+            coverUrl: (data as any).cover_url ?? null,
               contact: data.contact || { whatsapp: '', phone: '', preferredContact: '' },
               socialLinks: data.social_links || {}
           });
@@ -411,6 +413,30 @@ export default function VendorProfile() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto pb-28">
+          {/* Hero Cover */}
+          <div className="px-4 pt-4">
+            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
+              {(() => {
+                const hero = vendor.coverUrl || vendor.portfolioUrls?.[0] || null;
+                if (!hero) {
+                  return (
+                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
+                  );
+                }
+                return (
+                  <img
+                    src={hero}
+                    alt={`${vendor.name} cover`}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                );
+              })()}
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
+            </div>
+          </div>
+
           {/* Vendor Info Card */}
           <div className="px-4 py-5 border-b border-gray-200">
             <div className="flex items-start justify-between gap-3 mb-3">
@@ -452,6 +478,125 @@ export default function VendorProfile() {
               </div>
             </div>
           </div>
+
+          {/* Portfolio Section */}
+          <div className="px-4 py-5 border-b border-gray-200">
+            <h2 className="text-base font-bold text-gray-900 mb-3">Portfolio</h2>
+            {/* Video showreel (if provided) */}
+            {(() => {
+              const videoUrl = vendor.socialLinks?.youtube || vendor.socialLinks?.video || '';
+              if (!videoUrl) return null;
+              const extractYouTubeId = (url: string): string | null => {
+                const patterns = [/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/];
+                for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
+                return null;
+              };
+              const ytId = extractYouTubeId(videoUrl.trim());
+              if (ytId) {
+                return (
+                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                      <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${ytId}`} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    </div>
+                  </div>
+                );
+              }
+              // mp4 or other direct video
+              if (/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl.trim())) {
+                return (
+                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <video controls playsInline className="w-full h-auto max-h-[60vh] bg-black"> 
+                      <source src={videoUrl.trim()} />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
+            {vendor.portfolioUrls.length > 0 ? (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {vendor.portfolioUrls.slice(0, 9).map((url, index) => (
+                    <button
+                      key={index}
+                      onClick={() => { setLightboxIndex(index); setLightboxOpen(true); }}
+                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 p-0"
+                      type="button"
+                    >
+                      <img
+                        src={url}
+                        alt={`Portfolio ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
+                    </button>
+                  ))}
+                </div>
+                {vendor.portfolioUrls.length > 9 && (
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    +{vendor.portfolioUrls.length - 9} more images
+                  </p>
+                )}
+              </>
+            ) : vendor.portfolioImages > 0 ? (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({ length: Math.min(vendor.portfolioImages, 9) }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="aspect-square rounded-lg bg-gray-100 border-2 border-gray-200 flex items-center justify-center"
+                    >
+                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
+                  ))}
+                </div>
+                {vendor.portfolioImages > 9 && (
+                  <p className="text-xs text-gray-500 text-center mt-3">
+                    +{vendor.portfolioImages - 9} more images
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-gray-500 italic">No portfolio images yet</p>
+            )}
+          </div>
+
+          {/* Lightbox modal */}
+          {lightboxOpen && (
+            <div
+              className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
+              onTouchStart={(e) => handleTouchStart(e)}
+              onTouchMove={(e) => handleTouchMove(e)}
+              onTouchEnd={(e) => handleTouchEnd(e)}
+            >
+              <button aria-label="Close" onClick={() => { setLightboxOpen(false); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute top-4 right-4 p-3 text-white bg-black/30 rounded-full">✕</button>
+              <div className="absolute left-4 top-4 flex gap-2">
+                <button aria-label="Share" onClick={() => shareCurrentImage()} className="p-2 text-white bg-black/30 rounded-full">⤴</button>
+                <a aria-label="Download" href={vendor.portfolioUrls[lightboxIndex]} download className="p-2 text-white bg-black/30 rounded-full">↓</a>
+              </div>
+              <button aria-label="Prev" onClick={() => { setLightboxIndex(i => Math.max(0, i - 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">‹</button>
+              <div className="max-h-[90vh] max-w-[95vw] flex items-center justify-center">
+                <img
+                  src={vendor.portfolioUrls[lightboxIndex]}
+                  alt={`Full ${lightboxIndex + 1}`}
+                  className="object-contain touch-none"
+                  style={{
+                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomScale})`,
+                    transition: 'transform 0ms'
+                  }}
+                />
+              </div>
+              <button aria-label="Next" onClick={() => { setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">›</button>
+
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white text-sm">
+                <div className="text-center">Image {lightboxIndex + 1} of {vendor.portfolioUrls.length}</div>
+              </div>
+            </div>
+          )}
 
           {/* About Section */}
           <div className="px-4 py-5 border-b border-gray-200">
@@ -600,124 +745,7 @@ export default function VendorProfile() {
             )}
           </div>
 
-          {/* Portfolio Section */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <h2 className="text-base font-bold text-gray-900 mb-3">Portfolio</h2>
-            {/* Video showreel (if provided) */}
-            {(() => {
-              const videoUrl = vendor.socialLinks?.youtube || vendor.socialLinks?.video || '';
-              if (!videoUrl) return null;
-              const extractYouTubeId = (url: string): string | null => {
-                const patterns = [/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/, /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/, /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/];
-                for (const p of patterns) { const m = url.match(p); if (m) return m[1]; }
-                return null;
-              };
-              const ytId = extractYouTubeId(videoUrl.trim());
-              if (ytId) {
-                return (
-                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
-                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                      <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${ytId}`} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                    </div>
-                  </div>
-                );
-              }
-              // mp4 or other direct video
-              if (/\.(mp4|webm|ogg)(\?|$)/i.test(videoUrl.trim())) {
-                return (
-                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
-                    <video controls playsInline className="w-full h-auto max-h-[60vh] bg-black"> 
-                      <source src={videoUrl.trim()} />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-
-            {vendor.portfolioUrls.length > 0 ? (
-              <>
-                <div className="grid grid-cols-3 gap-2">
-                  {vendor.portfolioUrls.slice(0, 9).map((url, index) => (
-                    <button
-                      key={index}
-                      onClick={() => { setLightboxIndex(index); setLightboxOpen(true); }}
-                      className="aspect-square rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 p-0"
-                      type="button"
-                    >
-                      <img
-                        src={url}
-                        alt={`Portfolio ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    </button>
-                  ))}
-                </div>
-                {vendor.portfolioUrls.length > 9 && (
-                  <p className="text-xs text-gray-500 text-center mt-3">
-                    +{vendor.portfolioUrls.length - 9} more images
-                  </p>
-                )}
-              </>
-            ) : vendor.portfolioImages > 0 ? (
-              <>
-                <div className="grid grid-cols-3 gap-2">
-                  {Array.from({ length: Math.min(vendor.portfolioImages, 9) }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="aspect-square rounded-lg bg-gray-100 border-2 border-gray-200 flex items-center justify-center"
-                    >
-                      <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                  ))}
-                </div>
-                {vendor.portfolioImages > 9 && (
-                  <p className="text-xs text-gray-500 text-center mt-3">
-                    +{vendor.portfolioImages - 9} more images
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-gray-500 italic">No portfolio images yet</p>
-            )}
-          </div>
-
-          {/* Lightbox modal */}
-          {lightboxOpen && (
-            <div
-              className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
-              onTouchStart={(e) => handleTouchStart(e)}
-              onTouchMove={(e) => handleTouchMove(e)}
-              onTouchEnd={(e) => handleTouchEnd(e)}
-            >
-              <button aria-label="Close" onClick={() => { setLightboxOpen(false); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute top-4 right-4 p-3 text-white bg-black/30 rounded-full">✕</button>
-              <div className="absolute left-4 top-4 flex gap-2">
-                <button aria-label="Share" onClick={() => shareCurrentImage()} className="p-2 text-white bg-black/30 rounded-full">⤴</button>
-                <a aria-label="Download" href={vendor.portfolioUrls[lightboxIndex]} download className="p-2 text-white bg-black/30 rounded-full">↓</a>
-              </div>
-              <button aria-label="Prev" onClick={() => { setLightboxIndex(i => Math.max(0, i - 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute left-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">‹</button>
-              <div className="max-h-[90vh] max-w-[95vw] flex items-center justify-center">
-                <img
-                  src={vendor.portfolioUrls[lightboxIndex]}
-                  alt={`Full ${lightboxIndex + 1}`}
-                  className="object-contain touch-none"
-                  style={{
-                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomScale})`,
-                    transition: 'transform 0ms'
-                  }}
-                />
-              </div>
-              <button aria-label="Next" onClick={() => { setLightboxIndex(i => Math.min((vendor.portfolioUrls||[]).length - 1, i + 1)); setZoomScale(1); setPan({ x: 0, y: 0 }); }} className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-white bg-black/30 rounded-full">›</button>
-
-              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white text-sm">
-                <div className="text-center">Image {lightboxIndex + 1} of {vendor.portfolioUrls.length}</div>
-              </div>
-            </div>
-          )}
+          
 
           {/* Contact Section */}
           <div className="px-4 py-5">
