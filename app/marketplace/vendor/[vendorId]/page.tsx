@@ -385,24 +385,7 @@ export default function VendorProfile() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-lg font-semibold text-gray-900">{vendor.rating}</div>
-                <div className="text-xs text-gray-500">{vendor.reviewCount} reviews</div>
-              </div>
-              {!hideCTAs && (
-                <button
-                  onClick={handleToggleSave}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                    isSaved
-                      ? 'bg-purple-600 text-white border-purple-600'
-                      : 'bg-white text-purple-700 border-purple-200 hover:bg-purple-50'
-                  }`}
-                >
-                  {isSaved ? 'Saved' : 'Save'}
-                </button>
-              )}
-            </div>
+            {/* Right-side header actions removed (rating/reviews + save moved below location) */}
           </div>
         </div>
 
