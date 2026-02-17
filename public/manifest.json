@@ -1,0 +1,26 @@
+{
+  "name": "uMshado",
+  "short_name": "uMshado",
+  "display": "standalone",
+  "start_url": "/",
+  "background_color": "#F7F0EA",
+  "theme_color": "#7B1E3A",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

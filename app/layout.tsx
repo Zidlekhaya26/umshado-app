@@ -35,6 +35,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="uMshado" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         {/* ✅ No centering, no max-width here */}
         <div className="min-h-screen w-full">
