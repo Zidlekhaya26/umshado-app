@@ -394,13 +394,20 @@ export default function ChatThread() {
         }),
       });
 
-      const result = await res.json();
-      if (!res.ok) { alert(result.error || 'Failed to send final quote.'); return; }
+      let result: any = null;
+      try { result = await res.json(); } catch { result = null; }
 
-      setQuote(result.quote as Quote);
-      setShowFinalQuoteModal(false);
-      setFinalPrice('');
-      setFinalMessage('');
+      if (!res.ok) { alert((result && result.error) || 'Failed to send final quote.'); return; }
+
+      if (result && result.quote) {
+        setQuote(result.quote as Quote);
+        setShowFinalQuoteModal(false);
+        setFinalPrice('');
+        setFinalMessage('');
+      } else {
+        // Defensive: server responded OK but no body
+        alert('Quote updated, but server returned no data.');
+      }
     } catch (err) { console.error(err); alert('Failed to send final quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
@@ -422,10 +429,16 @@ export default function ChatThread() {
         }),
       });
 
-      const result = await res.json();
-      if (!res.ok) { alert(result.error || 'Failed to update quote status.'); return; }
+      let result: any = null;
+      try { result = await res.json(); } catch { result = null; }
 
-      setQuote(result.quote as Quote);
+      if (!res.ok) { alert((result && result.error) || 'Failed to update quote status.'); return; }
+
+      if (result && result.quote) {
+        setQuote(result.quote as Quote);
+      } else {
+        alert('Quote updated, but server returned no data.');
+      }
     } catch (err) { console.error(err); alert('Failed to update quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
