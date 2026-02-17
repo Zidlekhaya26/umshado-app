@@ -400,9 +400,20 @@ export default function Marketplace() {
               <Link
                 key={vendor.id}
                 href={`/marketplace/vendor/${vendor.id}`}
-                className="relative block bg-white rounded-xl border border-transparent p-4 shadow-sm hover:shadow-lg hover:border-purple-200 transition-transform active:scale-[0.98] h-full"
+                className={[
+                  "block rounded-xl p-4 transition-all active:scale-[0.98] h-full",
+                  vendor.score > 200
+                    ? "bg-white border-2 border-purple-200 shadow-md"
+                    : "bg-white border-2 border-gray-100 shadow-sm",
+                  "hover:shadow-lg hover:border-purple-300 relative"
+                ].join(" ")}
               >
-                <div className="relative space-y-3 h-full flex flex-col justify-between">
+                <div className="space-y-3 h-full flex flex-col justify-between relative">
+                  {vendor.score > 240 && (
+                    <div className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full bg-purple-600 text-white shadow">
+                      Featured
+                    </div>
+                  )}
                   <div className="absolute top-3 right-3">
                     <VerifiedBadge verified={vendor.verified} />
                   </div>
@@ -428,9 +439,17 @@ export default function Marketplace() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-                            {vendor.name}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 w-full">
+                            <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+                              {vendor.name}
+                            </h3>
+
+                            {sortBy === "recommended" && vendor.score > 120 && (
+                              <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
+                                ⭐ Recommended
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                       </div>
