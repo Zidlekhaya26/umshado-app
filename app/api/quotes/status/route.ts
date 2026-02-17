@@ -17,50 +17,51 @@ import { notifyUsers } from '@/lib/server/notify';
  * }
  */
 export async function POST(req: NextRequest) {
-  // --- Auth ---
-  const authHeader = req.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const token = authHeader.slice(7);
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-  const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-    headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
-  });
-
-  if (!userRes.ok) {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-  }
-
-  const authUser = await userRes.json();
-  const userId = authUser?.id;
-  if (!userId) {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-  }
-
-  // --- Body ---
-  let body: any;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+    // --- Auth ---
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const { quoteId, status, vendorFinalPrice, vendorMessage, conversationId } = body;
+    const token = authHeader.slice(7);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-  if (!quoteId || !status || !conversationId) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  }
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${token}`, apikey: supabaseAnonKey },
+    });
 
-  const validStatuses = ['negotiating', 'accepted', 'declined'];
-  if (!validStatuses.includes(status)) {
-    return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
-  }
+    if (!userRes.ok) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
 
-  try {
+    const authUser = await userRes.json();
+    const userId = authUser?.id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+    }
+
+    // --- Body ---
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
+
+    const { quoteId, status, vendorFinalPrice, vendorMessage, conversationId } = body;
+
+    if (!quoteId || !status || !conversationId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const validStatuses = ['negotiating', 'accepted', 'declined'];
+    if (!validStatuses.includes(status)) {
+      return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+    }
+
+    const supabase = createServiceClient();
     const supabase = createServiceClient();
     // 1. Fetch current quote to verify ownership
     const { data: existingQuote, error: fetchErr } = await supabase
