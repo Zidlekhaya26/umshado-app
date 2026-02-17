@@ -60,9 +60,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
   }
 
-  const supabase = createServiceClient();
-
   try {
+    const supabase = createServiceClient();
     // 1. Fetch current quote to verify ownership
     const { data: existingQuote, error: fetchErr } = await supabase
       .from('quotes')
