@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #fbf6f0;
+  --bg: #F7F0EA;
   --card: #ffffff;
   --primary: #6b1f3a;
   --primary-foreground: #ffffff;
@@ -26,7 +26,7 @@
   --font-mono: var(--font-geist-mono);
 
   /* Override gray palette for warm brand tones & strong readability */
-  --color-gray-50: #fbf6f0;
+  --color-gray-50: #F7F0EA;
   --color-gray-100: #f3ebe3;
   --color-gray-200: #eadfd6;
   --color-gray-300: #b5a99e;

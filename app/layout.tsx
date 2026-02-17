@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "uMshado",
   description: "Plan your dream wedding with uMshado",
+  themeColor: '#F7F0EA'
 };
 
 // ✅ This helps iPhone Safari render at true device width
@@ -31,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         {/* ✅ No centering, no max-width here */}
         <div className="min-h-screen w-full">
           {children}
