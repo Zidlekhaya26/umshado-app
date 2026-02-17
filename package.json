@@ -6,9 +6,14 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "assets:generate": "capacitor-assets generate --iconBackgroundColor \"#F8F3EE\"",
+    "cap:sync": "npx cap sync"
   },
   "dependencies": {
+    "@capacitor/android": "^8.1.0",
+    "@capacitor/cli": "^8.1.0",
+    "@capacitor/core": "^8.1.0",
     "@supabase/supabase-js": "^2.93.3",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
@@ -23,6 +28,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "@capacitor/assets": "^1.0.0",
     "typescript": "^5"
   }
 }
