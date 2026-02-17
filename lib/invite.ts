@@ -1,18 +1,27 @@
 import { formatWhatsappLink } from './whatsapp';
+import { getPublicBaseUrl } from './publicUrl';
 
-export function generateWhatsappInviteLink(opts: { phone?: string | null; guestId: string; coupleName?: string | null; }) {
-  const { phone, guestId, coupleName } = opts;
-  const base = (process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000').replace(/\/$/, '');
-  const rsvp = `${base}/rsvp/${guestId}`;
+export function generateWhatsappInviteLink(opts: {
+  phone?: string | null;
+  guestId: string;
+  coupleName?: string | null;
+  guestName?: string | null;
+  token?: string | null;
+}) {
+  const { phone, guestId, coupleName, guestName, token } = opts;
+  const base = getPublicBaseUrl();
+  const rsvp = `${base}/rsvp/${guestId}${token ? `?t=${encodeURIComponent(token)}` : ''}`;
 
-  // Fallback plain link if phone not available
-  const message = `You're invited! Please RSVP here: ${rsvp}`;
+  // Prefer an explicit couple name when available. If guestName is provided,
+  // address them directly. Use a celebratory emoji and clear RSVP link.
+  const host = coupleName ? coupleName : 'You';
+  const greeting = guestName ? `Hi ${guestName},\n\n` : '';
+  const message = `${greeting}${host} invite you to their wedding 💍\nPlease RSVP here:\n${rsvp}`.trim();
 
-  if (!phone) return `${rsvp}`;
+  if (!phone) return rsvp;
 
   const wa = formatWhatsappLink(phone);
-  if (!wa) return `${rsvp}`;
+  if (!wa) return rsvp;
 
-  const encoded = encodeURIComponent(`${coupleName ? `${coupleName} invites you.` : ''} ${message}`.trim());
-  return `${wa}?text=${encoded}`;
+  return `${wa}?text=${encodeURIComponent(message)}`;
 }

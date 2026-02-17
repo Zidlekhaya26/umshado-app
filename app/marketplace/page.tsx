@@ -94,6 +94,23 @@ export default function Marketplace() {
     setDisplayedCount(10);
   }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
 
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setCategoryFilter('');
+    setServiceFilter([]);
+    setSortBy('recommended');
+    setDisplayedCount(10);
+  };
+
+  const activeFilterCount = () => {
+    let c = 0;
+    if (searchQuery && searchQuery.trim() !== '') c += 1;
+    if (categoryFilter && categoryFilter !== '') c += 1;
+    c += serviceFilter.length || 0;
+    if (sortBy && sortBy !== 'recommended') c += 1;
+    return c;
+  };
+
   // When category changes, clear service filter chips (old selections may not apply)
   useEffect(() => {
     setServiceFilter([]);
@@ -299,7 +316,7 @@ export default function Marketplace() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-4">
+      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-2 sm:px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
@@ -323,30 +340,83 @@ export default function Marketplace() {
           displayedServices={displayedServices}
           serviceFilter={serviceFilter}
           toggleServiceFilter={toggleServiceFilter}
+          onClear={clearAllFilters}
+          activeCount={activeFilterCount()}
         />
 
         {/* Vendor Cards List - responsive grid */}
-        <div className="flex-1 px-4 pb-28 overflow-y-auto">
-          <p className="text-xs font-medium text-gray-500 mb-2">
-            {loading ? 'Loading vendors...' : `${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}
-          </p>
+        <div className="flex-1 px-2 sm:px-4 pb-28 overflow-y-auto">
+          <div className="mb-2">
+            {!loading ? (
+              <p className="text-xs font-medium text-gray-500">{`${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}</p>
+            ) : (
+              <p className="sr-only">Loading vendors</p>
+            )}
+          </div>
 
           {!loading && vendors.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="opacity-15 mb-4"><UmshadoIcon size={64} /></div>
               <p className="text-sm text-gray-500 font-medium">No vendors found</p>
               <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or check back soon</p>
+              <div className="mt-4 flex gap-2">
+                <button onClick={clearAllFilters} className="px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-semibold">Clear filters</button>
+              </div>
+              <div className="mt-4 flex gap-2 flex-wrap justify-center">
+                {Array.from(LOCKED_CATEGORIES).slice(0,6).map((cat) => (
+                  <button key={cat} onClick={() => setCategoryFilter(cat)} className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200">{cat}</button>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {vendors.slice(0, displayedCount).map((vendor) => (
+          {loading ? (
+            <div className="p-4 bg-white/60 rounded-2xl">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm h-44">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gray-200" />
+                        <div className="w-40 h-4 bg-gray-200 rounded-md" />
+                      </div>
+                      <div className="w-12 h-4 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <div className="w-32 h-3 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <div className="w-16 h-6 bg-gray-200 rounded-md" />
+                      <div className="w-10 h-6 bg-gray-200 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 bg-white/60 rounded-2xl">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+              {vendors.slice(0, displayedCount).map((vendor) => (
               <Link
                 key={vendor.id}
                 href={`/marketplace/vendor/${vendor.id}`}
-                className="block bg-white rounded-xl border-2 border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-purple-300 transition-all active:scale-[0.98] h-full"
+                className={[
+                  "block bg-white rounded-xl p-3 sm:p-4 transition-all active:scale-[0.98] h-full w-full",
+                  vendor.score > 200
+                    ? "border-2 border-purple-200 shadow-md"
+                    : "border-2 border-gray-100 shadow-sm",
+                  "hover:shadow-md hover:border-purple-300 relative"
+                ].join(" ")}
               >
-                <div className="space-y-3 h-full flex flex-col justify-between">
+                <div className="space-y-3 h-full flex flex-col justify-between relative">
+                  {vendor.score > 240 && (
+                    <div className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full bg-purple-600 text-white shadow">
+                      Featured
+                    </div>
+                  )}
+                  <div className="absolute top-3 right-3">
+                    <VerifiedBadge verified={vendor.verified} />
+                  </div>
                   {/* Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
@@ -355,13 +425,13 @@ export default function Marketplace() {
                           <button
                             type="button"
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl ?? null); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
-                            className="w-11 h-11 rounded-full overflow-hidden border border-gray-100 flex items-center justify-center bg-white"
+                            className="w-12 h-12 rounded-full overflow-hidden ring-1 ring-purple-50 flex items-center justify-center bg-white"
                             aria-label={`View ${vendor.name || 'vendor'} logo`}
                           >
                             <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-contain p-2" />
                           </button>
                         ) : (
-                          <div className="w-11 h-11 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
+                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
                             {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
                           </div>
                         )}
@@ -369,17 +439,23 @@ export default function Marketplace() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-                            {vendor.name}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2 w-full">
+                            <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
+                              {vendor.name}
+                            </h3>
+
+                            {sortBy === "recommended" && vendor.score > 120 && (
+                              <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
+                                ⭐ Recommended
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0 ml-3 self-start">
-                      <VerifiedBadge verified={vendor.verified} />
-                    </div>
+                    {/* verified badge moved to top-right for a cleaner header */}
                   </div>
 
                   {/* Location */}
@@ -447,7 +523,10 @@ export default function Marketplace() {
                 </div>
               </Link>
             ))}
+            </div>
           </div>
+
+          )}
 
           {/* Load More Button */}
           {!loading && vendors.length > displayedCount && (

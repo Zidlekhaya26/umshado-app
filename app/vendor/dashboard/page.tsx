@@ -5,6 +5,7 @@ import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
 /* ------------------------------------------------------------------ */
@@ -34,6 +35,7 @@ interface Quote {
   created_at: string;
   couple_id: string;
   couple_name: string;
+  couple_avatar?: string | null;
 }
 
 interface Metrics {
@@ -61,6 +63,7 @@ export default function VendorDashboard() {
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     loadDashboard();
@@ -85,6 +88,14 @@ export default function VendorDashboard() {
 
       if (!v) { setLoading(false); return; }
       setVendor(v);
+
+      // determine onboarding status for this vendor
+      try {
+        const status = await getVendorSetupStatus(supabase, v.id);
+        setNeedsOnboarding(Boolean(status.needsOnboarding));
+      } catch (e) {
+        console.warn('Unable to determine vendor onboarding status:', e);
+      }
 
       // Parallel data fetching
       const vendorId = v.id;
@@ -120,8 +131,13 @@ export default function VendorDashboard() {
       // Add couple names to quotes
       const addCoupleNames = async (rows: any[]): Promise<Quote[]> => {
         return Promise.all((rows || []).map(async (q: any) => {
+          // Prefer couples table which holds partner_name + avatar_url
+          const { data: c } = await supabase.from('couples').select('partner_name, avatar_url').eq('id', q.couple_id).maybeSingle();
+          if (c && (c.partner_name || c.avatar_url)) {
+            return { ...q, couple_name: c.partner_name || 'Couple', couple_avatar: c.avatar_url || null } as Quote;
+          }
           const { data: p } = await supabase.from('profiles').select('full_name').eq('id', q.couple_id).maybeSingle();
-          return { ...q, couple_name: p?.full_name || 'Couple' } as Quote;
+          return { ...q, couple_name: p?.full_name || 'Couple', couple_avatar: null } as Quote;
         }));
       };
 
@@ -384,7 +400,16 @@ export default function VendorDashboard() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="text-xs font-mono text-purple-600 font-semibold">{quote.quote_ref}</p>
-                        <p className="text-sm font-bold text-gray-900 mt-1">{quote.couple_name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          {quote.couple_avatar ? (
+                            <img src={quote.couple_avatar} alt={quote.couple_name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                              {String(quote.couple_name || 'C').split(' ').map(s => s.charAt(0)).slice(0,2).join('').toUpperCase()}
+                            </div>
+                          )}
+                          <p className="text-sm font-bold text-gray-900">{quote.couple_name}</p>
+                        </div>
                       </div>
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-semibold rounded-md">Pending</span>
                     </div>
@@ -424,7 +449,16 @@ export default function VendorDashboard() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <p className="text-xs font-mono text-blue-600 font-semibold">{quote.quote_ref}</p>
-                        <p className="text-sm font-bold text-gray-900 mt-1">{quote.couple_name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          {quote.couple_avatar ? (
+                            <img src={quote.couple_avatar} alt={quote.couple_name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                              {String(quote.couple_name || 'C').split(' ').map(s => s.charAt(0)).slice(0,2).join('').toUpperCase()}
+                            </div>
+                          )}
+                          <p className="text-sm font-bold text-gray-900">{quote.couple_name}</p>
+                        </div>
                       </div>
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-md">Negotiating</span>
                     </div>
@@ -491,6 +525,18 @@ export default function VendorDashboard() {
           <div>
             <h2 className="text-base font-semibold text-gray-900 mb-3">Quick Actions</h2>
             <div className="space-y-2.5">
+              {needsOnboarding && (
+                <Link
+                  href="/vendor/services?mode=onboarding"
+                  className="w-full px-4 py-3.5 bg-yellow-50 border-2 border-yellow-200 text-yellow-900 rounded-xl font-semibold text-base text-left hover:bg-yellow-100 hover:border-yellow-300 transition-colors flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-800">⚠️</div>
+                    <span>Complete onboarding</span>
+                  </div>
+                  <svg className="w-5 h-5 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </Link>
+              )}
               {vendor?.is_published && (
                 <Link
                   href={`/marketplace/vendor/${vendor.id}?preview=1`}

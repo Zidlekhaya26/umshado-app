@@ -379,29 +379,69 @@ export default function ChatThread() {
 
     setIsUpdatingQuote(true);
     try {
-      const token = await getAccessToken();
-      if (!token) { alert('Please sign in again.'); return; }
+      // Log the quote object for debugging — ensure it's the DB row
+      // eslint-disable-next-line no-console
+      console.log('Quote object being used:', quote);
+
+      const isUuidLocal = (v: any) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+
+      const payload: any = {
+        status: 'negotiating',
+        finalPrice: priceValue,
+        message: finalMessage || '',
+      };
+
+      if (quote && isUuidLocal((quote as any).id)) {
+        payload.quoteId = (quote as any).id;
+      } else if (quote && ((quote as any).quote_ref || (quote as any).quoteRef) && (quote as any).vendor_id) {
+        payload.quoteRef = (quote as any).quote_ref || (quote as any).quoteRef;
+        payload.vendorId = (quote as any).vendor_id;
+      } else {
+        alert('Quote data not loaded. Please refresh.');
+        return;
+      }
+
+      // Log payload for verification
+      // eslint-disable-next-line no-console
+      console.log('Sending quote status payload', payload);
+
+      const { data: sessionData, error: sessErr } = await supabase.auth.getSession();
+      if (sessErr || !sessionData?.session?.access_token) {
+        alert('You are not logged in. Please sign in again.');
+        return;
+      }
 
       const res = await fetch('/api/quotes/status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          quoteId: quote.id,
-          status: 'negotiating',
-          vendorFinalPrice: priceValue,
-          vendorMessage: finalMessage || null,
-          conversationId,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-      const result = await res.json();
-      if (!res.ok) { alert(result.error || 'Failed to send final quote.'); return; }
+      const data = await res.json().catch(() => null);
 
-      setQuote(result.quote as Quote);
+      if (!res.ok || !data?.success) {
+        alert(data?.error || 'Failed to send final quote.');
+        return;
+      }
+
+      if (!data?.quote) {
+        alert('Quote updated, but server returned no data.');
+        setShowFinalQuoteModal(false);
+        setFinalPrice('');
+        setFinalMessage('');
+        return;
+      }
+
+      // Update UI state from server
+      setQuote(data.quote as Quote);
+      alert('Final quote sent successfully ✅');
       setShowFinalQuoteModal(false);
       setFinalPrice('');
       setFinalMessage('');
-    } catch (err) { console.error(err); alert('Failed to send final quote.'); } finally { setIsUpdatingQuote(false); }
+    } catch (e) { console.error('handleSendFinalQuote error', e); alert('Network/server error sending quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
   /* ── Couple accept / decline quote — via API route ──────── */
@@ -417,15 +457,23 @@ export default function ChatThread() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           quoteId: quote.id,
+          quoteRef: (quote as any)?.quote_ref || (quote as any)?.quoteRef || null,
           status: decision,
           conversationId,
         }),
       });
 
-      const result = await res.json();
-      if (!res.ok) { alert(result.error || 'Failed to update quote status.'); return; }
+      let result: any = null;
+      try { result = await res.json(); } catch { result = null; }
 
-      setQuote(result.quote as Quote);
+      if (!res.ok || (result && result.success === false)) {
+        alert((result && result.error) || 'Failed to update quote status.');
+        return;
+      }
+
+      if (result && result.quote) {
+        setQuote(result.quote as Quote);
+      }
     } catch (err) { console.error(err); alert('Failed to update quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
@@ -540,7 +588,7 @@ export default function ChatThread() {
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-xs font-semibold text-gray-500">Quote #{quote.quote_ref}</div>
-                  <div className="text-sm font-bold text-gray-900">Status: {quote.status}</div>
+                  <div className="text-sm font-bold text-gray-900">Status: {quote.status === 'negotiating' ? 'Sent' : quote.status}</div>
                 </div>
                 {quote.vendor_final_price && (
                   <div className="text-lg font-bold text-purple-700">R{quote.vendor_final_price.toLocaleString()}</div>

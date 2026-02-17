@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
 import { supabase } from '@/lib/supabaseClient';
+import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 
 type PreferredContact = 'chat' | 'whatsapp' | 'call';
 
@@ -22,6 +23,7 @@ export default function VendorMedia() {
   const [contact, setContact] = useState({ whatsapp: '', phone: '', preferredContact: 'whatsapp' as PreferredContact });
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -50,6 +52,17 @@ export default function VendorMedia() {
     })();
   }, []);
 
+  useEffect(() => {
+    if (!vendorId) return;
+    (async () => {
+      try {
+        const status = await getVendorSetupStatus(supabase, vendorId);
+        setNeedsOnboarding(Boolean(status.needsOnboarding));
+      } catch (e) {
+        console.warn('Unable to determine onboarding status for media page:', e);
+      }
+    })();
+  }, [vendorId]);
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
     if (!vendorId) return null;
     const ext = file.name.split('.').pop() || 'jpg';
@@ -99,9 +112,11 @@ export default function VendorMedia() {
       setForcedEdit(sp.get('mode') === 'edit');
     }
   }, []);
-  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
-  const backHref = editMode ? '/vendor/dashboard' : '/vendor/packages';
-  const primaryLabel = saving ? 'Saving...' : editMode ? 'Save' : 'Save & Continue';
+  const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
+  const isOnboarding = modeParamOnboarding || Boolean(needsOnboarding);
+  const editMode = !isOnboarding;
+  const backHref = editMode ? '/vendor/dashboard' : '/vendor/packages?mode=onboarding';
+  const primaryLabel = saving ? 'Saving...' : isOnboarding ? 'Save & Continue' : 'Save';
 
   if (loading) return (<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>);
 
@@ -185,10 +200,10 @@ export default function VendorMedia() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="w-full max-w-screen-xl mx-auto flex gap-3 px-4">
           <Link href={backHref} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
-          <button onClick={async () => { await handleSave(); if (canContinue) window.location.href = editMode ? '/vendor/dashboard' : '/vendor/review'; }} disabled={!canContinue || saving} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue && !saving ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>{primaryLabel}</button>
+          <button onClick={async () => { await handleSave(); if (canContinue) { if (isOnboarding) window.location.href = '/vendor/review?mode=onboarding'; else alert('Saved'); } }} disabled={!canContinue || saving} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue && !saving ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>{primaryLabel}</button>
         </div>
       </div>
     </div>

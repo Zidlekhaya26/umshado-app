@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import { getOrCreateVendorForUser, getVendorSelectedServices, getServicesCatalog, type Service } from "@/lib/vendorServices";
 import { getPricingType } from "@/lib/marketplaceCategories";
 import ProfileCompletionIndicator from "@/components/ProfileCompletionIndicator";
@@ -26,6 +27,8 @@ export default function VendorPackagesPage() {
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false);
   const [defaultPricingMode, setDefaultPricingMode] = useState<PricingMode>("guest-based");
+
+  const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
 
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +98,13 @@ export default function VendorPackagesPage() {
         }
       } catch (err) {
         console.warn("Unable to load vendor category:", err);
+      }
+
+      try {
+        const status = await getVendorSetupStatus(supabase, vId);
+        setNeedsOnboarding(Boolean(status.needsOnboarding));
+      } catch (e) {
+        console.warn('Unable to determine onboarding status for packages page:', e);
       }
 
       try {
@@ -288,8 +298,10 @@ export default function VendorPackagesPage() {
       setForcedEdit(sp.get('mode') === 'edit');
     }
   }, []);
-  const editMode = Boolean(forcedEdit || isPublished || onboardingCompleted);
-  const modeQuery = forcedEdit ? '?mode=edit' : '';
+  const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
+  const isOnboarding = modeParamOnboarding || Boolean(needsOnboarding);
+  const editMode = !isOnboarding && Boolean(forcedEdit || isPublished || onboardingCompleted);
+  const modeQuery = isOnboarding ? '?mode=onboarding' : (forcedEdit ? '?mode=edit' : '');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -347,6 +359,15 @@ export default function VendorPackagesPage() {
           ))}
 
           {!loading && <button onClick={() => openForm()} disabled={loading} className="w-full py-5 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 font-semibold hover:border-purple-400 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Package</button>}
+
+          {isOnboarding && (
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
+              <div className="w-full max-w-screen-xl mx-auto flex gap-3 px-4">
+                <Link href={`/vendor/services?mode=onboarding`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50">Back</Link>
+                <button onClick={() => { if (canContinue) window.location.href = '/vendor/media?mode=onboarding'; }} disabled={!canContinue} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>Continue</button>
+              </div>
+            </div>
+          )}
 
           {/* Package Form Modal - Bottom Sheet */}
           {isFormOpen && (

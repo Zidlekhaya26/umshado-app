@@ -35,6 +35,7 @@ interface DbGuest {
   couple_id: string;
   full_name: string;
   phone: string | null;
+  rsvp_token?: string | null;
   rsvp_status: 'pending' | 'accepted' | 'declined';
   invited_via: 'manual' | 'import' | 'whatsapp';
   plus_one: boolean;
@@ -81,6 +82,7 @@ function CouplePlannerContent() {
   const [tasks, setTasks] = useState<DbTask[]>([]);
   const [budgetItems, setBudgetItems] = useState<DbBudgetItem[]>([]);
   const [guests, setGuests] = useState<DbGuest[]>([]);
+  const [coupleName, setCoupleName] = useState<string | null>(null);
 
   // Task form
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -127,9 +129,40 @@ function CouplePlannerContent() {
       if (!user) { router.replace('/auth/sign-in'); return; }
       setUserId(user.id);
       await loadData(user.id);
+      // fetch couple profile name
+      try {
+        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
+        setCoupleName((profile as any)?.full_name ?? null);
+      } catch (e) {
+        setCoupleName(null);
+      }
       setLoaded(true);
     })();
   }, [router, loadData]);
+
+  // Realtime updates for guest list (auto-adjust)
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel(`guests-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'couple_guests', filter: `couple_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new as DbGuest;
+          if (!row?.id) return;
+          setGuests(prev => {
+            const exists = prev.some(g => g.id === row.id);
+            if (!exists) return [row, ...prev];
+            return prev.map(g => (g.id === row.id ? { ...g, ...row } : g));
+          });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
 
   useEffect(() => { if (urlTab !== activeTab) setActiveTab(urlTab as 'tasks' | 'budget' | 'guests'); }, [urlTab]);
 
@@ -278,21 +311,35 @@ function CouplePlannerContent() {
   const inviteViaWhatsapp = async (guest: DbGuest) => {
     let phone = guest.phone;
     if (!phone) {
-      const p = window.prompt('Enter guest phone number (e.g. +27831234567) to send WhatsApp invite');
+      const p = window.prompt('Enter guest phone number (e.g. +27831234567)');
       if (!p) return;
       phone = p.trim();
       try {
-        const result = await supabase.from('couple_guests').update({ phone }).eq('id', guest.id).select().single();
+        const result = await supabase.from('couple_guests').update({ phone }).eq('id', guest.id).select('id, phone, rsvp_token').single();
         if (!result.error && result.data) {
-          setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, phone: result.data.phone } : g));
+          setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, phone: result.data.phone, rsvp_token: result.data.rsvp_token } : g));
         }
       } catch (e) {
         console.error('Failed to save phone for guest', e);
       }
     }
 
+    // ensure rsvp_token exists
+    let token: string | null = (guest as any).rsvp_token ?? null;
+    if (!token) {
+      token = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : String(Date.now());
+      try {
+        const save = await supabase.from('couple_guests').update({ rsvp_token: token }).eq('id', guest.id).select('rsvp_token').single();
+        if (!save.error && save.data?.rsvp_token) token = save.data.rsvp_token;
+        setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_token: token } : g));
+      } catch (e) {
+        console.error('Failed to save rsvp token', e);
+      }
+    }
+
     if (!phone) return;
-    const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName: null });
+
+    const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName, guestName: guest.full_name, token });
     window.open(url, '_blank', 'noopener');
   };
 
