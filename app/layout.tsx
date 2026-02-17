@@ -15,7 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "uMshado",
   description: "Plan your dream wedding with uMshado",
-  themeColor: '#F7F0EA'
+  themeColor: '#F7F0EA',
+  icons: {
+    apple: '/apple-touch-icon.png',
+  }
 };
 
 // ✅ This helps iPhone Safari render at true device width
