@@ -49,7 +49,7 @@ interface VendorProfile {
     phone: string;
     preferredContact: string;
   };
-    socialLinks?: { [key: string]: string };
+  socialLinks?: { [key: string]: string };
 }
 
 export default function VendorProfile() {
@@ -107,9 +107,7 @@ export default function VendorProfile() {
       initialPinchDistance.current = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
-              </div>
-
-            </div>
+      );
     } else if (e.touches.length === 1 && zoomScale > 1) {
       const touch = e.touches[0];
       const dx = touch.clientX - (touchStartX.current ?? touch.clientX);
