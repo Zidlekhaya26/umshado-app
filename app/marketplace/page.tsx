@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
@@ -71,6 +71,8 @@ export default function Marketplace() {
   const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
   const [couplePreferences, setCouplePreferences] = useState<{category?: string; services?: string[]}>({});
   const [displayedCount, setDisplayedCount] = useState(10);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isVendor, setIsVendor] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
@@ -93,6 +95,27 @@ export default function Marketplace() {
     applyFiltersAndSort();
     setDisplayedCount(10);
   }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
+
+  // IntersectionObserver: load more when bottom sentinel intersects
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      const ent = entries[0];
+      const hasMore = vendors.length > displayedCount;
+      if (ent.isIntersecting && hasMore && !loading && !isFetchingMore) {
+        // guard to prevent double requests
+        setIsFetchingMore(true);
+        // emulate fetch behavior by increasing displayedCount
+        setDisplayedCount((prev) => Math.min(prev + 10, vendors.length));
+        // small timeout to show skeleton briefly while 'loading'
+        setTimeout(() => setIsFetchingMore(false), 300);
+      }
+    }, { root: null, rootMargin: '0px', threshold: 0.1 });
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [loadMoreRef, vendors.length, displayedCount, loading, isFetchingMore]);
 
   const clearAllFilters = () => {
     setSearchQuery('');
@@ -528,15 +551,31 @@ export default function Marketplace() {
 
           )}
 
-          {/* Load More Button */}
-          {!loading && vendors.length > displayedCount && (
-            <div className="mt-4">
-              <button
-                onClick={() => setDisplayedCount(prev => prev + 10)}
-                className="w-full py-3 bg-purple-50 text-purple-700 rounded-xl font-semibold text-sm border-2 border-purple-200 hover:bg-purple-100 active:scale-[0.98] transition-all"
-              >
-                Load more ({vendors.length - displayedCount} remaining)
-              </button>
+          {/* Infinite scroll sentinel (replaces Load More button) */}
+          <div ref={loadMoreRef} className="h-10 w-full" />
+          {/* Small skeleton while fetching next batch */}
+          {isFetchingMore && (
+            <div className="mt-4 p-4 bg-white/60 rounded-2xl">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm h-44">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-gray-200" />
+                        <div className="w-40 h-4 bg-gray-200 rounded-md" />
+                      </div>
+                      <div className="w-12 h-4 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex items-center gap-2">
+                      <div className="w-32 h-3 bg-gray-200 rounded-md" />
+                    </div>
+                    <div className="mt-4 flex gap-2">
+                      <div className="w-16 h-6 bg-gray-200 rounded-md" />
+                      <div className="w-10 h-6 bg-gray-200 rounded-md" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
