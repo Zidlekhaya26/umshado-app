@@ -10,11 +10,34 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
   const { vendorId } = params;
 
   // Fetch vendor public info
-  const { data: vendor } = await supabase
+  let { data: vendor } = await supabase
     .from('vendors')
     .select('id, business_name, category, location, description, logo_url, portfolio_urls, contact')
     .eq('id', vendorId)
     .maybeSingle();
+
+  // Fallback: some deployments expose a public view `marketplace_vendors`.
+  // If no direct `vendors` row exists, try the marketplace view to render a public profile.
+  if (!vendor) {
+    const { data: mv } = await supabase
+      .from('marketplace_vendors')
+      .select('vendor_id, business_name, category, city, country, description, logo_url')
+      .eq('vendor_id', vendorId)
+      .maybeSingle();
+
+    if (mv) {
+      vendor = {
+        id: mv.vendor_id,
+        business_name: mv.business_name,
+        category: mv.category,
+        location: [mv.city, mv.country].filter(Boolean).join(', '),
+        description: mv.description,
+        logo_url: mv.logo_url,
+        portfolio_urls: null,
+        contact: null,
+      } as any;
+    }
+  }
 
   if (!vendor) {
     return (
