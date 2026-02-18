@@ -3,6 +3,7 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { trackVendorEvent } from '@/lib/analytics';
 import BottomNav from '@/components/BottomNav';
@@ -63,6 +64,7 @@ export default function VendorProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isVendorRole, setIsVendorRole] = useState(false);
+  const { user, role } = useAuthRole();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -288,21 +290,20 @@ export default function VendorProfile() {
   useEffect(() => {
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !vendorId) { setIsOwner(false); setIsVendorRole(false); return; }
-        // Check active role — vendors should not see couple CTAs on any profile
-        const { data: profile } = await supabase.from('profiles').select('active_role').eq('id', user.id).maybeSingle();
-        if (profile?.active_role === 'vendor') setIsVendorRole(true);
+        const u = user ?? null;
+        if (!u || !vendorId) { setIsOwner(false); setIsVendorRole(false); return; }
+        // Use global role
+        if ((role ?? 'couple') === 'vendor') setIsVendorRole(true);
         // Check if vendorId matches user.id directly OR via user_id column
-        if (vendorId === user.id) { setIsOwner(true); return; }
+        if (vendorId === u.id) { setIsOwner(true); return; }
         const { data } = await supabase.from('vendors').select('user_id').eq('id', vendorId).maybeSingle();
-        setIsOwner(data?.user_id === user.id);
+        setIsOwner(data?.user_id === u.id);
       } catch {
         setIsOwner(false);
         setIsVendorRole(false);
       }
     })();
-  }, [vendorId]);
+  }, [vendorId, user, role]);
 
   const hideCTAs = isPreview || isOwner || isVendorRole;
 

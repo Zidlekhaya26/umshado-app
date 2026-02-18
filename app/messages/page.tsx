@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -38,7 +39,8 @@ export default function MessagesIndex() {
   const router = useRouter();
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isVendor, setIsVendor] = useState(false);
+  const { user, role } = useAuthRole();
+  const [isVendor, setIsVendor] = useState(role === 'vendor');
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
@@ -51,16 +53,9 @@ export default function MessagesIndex() {
     try {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setItems([]); return; }
-
-      // Determine active role to filter conversations correctly
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('active_role')
-        .eq('id', user.id)
-        .maybeSingle();
-      const activeRole = profileData?.active_role || 'couple';
+      const u = user ?? null;
+      if (!u) { setItems([]); return; }
+      const activeRole = role ?? 'couple';
       setIsVendor(activeRole === 'vendor');
 
       // If vendor, fetch vendor ID and publish status for CTAs
@@ -69,7 +64,7 @@ export default function MessagesIndex() {
         const { data: vRow } = await supabase
           .from('vendors')
           .select('id, is_published')
-          .eq('user_id', user.id)
+          .eq('user_id', u.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -82,8 +77,8 @@ export default function MessagesIndex() {
 
       // Filter conversations by role: couple sees couple_id matches, vendor sees vendor_id matches (use vendor row id)
       const roleFilter = activeRole === 'vendor'
-        ? `vendor_id.eq.${myVendorId ?? user.id}`
-        : `couple_id.eq.${user.id}`;
+        ? `vendor_id.eq.${myVendorId ?? u.id}`
+        : `couple_id.eq.${u.id}`;
 
       // Fetch conversations the user participates in (based on their active role)
       const { data, error } = await supabase
@@ -190,13 +185,13 @@ export default function MessagesIndex() {
     let convChannelB: any = null;
 
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const u = user ?? null;
+      if (!u) return;
 
       // Listen for conversation INSERT/UPDATE where couple_id == user.id
       convChannelA = supabase
-        .channel(`conversations_user_${user.id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => {
+        .channel(`conversations_user_${u.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${u.id}` }, () => {
           loadConversations();
         })
         .subscribe();

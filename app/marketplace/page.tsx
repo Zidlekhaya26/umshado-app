@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
@@ -73,22 +74,15 @@ export default function Marketplace() {
   const [displayedCount, setDisplayedCount] = useState(10);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [isVendor, setIsVendor] = useState(false);
+  const { role, user } = useAuthRole();
+  const isVendor = role === 'vendor';
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
-    // Detect active role for nav
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: profile } = await supabase.from('profiles').select('active_role').eq('id', user.id).maybeSingle();
-        setIsVendor(profile?.active_role === 'vendor');
-      } catch { /* ignore */ }
-    })();
+    // role is provided by AuthRoleProvider
   }, []);
 
   useEffect(() => {
@@ -151,14 +145,14 @@ export default function Marketplace() {
     setLoading(true);
     try {
       // Fetch couple preferences for ranking
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      const u = user ?? null;
+      if (u) {
         const { data: coupleData } = await supabase
           .from('couples')
           .select('location, country')
-          .eq('id', user.id)
+          .eq('id', u.id)
           .maybeSingle();
-        
+
         if (coupleData) {
           setCouplePreferences({ category: coupleData.location });
         }

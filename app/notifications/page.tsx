@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
@@ -22,7 +23,8 @@ export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
-  const [isVendor, setIsVendor] = useState(false);
+  const { user, role } = useAuthRole();
+  const [isVendor, setIsVendor] = useState(role === 'vendor');
 
   useEffect(() => {
     loadNotifications();
@@ -31,15 +33,12 @@ export default function NotificationsPage() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const u = user ?? null;
+      if (!u) {
         setItems([]);
         return;
       }
-
-      // Detect role for nav
-      const { data: profileData } = await supabase.from('profiles').select('active_role').eq('id', user.id).maybeSingle();
-      setIsVendor(profileData?.active_role === 'vendor');
+      setIsVendor((role ?? 'couple') === 'vendor');
 
       const { data, error } = await supabase
         .from('notifications')
@@ -87,13 +86,13 @@ export default function NotificationsPage() {
 
     setMarkingAll(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const u = user ?? null;
+      if (!u) return;
 
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('user_id', user.id)
+        .eq('user_id', u.id)
         .eq('is_read', false);
 
       if (error) {
