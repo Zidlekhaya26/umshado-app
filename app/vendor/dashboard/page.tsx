@@ -205,7 +205,7 @@ export default function VendorDashboard() {
     if (!vendor?.id) return;
     const profileUrl = `${window.location.origin}/v/${vendor.id}`;
     const title = vendor.business_name || 'uMshado Vendor Profile';
-    const text = vendor.tagline ?? `Check out our business on uMshado: ${profileUrl}`;
+    const text = vendor.description ?? `Check out our business on uMshado: ${profileUrl}`;
     const res = await shareLink({ title, text, url: profileUrl });
     if (!res.ok) setShareOpen(true);
   };
@@ -667,7 +667,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-        <ShareActions payload={{ title: vendor?.business_name || 'uMshado Vendor Profile', text: vendor?.tagline ?? undefined, url: `${typeof window !== 'undefined' ? window.location.origin : ''}/v/${vendor?.id}` }} open={shareOpen} onClose={() => setShareOpen(false)} />
+        <ShareActions payload={{ title: vendor?.business_name || 'uMshado Vendor Profile', text: vendor?.description ?? undefined, url: `${typeof window !== 'undefined' ? window.location.origin : ''}/v/${vendor?.id}` }} open={shareOpen} onClose={() => setShareOpen(false)} />
         <VendorBottomNav />
       </div>
     </div>

@@ -16,7 +16,7 @@ export default function PublicVendorCTAs({ vendor, preview }: Props) {
   const url = `${process.env.NEXT_PUBLIC_BASE_URL}/v/${vendor.id}`;
 
   const handleShare = async () => {
-    const res = await shareLink({ title: vendor.business_name, text: vendor.tagline ?? undefined, url });
+    const res = await shareLink({ title: vendor.business_name, text: vendor.description ?? undefined, url });
     if (!res.ok) setOpen(true);
   };
 
@@ -34,7 +34,7 @@ export default function PublicVendorCTAs({ vendor, preview }: Props) {
           Manage
         </Link>
       )}
-      <ShareActions payload={{ title: vendor.business_name, text: vendor.tagline ?? undefined, url }} open={open} onClose={() => setOpen(false)} />
+      <ShareActions payload={{ title: vendor.business_name, text: vendor.description ?? undefined, url }} open={open} onClose={() => setOpen(false)} />
     </div>
   );
 }

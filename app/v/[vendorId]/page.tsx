@@ -71,7 +71,7 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
             <p className="text-sm text-gray-700 mt-3 leading-relaxed">{vendor.description}</p>
 
             <div className="mt-4">
-              <PublicVendorCTAs vendorId={vendor.id} whatsapp={whatsapp} />
+              <PublicVendorCTAs vendor={vendor} />
             </div>
           </div>
         </div>
