@@ -355,45 +355,61 @@ export default function VendorDashboard() {
           </div>
         </div>
 
+        {/* ── Profile Completion / Publish state (moved below stats) ─────────────── */}
+        {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
+        {(!vendor?.is_published && (vendor as any)?.onboarding_completed === false) && !profileComplete ? (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-4 py-5 text-white shadow-lg">
+            <h2 className="text-lg font-bold mb-1">Profile Completion</h2>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-amber-100">{percentComplete}% complete</span>
+              <span className="text-xs text-amber-200">{completedSteps} of {totalSteps} steps</span>
+            </div>
+            <div className="w-full bg-white/30 rounded-full h-2 mb-4">
+              <div className="bg-white rounded-full h-2 transition-all" style={{ width: `${percentComplete}%` }} />
+            </div>
+            <ul className="space-y-2 text-sm">
+              {!profileChecks?.businessInfo && (<li><Link href="/vendor/onboarding" className="underline hover:text-white">Business info</Link> <span className="ml-1 text-amber-200">(name, category, location, description)</span></li>)}
+              {!profileChecks?.services && (<li><Link href="/vendor/services" className="underline hover:text-white">Select at least 1 service</Link></li>)}
+              {!profileChecks?.packages && (<li><Link href="/vendor/packages" className="underline hover:text-white">Create at least 1 package</Link></li>)}
+              {!profileChecks?.portfolio && (<li><Link href="/vendor/media" className="underline hover:text-white">Upload at least 1 portfolio image</Link></li>)}
+              {!profileChecks?.contact && (<li><Link href="/vendor/media" className="underline hover:text-white">Add contact details</Link> <span className="ml-1 text-amber-200">(phone or WhatsApp)</span></li>)}
+            </ul>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-4 py-5 text-white shadow-lg">
+            <h2 className="text-lg font-bold mb-1">Profile complete! ✅</h2>
+            <p className="text-sm text-green-100 mb-3">You&apos;re ready to go live. Publish your profile to appear on the marketplace.</p>
+            <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish →</Link>
+          </div>
+        )}
+
+        {vendor?.is_published && (
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl px-4 py-5 text-white shadow-lg">
+            <h2 className="text-lg font-bold mb-1">You&apos;re live! 🎉</h2>
+            <p className="text-sm text-purple-100">Couples can discover and contact you for their special day.</p>
+          </div>
+        )}
+
         {/* Content */}
           <div className="flex-1 px-4 py-5 space-y-6 overflow-y-auto pb-24">
 
-          {/* ── Profile Completion / Publish state ─────────────── */}
-          {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
-          {(!vendor?.is_published && !(vendor as any)?.onboarding_completed) && !profileComplete ? (
-            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-4 py-5 text-white shadow-lg">
-              <h2 className="text-lg font-bold mb-1">Profile Completion</h2>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-amber-100">{percentComplete}% complete</span>
-                <span className="text-xs text-amber-200">{completedSteps} of {totalSteps} steps</span>
+          {/* ── Growth Card (Get more couples) ───────────────────── */}
+          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 mb-4">
+            <div className="flex items-start justify-between w-full">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-bold text-gray-900">Get more couples</h2>
+                <p className="text-sm text-gray-600 mt-1">Share your profile to start receiving requests</p>
               </div>
-              <div className="w-full bg-white/30 rounded-full h-2 mb-4">
-                <div className="bg-white rounded-full h-2 transition-all" style={{ width: `${percentComplete}%` }} />
+              <div className="flex-shrink-0 ml-4">
+                <button onClick={handleShareProfile} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#7B1E3A] text-white text-sm font-semibold hover:brightness-110 transition whitespace-nowrap">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v13"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7l4-4 4 4"/></svg>
+                  Share Profile
+                </button>
               </div>
-              <ul className="space-y-2 text-sm">
-                {!profileChecks?.businessInfo && (<li><Link href="/vendor/onboarding" className="underline hover:text-white">Business info</Link> <span className="ml-1 text-amber-200">(name, category, location, description)</span></li>)}
-                {!profileChecks?.services && (<li><Link href="/vendor/services" className="underline hover:text-white">Select at least 1 service</Link></li>)}
-                {!profileChecks?.packages && (<li><Link href="/vendor/packages" className="underline hover:text-white">Create at least 1 package</Link></li>)}
-                {!profileChecks?.portfolio && (<li><Link href="/vendor/media" className="underline hover:text-white">Upload at least 1 portfolio image</Link></li>)}
-                {!profileChecks?.contact && (<li><Link href="/vendor/media" className="underline hover:text-white">Add contact details</Link> <span className="ml-1 text-amber-200">(phone or WhatsApp)</span></li>)}
-              </ul>
             </div>
-          ) : (
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-4 py-5 text-white shadow-lg">
-              <h2 className="text-lg font-bold mb-1">Profile complete! ✅</h2>
-              <p className="text-sm text-green-100 mb-3">You&apos;re ready to go live. Publish your profile to appear on the marketplace.</p>
-              <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish →</Link>
-            </div>
-          )}
+          </div>
 
-          {vendor?.is_published && (
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl px-4 py-5 text-white shadow-lg">
-              <h2 className="text-lg font-bold mb-1">You&apos;re live! 🎉</h2>
-              <p className="text-sm text-purple-100">Couples can discover and contact you for their special day.</p>
-            </div>
-          )}
-
-          {/* ── Stats Cards ───────────────────────────────────── */}
+          {/* ── Stats Cards (moved up) ─────────────────────────── */}
           <div>
             <h2 className="text-base font-semibold text-gray-900 mb-3">Your Performance</h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
