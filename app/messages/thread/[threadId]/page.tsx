@@ -41,6 +41,12 @@ interface Quote {
   couple_id: string;
   vendor_id: string;
   created_at: string;
+  // Optional fields pulled from the quotes row for UI
+  add_ons?: any[];
+  package_name?: string | null;
+  base_from_price?: number | null;
+  guest_count?: number | null;
+  hours?: number | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -163,12 +169,14 @@ export default function ChatThread() {
     (async () => {
       const { data } = await supabase
         .from('quotes')
-        .select('id, quote_ref, status, vendor_final_price, vendor_message, couple_id, vendor_id, created_at')
+        .select('id, quote_ref, status, vendor_final_price, vendor_message, couple_id, vendor_id, created_at, add_ons, package_name, base_from_price, guest_count, hours')
         .eq('couple_id', conversation.couple_id)
         .eq('vendor_id', conversation.vendor_id)
+        .in('status', ['requested', 'negotiating', 'accepted', 'declined', 'expired'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
       setQuote(data || null);
     })();
   }, [conversation]);
@@ -222,6 +230,36 @@ export default function ChatThread() {
         );
         setMessages((prev) => [...prev, { ...(payload.new as Message), attachments: signed }]);
       })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [conversationId]);
+
+  /* ── Realtime: listen for quote updates for this conversation/thread ── */
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const channel = supabase
+      .channel(`quotes-thread-${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quotes',
+          filter: `thread_id=eq.${conversationId}`,
+        },
+        (payload: any) => {
+          const next = payload?.new;
+          if (!next) return;
+
+          setQuote((prev: any) => {
+            if (!prev) return next;
+            if (prev.id === next.id) return { ...prev, ...next };
+            return prev;
+          });
+        }
+      )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
@@ -596,6 +634,25 @@ export default function ChatThread() {
               </div>
               {quote.vendor_message && (
                 <div className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{quote.vendor_message}</div>
+              )}
+              {/* Add-ons */}
+              {Array.isArray((quote as any)?.add_ons) && (quote as any).add_ons.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-xs font-semibold text-gray-600 mb-1">Add-ons</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(quote as any).add_ons.map((a: any, idx: number) => (
+                      <span
+                        key={`${a?.name ?? 'addon'}-${idx}`}
+                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200"
+                      >
+                        {a?.name ?? 'Add-on'}{typeof a?.price === 'number' ? ` • R${a.price.toLocaleString()}` : ''}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {Array.isArray((quote as any)?.add_ons) && (quote as any).add_ons.length === 0 && (
+                <p className="text-xs text-gray-400 mt-2">No add-ons selected</p>
               )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {userIsVendor && (
