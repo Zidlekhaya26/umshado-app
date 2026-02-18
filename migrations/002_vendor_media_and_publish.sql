@@ -89,7 +89,7 @@ FROM vendors v
 WHERE v.business_name IS NOT NULL
   AND v.is_published = true;
 
-GRANT SELECT ON public.marketplace_vendors TO authenticated;
+GRANT SELECT ON public.marketplace_vendors TO public;
 
 -- Mark existing vendors that already have data as published
 -- (so they still appear on the marketplace after this migration)

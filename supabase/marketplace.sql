@@ -56,7 +56,7 @@ WHERE v.business_name IS NOT NULL;
 -- ============================================================================
 -- Allow all authenticated users (couples + vendors) to read marketplace
 
-GRANT SELECT ON public.marketplace_vendors TO authenticated;
+GRANT SELECT ON public.marketplace_vendors TO public;
 
 -- ============================================================================
 -- OPTIONAL: Add index for better performance
