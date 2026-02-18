@@ -9,19 +9,16 @@ const supabase = createClient(supabaseUrl, supabaseAnon);
 export default async function VendorPublicPage({ params }: { params: { vendorId: string } }) {
   const { vendorId } = params;
 
-  // Fetch vendor public info
-  let { data: vendor } = await supabase
-    .from('vendors')
-    .select('id, business_name, category, location, description, logo_url, portfolio_urls, contact')
-    .eq('id', vendorId)
-    .maybeSingle();
+  // Log the requested vendorId for debugging (server-side)
+  console.log('Public vendor page requested for vendorId=', vendorId);
 
-  // Fallback: some deployments expose a public view `marketplace_vendors`.
-  // If no direct `vendors` row exists, try the marketplace view to render a public profile.
-  if (!vendor) {
-    const { data: mv } = await supabase
+  // Try the public marketplace view first (this view is usually anon-readable)
+  // It avoids permission/RLS issues that can occur when querying `vendors` directly.
+  let vendor: any = null;
+  try {
+    const { data: mv, error: mvError } = await supabase
       .from('marketplace_vendors')
-      .select('vendor_id, business_name, category, city, country, description, logo_url')
+      .select('vendor_id, business_name, category, city, country, description, logo_url, featured, featured_until')
       .eq('vendor_id', vendorId)
       .maybeSingle();
 
@@ -35,7 +32,28 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
         logo_url: mv.logo_url,
         portfolio_urls: null,
         contact: null,
+        featured: mv.featured,
+        featured_until: mv.featured_until,
       } as any;
+    }
+    if (mvError) console.warn('marketplace_vendors query error:', mvError);
+  } catch (err) {
+    console.error('marketplace_vendors fetch failed:', err);
+  }
+
+  // If the public view didn't return a row, fall back to the `vendors` table (may require auth)
+  if (!vendor) {
+    try {
+      const { data: vData, error: vError } = await supabase
+        .from('vendors')
+        .select('id, business_name, category, location, description, logo_url, portfolio_urls, contact')
+        .eq('id', vendorId)
+        .maybeSingle();
+
+      if (vData) vendor = vData as any;
+      if (vError) console.warn('vendors query error:', vError);
+    } catch (err) {
+      console.error('vendors fetch failed:', err);
     }
   }
 
