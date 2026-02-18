@@ -10,54 +10,18 @@ export async function getCoupleDisplayName(coupleId: string): Promise<CoupleDisp
   if (!coupleId) return { displayName: 'Couple (unknown)', avatarUrl: null, location: null };
 
   try {
-    // 1) Try the couples table first (partner_name + avatar_url + location)
-    const { data: coupleRow, error: coupleErr } = await supabase
-      .from('couples')
-      .select('partner_name, avatar_url, location')
-      .eq('id', coupleId)
-      .maybeSingle();
+    // Call the server-side RPC which encapsulates RLS-safe logic
+    const { data, error } = await supabase.rpc('get_couple_display_name', { p_couple_id: coupleId });
 
-    if (coupleErr) {
-      console.warn('getCoupleDisplayName: couples lookup failed', coupleErr);
+    if (error) {
+      console.warn('getCoupleDisplayName RPC failed', error);
+      return { displayName: 'Couple', avatarUrl: null, location: null };
     }
 
-    const partnerName = (coupleRow?.partner_name || '').toString().trim();
-    if (partnerName) {
-      return {
-        displayName: partnerName,
-        avatarUrl: coupleRow?.avatar_url || null,
-        location: coupleRow?.location || null,
-      };
-    }
-
-    // 2) If no partner_name, fallback to profiles.full_name for the same id
-    const { data: profileRow, error: profileErr } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', coupleId)
-      .maybeSingle();
-
-    if (profileErr) {
-      console.warn('getCoupleDisplayName: profiles lookup failed', profileErr);
-    }
-
-    const fullName = (profileRow as any)?.full_name?.toString().trim?.();
-    if (fullName) {
-      return {
-        displayName: fullName,
-        avatarUrl: coupleRow?.avatar_url || null,
-        location: coupleRow?.location || null,
-      };
-    }
-
-    // 3) Final fallback: use avatar/location from couples if present, but display name "Couple"
-    return {
-      displayName: 'Couple',
-      avatarUrl: coupleRow?.avatar_url || null,
-      location: coupleRow?.location || null,
-    };
+    const name = typeof data === 'string' ? (data as string).trim() : '';
+    return { displayName: name || 'Couple', avatarUrl: null, location: null };
   } catch (err) {
-    console.warn('getCoupleDisplayName error', err);
+    console.warn('getCoupleDisplayName unexpected error', err);
     return { displayName: 'Couple', avatarUrl: null, location: null };
   }
 }
