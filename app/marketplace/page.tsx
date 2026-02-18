@@ -422,7 +422,7 @@ export default function Marketplace() {
               {vendors.slice(0, displayedCount).map((vendor) => (
               <Link
                 key={vendor.id}
-                href={`/marketplace/vendor/${vendor.id}`}
+                href={`/v/${vendor.id}`}
                 className={[
                   "block bg-white rounded-xl p-3 sm:p-4 transition-all active:scale-[0.98] h-full w-full",
                   vendor.score > 200

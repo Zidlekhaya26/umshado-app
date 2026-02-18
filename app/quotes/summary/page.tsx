@@ -310,7 +310,7 @@ function QuoteSummaryContent() {
       <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-20 px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <Link href={`/marketplace/vendor/${vendorId}`} className="inline-flex items-center text-purple-600 text-sm font-medium mb-3">
+          <Link href={`/v/${vendorId}`} className="inline-flex items-center text-purple-600 text-sm font-medium mb-3">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>

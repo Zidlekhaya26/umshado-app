@@ -62,6 +62,11 @@ async function updateActiveRole(userId: string, accessToken: string, activeRole:
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Explicit public vendor profile route: always allow access to /v/*
+  if (pathname.startsWith('/v')) {
+    return NextResponse.next();
+  }
+
   // ── PUBLIC ROUTES: never gate these ──
   const publicPaths = ['/', '/auth', '/request-access', '/debug'];
   const isPublic =

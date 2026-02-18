@@ -200,7 +200,7 @@ export default function VendorDashboard() {
   /* ── Share profile helper ────────────────────────────────────── */
   const handleShareProfile = async () => {
     if (!vendor?.id) return;
-    const profileUrl = `${window.location.origin}/marketplace/vendor/${vendor.id}`;
+    const profileUrl = `${window.location.origin}/v/${vendor.id}`;
     const shareText = `Check out our business on uMshado: ${profileUrl}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'uMshado Vendor Profile', text: shareText, url: profileUrl }); } catch { /* user cancelled */ }
@@ -582,7 +582,7 @@ export default function VendorDashboard() {
               )}
               {vendor?.is_published && (
                 <Link
-                  href={`/marketplace/vendor/${vendor.id}?preview=1`}
+                  href={`/v/${vendor.id}?preview=1`}
                   className="w-full px-4 py-3.5 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-base text-left hover:bg-gray-50 hover:border-purple-300 transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">

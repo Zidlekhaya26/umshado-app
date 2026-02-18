@@ -235,7 +235,7 @@ export default function MessagesIndex() {
   /* ── Share profile helper ──────────────────────────────────────── */
   const handleShareProfile = async () => {
     if (!vendorId) return;
-    const profileUrl = `${window.location.origin}/marketplace/vendor/${vendorId}`;
+    const profileUrl = `${window.location.origin}/v/${vendorId}`;
     const shareText = `Check out our business on uMshado: ${profileUrl}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'uMshado Vendor Profile', text: shareText, url: profileUrl }); } catch { /* user cancelled */ }
@@ -287,7 +287,7 @@ export default function MessagesIndex() {
                       </button>
                     )}
                     {isPublished && vendorId && (
-                      <Link href={`/marketplace/vendor/${vendorId}?preview=1`} className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors text-center">
+                      <Link href={`/v/${vendorId}?preview=1`} className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors text-center">
                         View Public Profile
                       </Link>
                     )}
