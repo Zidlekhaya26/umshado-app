@@ -25,6 +25,7 @@ export default function NotificationsPage() {
   const [markingAll, setMarkingAll] = useState(false);
   const { user, role } = useAuthRole();
   const [isVendor, setIsVendor] = useState(role === 'vendor');
+  const u = user ?? null;
 
   useEffect(() => {
     loadNotifications();
@@ -33,7 +34,6 @@ export default function NotificationsPage() {
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const u = user ?? null;
       if (!u) {
         setItems([]);
         return;
@@ -43,7 +43,7 @@ export default function NotificationsPage() {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', u.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -86,7 +86,6 @@ export default function NotificationsPage() {
 
     setMarkingAll(true);
     try {
-      const u = user ?? null;
       if (!u) return;
 
       const { error } = await supabase
