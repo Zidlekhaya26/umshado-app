@@ -266,79 +266,92 @@ export default function VendorDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col px-4">
+      <div className="w-full mx-auto min-h-screen flex flex-col px-4 sm:px-6 lg:max-w-7xl min-w-0 overflow-x-hidden">
         {/* Header / Hero */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <div className="flex items-center gap-3 w-full">
-            {vendor?.logo_url ? (
-              <button
-                type="button"
-                onClick={() => { setLogoSrc(vendor.logo_url ?? null); setLogoAlt(vendor.business_name || 'Logo'); setLogoOpen(true); }}
-                className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center"
-                aria-label="View business logo"
-              >
-                <img src={vendor.logo_url} alt="" className="w-full h-full object-contain p-2" />
-              </button>
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-lg">
-                  {(vendor?.business_name || 'V').charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-gray-900 truncate">{vendor?.business_name || 'Your vendor hub'}</h1>
-              <p className="text-sm text-gray-600 mt-0.5">Your business hub — insights & activity</p>
-            </div>
-            <div className="ml-4 flex items-center gap-2">
-              {vendor?.is_published && (
-                <span title="Published" className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-100">
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                  Live
-                </span>
-              )}
-              <Link href="/vendor/profile/edit" className="px-3 py-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200">Edit Profile</Link>
+          <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between">
 
-              {/* Share Profile CTA */}
-              <button onClick={handleShareProfile} className="ml-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#7B1E3A] text-white text-sm font-semibold hover:brightness-110 transition">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v13"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7l4-4 4 4"/></svg>
-                Share Profile
-              </button>
-
-              {/* Vendor menu: includes logout */}
-              <div className="relative">
-                    <button
-                      aria-label="Vendor menu"
-                      onClick={() => setShowMenu(prev => !prev)}
-                      className="ml-2 w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100"
-                    >
-                      <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
-                    </button>
-
-                    {showMenu && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-30">
-                        <button
-                          onClick={async () => {
-                            // lightweight confirmation
-                            const ok = confirm('Log out from vendor account?');
-                            if (!ok) return;
-                            try {
-                              const { error } = await supabase.auth.signOut();
-                              if (error) console.error('Sign out error:', error);
-                            } catch (err) {
-                              console.error('Sign out failed:', err);
-                            }
-                            router.push('/auth/sign-in');
-                          }}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
-                        >
-                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
-                          Log out
-                        </button>
-                      </div>
-                    )}
-                  </div>
+            {/* LEFT BLOCK: logo + title/subtitle */}
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              {vendor?.logo_url ? (
+                <button
+                  type="button"
+                  onClick={() => { setLogoSrc(vendor.logo_url ?? null); setLogoAlt(vendor.business_name || 'Logo'); setLogoOpen(true); }}
+                  className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-purple-200 flex items-center justify-center"
+                  aria-label="View business logo"
+                >
+                  <img src={vendor.logo_url} alt="" className="w-full h-full object-contain p-2" />
+                </button>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-lg">
+                    {(vendor?.business_name || 'V').charAt(0).toUpperCase()}
+                  </span>
                 </div>
+              )}
+
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl font-bold text-gray-900 truncate">{vendor?.business_name || 'Your vendor hub'}</h1>
+                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2 sm:line-clamp-1">Your business hub — insights & activity</p>
+              </div>
+            </div>
+
+            {/* RIGHT BLOCK: actions (grid -> becomes row on sm) */}
+            <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-2 w-full sm:w-auto sm:flex sm:items-center">
+              <div className="flex items-center gap-2">
+                {vendor?.is_published && (
+                  <span title="Published" className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-50 text-green-700 text-xs font-semibold border border-green-100">
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                    Live
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center">
+                <Link href="/vendor/profile/edit" className="px-3 py-2 rounded-lg bg-gray-100 text-sm font-semibold text-gray-700 hover:bg-gray-200 whitespace-nowrap">Edit Profile</Link>
+              </div>
+
+              <div className="flex items-center">
+                <button onClick={handleShareProfile} className="ml-2 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#7B1E3A] text-white text-sm font-semibold hover:brightness-110 transition whitespace-nowrap">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v13"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7l4-4 4 4"/></svg>
+                  Share Profile
+                </button>
+              </div>
+
+              <div className="flex items-center justify-end">
+                <div className="relative">
+                  <button
+                    aria-label="Vendor menu"
+                    onClick={() => setShowMenu(prev => !prev)}
+                    className="ml-2 w-10 h-10 rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center hover:bg-gray-100"
+                  >
+                    <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01"/></svg>
+                  </button>
+
+                  {showMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-30">
+                      <button
+                        onClick={async () => {
+                          const ok = confirm('Log out from vendor account?');
+                          if (!ok) return;
+                          try {
+                            const { error } = await supabase.auth.signOut();
+                            if (error) console.error('Sign out error:', error);
+                          } catch (err) {
+                            console.error('Sign out failed:', err);
+                          }
+                          router.push('/auth/sign-in');
+                        }}
+                        className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center gap-2 text-sm text-gray-700"
+                      >
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+                        Log out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
