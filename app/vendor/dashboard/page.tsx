@@ -5,6 +5,8 @@ import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+import { shareLink } from '@/lib/share';
+import ShareActions from '@/components/ui/ShareActions';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
@@ -64,6 +66,7 @@ export default function VendorDashboard() {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     loadDashboard();
@@ -201,12 +204,10 @@ export default function VendorDashboard() {
   const handleShareProfile = async () => {
     if (!vendor?.id) return;
     const profileUrl = `${window.location.origin}/v/${vendor.id}`;
-    const shareText = `Check out our business on uMshado: ${profileUrl}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'uMshado Vendor Profile', text: shareText, url: profileUrl }); } catch { /* user cancelled */ }
-    } else {
-      try { await navigator.clipboard.writeText(shareText); alert('Profile link copied to clipboard!'); } catch { /* ignore */ }
-    }
+    const title = vendor.business_name || 'uMshado Vendor Profile';
+    const text = vendor.tagline ?? `Check out our business on uMshado: ${profileUrl}`;
+    const res = await shareLink({ title, text, url: profileUrl });
+    if (!res.ok) setShareOpen(true);
   };
 
   /* ── Stats config ───────────────────────────────────────────── */
@@ -666,6 +667,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
+        <ShareActions payload={{ title: vendor?.business_name || 'uMshado Vendor Profile', text: vendor?.tagline ?? undefined, url: `${typeof window !== 'undefined' ? window.location.origin : ''}/v/${vendor?.id}` }} open={shareOpen} onClose={() => setShareOpen(false)} />
         <VendorBottomNav />
       </div>
     </div>
