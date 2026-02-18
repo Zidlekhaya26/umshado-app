@@ -5,7 +5,7 @@ import RSVPClient from './RSVPClient';
 type Props = { params: { guestId: string }, searchParams?: { t?: string } };
 
 export default async function RSVPPage({ params, searchParams }: Props) {
-  const { guestId } = params;
+  const { guestId } = await params;
   const token = searchParams?.t ?? null;
 
   const supabase = createServiceClient();

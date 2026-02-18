@@ -7,7 +7,7 @@ const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 const supabase = createClient(supabaseUrl, supabaseAnon);
 
 export default async function VendorPublicPage({ params }: { params: { vendorId: string } }) {
-  const { vendorId } = params;
+  const { vendorId } = await params;
 
   // Log the requested vendorId for debugging (server-side)
   console.log('Public vendor page requested for vendorId=', vendorId);
