@@ -158,15 +158,28 @@ export default function Marketplace() {
         }
       }
 
-      // Fetch marketplace vendors
-      const { data, error } = await supabase
+      // Fetch marketplace vendors (preferred read-only aggregated view)
+      let { data, error } = await supabase
         .from('marketplace_vendors')
         .select('*');
 
-      if (error) {
-        console.error('marketplace: failed to load vendors', error);
-        setLoading(false);
-        return;
+      // If the view is unavailable or permissioned (common on some deployments),
+      // fall back to reading from the underlying `vendors` table and map fields
+      if (error || !data) {
+        console.warn('marketplace: marketplace_vendors query failed, attempting vendors fallback', error);
+        const { data: vdata, error: verror } = await supabase
+          .from('vendors')
+          .select('id as vendor_id, business_name, category, location as city, NULL::text as country, description, logo_url, is_published, created_at, updated_at, featured, featured_until, plan, plan_until')
+          .eq('is_published', true)
+          .limit(1000);
+
+        if (verror) {
+          console.error('marketplace: failed to load vendors fallback', verror);
+          setLoading(false);
+          return;
+        }
+
+        data = vdata;
       }
 
       const { data: activityData, error: activityError } = await supabase
