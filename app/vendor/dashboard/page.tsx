@@ -355,77 +355,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-          {/* ── Growth Strip: quick business stats (presentation only) ─────────────── */}
-          <div className="w-full mt-4">
-            <div className="w-full max-w-screen-xl mx-auto px-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {/* Profile Views */}
-                <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 max-h-[90px] flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Profile Views</p>
-                    <p className={`text-xl font-bold mt-1 ${metrics.profileViews > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {metrics.profileViews > 0 ? metrics.profileViews : '—'}
-                    </p>
-                    {metrics.profileViews === 0 && <p className="text-xs text-gray-400 mt-1">Launching Soon</p>}
-                  </div>
-                  <div className="flex-shrink-0 ml-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#F7F0EA] text-[#7B1E3A] flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Saved By Couples */}
-                <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 max-h-[90px] flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Saved By Couples</p>
-                    <p className={`text-xl font-bold mt-1 ${metrics.savedByCouples > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {metrics.savedByCouples > 0 ? metrics.savedByCouples : '—'}
-                    </p>
-                    {metrics.savedByCouples === 0 && <p className="text-xs text-gray-400 mt-1">Launching Soon</p>}
-                  </div>
-                  <div className="flex-shrink-0 ml-3">
-                    <div className="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Quotes Received */}
-                <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 max-h-[90px] flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Quotes Received</p>
-                    <p className={`text-xl font-bold mt-1 ${metrics.quotesReceived > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {metrics.quotesReceived > 0 ? metrics.quotesReceived : '—'}
-                    </p>
-                    {metrics.quotesReceived === 0 && <p className="text-xs text-gray-400 mt-1">Launching Soon</p>}
-                  </div>
-                  <div className="flex-shrink-0 ml-3">
-                    <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 00-2 2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Messages */}
-                <div className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 max-h-[90px] flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase text-gray-500">Messages</p>
-                    <p className={`text-xl font-bold mt-1 ${metrics.chatsStarted > 0 ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {metrics.chatsStarted > 0 ? metrics.chatsStarted : '—'}
-                    </p>
-                    {metrics.chatsStarted === 0 && <p className="text-xs text-gray-400 mt-1">Launching Soon</p>}
-                  </div>
-                  <div className="flex-shrink-0 ml-3">
-                    <div className="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          
           {/* ── Profile Completion / Publish state (moved below stats) ─────────────── */}
         {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
         {(!vendor?.is_published && (vendor as any)?.onboarding_completed === false) && !profileComplete ? (
