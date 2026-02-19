@@ -17,18 +17,27 @@ const AuthRoleContext = createContext<AuthRoleContextValue | null>(null);
 
 async function fetchRole(userId: string): Promise<Role> {
   try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("active_role")
-      .eq("id", userId)
-      .maybeSingle();
+    // Race the DB fetch against a short timeout to avoid hanging the UI
+    const p = (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("active_role")
+        .eq("id", userId)
+        .maybeSingle();
+      return { data, error } as any;
+    })();
 
-    if (error) {
-      console.warn("AuthRoleProvider: failed to fetch role", error);
+    const res: any = await Promise.race([
+      p,
+      new Promise((resolve) => setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3000)),
+    ]);
+
+    if (res?.error) {
+      console.warn("AuthRoleProvider: failed to fetch role", res.error);
       return null;
     }
 
-    const r = (data?.active_role ?? null) as Role;
+    const r = (res?.data?.active_role ?? null) as Role;
     return r === "vendor" || r === "couple" ? r : null;
   } catch (e) {
     console.warn("AuthRoleProvider: fetchRole error", e);
@@ -52,15 +61,18 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-
     const init = async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.auth.getSession();
-        const u = data.session?.user ?? null;
+        // Race session fetch with timeout so we don't stay stuck in loading.
+        const sessionPromise = supabase.auth.getSession();
+        const sessionRes: any = await Promise.race([
+          sessionPromise,
+          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 4000)),
+        ]);
 
+        const u = sessionRes?.data?.session?.user ?? null;
         if (!mounted) return;
-
         setUser(u);
 
         if (u?.id) {
@@ -81,24 +93,33 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
 
     init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Handle auth state changes safely without leaking promises into unmounted component
       const u = session?.user ?? null;
+      if (!mounted) return;
       setUser(u);
 
-      if (u?.id) {
-        setLoading(true);
-        const r = await fetchRole(u.id);
-        setRole(r);
-        setLoading(false);
-      } else {
-        setRole(null);
-        setLoading(false);
-      }
+      (async () => {
+        if (u?.id) {
+          if (mounted) setLoading(true);
+          const r = await fetchRole(u.id);
+          if (!mounted) return;
+          setRole(r);
+          if (mounted) setLoading(false);
+        } else {
+          if (mounted) setRole(null);
+          if (mounted) setLoading(false);
+        }
+      })();
     });
 
     return () => {
       mounted = false;
-      try { sub.subscription.unsubscribe(); } catch {}
+      try {
+        sub?.subscription?.unsubscribe?.();
+      } catch (e) {
+        // ignore
+      }
     };
   }, []);
 
