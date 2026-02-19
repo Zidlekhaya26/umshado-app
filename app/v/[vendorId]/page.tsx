@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import Image from 'next/image';
-import PublicVendorCTAs from '@/components/PublicVendorCTAs';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -89,7 +88,10 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
             <p className="text-sm text-gray-700 mt-3 leading-relaxed">{vendor.description}</p>
 
             <div className="mt-4">
-              <PublicVendorCTAs vendor={vendor} />
+              <div className="flex gap-2">
+                <a href={`/messages/new?vendor=${vendor.id}`} className="rounded border px-3 py-2">Message</a>
+                <a href={`/quotes/new?vendor=${vendor.id}`} className="rounded border px-3 py-2">Request Quote</a>
+              </div>
             </div>
           </div>
         </div>
