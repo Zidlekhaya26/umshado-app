@@ -1,12 +1,10 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-import { shareLink } from '@/lib/share';
-import ShareActions from '@/components/ui/ShareActions';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
@@ -66,13 +64,12 @@ export default function VendorDashboard() {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
-  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     loadDashboard();
   }, []);
 
-  /* ── Load everything ────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Load everything ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
   const loadDashboard = async () => {
     try {
@@ -159,7 +156,7 @@ export default function VendorDashboard() {
     }
   };
 
-  /* ── Conversation helper for quote cards ────────────────────── */
+  /* ΓöÇΓöÇ Conversation helper for quote cards ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
   const getConversationForQuote = async (quoteId: string, coupleId: string) => {
     try {
@@ -200,17 +197,19 @@ export default function VendorDashboard() {
   const percentComplete = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const profileComplete = completedSteps === totalSteps;
 
-  /* ── Share profile helper ────────────────────────────────────── */
+  /* ΓöÇΓöÇ Share profile helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleShareProfile = async () => {
     if (!vendor?.id) return;
-    const profileUrl = `${window.location.origin}/v/${vendor.id}`;
-    const title = vendor.business_name || 'uMshado Vendor Profile';
-    const text = vendor.description ?? `Check out our business on uMshado: ${profileUrl}`;
-    const res = await shareLink({ title, text, url: profileUrl });
-    if (!res.ok) setShareOpen(true);
+    const profileUrl = `${window.location.origin}/marketplace/vendor/${vendor.id}`;
+    const shareText = `Check out our business on uMshado: ${profileUrl}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'uMshado Vendor Profile', text: shareText, url: profileUrl }); } catch { /* user cancelled */ }
+    } else {
+      try { await navigator.clipboard.writeText(shareText); alert('Profile link copied to clipboard!'); } catch { /* ignore */ }
+    }
   };
 
-  /* ── Stats config ───────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Stats config ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
   const stats = [
     {
@@ -253,7 +252,7 @@ export default function VendorDashboard() {
     return colors[color] || colors.blue;
   };
 
-  /* ── Loading state ──────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Loading state ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
   if (loading) {
     return (
@@ -263,7 +262,7 @@ export default function VendorDashboard() {
     );
   }
 
-  /* ── Render ─────────────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -293,7 +292,7 @@ export default function VendorDashboard() {
 
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold text-gray-900 truncate">{vendor?.business_name || 'Your vendor hub'}</h1>
-                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2 sm:line-clamp-1">Your business hub — insights & activity</p>
+                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2 sm:line-clamp-1">Your business hub ΓÇö insights & activity</p>
               </div>
             </div>
 
@@ -356,8 +355,7 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-          
-          {/* ── Profile Completion / Publish state (moved below stats) ─────────────── */}
+        {/* ΓöÇΓöÇ Profile Completion / Publish state (moved below stats) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
         {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
         {(!vendor?.is_published && (vendor as any)?.onboarding_completed === false) && !profileComplete ? (
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-4 py-5 text-white shadow-lg">
@@ -379,15 +377,15 @@ export default function VendorDashboard() {
           </div>
         ) : (
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-4 py-5 text-white shadow-lg">
-            <h2 className="text-lg font-bold mb-1">Profile complete! ✅</h2>
+            <h2 className="text-lg font-bold mb-1">Profile complete! Γ£à</h2>
             <p className="text-sm text-green-100 mb-3">You&apos;re ready to go live. Publish your profile to appear on the marketplace.</p>
-            <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish →</Link>
+            <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish ΓåÆ</Link>
           </div>
         )}
 
         {vendor?.is_published && (
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl px-4 py-5 text-white shadow-lg">
-            <h2 className="text-lg font-bold mb-1">You&apos;re live! 🎉</h2>
+            <h2 className="text-lg font-bold mb-1">You&apos;re live! ≡ƒÄë</h2>
             <p className="text-sm text-purple-100">Couples can discover and contact you for their special day.</p>
           </div>
         )}
@@ -395,7 +393,7 @@ export default function VendorDashboard() {
         {/* Content */}
           <div className="flex-1 px-4 py-5 space-y-6 overflow-y-auto pb-24">
 
-          {/* ── Growth Card (Get more couples) ───────────────────── */}
+          {/* ΓöÇΓöÇ Growth Card (Get more couples) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div className="bg-white rounded-xl border-2 border-gray-200 p-4 mb-4">
             <div className="flex items-start justify-between w-full">
               <div className="flex-1 min-w-0">
@@ -411,7 +409,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* ── Stats Cards (moved up) ─────────────────────────── */}
+          {/* ΓöÇΓöÇ Stats Cards (moved up) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div>
             <h2 className="text-base font-semibold text-gray-900 mb-3">Your Performance</h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -432,7 +430,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* ── Quote Requests ────────────────────────────────── */}
+          {/* ΓöÇΓöÇ Quote Requests ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           {quoteRequests.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -481,7 +479,7 @@ export default function VendorDashboard() {
             </div>
           )}
 
-          {/* ── Negotiations ──────────────────────────────────── */}
+          {/* ΓöÇΓöÇ Negotiations ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           {negotiations.length > 0 && (
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -530,7 +528,7 @@ export default function VendorDashboard() {
             </div>
           )}
 
-          {/* ── Recent Activity (from notifications) ──────────── */}
+          {/* ΓöÇΓöÇ Recent Activity (from notifications) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base font-semibold text-gray-900">Recent Activity</h2>
@@ -566,7 +564,7 @@ export default function VendorDashboard() {
             )}
           </div>
 
-          {/* ── Quick Actions ─────────────────────────────────── */}
+          {/* ΓöÇΓöÇ Quick Actions ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div>
             <h2 className="text-base font-semibold text-gray-900 mb-3">Quick Actions</h2>
             <div className="space-y-2.5">
@@ -576,7 +574,7 @@ export default function VendorDashboard() {
                   className="w-full px-4 py-3.5 bg-yellow-50 border-2 border-yellow-200 text-yellow-900 rounded-xl font-semibold text-base text-left hover:bg-yellow-100 hover:border-yellow-300 transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-800">⚠️</div>
+                    <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-800">ΓÜá∩╕Å</div>
                     <span>Complete onboarding</span>
                   </div>
                   <svg className="w-5 h-5 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -584,7 +582,7 @@ export default function VendorDashboard() {
               )}
               {vendor?.is_published && (
                 <Link
-                  href={`/v/${vendor.id}?preview=1`}
+                  href={`/marketplace/vendor/${vendor.id}?preview=1`}
                   className="w-full px-4 py-3.5 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-base text-left hover:bg-gray-50 hover:border-purple-300 transition-colors flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-3">
@@ -653,7 +651,7 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* ── Help Card ─────────────────────────────────────── */}
+          {/* ΓöÇΓöÇ Help Card ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-4">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 text-blue-600">
@@ -667,7 +665,6 @@ export default function VendorDashboard() {
           </div>
         </div>
 
-        <ShareActions payload={{ title: vendor?.business_name || 'uMshado Vendor Profile', text: vendor?.description ?? undefined, url: `${typeof window !== 'undefined' ? window.location.origin : ''}/v/${vendor?.id}` }} open={shareOpen} onClose={() => setShareOpen(false)} />
         <VendorBottomNav />
       </div>
     </div>

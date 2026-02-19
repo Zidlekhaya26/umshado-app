@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -32,7 +32,7 @@ interface Vendor {
 interface AddOn {
   id: string;
   name: string;
-  // price is intentionally optional — we don't display mock prices here
+  // price is intentionally optional ΓÇö we don't display mock prices here
   price?: number | null;
 }
 
@@ -81,7 +81,7 @@ function QuoteSummaryContent() {
         vendorData = vd;
       } else {
         // Some deployments / RLS configurations restrict direct access to `vendors`.
-        // The `marketplace_vendors` view exposes public vendor info — try that next.
+        // The `marketplace_vendors` view exposes public vendor info ΓÇö try that next.
         const { data: mv } = await supabase
           .from('marketplace_vendors')
           .select('vendor_id, business_name, category, city, country')
@@ -140,7 +140,7 @@ function QuoteSummaryContent() {
           })
           .filter(Boolean) as AddOn[];
 
-        // Custom services (free-text names) — prefix id to avoid collisions
+        // Custom services (free-text names) ΓÇö prefix id to avoid collisions
         const custom: AddOn[] = (selections.customServices || []).map((name, idx) => ({ id: `custom:${idx}`, name }));
 
         // Combine and remove any that are already part of the package included services
@@ -184,7 +184,7 @@ function QuoteSummaryContent() {
       total += extraHours * pkg.price_per_hour;
     }
 
-    // Note: add-on prices are not included here — vendor will confirm pricing in chat
+    // Note: add-on prices are not included here ΓÇö vendor will confirm pricing in chat
 
     return total;
   };
@@ -310,7 +310,7 @@ function QuoteSummaryContent() {
       <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-20 px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <Link href={`/v/${vendorId}`} className="inline-flex items-center text-purple-600 text-sm font-medium mb-3">
+          <Link href={`/marketplace/vendor/${vendorId}`} className="inline-flex items-center text-purple-600 text-sm font-medium mb-3">
             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -393,7 +393,7 @@ function QuoteSummaryContent() {
                     />
                       <span className="text-sm font-medium text-gray-900">{addOn.name}</span>
                     </div>
-                    {/* No mock price shown for add-ons — vendors supply pricing during conversation */}
+                    {/* No mock price shown for add-ons ΓÇö vendors supply pricing during conversation */}
                     <span className="text-sm text-gray-500">&nbsp;</span>
                 </label>
               ))}

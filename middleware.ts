@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -62,14 +62,14 @@ async function updateActiveRole(userId: string, accessToken: string, activeRole:
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // ── PUBLIC ROUTES: never gate these ──
+  // ΓöÇΓöÇ PUBLIC ROUTES: never gate these ΓöÇΓöÇ
   const publicPaths = ['/', '/auth', '/request-access', '/debug'];
   const isPublic =
     publicPaths.some(p => pathname === p || pathname.startsWith(p + '/')) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api');
 
-  // ── BETA GATE: block sign-up routes when invite-only ──
+  // ΓöÇΓöÇ BETA GATE: block sign-up routes when invite-only ΓöÇΓöÇ
   // Allow through if the user has an invite token in the URL
   if (BETA_INVITE_ONLY) {
     if (pathname === '/auth/sign-up' || pathname === '/auth/register') {
@@ -77,14 +77,14 @@ export async function middleware(req: NextRequest) {
       if (!inviteToken) {
         return NextResponse.redirect(new URL('/request-access', req.url));
       }
-      // Has invite token — let them through to the sign-up page
+      // Has invite token ΓÇö let them through to the sign-up page
       // (the page itself will validate the token)
       return NextResponse.next();
     }
   }
 
-  // ── ADMIN ROUTES ──
-  // Let /admin pages load — auth + admin-email checks are enforced
+  // ΓöÇΓöÇ ADMIN ROUTES ΓöÇΓöÇ
+  // Let /admin pages load ΓÇö auth + admin-email checks are enforced
   // inside the API route (server-side) and the page itself (client-side).
   // This avoids cookie-format mismatches in edge middleware.
   if (pathname.startsWith('/admin')) {

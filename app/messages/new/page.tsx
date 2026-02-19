@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { trackVendorEvent } from '@/lib/analytics';
 
 /* ------------------------------------------------------------------ */
-/*  Vendor type – minimal fields from the vendors table                */
+/*  Vendor type ΓÇô minimal fields from the vendors table                */
 /* ------------------------------------------------------------------ */
 
 interface VendorInfo {
@@ -44,7 +44,7 @@ function StartChatContent() {
   // Pre-fill message from query string
   useEffect(() => { if (prefillMessage) setMessage(prefillMessage); }, [prefillMessage]);
 
-  /* ── Fetch vendor info & redirect if conversation already exists ── */
+  /* ΓöÇΓöÇ Fetch vendor info & redirect if conversation already exists ΓöÇΓöÇ */
   useEffect(() => {
     (async () => {
       setVendorLoading(true);
@@ -105,7 +105,7 @@ function StartChatContent() {
     })();
   }, [vendorId]);
 
-  /* ── Attachment helpers ─────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Attachment helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleAddAttachment = (files: FileList | null) => {
     if (!files) return;
     setAttachments(prev => [...prev, ...Array.from(files)]);
@@ -114,7 +114,7 @@ function StartChatContent() {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  /* ── Start chat / find-or-create conversation ──────────────────── */
+  /* ΓöÇΓöÇ Start chat / find-or-create conversation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleStartChat = async () => {
     if (!vendor || sending) return;
     setSending(true);
@@ -150,7 +150,7 @@ function StartChatContent() {
           .single();
 
         if (convError) {
-          // Race-condition: unique constraint conflict → fetch again
+          // Race-condition: unique constraint conflict ΓåÆ fetch again
           if (convError.code === '23505') {
             const { data: retry } = await supabase
               .from('conversations')
@@ -208,7 +208,7 @@ function StartChatContent() {
     }
   };
 
-  /* ── Render ─────────────────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-20 px-4">
@@ -220,7 +220,7 @@ function StartChatContent() {
           </button>
           <h1 className="text-xl font-bold text-gray-900">Message Vendor</h1>
           <p className="text-sm text-gray-600 mt-1.5">
-            {vendor ? `Start a conversation with ${vendor.name}` : vendorLoading ? 'Loading…' : 'Vendor not found'}
+            {vendor ? `Start a conversation with ${vendor.name}` : vendorLoading ? 'LoadingΓÇª' : 'Vendor not found'}
           </p>
         </div>
 
@@ -307,11 +307,11 @@ function StartChatContent() {
       {/* Sticky Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 flex gap-3">
-            {vendor ? (
-              <Link href={`/v/${vendor.id}`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">
-                Back to Profile
-              </Link>
-            ) : (
+          {vendor ? (
+            <Link href={`/marketplace/vendor/${vendor.id}`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">
+              Back to Profile
+            </Link>
+          ) : (
             <button onClick={() => router.back()} className="flex-1 px-4 py-3.5 border-2 border-gray-200 text-gray-400 rounded-xl font-semibold text-base text-center" disabled>Back</button>
           )}
           <button
@@ -319,7 +319,7 @@ function StartChatContent() {
             disabled={!vendor || sending}
             className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${vendor && !sending ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
           >
-            {sending ? 'Starting…' : 'Start Chat'}
+            {sending ? 'StartingΓÇª' : 'Start Chat'}
           </button>
         </div>
       </div>

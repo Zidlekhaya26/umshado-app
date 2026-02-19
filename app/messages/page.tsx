@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -39,8 +38,7 @@ export default function MessagesIndex() {
   const router = useRouter();
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, role } = useAuthRole();
-  const [isVendor, setIsVendor] = useState(role === 'vendor');
+  const [isVendor, setIsVendor] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
@@ -53,9 +51,16 @@ export default function MessagesIndex() {
     try {
       setLoading(true);
 
-      const u = user ?? null;
-      if (!u) { setItems([]); return; }
-      const activeRole = role ?? 'couple';
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setItems([]); return; }
+
+      // Determine active role to filter conversations correctly
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('active_role')
+        .eq('id', user.id)
+        .maybeSingle();
+      const activeRole = profileData?.active_role || 'couple';
       setIsVendor(activeRole === 'vendor');
 
       // If vendor, fetch vendor ID and publish status for CTAs
@@ -64,7 +69,7 @@ export default function MessagesIndex() {
         const { data: vRow } = await supabase
           .from('vendors')
           .select('id, is_published')
-          .eq('user_id', u.id)
+          .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -77,8 +82,8 @@ export default function MessagesIndex() {
 
       // Filter conversations by role: couple sees couple_id matches, vendor sees vendor_id matches (use vendor row id)
       const roleFilter = activeRole === 'vendor'
-        ? `vendor_id.eq.${myVendorId ?? u.id}`
-        : `couple_id.eq.${u.id}`;
+        ? `vendor_id.eq.${myVendorId ?? user.id}`
+        : `couple_id.eq.${user.id}`;
 
       // Fetch conversations the user participates in (based on their active role)
       const { data, error } = await supabase
@@ -110,7 +115,7 @@ export default function MessagesIndex() {
             .maybeSingle();
 
           if (iAmVendor) {
-            // I'm the vendor → resolve couple display using helper (prefer partner1 & partner2, then partner_name, then profile)
+            // I'm the vendor ΓåÆ resolve couple display using helper (prefer partner1 & partner2, then partner_name, then profile)
             try {
               const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
               const d = await getCoupleDisplayName(row.couple_id);
@@ -135,7 +140,7 @@ export default function MessagesIndex() {
             }
           }
 
-          // I'm the couple → try marketplace view first (public), fallback to vendors table
+          // I'm the couple ΓåÆ try marketplace view first (public), fallback to vendors table
           const { data: mv } = await supabase
             .from('marketplace_vendors')
             .select('business_name, logo_url')
@@ -185,13 +190,13 @@ export default function MessagesIndex() {
     let convChannelB: any = null;
 
     (async () => {
-      const u = user ?? null;
-      if (!u) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
       // Listen for conversation INSERT/UPDATE where couple_id == user.id
       convChannelA = supabase
-        .channel(`conversations_user_${u.id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${u.id}` }, () => {
+        .channel(`conversations_user_${user.id}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => {
           loadConversations();
         })
         .subscribe();
@@ -214,7 +219,7 @@ export default function MessagesIndex() {
     };
   }, [vendorId]);
 
-  /* ── Time-ago helper ────────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Time-ago helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -227,10 +232,10 @@ export default function MessagesIndex() {
     return new Date(dateStr).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' });
   };
 
-  /* ── Share profile helper ──────────────────────────────────────── */
+  /* ΓöÇΓöÇ Share profile helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleShareProfile = async () => {
     if (!vendorId) return;
-    const profileUrl = `${window.location.origin}/v/${vendorId}`;
+    const profileUrl = `${window.location.origin}/marketplace/vendor/${vendorId}`;
     const shareText = `Check out our business on uMshado: ${profileUrl}`;
     if (navigator.share) {
       try { await navigator.share({ title: 'uMshado Vendor Profile', text: shareText, url: profileUrl }); } catch { /* user cancelled */ }
@@ -239,7 +244,7 @@ export default function MessagesIndex() {
     }
   };
 
-  /* ── Render ─────────────────────────────────────────────────────── */
+  /* ΓöÇΓöÇ Render ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-24 px-4">
@@ -282,7 +287,7 @@ export default function MessagesIndex() {
                       </button>
                     )}
                     {isPublished && vendorId && (
-                      <Link href={`/v/${vendorId}?preview=1`} className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors text-center">
+                      <Link href={`/marketplace/vendor/${vendorId}?preview=1`} className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-900 rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors text-center">
                         View Public Profile
                       </Link>
                     )}

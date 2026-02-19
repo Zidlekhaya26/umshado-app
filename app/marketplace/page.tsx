@@ -1,7 +1,6 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
@@ -74,15 +73,22 @@ export default function Marketplace() {
   const [displayedCount, setDisplayedCount] = useState(10);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const { role, user } = useAuthRole();
-  const isVendor = role === 'vendor';
+  const [isVendor, setIsVendor] = useState(false);
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
-    // role is provided by AuthRoleProvider
+    // Detect active role for nav
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        const { data: profile } = await supabase.from('profiles').select('active_role').eq('id', user.id).maybeSingle();
+        setIsVendor(profile?.active_role === 'vendor');
+      } catch { /* ignore */ }
+    })();
   }, []);
 
   useEffect(() => {
@@ -145,41 +151,28 @@ export default function Marketplace() {
     setLoading(true);
     try {
       // Fetch couple preferences for ranking
-      const u = user ?? null;
-      if (u) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         const { data: coupleData } = await supabase
           .from('couples')
           .select('location, country')
-          .eq('id', u.id)
+          .eq('id', user.id)
           .maybeSingle();
-
+        
         if (coupleData) {
           setCouplePreferences({ category: coupleData.location });
         }
       }
 
-      // Fetch marketplace vendors (preferred read-only aggregated view)
-      let { data, error } = await supabase
+      // Fetch marketplace vendors
+      const { data, error } = await supabase
         .from('marketplace_vendors')
         .select('*');
 
-      // If the view is unavailable or permissioned (common on some deployments),
-      // fall back to reading from the underlying `vendors` table and map fields
-      if (error || !data) {
-        console.warn('marketplace: marketplace_vendors query failed, attempting vendors fallback', error);
-        const { data: vdata, error: verror } = await supabase
-          .from('vendors')
-          .select('id as vendor_id, business_name, category, location as city, NULL::text as country, description, logo_url, is_published, created_at, updated_at, featured, featured_until, plan, plan_until')
-          .eq('is_published', true)
-          .limit(1000);
-
-        if (verror) {
-          console.error('marketplace: failed to load vendors fallback', verror);
-          setLoading(false);
-          return;
-        }
-
-        data = vdata;
+      if (error) {
+        console.error('marketplace: failed to load vendors', error);
+        setLoading(false);
+        return;
       }
 
       const { data: activityData, error: activityError } = await supabase
@@ -329,10 +322,10 @@ export default function Marketplace() {
   };
 
   const filterOptions = [
-    { label: 'Category', icon: '📋' },
-    { label: 'Location', icon: '📍' },
-    { label: 'Price', icon: '💰' },
-    { label: 'Availability', icon: '📅' }
+    { label: 'Category', icon: '≡ƒôï' },
+    { label: 'Location', icon: '≡ƒôì' },
+    { label: 'Price', icon: '≡ƒÆ░' },
+    { label: 'Availability', icon: '≡ƒôà' }
   ];
 
   const toggleServiceFilter = (service: string) => {
@@ -429,7 +422,7 @@ export default function Marketplace() {
               {vendors.slice(0, displayedCount).map((vendor) => (
               <Link
                 key={vendor.id}
-                href={`/v/${vendor.id}`}
+                href={`/marketplace/vendor/${vendor.id}`}
                 className={[
                   "block bg-white rounded-xl p-3 sm:p-4 transition-all active:scale-[0.98] h-full w-full",
                   vendor.score > 200
@@ -476,7 +469,7 @@ export default function Marketplace() {
 
                             {sortBy === "recommended" && vendor.score > 120 && (
                               <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
-                                ⭐ Recommended
+                                Γ¡É Recommended
                               </span>
                             )}
                           </div>
