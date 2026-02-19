@@ -292,7 +292,7 @@ export default function VendorDashboard() {
 
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold text-gray-900 truncate">{vendor?.business_name || 'Your vendor hub'}</h1>
-                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2 sm:line-clamp-1">Your business hub ΓÇö insights & activity</p>
+                <p className="text-sm text-gray-600 mt-0.5 line-clamp-2 sm:line-clamp-1">Your business hub — insights & activity</p>
               </div>
             </div>
 
@@ -377,15 +377,15 @@ export default function VendorDashboard() {
           </div>
         ) : (
           <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl px-4 py-5 text-white shadow-lg">
-            <h2 className="text-lg font-bold mb-1">Profile complete! Γ£à</h2>
+            <h2 className="text-lg font-bold mb-1">Profile complete!</h2>
             <p className="text-sm text-green-100 mb-3">You&apos;re ready to go live. Publish your profile to appear on the marketplace.</p>
-            <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish ΓåÆ</Link>
+            <Link href="/vendor/review" className="inline-block px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-semibold transition-colors">Review &amp; Publish</Link>
           </div>
         )}
 
         {vendor?.is_published && (
           <div className="bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl px-4 py-5 text-white shadow-lg">
-            <h2 className="text-lg font-bold mb-1">You&apos;re live! ≡ƒÄë</h2>
+            <h2 className="text-lg font-bold mb-1">You&apos;re live!</h2>
             <p className="text-sm text-purple-100">Couples can discover and contact you for their special day.</p>
           </div>
         )}

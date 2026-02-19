@@ -77,14 +77,14 @@ export async function middleware(req: NextRequest) {
       if (!inviteToken) {
         return NextResponse.redirect(new URL('/request-access', req.url));
       }
-      // Has invite token ΓÇö let them through to the sign-up page
+      // Has invite token — let them through to the sign-up page
       // (the page itself will validate the token)
       return NextResponse.next();
     }
   }
 
   // ΓöÇΓöÇ ADMIN ROUTES ΓöÇΓöÇ
-  // Let /admin pages load ΓÇö auth + admin-email checks are enforced
+  // Let /admin pages load — auth + admin-email checks are enforced
   // inside the API route (server-side) and the page itself (client-side).
   // This avoids cookie-format mismatches in edge middleware.
   if (pathname.startsWith('/admin')) {
