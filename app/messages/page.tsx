@@ -66,7 +66,7 @@ export default function MessagesIndex() {
         const { data: vRow } = await supabase
           .from('vendors')
           .select('id, is_published')
-          .eq('user_id', user.id)
+          .eq('user_id', u.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -79,8 +79,8 @@ export default function MessagesIndex() {
 
       // Filter conversations by role: couple sees couple_id matches, vendor sees vendor_id matches (use vendor row id)
       const roleFilter = activeRole === 'vendor'
-        ? `vendor_id.eq.${myVendorId ?? user.id}`
-        : `couple_id.eq.${user.id}`;
+        ? `vendor_id.eq.${myVendorId ?? u.id}`
+        : `couple_id.eq.${u.id}`;
 
       // Fetch conversations the user participates in (based on their active role)
       const { data, error } = await supabase
