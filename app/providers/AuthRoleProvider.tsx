@@ -53,11 +53,19 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Initialize session with a timeout to avoid indefinite loading on flaky mobile
     const init = async () => {
       setLoading(true);
       try {
-        const { data } = await supabase.auth.getSession();
-        const u = data.session?.user ?? null;
+        const race = Promise.race([
+          (async () => {
+            const { data } = await supabase.auth.getSession();
+            return data.session?.user ?? null;
+          })(),
+          new Promise<null>((res) => setTimeout(() => res(null), 4000)),
+        ]);
+
+        const u = await race;
 
         if (!mounted) return;
 
@@ -83,16 +91,24 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const u = session?.user ?? null;
+      if (!mounted) return;
       setUser(u);
 
       if (u?.id) {
-        setLoading(true);
-        const r = await fetchRole(u.id);
-        setRole(r);
-        setLoading(false);
+        try {
+          setLoading(true);
+          const r = await fetchRole(u.id);
+          if (!mounted) return;
+          setRole(r);
+        } catch (e) {
+          console.warn("AuthRoleProvider: onAuthStateChange fetchRole error", e);
+          setRole(null);
+        } finally {
+          if (mounted) setLoading(false);
+        }
       } else {
         setRole(null);
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     });
 

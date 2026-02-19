@@ -34,18 +34,23 @@ function parseEnv(filePath) {
       process.exit(0);
     }
 
+    const portsToTry = [process.env.DEV_PORT || 3000, 3001];
     for (const v of ids) {
       await new Promise((resolve) => {
-        const url = `http://localhost:3001/v/${v.id}`;
-        http.get(url, (res) => {
-          let d = '';
-          res.on('data', (c) => d += c);
-          res.on('end', () => {
-            const notFound = d.includes('Vendor not found') || d.includes('Vendor not found');
-            console.log(`${v.id} — ${v.name ?? '<no name>'} — status=${res.statusCode} — ${notFound ? 'NOT FOUND' : 'OK'}`);
-            resolve();
-          });
-        }).on('error', (e) => { console.error('Request error for', v.id, e.message); resolve(); });
+        (async function tryPorts(i = 0) {
+          if (i >= portsToTry.length) { console.error('All ports failed for', v.id); return resolve(); }
+          const port = portsToTry[i];
+          const url = `http://localhost:${port}/v/${v.id}`;
+          http.get(url, (res) => {
+            let d = '';
+            res.on('data', (c) => d += c);
+            res.on('end', () => {
+              const notFound = d.includes('Vendor not found');
+              console.log(`${v.id} — ${v.name ?? '<no name>'} — status=${res.statusCode} — ${notFound ? 'NOT FOUND' : 'OK'}`);
+              resolve();
+            });
+          }).on('error', (e) => { tryPorts(i+1); });
+        })();
       });
     }
   } catch (e) {
