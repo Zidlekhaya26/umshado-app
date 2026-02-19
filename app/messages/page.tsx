@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -39,28 +40,24 @@ export default function MessagesIndex() {
   const [items, setItems] = useState<ConversationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isVendor, setIsVendor] = useState(false);
+  const { user, role } = useAuthRole();
+  // derive isVendor from global role
+  useEffect(() => { setIsVendor(role === 'vendor'); }, [role]);
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
 
-  useEffect(() => { loadConversations(); }, []);
+  useEffect(() => { loadConversations(); }, [user]);
 
   const loadConversations = async () => {
     try {
       setLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setItems([]); return; }
-
-      // Determine active role to filter conversations correctly
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('active_role')
-        .eq('id', user.id)
-        .maybeSingle();
-      const activeRole = profileData?.active_role || 'couple';
+      const u = user ?? null;
+      if (!u) { setItems([]); return; }
+      const activeRole = role ?? 'couple';
       setIsVendor(activeRole === 'vendor');
 
       // If vendor, fetch vendor ID and publish status for CTAs
@@ -189,35 +186,32 @@ export default function MessagesIndex() {
     let convChannelA: any = null;
     let convChannelB: any = null;
 
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+    if (!user) return;
 
-      // Listen for conversation INSERT/UPDATE where couple_id == user.id
-      convChannelA = supabase
-        .channel(`conversations_user_${user.id}`)
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => {
+    // Listen for conversation INSERT/UPDATE where couple_id == user.id
+    convChannelA = supabase
+      .channel(`conversations_user_${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => {
+        loadConversations();
+      })
+      .subscribe();
+
+    // If vendor, also listen for vendor_id changes (use vendorId state if available)
+    const vid = vendorId;
+    if (vid) {
+      convChannelB = supabase
+        .channel(`conversations_vendor_${vid}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `vendor_id=eq.${vid}` }, () => {
           loadConversations();
         })
         .subscribe();
-
-      // If vendor, also listen for vendor_id changes (use vendorId state if available)
-      const vid = vendorId;
-      if (vid) {
-        convChannelB = supabase
-          .channel(`conversations_vendor_${vid}`)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `vendor_id=eq.${vid}` }, () => {
-            loadConversations();
-          })
-          .subscribe();
-      }
-    })();
+    }
 
     return () => {
       if (convChannelA) supabase.removeChannel(convChannelA);
       if (convChannelB) supabase.removeChannel(convChannelB);
     };
-  }, [vendorId]);
+  }, [vendorId, user]);
 
   /* ΓöÇΓöÇ Time-ago helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const timeAgo = (dateStr: string) => {

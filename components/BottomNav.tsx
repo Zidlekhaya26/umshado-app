@@ -4,30 +4,34 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user } = useAuthRole();
 
   useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+
+    let mounted = true;
     (async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
         const { count } = await supabase
           .from('notifications')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id)
           .eq('is_read', false);
 
-        setUnreadCount(count || 0);
+        if (mounted) setUnreadCount(count || 0);
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         console.error('Error loading unread notifications:', err);
       }
     })();
-  }, []);
+
+    return () => { mounted = false; };
+  }, [user]);
 
   const navItems = [
     {

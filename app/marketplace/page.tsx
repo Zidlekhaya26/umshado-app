@@ -13,6 +13,7 @@ import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 interface MarketplaceVendor {
   vendor_id: string;
@@ -73,23 +74,15 @@ export default function Marketplace() {
   const [displayedCount, setDisplayedCount] = useState(10);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
-  const [isVendor, setIsVendor] = useState(false);
+  const { user, role } = useAuthRole();
+  const isVendor = role === 'vendor';
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     loadData();
-    // Detect active role for nav
-    (async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-        const { data: profile } = await supabase.from('profiles').select('active_role').eq('id', user.id).maybeSingle();
-        setIsVendor(profile?.active_role === 'vendor');
-      } catch { /* ignore */ }
-    })();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -151,17 +144,16 @@ export default function Marketplace() {
     setLoading(true);
     try {
       // Fetch couple preferences for ranking
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: coupleData } = await supabase
-          .from('couples')
-          .select('location, country')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (coupleData) {
-          setCouplePreferences({ category: coupleData.location });
-        }
+      const u = user ?? null;
+      if (u) {
+        try {
+          const { data: coupleData } = await supabase
+            .from('couples')
+            .select('location, country')
+            .eq('id', u.id)
+            .maybeSingle();
+          if (coupleData) setCouplePreferences({ category: coupleData.location });
+        } catch {}
       }
 
       // Fetch marketplace vendors
