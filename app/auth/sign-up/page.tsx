@@ -290,7 +290,7 @@ function SignUpContent() {
                   type="button"
                   aria-pressed={role === 'couple'}
                   onClick={() => setRole('couple')}
-                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'couple' ? 'bg-white shadow font-semibold' : 'text-gray-700'}`}
+                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'couple' ? 'bg-white shadow font-semibold text-gray-900' : 'text-gray-700'}`}
                 >
                   Couple
                 </button>
@@ -298,7 +298,7 @@ function SignUpContent() {
                   type="button"
                   aria-pressed={role === 'vendor'}
                   onClick={() => setRole('vendor')}
-                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'vendor' ? 'bg-white shadow font-semibold' : 'text-gray-700'}`}
+                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'vendor' ? 'bg-white shadow font-semibold text-gray-900' : 'text-gray-700'}`}
                 >
                   Vendor
                 </button>
