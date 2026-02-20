@@ -460,8 +460,8 @@ export default function Marketplace() {
                             </h3>
 
                             {sortBy === "recommended" && vendor.score > 120 && (
-                              <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
-                                Γ¡É Recommended
+                                <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
+                                Recommended
                               </span>
                             )}
                           </div>
