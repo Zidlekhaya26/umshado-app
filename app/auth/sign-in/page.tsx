@@ -70,9 +70,13 @@ function SignInContent() {
 
   const handleGoogleSignIn = async () => {
     try {
+      const redirectOrigin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'https://www.umshado-app.vercel.app';
       const callbackUrl = redirectTo
-        ? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
-        : `${window.location.origin}/auth/callback`;
+        ? `${redirectOrigin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+        : `${redirectOrigin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

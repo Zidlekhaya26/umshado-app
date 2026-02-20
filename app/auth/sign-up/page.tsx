@@ -183,11 +183,15 @@ function SignUpContent() {
     setIsLoading(true);
 
     try {
+      const redirectOrigin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'https://www.umshado-app.vercel.app';
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?role=${effectiveRole}`,
+          emailRedirectTo: `${redirectOrigin}/auth/callback?role=${effectiveRole}`,
         }
       });
 
@@ -227,10 +231,14 @@ function SignUpContent() {
       // Redeem invite before OAuth redirect (since user will leave the page)
       await redeemInvite();
 
+      const redirectOrigin =
+        typeof window !== 'undefined'
+          ? window.location.origin
+          : 'https://www.umshado-app.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?role=${effectiveRole}`
+          redirectTo: `${redirectOrigin}/auth/callback?role=${effectiveRole}`
         }
       });
       if (error) {

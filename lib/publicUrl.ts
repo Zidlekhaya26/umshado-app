@@ -5,5 +5,5 @@ export function getPublicBaseUrl() {
   const vercel = process.env.NEXT_PUBLIC_VERCEL_URL?.trim();
   if (vercel) return `https://${vercel}`.replace(/\/$/, '');
 
-  return 'http://localhost:3000';
+  return 'https://www.umshado-app.vercel.app';
 }
