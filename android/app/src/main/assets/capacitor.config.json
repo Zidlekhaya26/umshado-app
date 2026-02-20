@@ -1,0 +1,9 @@
+{
+	"appId": "com.umshado.app",
+	"appName": "uMshado",
+	"webDir": "public",
+	"server": {
+		"url": "https://umshado-app.vercel.app",
+		"cleartext": true
+	}
+}

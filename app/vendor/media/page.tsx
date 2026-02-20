@@ -122,7 +122,7 @@ export default function VendorMedia() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen flex flex-col pb-20 px-4">
+      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-20 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
         <div className="bg-white border-b border-gray-200 px-4 py-5 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Media & Portfolio</h1>
@@ -201,7 +201,7 @@ export default function VendorMedia() {
       </div>
 
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
-        <div className="w-full max-w-screen-xl mx-auto flex gap-3 px-4">
+        <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto flex gap-3 px-4">
           <Link href={backHref} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
           <button onClick={async () => { await handleSave(); if (canContinue) { if (isOnboarding) window.location.href = '/vendor/review?mode=onboarding'; else alert('Saved'); } }} disabled={!canContinue || saving} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue && !saving ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>{primaryLabel}</button>
         </div>

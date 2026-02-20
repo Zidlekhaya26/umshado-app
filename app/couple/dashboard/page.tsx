@@ -350,7 +350,7 @@ export default function CoupleDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-screen-xl mx-auto min-h-screen bg-white shadow-lg flex flex-col pb-24 px-4">
+      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] bg-white shadow-lg flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
         {/* Hidden file input for avatar upload */}
         <input
           ref={fileInputRef}
