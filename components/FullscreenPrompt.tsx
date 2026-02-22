@@ -56,12 +56,12 @@ export default function FullscreenPrompt() {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <div className="bg-white border rounded-lg shadow-lg p-3 flex items-center gap-3 max-w-md">
-        <div className="text-sm">For a native fullscreen experience, install the app or enter fullscreen.</div>
+      <div className="bg-white border rounded-lg shadow-lg p-3 flex items-center gap-3 max-w-md" role="dialog" aria-label="Install or fullscreen prompt">
+        <div className="text-sm text-gray-800">For a native fullscreen experience, install the app or enter fullscreen.</div>
         <div className="flex items-center gap-2">
           <button onClick={handleInstall} className="px-3 py-1 bg-purple-600 text-white rounded-md text-sm">Install</button>
-          <button onClick={enterFullscreen} className="px-3 py-1 bg-gray-100 rounded-md text-sm">Fullscreen</button>
-          <button onClick={() => setVisible(false)} className="text-xs text-gray-500">Dismiss</button>
+          <button onClick={enterFullscreen} className="px-3 py-1 bg-gray-200 text-gray-800 rounded-md text-sm">Fullscreen</button>
+          <button onClick={() => setVisible(false)} className="text-sm text-gray-600">Dismiss</button>
         </div>
       </div>
     </div>
