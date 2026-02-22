@@ -1,10 +1,10 @@
 {
   "name": "uMshado",
   "short_name": "uMshado",
-  "display": "standalone",
+  "display": "fullscreen",
   "start_url": "/",
   "background_color": "#F7F0EA",
-  "theme_color": "#7B1E3A",
+  "theme_color": "#F7F0EA",
   "icons": [
     {
       "src": "/assets/icons/icon-192x192.png",

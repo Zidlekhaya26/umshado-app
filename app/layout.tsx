@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthRoleProvider } from "./providers/AuthRoleProvider";
 import { CurrencyProvider } from "./providers/CurrencyProvider";
 import CurrencySelector from '@/components/CurrencySelector';
+import FullscreenPrompt from '@/components/FullscreenPrompt';
 import RoleGate from "@/components/RoleGate";
 
 const geistSans = Geist({
@@ -41,8 +42,12 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="uMshado" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#F7F0EA" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
@@ -51,8 +56,9 @@ export default function RootLayout({
           <CurrencyProvider>
             <div className="w-full">
               <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
-                <div className="block">
+                <div className="block flex items-center gap-3">
                   <CurrencySelector />
+                  <FullscreenPrompt />
                 </div>
               </header>
               <RoleGate>

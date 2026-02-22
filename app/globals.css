@@ -52,6 +52,18 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
+/* Respect device safe-area insets on iOS (notably when running as PWA) */
+html, body {
+  height: 100%;
+}
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Force form controls to use dark text instead of browser-default grey */
 input,
 textarea,
