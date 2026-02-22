@@ -433,7 +433,7 @@ function QuoteSummaryContent() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Extra Guests:</span>
                 <span className="text-sm text-gray-900">
-                  {format(((guestCount - (pkg.base_guests || 0)) * pkg.price_per_guest) ?? 0)}
+                  {format(((guestCount - (pkg.base_guests ?? 0)) * (pkg.price_per_guest ?? 0)))}
                 </span>
               </div>
             )}
@@ -441,7 +441,7 @@ function QuoteSummaryContent() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Extra Hours:</span>
                 <span className="text-sm text-gray-900">
-                  {format(((hours - (pkg.base_hours || 0)) * pkg.price_per_hour) ?? 0)}
+                  {format(((hours - (pkg.base_hours ?? 0)) * (pkg.price_per_hour ?? 0)))}
                 </span>
               </div>
             )}
