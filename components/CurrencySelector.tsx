@@ -2,7 +2,7 @@
 import React from 'react';
 import { useCurrency } from '../app/providers/CurrencyProvider';
 
-export const CurrencySelector = () => {
+export default function CurrencySelector() {
   const { currency, setCurrency } = useCurrency();
   return (
     <div className="flex items-center gap-2">
@@ -18,4 +18,4 @@ export const CurrencySelector = () => {
       </select>
     </div>
   );
-};
+}
