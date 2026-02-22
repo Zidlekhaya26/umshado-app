@@ -1,4 +1,11 @@
 {
+  "name": "uMshado",
+  "short_name": "uMshado",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#6b1f3a",
   "icons": [
     {
       "src": "../icons/icon-48.webp",
@@ -42,6 +49,5 @@
       "sizes": "512x512",
       "purpose": "any maskable"
     }
-  ],
-  "background_color": "#F7F0EA"
+  ]
 }
