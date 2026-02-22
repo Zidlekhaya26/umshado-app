@@ -26,10 +26,9 @@ export async function getPostAuthRedirect(
       // No profile at all — new user, route to onboarding based on intended role
       const role = intendedRole || 'couple';
 
-      // Create profile with initial role
+      // Create profile with initial role. Ensure we set `active_role` (DB column)
       await supabase.from('profiles').upsert({
         id: user.id,
-        role: role,
         active_role: role,
         has_couple: role === 'couple',
         has_vendor: role === 'vendor',
@@ -38,8 +37,24 @@ export async function getPostAuthRedirect(
       return role === 'vendor' ? '/vendor/onboarding' : '/couple/onboarding';
     }
 
-    // Profile exists — check if they have the onboarding done
-    const activeRole = profile.active_role || intendedRole || 'couple';
+    // Profile exists — choose active role using available data in order:
+    // 1) explicit active_role
+    // 2) if user has vendor flag, prefer vendor
+    // 3) if user has couple flag, prefer couple
+    // 4) intendedRole from sign-in flow
+    // 5) fallback to 'couple'
+    let activeRole: 'vendor' | 'couple' | null = null;
+    if (profile.active_role === 'vendor' || profile.active_role === 'couple') {
+      activeRole = profile.active_role;
+    } else if (profile.has_vendor) {
+      activeRole = 'vendor';
+    } else if (profile.has_couple) {
+      activeRole = 'couple';
+    } else if (intendedRole) {
+      activeRole = intendedRole;
+    } else {
+      activeRole = 'couple';
+    }
 
     if (activeRole === 'vendor') {
       if (!profile.has_vendor) {
