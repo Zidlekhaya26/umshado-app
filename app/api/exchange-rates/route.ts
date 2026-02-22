@@ -20,8 +20,8 @@ export async function GET() {
     const rates: Record<string, number> = {};
     if (json && json.rates) {
       rates['USD'] = Number(json.rates['USD']) || 0;
-      // some providers use ZWL or ZWG keys; prefer ZWL then fallback
-      rates['ZWL'] = Number(json.rates['ZWL'] ?? json.rates['ZWG'] ?? 0) || 0;
+      // add BWP (Pula) rate when provided
+      rates['BWP'] = Number(json.rates['BWP'] ?? 0) || 0;
     }
     cache = { rates, ts: now };
     return NextResponse.json({ rates, cached: false });

@@ -1,0 +1,13 @@
+{
+  "appId": "com.umshado.app",
+  "appName": "uMshado",
+  "webDir": "build",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://umshado-app.vercel.app",
+    "cleartext": false
+  },
+  "android": {
+    "androidScheme": "https"
+  }
+}

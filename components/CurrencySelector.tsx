@@ -14,7 +14,7 @@ export default function CurrencySelector() {
       >
         <option value="ZAR">R (ZAR)</option>
         <option value="USD">$ (USD)</option>
-        <option value="ZWL">Z$ (ZWL)</option>
+        <option value="BWP">P (BWP)</option>
       </select>
     </div>
   );

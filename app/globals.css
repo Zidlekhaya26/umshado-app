@@ -155,3 +155,15 @@ textarea::placeholder {
 .animate-umshado-pulse {
   animation: umshado-pulse 1.8s ease-in-out infinite;
 }
+
+/* Make web background transparent so native WebView background shows through */
+:root, html, body, #__next, #root {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Ensure commonly used loading / card containers don't force a white background */
+.loading-container, .loading, .splash, .splash-screen, .app-shell {
+  background: transparent !important;
+  background-color: transparent !important;
+}

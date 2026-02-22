@@ -1,4 +1,4 @@
-export type Currency = 'ZAR' | 'USD' | 'ZWL';
+export type Currency = 'ZAR' | 'USD' | 'BWP';
 
 export type ExchangeRates = {
   // rates relative to base currency (ZAR)
@@ -8,13 +8,13 @@ export type ExchangeRates = {
 const SYMBOL: Record<Currency, string> = {
   ZAR: 'R',
   USD: '$',
-  ZWL: 'Z$'
+  BWP: 'P'
 };
 
 const LOCALE: Record<Currency, string> = {
   ZAR: 'en-ZA',
   USD: 'en-US',
-  ZWL: 'en-ZA'
+  BWP: 'en-BW'
 };
 
 export function convertAmount(amountInZar: number, to: Currency, rates?: ExchangeRates) {
@@ -27,7 +27,7 @@ export function formatAmount(amount: number, currency: Currency) {
   try {
     return new Intl.NumberFormat(LOCALE[currency], {
       style: 'currency',
-      currency: currency === 'ZWL' ? 'USD' : currency, // ZWL often unsupported; format with symbol fallback
+      currency: currency,
       maximumFractionDigits: 0
     }).format(amount).replace(/[A-Z]{3}/, SYMBOL[currency]);
   } catch (e) {
