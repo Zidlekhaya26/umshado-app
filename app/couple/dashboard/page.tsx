@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -175,6 +176,8 @@ export default function CoupleDashboard() {
   const totalBudget = budgetItems.reduce((s, b) => s + Number(b.amount), 0);
   const totalPaid = budgetItems.reduce((s, b) => s + Number(b.amount_paid || 0), 0);
   const totalRemaining = totalBudget - totalPaid;
+
+  const { format } = useCurrency();
 
   const hasBudget = budgetItems.length > 0;
   const hasTasks = tasks.length > 0;
@@ -665,16 +668,16 @@ export default function CoupleDashboard() {
               <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Total Budget</span>
-                  <span className="text-base font-bold text-gray-900">R{totalBudget.toLocaleString()}</span>
+                  <span className="text-base font-bold text-gray-900">{format(totalBudget)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Paid</span>
-                  <span className="text-base font-bold text-red-600">R{totalPaid.toLocaleString()}</span>
+                  <span className="text-base font-bold text-red-600">{format(totalPaid)}</span>
                 </div>
                 <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-900">Remaining</span>
-                    <span className="text-lg font-bold text-green-600">R{totalRemaining.toLocaleString()}</span>
+                    <span className="text-lg font-bold text-green-600">{format(totalRemaining)}</span>
                   </div>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2.5 mt-3">

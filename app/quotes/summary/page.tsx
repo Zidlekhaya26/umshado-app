@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense } from 'react';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
@@ -38,6 +39,7 @@ interface AddOn {
 
 function QuoteSummaryContent() {
   const router = useRouter();
+  const { format } = useCurrency();
   const searchParams = useSearchParams();
   const vendorId = searchParams.get('vendorId');
   const packageId = searchParams.get('packageId');
@@ -326,9 +328,9 @@ function QuoteSummaryContent() {
           <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4">
             <h2 className="text-lg font-bold text-gray-900 mb-1">{pkg?.name}</h2>
             <p className="text-sm text-gray-600 mb-3">{pkg?.description}</p>
-            <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Base Price:</span>
-              <span className="text-lg font-bold text-purple-600">R{pkg?.base_price.toLocaleString()}</span>
+              <span className="text-lg font-bold text-purple-600">{format(pkg?.base_price ?? 0)}</span>
             </div>
           </div>
 
@@ -345,8 +347,8 @@ function QuoteSummaryContent() {
                 onChange={(e) => setGuestCount(parseInt(e.target.value) || 0)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Base: {pkg.base_guests} guests. Additional: R{pkg.price_per_guest}/guest
+                <p className="text-xs text-gray-500 mt-1">
+                Base: {pkg.base_guests} guests. Additional: {format(pkg.price_per_guest)} / guest
               </p>
             </div>
           )}
@@ -363,8 +365,8 @@ function QuoteSummaryContent() {
                 onChange={(e) => setHours(parseInt(e.target.value) || 0)}
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               />
-              <p className="text-xs text-gray-500 mt-1">
-                Base: {pkg.base_hours} hours. Additional: R{pkg.price_per_hour}/hour
+                <p className="text-xs text-gray-500 mt-1">
+                Base: {pkg.base_hours} hours. Additional: {format(pkg.price_per_hour)} / hour
               </p>
             </div>
           )}
@@ -431,7 +433,7 @@ function QuoteSummaryContent() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Extra Guests:</span>
                 <span className="text-sm text-gray-900">
-                  R{((guestCount - (pkg.base_guests || 0)) * pkg.price_per_guest).toLocaleString()}
+                  {format(((guestCount - (pkg.base_guests || 0)) * pkg.price_per_guest) ?? 0)}
                 </span>
               </div>
             )}
@@ -439,7 +441,7 @@ function QuoteSummaryContent() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-gray-600">Extra Hours:</span>
                 <span className="text-sm text-gray-900">
-                  R{((hours - (pkg.base_hours || 0)) * pkg.price_per_hour).toLocaleString()}
+                  {format(((hours - (pkg.base_hours || 0)) * pkg.price_per_hour) ?? 0)}
                 </span>
               </div>
             )}
@@ -455,7 +457,7 @@ function QuoteSummaryContent() {
             <div className="border-t-2 border-gray-300 mt-3 pt-3">
               <div className="flex items-center justify-between">
                 <span className="text-base font-bold text-gray-900">Estimated Total:</span>
-                <span className="text-2xl font-bold text-purple-600">R{calculateTotal().toLocaleString()}</span>
+                <span className="text-2xl font-bold text-purple-600">{format(calculateTotal())}</span>
               </div>
             </div>
           </div>

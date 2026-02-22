@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
@@ -348,6 +349,8 @@ function CouplePlannerContent() {
   const totalPaid = budgetItems.reduce((s, b) => s + Number(b.amount_paid || 0), 0);
   const totalOutstanding = totalBudget - totalPaid;
 
+  const { format } = useCurrency();
+
   const totalGuestCount = guests.reduce((s, g) => s + (g.plus_one ? 2 : 1), 0);
   const acceptedGuests = guests.filter(g => g.rsvp_status === 'accepted').length;
   const pendingGuests = guests.filter(g => g.rsvp_status === 'pending').length;
@@ -365,7 +368,7 @@ function CouplePlannerContent() {
 
   const budgetStatusLabel = (item: DbBudgetItem) => {
     if (item.status === 'paid' || item.amount_paid >= item.amount) return '✓ Fully Paid';
-    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — R${Number(item.amount_paid).toLocaleString()} of R${Number(item.amount).toLocaleString()}`;
+    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — ${format(Number(item.amount_paid))} of ${format(Number(item.amount))}`;
     return 'Planned';
   };
   const budgetStatusColor = (item: DbBudgetItem) => {
@@ -440,10 +443,10 @@ function CouplePlannerContent() {
                   {/* Summary Card */}
                   <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
                     <p className="text-sm font-medium opacity-90 mb-2">Total Budget</p>
-                    <p className="text-3xl font-bold">R{totalBudget.toLocaleString()}</p>
+                    <p className="text-3xl font-bold">{format(totalBudget)}</p>
                     <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
-                      <div><p className="text-xs opacity-90">Paid</p><p className="text-lg font-bold">R{totalPaid.toLocaleString()}</p></div>
-                      <div><p className="text-xs opacity-90">Outstanding</p><p className="text-lg font-bold">R{totalOutstanding.toLocaleString()}</p></div>
+                      <div><p className="text-xs opacity-90">Paid</p><p className="text-lg font-bold">{format(totalPaid)}</p></div>
+                      <div><p className="text-xs opacity-90">Outstanding</p><p className="text-lg font-bold">{format(totalOutstanding)}</p></div>
                       <div><p className="text-xs opacity-90">Progress</p><p className="text-lg font-bold">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
                     </div>
                     {/* Progress bar */}
@@ -466,7 +469,7 @@ function CouplePlannerContent() {
                             {item.category && <p className="text-xs text-gray-500 mt-0.5">{item.category}</p>}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                            <p className="text-sm font-semibold text-gray-700">R{Number(item.amount).toLocaleString()}</p>
+                            <p className="text-sm font-semibold text-gray-700">{format(Number(item.amount))}</p>
                             <button onClick={() => startEditBudget(item)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit item">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthRoleProvider } from "./providers/AuthRoleProvider";
 import { CurrencyProvider } from "./providers/CurrencyProvider";
+import CurrencySelector from '@/components/CurrencySelector';
 import RoleGate from "@/components/RoleGate";
 
 const geistSans = Geist({
@@ -48,9 +49,16 @@ export default function RootLayout({
         {/* ✅ No centering, no max-width here */}
         <AuthRoleProvider>
           <CurrencyProvider>
-            <RoleGate>
-              <div className="min-h-screen w-full">{children}</div>
-            </RoleGate>
+            <div className="w-full">
+              <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
+                <div className="hidden sm:block">
+                  <CurrencySelector />
+                </div>
+              </header>
+              <RoleGate>
+                <div className="min-h-screen w-full">{children}</div>
+              </RoleGate>
+            </div>
           </CurrencyProvider>
         </AuthRoleProvider>
       </body>
