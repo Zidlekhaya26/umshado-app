@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
+import CurrencySelector from '@/components/CurrencySelector';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 export default function VendorOnboarding() {
   const router = useRouter();
@@ -18,6 +20,8 @@ export default function VendorOnboarding() {
     country: '',
     businessDescription: ''
   });
+
+  const { currency } = useCurrency();
 
   const categories = [...LOCKED_CATEGORIES];
 
@@ -51,6 +55,8 @@ export default function VendorOnboarding() {
         category: formData.category || null,
         location: locationParts.length > 0 ? locationParts.join(', ') : null,
         description: formData.businessDescription || null
+      ,
+        currency: currency
       });
 
       console.log('upsertVendor response:', res);
@@ -80,11 +86,16 @@ export default function VendorOnboarding() {
       <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <div className="flex items-center gap-3">
-            <UmshadoIcon size={32} />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <UmshadoIcon size={32} />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Join uMshado</h1>
+                <p className="text-sm text-gray-600 mt-0.5">Grow your wedding business with us</p>
+              </div>
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Join uMshado</h1>
-              <p className="text-sm text-gray-600 mt-0.5">Grow your wedding business with us</p>
+              <CurrencySelector />
             </div>
           </div>
         </div>

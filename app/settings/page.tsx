@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 function SettingsContent() {
   const router = useRouter();
@@ -48,6 +49,9 @@ function SettingsContent() {
   // ── Couple profile from DB ─────────────────────────────
   const [coupleWeddingDate, setCoupleWeddingDate] = useState<string | null>(null);
   const [couplePartnerName, setCouplePartnerName] = useState<string | null>(null);
+
+  // Currency from client-side provider (localStorage)
+  const { currency, setCurrency } = useCurrency();
 
   useEffect(() => {
     (async () => {
@@ -543,6 +547,44 @@ function SettingsContent() {
                   <option value="Xhosa">Xhosa</option>
                   <option value="Afrikaans">Afrikaans</option>
                   <option value="Sotho">Sotho</option>
+                </select>
+              </div>
+
+              {/* Currency Selector */}
+              <div className="px-4 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3 1.343 3 3-1.343 3-3 3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">Currency</p>
+                    <p className="text-xs text-gray-500">Select how prices are displayed in the app</p>
+                  </div>
+                </div>
+                <select
+                  value={currency}
+                  onChange={async (e) => {
+                    const next = e.target.value;
+                    setCurrency(next as any);
+                    try {
+                      if (authUserId) {
+                        await supabase.from('user_preferences').upsert({
+                          user_id: authUserId,
+                          currency: next,
+                          updated_at: new Date().toISOString(),
+                        });
+                      }
+                    } catch (err) {
+                      console.warn('Failed to save currency preference:', err);
+                    }
+                  }}
+                  className="px-3 py-1.5 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                >
+                  <option value="ZAR">R (ZAR)</option>
+                  <option value="USD">$ (USD)</option>
+                  <option value="ZWL">Z$ (ZWL)</option>
                 </select>
               </div>
             </div>

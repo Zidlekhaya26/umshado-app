@@ -4,6 +4,8 @@ import { useState } from "react";
 import { getUserOrRedirect, upsertCouple } from '@/lib/onboarding';
 import { useRouter } from "next/navigation";
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
+import CurrencySelector from '@/components/CurrencySelector';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 export default function CoupleOnboarding() {
   const router = useRouter();
@@ -15,6 +17,8 @@ export default function CoupleOnboarding() {
     country: "",
     culturalPreferences: ""
   });
+
+  const { currency } = useCurrency();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
@@ -39,7 +43,8 @@ export default function CoupleOnboarding() {
         wedding_date: formData.weddingDate || null,
         location: formData.weddingLocation || null,
         country: formData.country || null,
-        cultural_preferences: formData.culturalPreferences || null
+        cultural_preferences: formData.culturalPreferences || null,
+        currency: currency
       });
 
       if (!res.success) {
@@ -60,11 +65,16 @@ export default function CoupleOnboarding() {
       <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 min-h-[100dvh] bg-white shadow-lg flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-5">
-        <div className="flex items-center gap-3">
-          <UmshadoIcon size={32} />
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <UmshadoIcon size={32} />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Welcome to uMshado</h1>
+              <p className="text-sm text-gray-600 mt-0.5">Let&apos;s plan your dream wedding</p>
+            </div>
+          </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Welcome to uMshado</h1>
-            <p className="text-sm text-gray-600 mt-0.5">Let&apos;s plan your dream wedding</p>
+            <CurrencySelector />
           </div>
         </div>
       </div>

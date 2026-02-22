@@ -427,7 +427,7 @@ function QuoteSummaryContent() {
           <div className="bg-gray-100 border-2 border-gray-300 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-medium text-gray-600">Base Price:</span>
-              <span className="text-sm text-gray-900">R{pkg?.base_price.toLocaleString()}</span>
+              <span className="text-sm text-gray-900">{format(pkg?.base_price || 0)}</span>
             </div>
             {pkg?.pricing_mode === 'guest' && pkg.price_per_guest && guestCount > (pkg.base_guests || 0) && (
               <div className="flex items-center justify-between mb-2">

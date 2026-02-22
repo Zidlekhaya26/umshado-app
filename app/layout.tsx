@@ -51,7 +51,7 @@ export default function RootLayout({
           <CurrencyProvider>
             <div className="w-full">
               <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
-                <div className="hidden sm:block">
+                <div className="block">
                   <CurrencySelector />
                 </div>
               </header>

@@ -35,6 +35,7 @@ export async function upsertCouple(userId: string, data: {
   location?: string | null;
   country?: string | null;
   cultural_preferences?: string | null;
+  currency?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   try {
     // Only include columns that are present in the couples table schema.
@@ -75,6 +76,19 @@ export async function upsertCouple(userId: string, data: {
 
     if (profileErr) console.warn('upsertCouple - profile role update warning:', profileErr.message);
 
+    // persist currency preference if provided in data (backwards-compatible)
+    if ((data as any).currency) {
+      try {
+        await supabase.from('user_preferences').upsert({
+          user_id: userId,
+          currency: (data as any).currency,
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Failed to persist currency preference for couple:', err);
+      }
+    }
+
     return { success: true };
   } catch (err: any) {
     console.error('upsertCouple unexpected error:', err);
@@ -87,6 +101,7 @@ export async function upsertVendor(userId: string, data: {
   category?: string | null;
   location?: string | null;
   description?: string | null;
+  currency?: string | null;
 }): Promise<{ success: boolean; vendorId?: string; error?: string }> {
   try {
     const fields: any = {
@@ -179,6 +194,19 @@ export async function upsertVendor(userId: string, data: {
     if (roleErr) {
       console.error('upsertVendor role update error:', roleErr);
       return { success: false, error: `Profile update failed: ${roleErr.message}` };
+    }
+
+    // persist currency preference if provided
+    if ((data as any).currency) {
+      try {
+        await supabase.from('user_preferences').upsert({
+          user_id: userId,
+          currency: (data as any).currency,
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Failed to persist currency preference for vendor:', err);
+      }
     }
 
     return { success: true, vendorId };

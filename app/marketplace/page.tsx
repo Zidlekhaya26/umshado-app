@@ -56,6 +56,7 @@ interface Vendor {
   score: number;
   logoUrl?: string | null;
   verified?: boolean;
+  preferredCurrency?: string | null;
 }
 
 type SortOption = 'recommended' | 'price_low' | 'price_high' | 'newest';
@@ -183,7 +184,8 @@ export default function Marketplace() {
         activityMap.set(row.vendor_id, row);
       });
 
-      const mapped: Vendor[] = (data || []).map((v: MarketplaceVendor) => {
+      // Pre-map basic vendor info
+      const prelim: Vendor[] = (data || []).map((v: MarketplaceVendor) => {
         const activity = activityMap.get(v.vendor_id);
         return {
           id: v.vendor_id,
@@ -193,11 +195,37 @@ export default function Marketplace() {
           fromPrice: v.min_from_price || 0,
           services: v.services || [],
           score: calculateScore(v, couplePreferences, activity),
-          logoUrl: v.logo_url || null
-          ,
-          verified: !!v.verified
+          logoUrl: v.logo_url || null,
+          verified: !!v.verified,
+          preferredCurrency: null
         };
       });
+
+      // Fetch vendor user preferences to surface vendor-chosen currency (if any)
+      try {
+        const vendorIds = prelim.map(p => p.id).filter(Boolean);
+        if (vendorIds.length > 0) {
+          const { data: prefsData } = await supabase
+            .from('user_preferences')
+            .select('user_id, currency')
+            .in('user_id', vendorIds as string[]);
+
+          const prefMap = new Map<string, string>();
+          (prefsData || []).forEach((r: any) => {
+            if (r.user_id && r.currency) prefMap.set(r.user_id, r.currency);
+          });
+
+          // attach currency to vendor objects
+          prelim.forEach(p => {
+            const c = prefMap.get(p.id);
+            if (c) p.preferredCurrency = c;
+          });
+        }
+      } catch (err) {
+        console.warn('marketplace: failed to load vendor preferences', err);
+      }
+
+      const mapped: Vendor[] = prelim;
 
       // Extract unique services from vendors (used when no category is selected)
       const servs = Array.from(new Set(mapped.flatMap(v => v.services)));
@@ -506,7 +534,12 @@ export default function Marketplace() {
                   {/* Price & CTA */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                     {vendor.fromPrice > 0 ? (
-                      <p className="text-lg font-bold text-purple-600">{format(vendor.fromPrice)}</p>
+                      <div className="flex flex-col">
+                        <p className="text-lg font-bold text-purple-600">{format(vendor.fromPrice)}</p>
+                        {vendor.preferredCurrency && (
+                          <p className="text-xs text-gray-500">Vendor currency: {vendor.preferredCurrency}</p>
+                        )}
+                      </div>
                     ) : (
                       <p className="text-sm text-gray-500">Contact for pricing</p>
                     )}

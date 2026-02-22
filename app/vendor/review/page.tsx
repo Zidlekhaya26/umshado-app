@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { supabase } from '@/lib/supabaseClient';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -133,6 +134,7 @@ export default function VendorReview() {
   const [vendor, setVendor] = useState<VendorRow | null>(null);
   const [services, setServices] = useState<string[]>([]);
   const [packages, setPackages] = useState<PkgRow[]>([]);
+  const { format } = useCurrency();
   // Lightbox state for previewing images (logo / portfolio)
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
@@ -410,7 +412,7 @@ export default function VendorReview() {
                         )}
                       </div>
                       <p className="text-base font-bold text-purple-600 whitespace-nowrap">
-                        R{Number(pkg.base_price).toLocaleString()}
+                        {format(Number(pkg.base_price))}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">

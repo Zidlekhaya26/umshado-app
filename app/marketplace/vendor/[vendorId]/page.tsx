@@ -52,6 +52,7 @@ interface VendorProfile {
     preferredContact: string;
   };
   socialLinks?: { [key: string]: string };
+  preferredCurrency?: string | null;
 }
 
 export default function VendorProfile() {
@@ -254,6 +255,19 @@ export default function VendorProfile() {
             console.warn('Could not fetch vendor packages:', err);
           }
 
+          // try to fetch vendor user preferences (currency)
+          let vendorCurrency: string | null = null;
+          try {
+            const { data: pref } = await supabase
+              .from('user_preferences')
+              .select('currency')
+              .eq('user_id', data.id)
+              .maybeSingle();
+            if (pref && pref.currency) vendorCurrency = pref.currency;
+          } catch (err) {
+            console.warn('Could not fetch vendor preferences:', err);
+          }
+
           setVendor({
             id: data.id,
             name: data.business_name || '',
@@ -271,6 +285,7 @@ export default function VendorProfile() {
             coverUrl: (data as any).cover_url ?? null,
               contact: data.contact || { whatsapp: '', phone: '', preferredContact: '' },
               socialLinks: data.social_links || {}
+            , preferredCurrency: vendorCurrency
           });
         } else {
           setVendor(null);
@@ -683,7 +698,12 @@ export default function VendorProfile() {
                         {pkg.pricingMode === 'quantity-based' && 'Quantity Pricing'}
                       </p>
                     </div>
-                    <p className="text-xl font-bold text-purple-600 whitespace-nowrap">{format(pkg.fromPrice)}</p>
+                    <div className="flex flex-col items-end">
+                      <p className="text-xl font-bold text-purple-600 whitespace-nowrap">{format(pkg.fromPrice)}</p>
+                      {vendor.preferredCurrency && (
+                        <p className="text-xs text-gray-500">Vendor currency: {vendor.preferredCurrency}</p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">

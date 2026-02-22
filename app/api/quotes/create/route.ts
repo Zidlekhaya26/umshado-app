@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
+import { formatPrice } from '@/lib/currency';
 import { notifyUsers } from '@/lib/server/notify';
 
 /**
@@ -135,7 +136,7 @@ export async function POST(req: NextRequest) {
     // 3. Insert initial message
     const messageText = `Quote request ${quoteRef} created\n\nPackage: ${packageName}\n${
       pricingMode === 'guest-based' ? `Guests: ${guestCount}` : `Hours: ${hours}`
-    }\nEstimated Total: R${(basePrice || 0).toLocaleString()}\n${
+    }\nEstimated Total: ${formatPrice((basePrice || 0), 'ZAR')}\n${
       notes ? `\nNotes: ${notes}` : ''
     }`;
 

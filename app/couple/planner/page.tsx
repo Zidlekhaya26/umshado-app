@@ -645,9 +645,9 @@ function CouplePlannerContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
-            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: R{(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0)).toLocaleString()}</p>
+            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
             <div className="space-y-3">
-              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Amount (R)</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" autoFocus /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Amount</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" autoFocus /></div>
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => { setShowPaymentModal(false); setPaymentItem(null); }} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>

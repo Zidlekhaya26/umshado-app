@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -84,6 +85,7 @@ export default function ChatThread() {
   const [showFinalQuoteModal, setShowFinalQuoteModal] = useState(false);
   const [finalPrice, setFinalPrice] = useState('');
   const [finalMessage, setFinalMessage] = useState('');
+  const { format } = useCurrency();
 
   /* ── Get current user ───────────────────────────────────────────── */
   useEffect(() => {
@@ -629,7 +631,7 @@ export default function ChatThread() {
                   <div className="text-sm font-bold text-gray-900">Status: {quote.status === 'negotiating' ? 'Sent' : quote.status}</div>
                 </div>
                 {quote.vendor_final_price && (
-                  <div className="text-lg font-bold text-purple-700">R{quote.vendor_final_price.toLocaleString()}</div>
+                  <div className="text-lg font-bold text-purple-700">{format(quote.vendor_final_price)}</div>
                 )}
               </div>
               {quote.vendor_message && (
@@ -645,7 +647,7 @@ export default function ChatThread() {
                         key={`${a?.name ?? 'addon'}-${idx}`}
                         className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200"
                       >
-                        {a?.name ?? 'Add-on'}{typeof a?.price === 'number' ? ` • R${a.price.toLocaleString()}` : ''}
+                        {a?.name ?? 'Add-on'}{typeof a?.price === 'number' ? ` • ${format(a.price)}` : ''}
                       </span>
                     ))}
                   </div>

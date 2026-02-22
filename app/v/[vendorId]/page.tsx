@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import Image from 'next/image';
+import { formatPrice } from '@/lib/currency';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
@@ -144,7 +145,7 @@ async function PackagesList({ vendorId }: { vendorId: string }) {
     <ul className="space-y-2 text-sm text-gray-700">
       {items.length === 0 && <li className="italic text-gray-400">No packages listed</li>}
       {items.map((p: any) => (
-        <li key={p.id} className="py-1">{p.name} {p.base_price ? <span className="text-xs text-gray-500">• from R{Number(p.base_price).toLocaleString()}</span> : null}</li>
+        <li key={p.id} className="py-1">{p.name} {p.base_price ? <span className="text-xs text-gray-500">• from {formatPrice(Number(p.base_price), 'ZAR')}</span> : null}</li>
       ))}
     </ul>
   );

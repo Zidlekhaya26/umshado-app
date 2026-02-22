@@ -5,6 +5,7 @@ import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
@@ -64,6 +65,7 @@ export default function VendorDashboard() {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const { format } = useCurrency();
 
   useEffect(() => {
     loadDashboard();
@@ -460,7 +462,7 @@ export default function VendorDashboard() {
                       <p className="text-sm text-gray-700"><span className="font-medium">Package:</span> {quote.package_name}</p>
                       {quote.guest_count > 0 && <p className="text-sm text-gray-700"><span className="font-medium">Guests:</span> {quote.guest_count}</p>}
                       {quote.hours > 0 && <p className="text-sm text-gray-700"><span className="font-medium">Hours:</span> {quote.hours}</p>}
-                      <p className="text-sm font-semibold text-purple-600">Est. Total: R{Number(quote.base_from_price).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-purple-600">Est. Total: {format(Number(quote.base_from_price))}</p>
                     </div>
                     <button
                       onClick={async () => {
@@ -509,7 +511,7 @@ export default function VendorDashboard() {
                       <p className="text-sm text-gray-700"><span className="font-medium">Package:</span> {quote.package_name}</p>
                       {quote.guest_count > 0 && <p className="text-sm text-gray-700"><span className="font-medium">Guests:</span> {quote.guest_count}</p>}
                       {quote.hours > 0 && <p className="text-sm text-gray-700"><span className="font-medium">Hours:</span> {quote.hours}</p>}
-                      <p className="text-sm font-semibold text-blue-600">Est. Total: R{Number(quote.base_from_price).toLocaleString()}</p>
+                      <p className="text-sm font-semibold text-blue-600">Est. Total: {format(Number(quote.base_from_price))}</p>
                     </div>
                     <button
                       onClick={async () => {
