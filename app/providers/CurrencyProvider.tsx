@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Currency, ExchangeRates, formatPrice } from '../../../lib/currency';
+import { Currency, ExchangeRates, formatPrice } from '../../lib/currency';
 
 type CurrencyContext = {
   currency: Currency;
