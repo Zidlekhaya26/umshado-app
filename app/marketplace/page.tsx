@@ -14,6 +14,7 @@ import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 interface MarketplaceVendor {
   vendor_id: string;
@@ -76,6 +77,7 @@ export default function Marketplace() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const { user, role } = useAuthRole();
   const isVendor = role === 'vendor';
+  const { format } = useCurrency();
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
@@ -504,9 +506,7 @@ export default function Marketplace() {
                   {/* Price & CTA */}
                   <div className="flex items-center justify-between pt-2 border-t border-gray-100">
                     {vendor.fromPrice > 0 ? (
-                      <p className="text-lg font-bold text-purple-600">
-                        From R{vendor.fromPrice.toLocaleString()}
-                      </p>
+                      <p className="text-lg font-bold text-purple-600">{format(vendor.fromPrice)}</p>
                     ) : (
                       <p className="text-sm text-gray-500">Contact for pricing</p>
                     )}

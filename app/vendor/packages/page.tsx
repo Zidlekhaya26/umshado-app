@@ -6,6 +6,7 @@ import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import { getOrCreateVendorForUser, getVendorSelectedServices, getServicesCatalog, type Service } from "@/lib/vendorServices";
 import { getPricingType } from "@/lib/marketplaceCategories";
 import ProfileCompletionIndicator from "@/components/ProfileCompletionIndicator";
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 type PricingMode = "guest-based" | "time-based" | "per-person" | "package-based" | "event-based" | "quantity-based";
 
@@ -21,6 +22,7 @@ interface PackageItem {
 }
 
 export default function VendorPackagesPage() {
+  const { format } = useCurrency();
   const [availableServices, setAvailableServices] = useState<string[]>([]);
   const [servicesCatalog, setServicesCatalog] = useState<Service[]>([]);
   const [vendorCategory, setVendorCategory] = useState<string>("");
@@ -337,7 +339,7 @@ export default function VendorPackagesPage() {
                     <h3 className="text-base font-bold text-gray-900">{pkg.name}</h3>
                     {pkg.isPopular && <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">Most popular</span>}
                   </div>
-                  <p className="text-xl font-bold text-purple-600 mt-1.5">From R{pkg.fromPrice.toLocaleString()}</p>
+                  <p className="text-xl font-bold text-purple-600 mt-1.5">{format(pkg.fromPrice)}</p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
                   <button onClick={() => openForm(pkg)} className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Edit package">

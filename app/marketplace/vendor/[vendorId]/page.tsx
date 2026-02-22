@@ -10,6 +10,7 @@ import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import { formatWhatsappLink } from '@/lib/whatsapp';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 type PricingMode =
   | 'guest-based'
@@ -65,6 +66,7 @@ export default function VendorProfile() {
   const [isOwner, setIsOwner] = useState(false);
   const [isVendorRole, setIsVendorRole] = useState(false);
   const { user, role } = useAuthRole();
+  const { format } = useCurrency();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
@@ -681,9 +683,7 @@ export default function VendorProfile() {
                         {pkg.pricingMode === 'quantity-based' && 'Quantity Pricing'}
                       </p>
                     </div>
-                    <p className="text-xl font-bold text-purple-600 whitespace-nowrap">
-                      R{pkg.fromPrice.toLocaleString()}
-                    </p>
+                    <p className="text-xl font-bold text-purple-600 whitespace-nowrap">{format(pkg.fromPrice)}</p>
                   </div>
 
                   <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
