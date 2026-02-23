@@ -70,6 +70,11 @@ export default function ChatThread() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
+  // Pagination / performance: track oldest loaded message and paging
+  const [oldestTimestamp, setOldestTimestamp] = useState<string | null>(null);
+  const [hasMoreOlder, setHasMoreOlder] = useState(false);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
+  const PAGE_SIZE = 50;
 
   // Other party identity for the header
   const [otherPartyName, setOtherPartyName] = useState('');
@@ -187,54 +192,70 @@ export default function ChatThread() {
   useEffect(() => {
     if (!conversationId) return;
 
-    const loadMessages = async () => {
-      const { data: raw } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true });
+    let mounted = true;
 
-      const withAttachments = await Promise.all(
-        (raw || []).map(async (msg) => {
-          const { data: atts } = await supabase
-            .from('message_attachments')
-            .select('*')
-            .eq('message_id', msg.id);
+    const loadInitial = async () => {
+      try {
+        // Load newest messages first (descending), limit to PAGE_SIZE for performance
+        const { data: raw } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: false })
+          .limit(PAGE_SIZE);
 
-          const signed = await Promise.all(
-            (atts || []).map(async (att) => {
-              try {
-                const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600);
-                return { ...att, signed_url: s?.signedUrl };
-              } catch { return att; }
-            })
-          );
+        const newestFirst = raw || [];
+        const oldest = newestFirst.length > 0 ? newestFirst[newestFirst.length - 1].created_at : null;
 
-          return { ...msg, attachments: signed } as Message;
-        })
-      );
+        const withAttachments = await Promise.all(
+          newestFirst.reverse().map(async (msg) => {
+            const { data: atts } = await supabase
+              .from('message_attachments')
+              .select('*')
+              .eq('message_id', msg.id);
 
-      setMessages(withAttachments);
+            const signed = await Promise.all(
+              (atts || []).map(async (att) => {
+                try {
+                  const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600);
+                  return { ...att, signed_url: s?.signedUrl };
+                } catch { return att; }
+              })
+            );
+
+            return { ...msg, attachments: signed } as Message;
+          })
+        );
+
+        if (!mounted) return;
+        setMessages(withAttachments);
+        setOldestTimestamp(oldest);
+        setHasMoreOlder((newestFirst || []).length === PAGE_SIZE);
+      } catch (err) {
+        console.error('Failed to load initial messages:', err);
+      }
     };
 
-    loadMessages();
+    loadInitial();
 
-    // Realtime: new messages
+    // Realtime: append new messages only
     const channel = supabase
       .channel(`conversation:${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, async (payload) => {
-        const { data: atts } = await supabase.from('message_attachments').select('*').eq('message_id', payload.new.id);
-        const signed = await Promise.all(
-          (atts || []).map(async (att) => {
-            const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600);
-            return { ...att, signed_url: s?.signedUrl };
-          })
-        );
-        setMessages((prev) => [...prev, { ...(payload.new as Message), attachments: signed }]);
+        try {
+          const { data: atts } = await supabase.from('message_attachments').select('*').eq('message_id', payload.new.id);
+          const signed = await Promise.all(
+            (atts || []).map(async (att) => {
+              const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600);
+              return { ...att, signed_url: s?.signedUrl };
+            })
+          );
+          setMessages((prev) => [...prev, { ...(payload.new as Message), attachments: signed }]);
+        } catch (e) { console.warn('Realtime message handling error', e); }
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { mounted = false; supabase.removeChannel(channel); };
   }, [conversationId]);
 
   /* ── Realtime: listen for quote updates for this conversation/thread ── */
@@ -579,6 +600,50 @@ export default function ChatThread() {
           {messages.length === 0 && (
             <div className="text-center py-12 text-sm text-gray-500">
               <p>No messages yet. Say hello! 👋</p>
+            </div>
+          )}
+
+          {hasMoreOlder && (
+            <div className="text-center w-full">
+              <button onClick={async () => {
+                if (isLoadingOlder || !oldestTimestamp || !conversationId) return;
+                setIsLoadingOlder(true);
+                try {
+                  const { data: raw } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .eq('conversation_id', conversationId)
+                    .lt('created_at', oldestTimestamp)
+                    .order('created_at', { ascending: false })
+                    .limit(PAGE_SIZE);
+
+                  const page = raw || [];
+                  const withAttachments = await Promise.all(
+                    page.reverse().map(async (msg) => {
+                      const { data: atts } = await supabase
+                        .from('message_attachments')
+                        .select('*')
+                        .eq('message_id', msg.id);
+                      const signed = await Promise.all(
+                        (atts || []).map(async (att) => {
+                          try { const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600); return { ...att, signed_url: s?.signedUrl }; } catch { return att; }
+                        })
+                      );
+                      return { ...msg, attachments: signed } as Message;
+                    })
+                  );
+
+                  // prepend older messages
+                  setMessages(prev => [...withAttachments, ...prev]);
+                  const newOldest = page.length > 0 ? page[page.length - 1].created_at : oldestTimestamp;
+                  setOldestTimestamp(newOldest);
+                  setHasMoreOlder(page.length === PAGE_SIZE);
+                } catch (e) {
+                  console.error('Failed to load older messages', e);
+                } finally {
+                  setIsLoadingOlder(false);
+                }
+              }} className="text-sm px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">{isLoadingOlder ? 'Loading…' : 'Load older messages'}</button>
             </div>
           )}
 
