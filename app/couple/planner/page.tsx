@@ -778,7 +778,7 @@ function CouplePlannerContent() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Guest</h3>
             <div className="space-y-3">
-              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} placeholder="e.g., John & Sarah Smith" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} placeholder="e.g., Mthabisi" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (optional)</label><input type="tel" value={newGuestPhone} onChange={e => setNewGuestPhone(e.target.value)} placeholder="e.g., +27831234567" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Side</label>
