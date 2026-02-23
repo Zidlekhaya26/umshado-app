@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { getVendorSetupStatus } from './vendorOnboarding';
 
 /**
  * After sign-in or sign-up, determine where to redirect the user.
@@ -64,7 +65,23 @@ export async function getPostAuthRedirect(
           has_vendor: true,
         }).eq('id', user.id);
       }
-      // Always send vendors to dashboard — it has profile-completeness CTAs
+
+      // Check vendor setup status and redirect to onboarding if incomplete
+      try {
+        // Find vendor row for this user (user_id or id mapping)
+        const { data: v1 } = await supabase.from('vendors').select('id').eq('user_id', user.id).limit(1).maybeSingle();
+        const vendorId = v1?.id ?? null;
+        if (vendorId) {
+          const status = await getVendorSetupStatus(supabase, vendorId);
+          if (status?.needsOnboarding) {
+            return '/vendor/onboarding';
+          }
+        }
+      } catch (e) {
+        console.warn('Could not determine vendor setup status during post-auth routing', e);
+      }
+
+      // Default: send vendors to dashboard — it has profile-completeness CTAs
       return '/vendor/dashboard';
     }
 
