@@ -57,6 +57,7 @@ interface Vendor {
   logoUrl?: string | null;
   verified?: boolean;
   preferredCurrency?: string | null;
+  isDemo?: boolean;
 }
 
 type SortOption = 'recommended' | 'price_low' | 'price_high' | 'newest';
@@ -187,6 +188,8 @@ export default function Marketplace() {
       // Pre-map basic vendor info
       const prelim: Vendor[] = (data || []).map((v: MarketplaceVendor) => {
         const activity = activityMap.get(v.vendor_id);
+        const lowerName = (v.business_name || '').toLowerCase();
+        const isDemo = !!(v.plan === 'demo' || /\b(test|demo|sample|seed)\b/i.test(lowerName));
         return {
           id: v.vendor_id,
           name: v.business_name || 'Unnamed Vendor',
@@ -197,7 +200,8 @@ export default function Marketplace() {
           score: calculateScore(v, couplePreferences, activity),
           logoUrl: v.logo_url || null,
           verified: !!v.verified,
-          preferredCurrency: null
+          preferredCurrency: null,
+          isDemo
         };
       });
 
@@ -389,6 +393,13 @@ export default function Marketplace() {
           activeCount={activeFilterCount()}
         />
 
+        {/* Testing / Preview banner - shown while demo/test vendors exist */}
+        <div className="px-4 mt-3">
+          <div className="bg-amber-50 border border-amber-100 text-amber-800 rounded-xl p-3 text-sm">
+            You are viewing a preview marketplace. Some vendors are test profiles used during development. These vendors are not officially verified or affiliated with uMshado. Treat listings as preview content while we continue improving the platform.
+          </div>
+        </div>
+
         {/* Vendor Cards List - responsive grid */}
         <div className="flex-1 px-2 sm:px-4 pb-28 overflow-y-auto">
           <div className="mb-2">
@@ -492,6 +503,12 @@ export default function Marketplace() {
                             {sortBy === "recommended" && vendor.score > 120 && (
                                 <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
                                 Recommended
+                              </span>
+                            )}
+
+                            {vendor.isDemo && (
+                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 text-[10px] font-semibold border border-gray-200">
+                                Testing Vendor
                               </span>
                             )}
                           </div>
