@@ -9,6 +9,7 @@ import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
 import { useToast } from '@/components/ui/ToastProvider';
+import SeatingPlanner from '@/components/SeatingPlanner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { pickContacts } from '@/lib/contactsBridge';
 
@@ -91,6 +92,7 @@ function CouplePlannerContent() {
   const [tasks, setTasks] = useState<DbTask[]>([]);
   const [budgetItems, setBudgetItems] = useState<DbBudgetItem[]>([]);
   const [guests, setGuests] = useState<DbGuest[]>([]);
+  const [seatingAssignments, setSeatingAssignments] = useState<Record<string, { tableId: string; seatIndex: number }>>({});
   const [coupleName, setCoupleName] = useState<string | null>(null);
 
   // Task form
@@ -148,6 +150,49 @@ function CouplePlannerContent() {
       setLoaded(true);
     })();
   }, [router, loadData]);
+
+  // Detect restored seating payload (set by admin UI) and dispatch to planner
+  useEffect(() => {
+    if (!loaded) return;
+    try {
+      const raw = localStorage.getItem('restored_seating_payload');
+      if (!raw) return;
+      const payload = JSON.parse(raw);
+      // place payload into sessionStorage for in-page consumers
+      try { sessionStorage.setItem('active_seating_payload', JSON.stringify(payload)); } catch (e) {}
+      // dispatch a global DOM event so any planner component can pick it up
+      try {
+        const ev = new CustomEvent('umshado:restoreSeating', { detail: payload });
+        window.dispatchEvent(ev);
+      } catch (e) {
+        // ignore
+      }
+      // remove the one-time restore key
+      localStorage.removeItem('restored_seating_payload');
+      toastCtx.show('Loaded seating arrangement from Saved Seatings. Open the seating planner to view it.', 'default');
+    } catch (e) {
+      // ignore parse errors
+      console.error('Failed to load restored seating payload', e);
+    }
+  }, [loaded]);
+
+  const applySeatingPayload = (payload: any) => {
+    try {
+      const map: Record<string, { tableId: string; seatIndex: number }> = {};
+      if (Array.isArray(payload?.tables)) {
+        payload.tables.forEach((t: any) => {
+          if (!Array.isArray(t.seats)) return;
+          t.seats.forEach((guestId: string, idx: number) => {
+            if (guestId) map[String(guestId)] = { tableId: String(t.id ?? t.name ?? ''), seatIndex: idx };
+          });
+        });
+      }
+      setSeatingAssignments(map);
+      toastCtx.show('Seating applied in planner (client-side).', 'default');
+    } catch (e) {
+      console.error('Failed to apply seating payload', e);
+    }
+  };
 
   // Realtime updates for guest list (auto-adjust)
   useEffect(() => {
@@ -621,6 +666,7 @@ function CouplePlannerContent() {
           {/* ════════════ GUESTS ════════════ */}
           {activeTab === 'guests' && (
             <div className="p-4 space-y-4">
+              <SeatingPlanner onApply={applySeatingPayload} />
               {guests.length === 0 ? (
                 <EmptyState icon="👥" title="No guests yet" description="Start building your guest list for the big day." actionLabel="+ Add Guest" onAction={() => setShowGuestModal(true)} />
               ) : (
@@ -670,6 +716,9 @@ function CouplePlannerContent() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900">{guest.full_name}</p>
                             {guest.phone && <p className="text-xs text-gray-500 mt-1">{guest.phone}</p>}
+                            {seatingAssignments[guest.id] && (
+                              <p className="text-xs text-gray-500 mt-1">Table: <span className="font-semibold text-gray-900">{seatingAssignments[guest.id].tableId}</span></p>
+                            )}
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className={`text-xs font-semibold ${sideColor(guest.side)}`}>{sideLabel(guest.side)}</span>
                               {guest.plus_one && <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">+1</span>}
