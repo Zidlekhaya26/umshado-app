@@ -569,7 +569,6 @@ function CouplePlannerContent() {
                     <p className="text-sm font-semibold text-gray-900">Budget Items</p>
                     <div className="flex items-center gap-2">
                       <button onClick={() => setShowBudgetModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Item</button>
-                      <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
                     </div>
                   </div>
 
@@ -658,7 +657,10 @@ function CouplePlannerContent() {
 
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-gray-900">Guest List</p>
-                    <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
+                      <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
+                    </div>
                   </div>
 
                   <div className="bg-white rounded-xl border-2 border-gray-200 divide-y divide-gray-100 overflow-hidden">
