@@ -547,6 +547,52 @@ export default function ChatThread() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Client-side image resizing: reduce large image dimensions and compress to save bandwidth
+  const resizeImageFile = async (file: File, maxDim = 1920, quality = 0.8): Promise<File> => {
+    if (!file.type.startsWith('image/')) return file;
+    try {
+      // Use createImageBitmap for performant decoding when available
+      const bitmap = await (createImageBitmap ? createImageBitmap(file as any) : new Promise<HTMLImageElement>((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img as any);
+        img.onerror = rej;
+        img.src = URL.createObjectURL(file);
+      }));
+
+      // bitmap may be ImageBitmap or HTMLImageElement
+      const width = (bitmap as any).width;
+      const height = (bitmap as any).height;
+      const ratio = Math.min(1, Math.min(maxDim / width, maxDim / height));
+      const w = Math.round(width * ratio);
+      const h = Math.round(height * ratio);
+
+      if (ratio === 1) {
+        // No resize needed
+        return file;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap as any, 0, 0, w, h);
+
+      // Prefer JPEG for compression; preserve PNG only if original was PNG and transparency likely needed
+      const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, mime, quality));
+      if (!blob) return file;
+
+      const ext = mime === 'image/png' ? '.png' : '.jpg';
+      const newName = file.name.replace(/\.[^/.]+$/, '') + ext;
+      const newFile = new File([blob], newName, { type: mime });
+      return newFile;
+    } catch (err) {
+      // If anything fails, fall back to original file
+      return file;
+    }
+  };
+
   const handleDownloadAttachment = async (att: MessageAttachment) => {
     if (att.signed_url) { window.open(att.signed_url, '_blank'); return; }
     try {
