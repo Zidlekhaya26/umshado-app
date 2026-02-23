@@ -199,6 +199,12 @@ export default function VendorDashboard() {
   const percentComplete = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
   const profileComplete = completedSteps === totalSteps;
 
+  // Prefer computed onboarding status from `getVendorSetupStatus` when available.
+  // `needsOnboarding` is null while loading; fall back to the DB `onboarding_completed` flag.
+  const requiresOnboarding = (needsOnboarding !== null && typeof needsOnboarding !== 'undefined')
+    ? Boolean(needsOnboarding)
+    : ((vendor as any)?.onboarding_completed === false);
+
   /* ΓöÇΓöÇ Share profile helper ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleShareProfile = async () => {
     if (!vendor?.id) return;
@@ -353,8 +359,8 @@ export default function VendorDashboard() {
         </div>
 
         {/* ΓöÇΓöÇ Profile Completion / Publish state (moved below stats) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
-        {/* Show finish setup only when in wizard mode (not published and not onboarding_completed) */}
-        {(!vendor?.is_published && (vendor as any)?.onboarding_completed === false) && !profileComplete ? (
+        {/* Show finish setup only when in wizard mode (not published and onboarding required) */}
+        {(!vendor?.is_published && requiresOnboarding) && !profileComplete ? (
           <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl px-4 py-5 text-white shadow-lg">
             <h2 className="text-lg font-bold mb-1">Profile Completion</h2>
             <div className="flex items-center justify-between mb-2">
