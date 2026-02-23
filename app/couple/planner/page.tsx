@@ -1,13 +1,16 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
+import { useToast } from '@/components/ui/ToastProvider';
+import ConfirmModal from '@/components/ui/ConfirmModal';
+import { pickContacts } from '@/lib/contactsBridge';
 
 // ─── DB row types ────────────────────────────────────────
 
@@ -78,6 +81,11 @@ function CouplePlannerContent() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const vcardInputRef = useRef<HTMLInputElement | null>(null);
+  const [importInProgress, setImportInProgress] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingImportRows, setPendingImportRows] = useState<any[] | null>(null);
+  const toastCtx = useToast();
 
   // Data
   const [tasks, setTasks] = useState<DbTask[]>([]);
@@ -249,7 +257,7 @@ function CouplePlannerContent() {
     if (result.error && (result.error.message?.includes('amount_paid') || result.error.message?.includes('partial'))) {
       // Column doesn't exist yet — just update status
       result = await supabase.from('couple_budget_items').update({ status: statusForDb }).eq('id', paymentItem.id);
-      alert('Payment recorded locally but your database needs the amount_paid column. Run migration 005 or the ALTER statements.');
+      toastCtx.show('Payment recorded locally but your database needs the amount_paid column. Run migration 005 or the ALTER statements.', 'default');
     }
     if (!result.error) {
       setBudgetItems(prev => prev.map(b => b.id === paymentItem.id ? { ...b, amount_paid: newPaid, status } : b));
@@ -275,6 +283,108 @@ function CouplePlannerContent() {
     }
     if (!result.error && result.data) setGuests(prev => [...prev, { ...result.data, side: result.data.side ?? 'both' }]);
     setNewGuestName(''); setNewGuestPhone(''); setNewGuestPlusOne(false); setNewGuestSide('both'); setShowGuestModal(false);
+  };
+
+  // Import contacts (Contacts Picker API if available, fallback to vCard file)
+  const parseVCard = (text: string) => {
+    const entries: { full_name: string; phone: string | null }[] = [];
+    const blocks = text.split(/END:VCARD/i);
+    for (const b of blocks) {
+      const fnMatch = b.match(/FN:(.+)/i);
+      const telMatch = b.match(/TEL[^:]*:(.+)/i);
+      if (fnMatch) {
+        entries.push({ full_name: fnMatch[1].trim(), phone: telMatch ? telMatch[1].trim() : null });
+      }
+    }
+    return entries;
+  };
+
+  const handleVCardFile = async (file?: File) => {
+    if (!file) return;
+    const txt = await file.text();
+    const contacts = parseVCard(txt);
+    await importContactList(contacts);
+    if (vcardInputRef.current) vcardInputRef.current.value = '';
+  };
+
+  const importContactList = async (contacts: { full_name: string; phone: string | null }[]) => {
+    if (!userId || contacts.length === 0) return toastCtx.show('No contacts to import or not signed in.', 'error');
+
+    const normalizePhone = (p?: string | null) => {
+      if (!p) return null;
+      const digits = p.replace(/\D/g, '');
+      if (!digits) return null;
+      // compare last 9 digits for local/intl variations
+      return digits.length > 9 ? digits.slice(-9) : digits;
+    };
+
+    const existingPhones = new Set(guests.map(g => normalizePhone(g.phone)));
+    const existingNames = new Set(guests.map(g => (g.full_name || '').toLowerCase().trim()));
+
+    const filtered = contacts.filter(c => {
+      const name = (c.full_name || '').toLowerCase().trim();
+      const phoneNorm = normalizePhone(c.phone);
+      if (phoneNorm && existingPhones.has(phoneNorm)) return false;
+      if (name && existingNames.has(name)) return false;
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      return toastCtx.show('No new contacts to import (duplicates filtered).', 'default');
+    }
+
+    const rows = filtered.map(c => ({
+      couple_id: userId,
+      full_name: c.full_name,
+      phone: c.phone || null,
+      plus_one: false,
+      rsvp_status: 'pending' as const,
+      invited_via: 'import' as const
+    }));
+
+    // show confirmation modal instead of window.confirm
+    setPendingImportRows(rows);
+    setShowImportConfirm(true);
+  };
+
+  const performImport = async () => {
+    if (!pendingImportRows || !userId) return;
+    setShowImportConfirm(false);
+    setImportInProgress(true);
+    try {
+      const result = await supabase.from('couple_guests').insert(pendingImportRows).select();
+      if (!result.error && result.data) {
+        setGuests(prev => [...result.data.map((g: any) => ({ ...g, side: g.side ?? 'both' })), ...prev]);
+        toastCtx.show(`Imported ${result.data.length} contacts.`, 'success');
+      } else {
+        console.error('Import error', result.error);
+        toastCtx.show('Failed to import contacts.', 'error');
+      }
+    } catch (e) {
+      console.error(e);
+      toastCtx.show('Failed to import contacts.', 'error');
+    } finally {
+      setImportInProgress(false);
+      setPendingImportRows(null);
+    }
+  };
+
+  const importContacts = async () => {
+    if (!userId) return toastCtx.show('Please sign in first.', 'error');
+    // Prefer platform picker (web or native bridge), otherwise fallback to vCard upload
+    try {
+      const mapped = await pickContacts();
+      if (mapped && mapped.length > 0) {
+        await importContactList(mapped);
+        return;
+      }
+    } catch (e) {
+      console.error('pickContacts failed', e);
+    }
+
+    // Fallback: trigger vCard upload
+    if (vcardInputRef.current) vcardInputRef.current.click();
+    else toastCtx.show('Contact picker not available. Please upload a vCard (.vcf) file.', 'default');
   };
 
   const startEditGuest = (guest: DbGuest) => {
@@ -457,7 +567,10 @@ function CouplePlannerContent() {
 
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-gray-900">Budget Items</p>
-                    <button onClick={() => setShowBudgetModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Item</button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setShowBudgetModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Item</button>
+                      <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
@@ -713,6 +826,18 @@ function CouplePlannerContent() {
         </div>
       )}
 
+      {/* Import Confirmation Modal */}
+      <ConfirmModal
+        open={showImportConfirm}
+        title="Import Contacts"
+        message={`Import ${pendingImportRows?.length ?? 0} contacts to your guest list? They will be added as pending.`}
+        confirmLabel={importInProgress ? 'Importing…' : 'Import'}
+        cancelLabel="Cancel"
+        onConfirm={performImport}
+        onClose={() => { setShowImportConfirm(false); setPendingImportRows(null); }}
+      />
+
+      <input ref={vcardInputRef} type="file" accept=".vcf,text/vcard" onChange={e => handleVCardFile(e.target.files?.[0])} className="hidden" />
       <BottomNav />
     </div>
   );

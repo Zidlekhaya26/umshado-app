@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthRoleProvider } from "./providers/AuthRoleProvider";
 import { CurrencyProvider } from "./providers/CurrencyProvider";
+import { ToastProvider } from '@/components/ui/ToastProvider';
 import CurrencySelector from '@/components/CurrencySelector';
 import FullscreenPrompt from '@/components/FullscreenPrompt';
 import RoleGate from "@/components/RoleGate";
@@ -54,6 +55,7 @@ export default function RootLayout({
         {/* ✅ No centering, no max-width here */}
         <AuthRoleProvider>
           <CurrencyProvider>
+            <ToastProvider>
             <div className="w-full">
               <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
                 <div className="block flex items-center gap-3">
@@ -65,8 +67,9 @@ export default function RootLayout({
                 <div className="min-h-screen w-full">{children}</div>
               </RoleGate>
             </div>
-          </CurrencyProvider>
-        </AuthRoleProvider>
+            </ToastProvider>
+            </CurrencyProvider>
+          </AuthRoleProvider>
       </body>
     </html>
   );
