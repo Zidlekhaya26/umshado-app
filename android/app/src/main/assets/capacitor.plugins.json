@@ -1,1 +1,6 @@
-[]
+[
+	{
+		"pkg": "@capacitor-community/contacts",
+		"classpath": "getcapacitor.community.contacts.ContactsPlugin"
+	}
+]
