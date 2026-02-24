@@ -13,9 +13,8 @@ export function getPublicBaseUrl() {
     }
   }
 
-  // Avoid using Vercel preview URLs as public invite links — prefer a
-  // canonical production domain when NODE_ENV=production, otherwise
-  // fall back to localhost for development.
-  if (process.env.NODE_ENV === 'production') return 'https://umshado.app';
-  return 'http://localhost:3000';
+  // Avoid using Vercel preview URLs or localhost for public invite links.
+  // Prefer a canonical production domain when an explicit `NEXT_PUBLIC_APP_URL`
+  // is not provided to ensure links recipients can reach them.
+  return 'https://umshado.app';
 }
