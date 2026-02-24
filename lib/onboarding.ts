@@ -36,6 +36,7 @@ export async function upsertCouple(userId: string, data: {
   country?: string | null;
   cultural_preferences?: string | null;
   currency?: string | null;
+  wedding_venue?: string | null;
 }): Promise<{ success: boolean; error?: string }> {
   try {
     // Only include columns that are present in the couples table schema.
@@ -75,6 +76,20 @@ export async function upsertCouple(userId: string, data: {
       .eq('id', userId);
 
     if (profileErr) console.warn('upsertCouple - profile role update warning:', profileErr.message);
+
+    // Also attempt to persist wedding_date and wedding_venue on the profile
+    try {
+      const weddingDate = data.wedding_date ?? null;
+      // Prefer explicit wedding_venue field, otherwise use location
+      const weddingVenue = (data as any).wedding_venue ?? data.location ?? null;
+      const { error: pErr } = await supabase.from('profiles').update({ wedding_date: weddingDate, wedding_venue: weddingVenue }).eq('id', userId);
+      if (pErr) {
+        // Not fatal: older schemas may not have these columns yet
+        console.warn('upsertCouple - profile wedding fields update warning:', pErr.message);
+      }
+    } catch (e) {
+      // ignore
+    }
 
     // persist currency preference if provided in data (backwards-compatible)
     if ((data as any).currency) {

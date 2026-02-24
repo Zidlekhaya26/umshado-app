@@ -7,16 +7,37 @@ export function generateWhatsappInviteLink(opts: {
   coupleName?: string | null;
   guestName?: string | null;
   token?: string | null;
+  coupleDate?: string | null; // ISO date/time string
+  coupleVenue?: string | null;
 }) {
   const { phone, guestId, coupleName, guestName, token } = opts;
   const base = getPublicBaseUrl();
+  const { coupleDate, coupleVenue } = opts;
   const rsvp = `${base}/rsvp/${guestId}${token ? `?t=${encodeURIComponent(token)}` : ''}`;
 
   // Prefer an explicit couple name when available. If guestName is provided,
   // address them directly. Use a celebratory emoji and clear RSVP link.
   const host = coupleName ? coupleName : 'You';
   const greeting = guestName ? `Hi ${guestName},\n\n` : '';
-  const message = `${greeting}${host} invite you to their wedding 💍\nPlease RSVP here:\n${rsvp}`.trim();
+
+  // Optionally include date and venue when available
+  let eventLine = '';
+  try {
+    if (coupleDate) {
+      const d = new Date(coupleDate);
+      if (!isNaN(d.getTime())) {
+        // human-friendly date/time
+        eventLine += `When: ${d.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}`;
+      }
+    }
+  } catch (e) {
+    // ignore formatting errors
+  }
+  if (coupleVenue) {
+    eventLine += (eventLine ? ' — ' : '') + `Where: ${coupleVenue}`;
+  }
+
+  const message = `${greeting}${host} invites you to their wedding 💍${eventLine ? `\n${eventLine}` : ''}\nPlease RSVP here:\n${rsvp}`.trim();
 
   if (!phone) return rsvp;
 

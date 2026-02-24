@@ -8,6 +8,7 @@ import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
+import { normalizeInternationalPhone } from '@/lib/whatsapp';
 import { useToast } from '@/components/ui/ToastProvider';
 import SeatingPlanner from '@/components/SeatingPlanner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -94,6 +95,8 @@ function CouplePlannerContent() {
   const [guests, setGuests] = useState<DbGuest[]>([]);
   const [seatingAssignments, setSeatingAssignments] = useState<Record<string, { tableId: string; seatIndex: number }>>({});
   const [coupleName, setCoupleName] = useState<string | null>(null);
+  const [coupleDate, setCoupleDate] = useState<string | null>(null);
+  const [coupleVenue, setCoupleVenue] = useState<string | null>(null);
 
   // Task form
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -142,8 +145,17 @@ function CouplePlannerContent() {
       await loadData(user.id);
       // fetch couple profile name
       try {
-        const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
-        setCoupleName((profile as any)?.full_name ?? null);
+        // Try to fetch extended profile fields (may not exist on older schemas)
+        const { data: profile, error } = await supabase.from('profiles').select('full_name, wedding_date, wedding_venue').eq('id', user.id).maybeSingle();
+        if (!error && profile) {
+          setCoupleName((profile as any)?.full_name ?? null);
+          setCoupleDate((profile as any)?.wedding_date ?? null);
+          setCoupleVenue((profile as any)?.wedding_venue ?? null);
+        } else {
+          // Fallback to just full_name if extended columns don't exist
+          const { data: p2 } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
+          setCoupleName((p2 as any)?.full_name ?? null);
+        }
       } catch (e) {
         setCoupleName(null);
       }
@@ -320,7 +332,18 @@ function CouplePlannerContent() {
   // ── Guest actions ──────────────────────────────────────
   const addGuest = async () => {
     if (!newGuestName.trim() || !userId) return;
-    const base = { couple_id: userId, full_name: newGuestName.trim(), phone: newGuestPhone.trim() || null, plus_one: newGuestPlusOne, rsvp_status: 'pending' as const, invited_via: 'manual' as const };
+    // Validate phone includes country code if provided
+    let phoneToSave: string | null = null;
+    if (newGuestPhone.trim()) {
+      const norm = normalizeInternationalPhone(newGuestPhone.trim());
+      if (!norm) {
+        toastCtx.show('Please include an international country code (e.g. +27 or +263) in the phone number.', 'error');
+        return;
+      }
+      phoneToSave = norm;
+    }
+
+    const base = { couple_id: userId, full_name: newGuestName.trim(), phone: phoneToSave, plus_one: newGuestPlusOne, rsvp_status: 'pending' as const, invited_via: 'manual' as const };
     // Try with side column; fall back without it if column doesn't exist yet
     let result = await supabase.from('couple_guests').insert({ ...base, side: newGuestSide }).select().single();
     if (result.error && result.error.message?.includes('side')) {
@@ -442,7 +465,17 @@ function CouplePlannerContent() {
 
   const saveEditGuest = async () => {
     if (!editingGuest || !editGuestName.trim()) return;
-    const base = { full_name: editGuestName.trim(), phone: editGuestPhone.trim() || null, plus_one: editGuestPlusOne };
+    // Validate phone includes country code if provided
+    let phoneToSave: string | null = null;
+    if (editGuestPhone.trim()) {
+      const norm = normalizeInternationalPhone(editGuestPhone.trim());
+      if (!norm) {
+        toastCtx.show('Please include an international country code (e.g. +27 or +263) in the phone number.', 'error');
+        return;
+      }
+      phoneToSave = norm;
+    }
+    const base = { full_name: editGuestName.trim(), phone: phoneToSave, plus_one: editGuestPlusOne };
     let result = await supabase.from('couple_guests').update({ ...base, side: editGuestSide }).eq('id', editingGuest.id);
     if (result.error && result.error.message?.includes('side')) {
       result = await supabase.from('couple_guests').update(base).eq('id', editingGuest.id);
@@ -467,9 +500,14 @@ function CouplePlannerContent() {
   const inviteViaWhatsapp = async (guest: DbGuest) => {
     let phone = guest.phone;
     if (!phone) {
-      const p = window.prompt('Enter guest phone number (e.g. +27831234567)');
+      const p = window.prompt('Enter guest phone number (include country code, e.g. +27831234567)');
       if (!p) return;
-      phone = p.trim();
+      const norm = normalizeInternationalPhone(p.trim());
+      if (!norm) {
+        toastCtx.show('Phone must include an international country code (e.g. +27).', 'error');
+        return;
+      }
+      phone = norm;
       try {
         const result = await supabase.from('couple_guests').update({ phone }).eq('id', guest.id).select('id, phone, rsvp_token').single();
         if (!result.error && result.data) {
@@ -495,7 +533,7 @@ function CouplePlannerContent() {
 
     if (!phone) return;
 
-    const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName, guestName: guest.full_name, token });
+    const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName, guestName: guest.full_name, token, coupleDate, coupleVenue });
     window.open(url, '_blank', 'noopener');
   };
 
@@ -730,7 +768,11 @@ function CouplePlannerContent() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                             <button onClick={() => inviteViaWhatsapp(guest)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${guest.phone ? 'text-gray-400 hover:text-green-600' : 'text-gray-400 bg-gray-100 hover:bg-gray-200'}`} aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
-                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0012 0C5.373 0 .057 5.316.004 11.94.002 12.57.338 13.13.88 13.47L2.9 14.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94a11.9 11.9 0 00-3.52-8.02zM12 22.5c-2.32 0-4.56-.64-6.56-1.84l-.46-.27-3.9 1.02 1.04-3.81-.3-.48A9.9 9.9 0 0112 2.1c5.5 0 9.96 4.46 9.96 9.96S17.5 22.5 12 22.5z"/></svg>
+                              <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M20.52 3.48A11.9 11.9 0 0012 0C5.37 0 .06 5.31 0 11.94c0 1.42.34 2.78.88 3.12L2.9 15.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94A11.9 11.9 0 0020.52 3.48z" opacity="0" />
+                                <path d="M20.36 3.64a11.78 11.78 0 00-8.02-3.52c-6.63 0-11.94 5.32-11.99 11.94.01.56.2 1.14.52 1.56L2 21l3.99-1.03c.4-.11.74-.4.9-.79l.98-2.16a10.9 10.9 0 003.9.72c5.5 0 9.96-4.46 9.96-9.96 0-1.69-.38-3.27-1.37-4.57zM12 20.93c-1.99 0-3.86-.54-5.47-1.52l-.39-.23-2.74.72.73-2.68-.21-.35a9.66 9.66 0 01-1.34-4.77c0-5.35 4.34-9.69 9.69-9.69 5.35 0 9.68 4.34 9.68 9.69S17.35 20.93 12 20.93z" />
+                                <path d="M16.1 14.1c-.2-.1-1.2-.6-1.4-.6-.2 0-.4 0-.6.2-.2.1-.9.7-1.1.9-.2.2-.4.2-.7.1-.6-.2-1.6-.6-3-1.9-1.1-1.1-1.8-2.4-2-3-.1-.3 0-.6.1-.8.1-.2.2-.4.3-.6.1-.2.1-.4 0-.6-.1-.2-.6-1.6-.8-2.1-.2-.5-.4-.4-.6-.4-.2 0-.4 0-.6 0-.2 0-.6.1-.9.5-.3.4-1 1-1 2.4 0 1.4 1.1 2.8 1.3 3 .2.2 2 3.1 4.9 4.8 3 .1 3.4-.9 3.8-1.1.4-.2 1.3-.9 1.6-1.6.3-.6.3-1.1.2-1.2-.1-.1-.4-.2-.6-.3z" fill="#fff" />
+                              </svg>
                               <span className="hidden sm:inline">Invite</span>
                             </button>
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
