@@ -1,6 +1,7 @@
 import { createServiceClient } from '@/lib/supabaseServer';
 import { notFound } from 'next/navigation';
 import RSVPClient from './RSVPClient';
+import InviteCard from '@/components/InviteCard';
 
 type Props = { params: { guestId: string }, searchParams?: { t?: string } };
 
@@ -20,16 +21,51 @@ export default async function RSVPPage({ params, searchParams }: Props) {
   // token must match
   if (!token || guest.rsvp_token !== token) return notFound();
 
-  // Try to fetch couple profile name if available
+  // Try to fetch couple profile fields if available
   let coupleName: string | null = null;
+  let avatar_url: string | null = null;
+  let wedding_date: string | null = null;
+  let wedding_venue: string | null = null;
   try {
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', guest.couple_id).maybeSingle();
-    if (profile?.full_name) coupleName = profile.full_name;
+    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url, wedding_date, wedding_venue').eq('id', guest.couple_id).maybeSingle();
+    if (profile) {
+      coupleName = profile.full_name ?? null;
+      avatar_url = (profile as any).avatar_url ?? null;
+      wedding_date = (profile as any).wedding_date ?? null;
+      wedding_venue = (profile as any).wedding_venue ?? null;
+    }
   } catch (e) {
     // ignore
   }
 
-  // Render a small client-side form for RSVP
+  // Render either the designed invite card (view=card) or the plain RSVP form
+  const view = searchParams?.view ?? null;
+  if (view === 'card') {
+    // Format wedding date to human-friendly date-only string
+    let dateStr: string | null = null;
+    try {
+      if (wedding_date) {
+        const d = new Date(wedding_date);
+        if (!isNaN(d.getTime())) dateStr = d.toLocaleString(undefined, { dateStyle: 'long' });
+      }
+    } catch (e) { /* ignore */ }
+
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <InviteCard
+          guestName={guest.full_name}
+          coupleName={coupleName}
+          date={dateStr}
+          venue={wedding_venue}
+          avatarUrl={avatar_url}
+          guestId={guestId}
+          token={token}
+        />
+      </div>
+    );
+  }
+
+  // Default: Render a small client-side form for RSVP
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center">

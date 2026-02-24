@@ -13,7 +13,7 @@ export function generateWhatsappInviteLink(opts: {
   const { phone, guestId, coupleName, guestName, token } = opts;
   const base = getPublicBaseUrl();
   const { coupleDate, coupleVenue } = opts;
-  const rsvp = `${base}/rsvp/${guestId}${token ? `?t=${encodeURIComponent(token)}` : ''}`;
+  const rsvp = `${base}/rsvp/${guestId}${token ? `?t=${encodeURIComponent(token)}&view=card` : ''}`;
 
   // Prefer an explicit couple name when available. If guestName is provided,
   // address them directly. Use a celebratory emoji and clear RSVP link.
@@ -37,7 +37,7 @@ export function generateWhatsappInviteLink(opts: {
     eventLine += (eventLine ? ' — ' : '') + `Where: ${coupleVenue}`;
   }
 
-  const message = `${greeting}${host} invites you to their wedding 💍${eventLine ? `\n${eventLine}` : ''}\nPlease RSVP here:\n${rsvp}`.trim();
+  const message = `${greeting}${host} invites you to their wedding 💍${eventLine ? `\n${eventLine}` : ''}\nView your invite & RSVP:\n${rsvp}`.trim();
 
   if (!phone) return rsvp;
 
