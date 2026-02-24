@@ -9,6 +9,7 @@ import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
 import { normalizeInternationalPhone } from '@/lib/whatsapp';
+import WhatsAppIcon from '@/components/WhatsAppIcon';
 import { useToast } from '@/components/ui/ToastProvider';
 import SeatingPlanner from '@/components/SeatingPlanner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -768,11 +769,7 @@ function CouplePlannerContent() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                             <button onClick={() => inviteViaWhatsapp(guest)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${guest.phone ? 'text-gray-400 hover:text-green-600' : 'text-gray-400 bg-gray-100 hover:bg-gray-200'}`} aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
-                              <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                                <path d="M20.52 3.48A11.9 11.9 0 0012 0C5.37 0 .06 5.31 0 11.94c0 1.42.34 2.78.88 3.12L2.9 15.6c.38.2.83.19 1.21-.03l1.68-.96c.36-.2.81-.2 1.19-.01l2.08 1.1c.93.49 1.96.75 3.02.75 6.63 0 11.94-5.32 11.99-11.94A11.9 11.9 0 0020.52 3.48z" opacity="0" />
-                                <path d="M20.36 3.64a11.78 11.78 0 00-8.02-3.52c-6.63 0-11.94 5.32-11.99 11.94.01.56.2 1.14.52 1.56L2 21l3.99-1.03c.4-.11.74-.4.9-.79l.98-2.16a10.9 10.9 0 003.9.72c5.5 0 9.96-4.46 9.96-9.96 0-1.69-.38-3.27-1.37-4.57zM12 20.93c-1.99 0-3.86-.54-5.47-1.52l-.39-.23-2.74.72.73-2.68-.21-.35a9.66 9.66 0 01-1.34-4.77c0-5.35 4.34-9.69 9.69-9.69 5.35 0 9.68 4.34 9.68 9.69S17.35 20.93 12 20.93z" />
-                                <path d="M16.1 14.1c-.2-.1-1.2-.6-1.4-.6-.2 0-.4 0-.6.2-.2.1-.9.7-1.1.9-.2.2-.4.2-.7.1-.6-.2-1.6-.6-3-1.9-1.1-1.1-1.8-2.4-2-3-.1-.3 0-.6.1-.8.1-.2.2-.4.3-.6.1-.2.1-.4 0-.6-.1-.2-.6-1.6-.8-2.1-.2-.5-.4-.4-.6-.4-.2 0-.4 0-.6 0-.2 0-.6.1-.9.5-.3.4-1 1-1 2.4 0 1.4 1.1 2.8 1.3 3 .2.2 2 3.1 4.9 4.8 3 .1 3.4-.9 3.8-1.1.4-.2 1.3-.9 1.6-1.6.3-.6.3-1.1.2-1.2-.1-.1-.4-.2-.6-.3z" fill="#fff" />
-                              </svg>
+                              <WhatsAppIcon className="w-4 h-4 text-green-600" />
                               <span className="hidden sm:inline">Invite</span>
                             </button>
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
