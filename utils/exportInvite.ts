@@ -5,7 +5,9 @@ export async function exportPNG(node: HTMLElement, opts: ExportOptions = {}) {
   // avoids adding a blocking dependency at runtime; ensure you run
   // `npm install dom-to-image-more` in the project.
   try {
-    const lib = await import('dom-to-image-more');
+    // Use eval-import to avoid bundlers resolving this package at build
+    // time when it's optional. This keeps the import truly dynamic.
+    const lib = await (0, eval)('import("dom-to-image-more")');
     const scale = opts.scale ?? 1;
     const width = node.clientWidth * scale;
     const height = node.clientHeight * scale;
@@ -24,8 +26,8 @@ export async function exportPNG(node: HTMLElement, opts: ExportOptions = {}) {
 
 export async function exportPDF(node: HTMLElement, opts: ExportOptions = {}) {
   try {
-    const { jsPDF } = await import('jspdf');
-    const lib = await import('dom-to-image-more');
+    const { jsPDF } = await (0, eval)('import("jspdf")');
+    const lib = await (0, eval)('import("dom-to-image-more")');
     const dataUrl = await (lib as any).toPng(node, { cacheBust: true });
     const pdf = new jsPDF({ unit: 'px', format: [node.clientWidth, node.clientHeight] });
     pdf.addImage(dataUrl, 'PNG', 0, 0, node.clientWidth, node.clientHeight);

@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import RSVPClient from './RSVPClient';
 import InviteCard from '@/components/InviteCard';
 
-type Props = { params: { guestId: string }, searchParams?: { t?: string } };
+type Props = { params: { guestId: string }, searchParams?: { t?: string; view?: string } };
 
 export default async function RSVPPage({ params, searchParams }: Props) {
   const { guestId } = await params;
