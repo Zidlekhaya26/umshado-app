@@ -13,8 +13,19 @@ export function getPublicBaseUrl() {
     }
   }
 
-  // Avoid using Vercel preview URLs or localhost for public invite links.
-  // Prefer a canonical production domain when an explicit `NEXT_PUBLIC_APP_URL`
-  // is not provided to ensure links recipients can reach them.
-  return 'https://umshado.app';
+  // Prefer the configured public URL, then a Vercel-provided domain (useful
+  // when deployed on Vercel), then a canonical production domain. This makes
+  // invite links use the app's actual deployment domain like
+  // `umshado-app.vercel.app` when available.
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) {
+    const cleaned = vercelUrl.replace(/\/$/, '');
+    return cleaned.startsWith('http') ? cleaned : `https://${cleaned}`;
+  }
+
+  // Production fallback
+  if (process.env.NODE_ENV === 'production') return 'https://umshado.app';
+
+  // Development fallback
+  return 'http://localhost:3000';
 }
