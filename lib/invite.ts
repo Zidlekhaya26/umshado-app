@@ -26,8 +26,8 @@ export function generateWhatsappInviteLink(opts: {
     if (coupleDate) {
       const d = new Date(coupleDate);
       if (!isNaN(d.getTime())) {
-        // human-friendly date/time
-        eventLine += `When: ${d.toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}`;
+        // human-friendly date (date-only, no time)
+        eventLine += `When: ${d.toLocaleString(undefined, { dateStyle: 'long' })}`;
       }
     }
   } catch (e) {
