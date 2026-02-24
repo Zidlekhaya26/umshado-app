@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       .from('profiles')
       .upsert(
         { id: userId, wedding_date: wedding_date || null, wedding_venue: wedding_venue || null },
-        { onConflict: 'id', returning: 'minimal' }
+        { onConflict: 'id' }
       );
 
     if ((res as any).error) {
