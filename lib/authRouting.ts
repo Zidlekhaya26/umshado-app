@@ -1,5 +1,4 @@
 import { supabase } from './supabaseClient';
-import { getVendorSetupStatus } from './vendorOnboarding';
 
 /**
  * After sign-in or sign-up, determine where to redirect the user.
@@ -38,23 +37,45 @@ export async function getPostAuthRedirect(
       return role === 'vendor' ? '/vendor/onboarding' : '/couple/onboarding';
     }
 
-    // Profile exists — choose active role using available data in order:
-    // 1) explicit active_role
-    // 2) if user has vendor flag, prefer vendor
-    // 3) if user has couple flag, prefer couple
-    // 4) intendedRole from sign-in flow
-    // 5) fallback to 'couple'
+    // Profile exists — check if there's an existing vendor row first.
+    // Some older accounts may have vendor rows but not have profile flags set,
+    // so prefer vendor when a vendor record exists for this user.
     let activeRole: 'vendor' | 'couple' | null = null;
-    if (profile.active_role === 'vendor' || profile.active_role === 'couple') {
-      activeRole = profile.active_role;
-    } else if (profile.has_vendor) {
-      activeRole = 'vendor';
-    } else if (profile.has_couple) {
-      activeRole = 'couple';
-    } else if (intendedRole) {
-      activeRole = intendedRole;
-    } else {
-      activeRole = 'couple';
+    try {
+      const { data: vendorRow } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1)
+        .maybeSingle();
+
+      if (vendorRow && vendorRow.id) {
+        activeRole = 'vendor';
+        // Ensure profile flags reflect vendor status so middleware and other
+        // logic don't mis-route this user in future.
+        try {
+          await supabase.from('profiles').update({ has_vendor: true, active_role: 'vendor' }).eq('id', user.id);
+        } catch (e) {
+          // non-fatal
+        }
+      }
+    } catch (err) {
+      // ignore and continue to legacy checks below
+    }
+
+    // If vendor wasn't detected via vendors table, fall back to existing logic:
+    if (!activeRole) {
+      if (profile.active_role === 'vendor' || profile.active_role === 'couple') {
+        activeRole = profile.active_role;
+      } else if (profile.has_vendor) {
+        activeRole = 'vendor';
+      } else if (profile.has_couple) {
+        activeRole = 'couple';
+      } else if (intendedRole) {
+        activeRole = intendedRole;
+      } else {
+        activeRole = 'couple';
+      }
     }
 
     if (activeRole === 'vendor') {
@@ -66,23 +87,28 @@ export async function getPostAuthRedirect(
         }).eq('id', user.id);
       }
 
-      // Check vendor setup status and redirect to onboarding if incomplete
+      // Check if vendor has completed basic onboarding (business_name filled in)
       try {
-        // Find vendor row for this user (user_id or id mapping)
-        const { data: v1 } = await supabase.from('vendors').select('id').eq('user_id', user.id).limit(1).maybeSingle();
-        const vendorId = v1?.id ?? null;
-        if (vendorId) {
-          const status = await getVendorSetupStatus(supabase, vendorId);
-          if (status?.needsOnboarding) {
-            return '/vendor/onboarding';
-          }
-        }
-      } catch (e) {
-        console.warn('Could not determine vendor setup status during post-auth routing', e);
-      }
+        const { data: vendorBasicInfo } = await supabase
+          .from('vendors')
+          .select('business_name')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
 
-      // Default: send vendors to dashboard — it has profile-completeness CTAs
-      return '/vendor/dashboard';
+        // If basic info (business_name) is not filled, redirect to complete basic onboarding
+        if (!vendorBasicInfo?.business_name) {
+          return '/vendor/onboarding';
+        }
+
+        // Basic info is complete — send to dashboard
+        // (dashboard will show CTAs for services/packages/media if needed)
+        return '/vendor/dashboard';
+      } catch (e) {
+        console.warn('Could not determine vendor onboarding status during post-auth routing', e);
+        // Default to dashboard if error checking
+        return '/vendor/dashboard';
+      }
     }
 
     if (activeRole === 'couple') {

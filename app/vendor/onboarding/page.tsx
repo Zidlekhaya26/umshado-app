@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getUserOrRedirect, upsertVendor } from '@/lib/onboarding';
 import { useRouter } from 'next/navigation';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
@@ -8,10 +8,12 @@ import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
 import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function VendorOnboarding() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     businessName: '',
@@ -24,6 +26,45 @@ export default function VendorOnboarding() {
   const { currency } = useCurrency();
 
   const categories = [...LOCKED_CATEGORIES];
+
+  // Load existing vendor data on mount
+  useEffect(() => {
+    const loadVendorData = async () => {
+      try {
+        const user = await getUserOrRedirect();
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Try to find vendor row by user_id or id
+        const { data: vendorByUserId } = await supabase
+          .from('vendors')
+          .select('business_name, category, location, description')
+          .eq('user_id', user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (vendorByUserId) {
+          // Parse location back into city/country
+          const [city, country] = vendorByUserId.location ? vendorByUserId.location.split(', ') : ['', ''];
+          setFormData({
+            businessName: vendorByUserId.business_name || '',
+            category: vendorByUserId.category || '',
+            city: city || '',
+            country: country || '',
+            businessDescription: vendorByUserId.description || ''
+          });
+        }
+      } catch (err) {
+        console.warn('Could not load existing vendor data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVendorData();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -54,8 +95,7 @@ export default function VendorOnboarding() {
         business_name: formData.businessName || null,
         category: formData.category || null,
         location: locationParts.length > 0 ? locationParts.join(', ') : null,
-        description: formData.businessDescription || null
-      ,
+        description: formData.businessDescription || null,
         currency: currency
       });
 
@@ -68,17 +108,30 @@ export default function VendorOnboarding() {
         return;
       }
 
-      console.log('SUCCESS! Navigating in 500ms...');
-      // Wait a moment for database replication, then navigate
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('SUCCESS! Waiting for database replication...');
+      // Wait for database replication before navigating
+      await new Promise(resolve => setTimeout(resolve, 1000));
       console.log('Navigating to /vendor/services');
-      window.location.href = '/vendor/services';
+      // Use router.push instead of window.location to ensure auth state is fresh
+      router.push('/vendor/services');
     } catch (err) {
       console.error('EXCEPTION:', err);
       alert('An error occurred while saving your profile: ' + err);
       setIsSubmitting(false);
     }
   };
+
+  // Show loading state while fetching existing data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading your business profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
