@@ -7,7 +7,9 @@ type Props = { params: { guestId: string }, searchParams?: { t?: string; view?: 
 
 export default async function RSVPPage({ params, searchParams }: Props) {
   const { guestId } = await params;
-  const token = searchParams?.t ?? null;
+  const resolvedSearchParams = await searchParams;
+  const token = resolvedSearchParams?.t ?? null;
+  const view = resolvedSearchParams?.view ?? null;
 
   const supabase = createServiceClient();
 
@@ -39,7 +41,6 @@ export default async function RSVPPage({ params, searchParams }: Props) {
   }
 
   // Render either the designed invite card (view=card) or the plain RSVP form
-  const view = searchParams?.view ?? null;
   if (view === 'card') {
     // Format wedding date to human-friendly date-only string
     let dateStr: string | null = null;
