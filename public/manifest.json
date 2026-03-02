@@ -7,17 +7,17 @@
   "theme_color": "#F7F0EA",
   "icons": [
     {
-      "src": "/assets/icons/icon-192x192.png",
+      "src": "/logo-icon.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/assets/icons/icon-512x512.png",
+      "src": "/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/assets/icons/maskable-icon-512x512.png",
+      "src": "/logo-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
