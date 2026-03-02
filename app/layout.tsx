@@ -48,7 +48,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="uMshado" />
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content="#F7F0EA" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.json?v=1" />
+        <link rel="manifest" href="/manifest.webmanifest?v=1" />
+        <link rel="icon" href="/logo-icon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
