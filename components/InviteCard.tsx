@@ -40,126 +40,268 @@ export default function InviteCard({
   };
 
   return (
-    <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+    <div style={{
+      width: '100%',
+      maxWidth: 480,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: 20,
+    }}>
 
-      {/* ── Download Button ───────────────────────────────── */}
-      <button
-        onClick={handleDownload}
-        disabled={downloading}
-        style={{
-          background: '#8b6f47',
-          color: '#fff',
-          border: 'none',
-          borderRadius: 8,
-          padding: '10px 24px',
-          fontSize: 14,
-          fontWeight: 600,
-          cursor: downloading ? 'not-allowed' : 'pointer',
-          fontFamily: 'system-ui, sans-serif',
-          boxShadow: '0 2px 8px rgba(139, 111, 71, 0.25)',
-        }}
-      >
-        {downloading ? 'Saving...' : 'Download Invite'}
-      </button>
-
-      {/* ── The Card ─────────────────────────────────────── */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          PRINTABLE CARD — cardRef wraps ONLY this section.
+          All children use inline styles only. No Tailwind.
+          No interactive elements. No borders from browser.
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
       <div
         ref={cardRef}
         style={{
           width: '100%',
-          background: '#fff',
-          borderRadius: 24,
+          background: '#fdfaf6',
+          borderRadius: 0,
           overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.12)',
+          outline: 'none',
+          border: 'none',
+          boxShadow: 'none',
           fontFamily: 'Georgia, "Times New Roman", serif',
-          position: 'relative',
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
         }}
       >
-        {/* Photo section */}
+        {/* ── Gold top rule ─────────────────────────────── */}
+        <div style={{
+          height: 5,
+          background: 'linear-gradient(90deg, #8a6e3a 0%, #d4aa60 30%, #f2d98a 50%, #d4aa60 70%, #8a6e3a 100%)',
+          flexShrink: 0,
+        }} />
+
+        {/* ── Couple photo ──────────────────────────────── */}
         <div style={{
           width: '100%',
-          aspectRatio: '4/3',
-          background: 'linear-gradient(180deg, #f0e8df 0%, #e8ddd4 100%)',
+          height: 340,
+          overflow: 'hidden',
+          position: 'relative',
+          background: '#ede3d8',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          overflow: 'hidden',
-          position: 'relative',
+          flexShrink: 0,
         }}>
           {avatarUrl ? (
             <img
               src={avatarUrl}
               alt="Couple"
               crossOrigin="anonymous"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center top',
+                display: 'block',
+                outline: 'none',
+                border: 'none',
+              }}
             />
           ) : (
-            <div style={{ textAlign: 'center', color: '#b8a898' }}>
-              <div style={{ fontSize: 48, marginBottom: 8 }}>💍</div>
-              <p style={{ fontSize: 13, letterSpacing: 2, textTransform: 'uppercase', fontFamily: 'system-ui, sans-serif' }}>Photo coming soon</p>
+            <div style={{ textAlign: 'center', color: '#c4a882' }}>
+              <div style={{ fontSize: 52, lineHeight: 1 }}>💍</div>
+              <p style={{
+                margin: '12px 0 0',
+                fontSize: 10,
+                letterSpacing: 4,
+                textTransform: 'uppercase',
+                fontFamily: 'Georgia, serif',
+                color: '#c4a882',
+              }}>Photo coming soon</p>
             </div>
           )}
-          {/* Gradient overlay at bottom of photo */}
+          {/* Soft vignette fade into body */}
           <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: 100,
-            background: 'linear-gradient(to top, rgba(255, 255, 255, 1), transparent)',
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 120,
+            background: 'linear-gradient(to top, #fdfaf6 0%, rgba(253,250,246,0) 100%)',
+            pointerEvents: 'none',
           }} />
         </div>
 
-        {/* Card body */}
-        <div style={{ padding: '32px 28px', textAlign: 'center' }}>
+        {/* ── Invitation body ───────────────────────────── */}
+        <div style={{
+          background: '#fdfaf6',
+          padding: '4px 48px 44px',
+          textAlign: 'center',
+        }}>
 
-          {/* Invitation text */}
-          <p style={{
-            fontSize: 14, color: '#5c3d2e', lineHeight: 1.6, margin: '0 0 24px',
-            fontFamily: 'system-ui, sans-serif', fontWeight: 500,
-          }}>
-            {guestName} <br />
-            <span style={{ fontStyle: 'italic' }}>with love in our hearts</span>,<br />
-            invite you to
-          </p>
-
-          {/* Couple name — the hero element */}
-          <h2 style={{
-            fontSize: 32, fontWeight: 400, color: '#5c3d2e',
-            lineHeight: 1.3, margin: '0 0 32px',
-            fontStyle: 'italic',
-          }}>
-            {coupleName ?? 'The Wedding'}
-          </h2>
-
-          {/* Date & Venue */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            <div>
-              <p style={{ 
-                fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-                color: '#b8a898', fontFamily: 'system-ui, sans-serif', marginBottom: 10, fontWeight: 500,
-              }}>
-                Date
-              </p>
-              <p style={{ fontSize: 15, color: '#3d2b1f', fontWeight: 500, lineHeight: 1.4 }}>
-                {date ?? 'To be announced'}
-              </p>
-            </div>
-            <div>
-              <p style={{ 
-                fontSize: 11, letterSpacing: 3, textTransform: 'uppercase',
-                color: '#b8a898', fontFamily: 'system-ui, sans-serif', marginBottom: 10, fontWeight: 500,
-              }}>
-                Venue
-              </p>
-              <p style={{ fontSize: 15, color: '#3d2b1f', fontWeight: 500, lineHeight: 1.4 }}>
-                {venue ?? 'To be announced'}
-              </p>
-            </div>
+          {/* Thin gold rule + ornament */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, #c9a860)' }} />
+            <span style={{ color: '#c9a860', fontSize: 13, lineHeight: 1, fontFamily: 'Georgia, serif' }}>✦</span>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, #c9a860)' }} />
           </div>
-        </div>
-      </div>
 
-      {/* ── RSVP Section ─────────────────────────────────── */}
-      <div style={{ width: '100%', display: 'flex', gap: 12, justifyContent: 'center' }}>
+          {/* "Dear" */}
+          <p style={{
+            margin: '0 0 3px',
+            fontSize: 10,
+            letterSpacing: 5,
+            textTransform: 'uppercase',
+            color: '#9a7c58',
+            fontFamily: 'Georgia, serif',
+          }}>Dear</p>
+
+          {/* Guest name */}
+          <p style={{
+            margin: '0 0 16px',
+            fontSize: 22,
+            fontWeight: 700,
+            color: '#1e110a',
+            letterSpacing: 0.5,
+            fontFamily: 'Georgia, serif',
+            lineHeight: 1.3,
+          }}>{guestName}</p>
+
+          {/* Invitation prose */}
+          <p style={{
+            margin: '0 0 4px',
+            fontSize: 13,
+            color: '#6b4d34',
+            fontStyle: 'italic',
+            fontFamily: 'Georgia, serif',
+            lineHeight: 1.7,
+          }}>with love in our hearts, we invite you to</p>
+          <p style={{
+            margin: '0 0 18px',
+            fontSize: 10,
+            letterSpacing: 4,
+            textTransform: 'uppercase',
+            color: '#9a7c58',
+            fontFamily: 'Georgia, serif',
+          }}>celebrate the marriage of</p>
+
+          {/* Couple name — the statement */}
+          <h2 style={{
+            margin: '0 0 30px',
+            fontSize: 36,
+            fontWeight: 400,
+            fontStyle: 'italic',
+            color: '#1e110a',
+            lineHeight: 1.25,
+            fontFamily: 'Georgia, "Times New Roman", serif',
+            letterSpacing: 0.5,
+          }}>{coupleName ?? 'The Wedding'}</h2>
+
+          {/* Middle ornament */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, transparent, #c9a860)' }} />
+            <span style={{ color: '#c9a860', fontSize: 10, fontFamily: 'Georgia, serif' }}>♦</span>
+            <div style={{ flex: 1, height: 1, background: 'linear-gradient(to left, transparent, #c9a860)' }} />
+          </div>
+
+          {/* Date + Venue tiles */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 12,
+            marginBottom: 28,
+          }}>
+            {[
+              { label: 'Date',  value: date  ?? 'To be announced' },
+              { label: 'Venue', value: venue ?? 'To be announced' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{
+                padding: '16px 12px',
+                background: 'rgba(201,168,96,0.07)',
+                borderTop: '2px solid #c9a860',
+              }}>
+                <p style={{
+                  margin: '0 0 6px',
+                  fontSize: 9,
+                  letterSpacing: 4,
+                  textTransform: 'uppercase',
+                  color: '#c9a860',
+                  fontFamily: 'Georgia, serif',
+                }}>{label}</p>
+                <p style={{
+                  margin: 0,
+                  fontSize: 13,
+                  color: '#1e110a',
+                  fontWeight: 600,
+                  lineHeight: 1.5,
+                  fontFamily: 'Georgia, serif',
+                }}>{value}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer script */}
+          <p style={{
+            margin: 0,
+            fontSize: 11,
+            fontStyle: 'italic',
+            color: '#c9a860',
+            fontFamily: 'Georgia, serif',
+            letterSpacing: 0.5,
+          }}>Black tie · Kindly RSVP</p>
+
+        </div>
+
+        {/* ── Gold bottom rule ─────────────────────────── */}
+        <div style={{
+          height: 5,
+          background: 'linear-gradient(90deg, #8a6e3a 0%, #d4aa60 30%, #f2d98a 50%, #d4aa60 70%, #8a6e3a 100%)',
+          flexShrink: 0,
+        }} />
+      </div>
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ end printable card ━ */}
+
+
+      {/* ── RSVP panel — completely outside cardRef ─────── */}
+      <div style={{
+        width: '100%',
+        background: 'rgba(255,252,248,0.92)',
+        borderRadius: 16,
+        padding: '18px 24px 20px',
+        boxShadow: '0 2px 20px rgba(100,70,30,0.10)',
+        border: '1px solid rgba(201,168,96,0.25)',
+        backdropFilter: 'blur(10px)',
+      }}>
+        <p style={{
+          textAlign: 'center',
+          fontSize: 10,
+          letterSpacing: 4,
+          textTransform: 'uppercase',
+          color: '#9a7c58',
+          fontFamily: 'Georgia, serif',
+          margin: '0 0 14px',
+        }}>Kindly respond</p>
         <RSVPClient guestId={guestId} token={token} />
       </div>
+
+      {/* ── Download button ──────────────────────────────── */}
+      <button
+        onClick={handleDownload}
+        disabled={downloading}
+        style={{
+          width: '100%',
+          background: downloading
+            ? '#c4a87a'
+            : 'linear-gradient(135deg, #c9a860 0%, #8a6e3a 100%)',
+          color: '#fff',
+          border: 'none',
+          outline: 'none',
+          borderRadius: 12,
+          padding: '14px 0',
+          fontSize: 11,
+          letterSpacing: 3,
+          textTransform: 'uppercase',
+          cursor: downloading ? 'not-allowed' : 'pointer',
+          fontFamily: 'Georgia, serif',
+          fontWeight: 700,
+          boxShadow: downloading ? 'none' : '0 4px 20px rgba(138,110,58,0.35)',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        {downloading ? 'Saving…' : 'Download Invite'}
+      </button>
 
     </div>
   );
