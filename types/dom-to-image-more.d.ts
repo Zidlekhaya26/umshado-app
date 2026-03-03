@@ -1,4 +1,4 @@
-﻿declare module 'dom-to-image-more' {
+declare module 'dom-to-image-more' {
   interface Options {
     width?: number;
     height?: number;
@@ -6,9 +6,11 @@
     cacheBust?: boolean;
   }
 
-  export const default: {
-    toPng(node: HTMLElement, options?: Options): Promise<string>;
-    toJpeg(node: HTMLElement, options?: Options): Promise<string>;
-    toSvg(node: HTMLElement, options?: Options): Promise<string>;
-  };
+  namespace domToImage {
+    function toPng(node: HTMLElement, options?: Options): Promise<string>;
+    function toJpeg(node: HTMLElement, options?: Options): Promise<string>;
+    function toSvg(node: HTMLElement, options?: Options): Promise<string>;
+  }
+
+  export default domToImage;
 }
