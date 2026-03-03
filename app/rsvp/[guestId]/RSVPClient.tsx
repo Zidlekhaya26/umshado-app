@@ -49,11 +49,9 @@ export default function RSVPClient({ guestId, token: propToken }: { guestId: str
   };
 
   return (
-    <div className="mt-3">
-      <div className="flex justify-center gap-3">
-        <button aria-live="polite" disabled={loading || disabled} onClick={() => update('accepted')} className="px-4 py-2 rounded-lg bg-emerald-500 text-white disabled:opacity-60">Accept</button>
-        <button aria-live="polite" disabled={loading || disabled} onClick={() => update('declined')} className="px-4 py-2 rounded-lg bg-red-500 text-white disabled:opacity-60">Decline</button>
-      </div>
+    <div className="flex justify-center gap-4">
+      <button aria-live="polite" disabled={loading || disabled} onClick={() => update('accepted')} className="px-8 py-3 rounded-full bg-emerald-500 text-white font-semibold disabled:opacity-60 hover:bg-emerald-600 transition-colors">Accept</button>
+      <button aria-live="polite" disabled={loading || disabled} onClick={() => update('declined')} className="px-8 py-3 rounded-full bg-red-500 text-white font-semibold disabled:opacity-60 hover:bg-red-600 transition-colors">Decline</button>
       {message && <p className="text-center text-sm text-gray-700 mt-3" role="status">{message}</p>}
       {!token && <p className="text-center text-xs text-gray-500 mt-2">If the RSVP fails due to a missing token, ask the couple to resend the invite.</p>}
     </div>

@@ -3,62 +3,84 @@ import { notFound } from 'next/navigation';
 import RSVPClient from './RSVPClient';
 import InviteCard from '@/components/InviteCard';
 
-type Props = { params: { guestId: string }, searchParams?: { t?: string; view?: string } };
+type Props = {
+  params: Promise<{ guestId: string }>;
+  searchParams?: Promise<{ t?: string; view?: string }>;
+};
 
 export default async function RSVPPage({ params, searchParams }: Props) {
   const { guestId } = await params;
   const resolvedSearchParams = await searchParams;
   const token = resolvedSearchParams?.t ?? null;
-  const view = resolvedSearchParams?.view ?? null;
-
+  const view  = resolvedSearchParams?.view ?? null;
   const supabase = createServiceClient();
 
-  // Basic validation
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(guestId)) return notFound();
 
-  const { data: guest } = await supabase.from('couple_guests').select('*').eq('id', guestId).maybeSingle();
+  const { data: guest } = await supabase
+    .from('couple_guests').select('*').eq('id', guestId).maybeSingle();
   if (!guest) return notFound();
-
-  // token must match
   if (!token || guest.rsvp_token !== token) return notFound();
 
-  // Try to fetch couple profile fields if available
   let coupleName: string | null = null;
-  let avatar_url: string | null = null;
-  let wedding_date: string | null = null;
-  let wedding_venue: string | null = null;
+  let avatarUrl: string | null = null;
+  let weddingDate: string | null = null;
+  let weddingVenue: string | null = null;
+
+  // Primary: couples table
   try {
-    const { data: profile } = await supabase.from('profiles').select('full_name, avatar_url, wedding_date, wedding_venue').eq('id', guest.couple_id).maybeSingle();
-    if (profile) {
-      coupleName = profile.full_name ?? null;
-      avatar_url = (profile as any).avatar_url ?? null;
-      wedding_date = (profile as any).wedding_date ?? null;
-      wedding_venue = (profile as any).wedding_venue ?? null;
+    const { data: couple } = await supabase
+      .from('couples')
+      .select('partner_name, avatar_url, wedding_date, location')
+      .eq('id', guest.couple_id).maybeSingle();
+    if (couple) {
+      coupleName   = couple.partner_name ?? null;
+      avatarUrl    = couple.avatar_url   ?? null;
+      weddingDate  = couple.wedding_date ?? null;
+      weddingVenue = couple.location     ?? null;
     }
-  } catch (e) {
-    // ignore
-  }
+  } catch (_) {}
 
-  // Render either the designed invite card (view=card) or the plain RSVP form
-  if (view === 'card') {
-    // Format wedding date to human-friendly date-only string
-    let dateStr: string | null = null;
-    try {
-      if (wedding_date) {
-        const d = new Date(wedding_date);
-        if (!isNaN(d.getTime())) dateStr = d.toLocaleString(undefined, { dateStyle: 'long' });
+  // Fallback: profiles table
+  try {
+    if (!coupleName || !avatarUrl || !weddingDate || !weddingVenue) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url, wedding_date, wedding_venue')
+        .eq('id', guest.couple_id).maybeSingle();
+      if (profile) {
+        if (!coupleName)   coupleName   = (profile as any).full_name     ?? null;
+        if (!avatarUrl)    avatarUrl    = (profile as any).avatar_url    ?? null;
+        if (!weddingDate)  weddingDate  = (profile as any).wedding_date  ?? null;
+        if (!weddingVenue) weddingVenue = (profile as any).wedding_venue ?? null;
       }
-    } catch (e) { /* ignore */ }
+    }
+  } catch (_) {}
 
+  // Format date
+  let dateStr: string | null = null;
+  try {
+    if (weddingDate) {
+      const d = new Date(weddingDate);
+      if (!isNaN(d.getTime())) {
+        dateStr = d.toLocaleDateString('en-ZA', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        });
+      }
+    }
+  } catch (_) {}
+
+  if (view === 'card') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-4"
+        style={{ background: 'linear-gradient(135deg, #f5ede4 0%, #ede0d4 50%, #e8d5c4 100%)' }}>
         <InviteCard
           guestName={guest.full_name}
           coupleName={coupleName}
           date={dateStr}
-          venue={wedding_venue}
-          avatarUrl={avatar_url}
+          venue={weddingVenue}
+          avatarUrl={avatarUrl}
           guestId={guestId}
           token={token}
         />
@@ -66,14 +88,13 @@ export default async function RSVPPage({ params, searchParams }: Props) {
     );
   }
 
-  // Default: Render a small client-side form for RSVP
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center">
-        <h1 className="text-xl font-bold text-gray-900 mb-2">You're invited</h1>
-        <p className="text-sm text-gray-600 mb-4">{coupleName ? `${coupleName} invited you to their wedding.` : `You've been invited.`}</p>
-        <p className="text-sm text-gray-700 font-semibold mb-4">{guest.full_name}</p>
-
+    <div className="min-h-screen flex items-center justify-center p-6"
+      style={{ background: 'linear-gradient(135deg, #f5ede4 0%, #ede0d4 50%, #e8d5c4 100%)' }}>
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+        <p className="text-xs tracking-widest text-amber-700 uppercase mb-3">Wedding Invitation</p>
+        <h1 className="font-serif text-2xl text-stone-800 mb-1">{coupleName ?? 'You are invited'}</h1>
+        <p className="text-sm text-stone-500 mb-6">{guest.full_name}</p>
         <RSVPClient guestId={guestId} token={token} />
       </div>
     </div>

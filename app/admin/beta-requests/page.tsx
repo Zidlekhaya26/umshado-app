@@ -306,6 +306,16 @@ export default function AdminBetaRequestsPage() {
           title="Beta Requests"
           subtitle={`Manage private beta invitations · ${requests.length} total`}
         />
+        <div className="flex gap-3 mt-3 flex-wrap">
+          <a href="/admin/beta-requests"
+            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-600 text-white">
+            Beta Requests
+          </a>
+          <a href="/admin/verifications"
+            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-700 transition-colors">
+            🔵 Verifications
+          </a>
+        </div>
       </div>
 
       {/* Schema error callout */}

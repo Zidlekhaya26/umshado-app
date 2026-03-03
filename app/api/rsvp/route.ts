@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     // validate token
     const { data: guest, error: gErr } = await supabase
       .from('couple_guests')
-      .select('id, rsvp_token')
+      .select('id, rsvp_token, full_name, couple_id')
       .eq('id', guestId)
       .maybeSingle();
 
@@ -36,6 +36,23 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) return NextResponse.json({ success: false, error: 'Failed to update RSVP' }, { status: 500 });
+
+    // Notify the couple — non-blocking
+    try {
+      const verb = status === 'accepted' ? 'accepted' : 'declined';
+      const emoji = status === 'accepted' ? '\uD83C\uDF89' : '\uD83D\uDE14';
+      await supabase.from('notifications').insert({
+        user_id: guest.couple_id,
+        type: 'rsvp_response',
+        title: emoji + ' ' + guest.full_name + ' ' + verb + ' their invite',
+        body: guest.full_name + ' has ' + verb + ' their invitation to your wedding.',
+        link: '/couple/planner?tab=guests',
+        meta: { guest_id: guestId, rsvp_status: status },
+        created_at: new Date().toISOString(),
+      });
+    } catch (notifyErr) {
+      console.error('Failed to notify couple of RSVP:', notifyErr);
+    }
 
     return NextResponse.json({ success: true, guest: data });
   } catch (err) {

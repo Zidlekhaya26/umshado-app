@@ -740,9 +740,21 @@ function CouplePlannerContent() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <p className="text-sm font-semibold text-gray-900">Guest List</p>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {guests.filter(g => g.rsvp_status === 'pending' && g.phone).length > 0 && (
+                        <button
+                          onClick={() => {
+                            const pending = guests.filter(g => g.rsvp_status === 'pending' && g.phone);
+                            if (!window.confirm('Send WhatsApp invites to ' + pending.length + ' pending guest' + (pending.length > 1 ? 's' : '') + ' with a phone number?')) return;
+                            pending.forEach((g, i) => { setTimeout(() => inviteViaWhatsapp(g), i * 800); });
+                          }}
+                          className="px-3 py-2 bg-green-500 text-white rounded-full text-sm font-semibold hover:bg-green-600 transition-colors"
+                        >
+                          Invite All ({guests.filter(g => g.rsvp_status === 'pending' && g.phone).length})
+                        </button>
+                      )}
                       <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
                       <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
                     </div>
