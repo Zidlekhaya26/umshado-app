@@ -125,7 +125,6 @@ export default async function RSVPPathTokenPage({ params, searchParams }: Props)
           avatarUrl={avatar_url}
           guestId={guestId}
           token={token}
-          plusOne={guest.plus_one}
         />
       </div>
     );
