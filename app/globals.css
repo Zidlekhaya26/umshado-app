@@ -1,169 +1,448 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   uMshado — Global Design System
+   Brand: warm ivory + antique gold + near-black
+   Updated: 2026-03 — full UI overhaul
+═══════════════════════════════════════════════════════════════ */
+
+
+/* ── CSS Custom Properties ─────────────────────────────────── */
 :root {
-  --bg: #F7F0EA;
-  --card: #ffffff;
-  --primary: #6b1f3a;
-  --primary-foreground: #ffffff;
-  --secondary: #f4c0c9;
-  --muted: #5a4e46;
-  --border: #eadfd6;
-  --shadow: 0 12px 30px rgba(70, 32, 46, 0.12);
+  /* Brand palette */
+  --um-ivory:        #faf7f2;
+  --um-ivory-dark:   #f0ebe0;
+  --um-gold:         #b8973e;
+  --um-gold-light:   #d4b86a;
+  --um-gold-hi:      #e8d090;
+  --um-gold-dim:     rgba(184,151,62,0.15);
+  --um-dark:         #18100a;
+  --um-brown:        #5c3d28;
+  --um-brown-light:  #8a6e4a;
+  --um-cream:        #fdfaf6;
 
-  --background: var(--bg);
-  --foreground: #2b1b1b;
+  /* Semantic aliases */
+  --background:      var(--um-ivory);
+  --surface:         #ffffff;
+  --surface-raised:  var(--um-cream);
+  --foreground:      var(--um-dark);
+  --muted:           var(--um-brown-light);
+  --border:          rgba(184,151,62,0.18);
+  --border-subtle:   rgba(0,0,0,0.06);
+  --primary:         var(--um-gold);
+  --primary-dark:    #8a6010;
+  --primary-fg:      #ffffff;
+
+  /* Status colours */
+  --success:         #2d7a4f;
+  --success-bg:      rgba(45,122,79,0.1);
+  --warning:         #b8973e;
+  --warning-bg:      rgba(184,151,62,0.1);
+  --error:           #c83232;
+  --error-bg:        rgba(200,50,50,0.1);
+  --info:            #1a6aa8;
+  --info-bg:         rgba(26,106,168,0.1);
+
+  /* Typography */
+  --font-display:    'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body:       'DM Sans', var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono:       var(--font-geist-mono), monospace;
+
+  /* Spacing scale */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+
+  /* Radius */
+  --radius-sm:  8px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:  0 1px 4px rgba(0,0,0,0.07);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.09);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --shadow-gold: 0 4px 20px rgba(184,151,62,0.25);
+
+  /* Gradients */
+  --grad-gold:   linear-gradient(135deg, #b8973e 0%, #8a6010 100%);
+  --grad-header: linear-gradient(160deg, #18100a 0%, #2e1d0e 60%, #3d2810 100%);
+  --grad-ivory:  linear-gradient(135deg, #faf7f2 0%, #f0ebe0 100%);
+
+  /* Transitions */
+  --transition: 0.18s ease;
+
+  /* Legacy aliases — keeps old Tailwind overrides working */
+  --bg:    var(--um-ivory);
+  --card:  var(--surface);
+  --secondary: var(--um-gold-hi);
+  --shadow: var(--shadow-md);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-muted: var(--muted);
-  --color-border: var(--border);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-
-  /* Override gray palette for warm brand tones & strong readability */
-  --color-gray-50: #F7F0EA;
-  --color-gray-100: #f3ebe3;
-  --color-gray-200: #eadfd6;
-  --color-gray-300: #b5a99e;
-  --color-gray-400: #6f6259;
-  --color-gray-500: #5a4e46;
-  --color-gray-600: #4a3f38;
-  --color-gray-700: #3d3430;
-  --color-gray-800: #2b1b1b;
-  --color-gray-900: #1a1010;
-  --color-gray-950: #0f0808;
-}
-
+/* Dark mode — intentionally minimal, preserving brand warmth */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background:     #0f0c08;
+    --surface:        #1a1410;
+    --surface-raised: #221c14;
+    --foreground:     #f0ebe0;
+    --muted:          #9a8060;
+    --border:         rgba(184,151,62,0.2);
+    --border-subtle:  rgba(255,255,255,0.06);
   }
 }
 
+/* ── Tailwind theme bridge ────────────────────────────────── */
+@theme inline {
+  --color-background:        var(--background);
+  --color-foreground:        var(--foreground);
+  --color-primary:           var(--primary);
+  --color-primary-foreground: var(--primary-fg);
+  --color-secondary:         var(--um-gold-hi);
+  --color-muted:             var(--muted);
+  --color-border:            var(--border);
+  --font-sans:               var(--font-body);
+  --font-mono:               var(--font-mono);
+
+  /* Warm gray override — all grays map to brand warm tones */
+  --color-gray-50:  #faf7f2;
+  --color-gray-100: #f3ebe3;
+  --color-gray-200: #eadfd6;
+  --color-gray-300: #c4b4a4;
+  --color-gray-400: #9a8060;
+  --color-gray-500: #7a6050;
+  --color-gray-600: #5c4838;
+  --color-gray-700: #3d3028;
+  --color-gray-800: #2a1e14;
+  --color-gray-900: #18100a;
+  --color-gray-950: #0f0808;
+}
+
+/* ── Base reset ─────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
+  height: 100%;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
-
-/* Respect device safe-area insets on iOS (notably when running as PWA) */
-html, body {
-  height: 100%;
-}
-body {
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  padding-top:    env(safe-area-inset-top);
+  padding-right:  env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  -webkit-text-size-adjust: 100%;
+  padding-left:   env(safe-area-inset-left);
 }
 
-/* Force form controls to use dark text instead of browser-default grey */
-input,
-textarea,
-select {
-  color: var(--color-gray-900, #1a1010) !important;
-}
-input::placeholder,
-textarea::placeholder {
-  color: var(--color-gray-400, #6f6259) !important;
+/* ── Typography ─────────────────────────────────────────────── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--foreground);
+  line-height: 1.25;
+  font-weight: 700;
 }
 
-/* Theme overrides for common Tailwind utility classes */
-.bg-white {
-  background-color: var(--card) !important;
+h1 { font-size: clamp(22px, 5vw, 32px); }
+h2 { font-size: clamp(18px, 4vw, 24px); }
+h3 { font-size: clamp(15px, 3vw, 19px); }
+
+p { color: var(--muted); line-height: 1.65; }
+
+a { color: var(--primary); text-decoration: none; transition: opacity var(--transition); }
+a:hover { opacity: 0.8; }
+
+/* ── Form controls ──────────────────────────────────────────── */
+input, textarea, select {
+  color: var(--foreground) !important;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 14px;
+  transition: border-color var(--transition), box-shadow var(--transition);
 }
 
-.bg-purple-600,
-.bg-purple-700,
-.bg-purple-500,
-.bg-purple-800 {
-  background-color: var(--primary) !important;
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--um-gold) !important;
+  box-shadow: 0 0 0 3px var(--um-gold-dim);
 }
 
-.text-purple-600,
-.text-purple-700,
-.text-purple-500 {
-  color: var(--primary) !important;
+input::placeholder, textarea::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.6;
 }
 
-.border-purple-600,
-.border-purple-500,
-.border-purple-300,
-.border-purple-200 {
-  border-color: var(--primary) !important;
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(184,151,62,0.25); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(184,151,62,0.45); }
+
+/* ── uMshado component classes ──────────────────────────────── */
+
+/* Cards */
+.um-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--border-subtle);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow var(--transition), transform var(--transition);
+}
+.um-card:hover { box-shadow: var(--shadow-md); }
+.um-card-gold {
+  border-color: rgba(184,151,62,0.35);
+  box-shadow: var(--shadow-gold);
 }
 
-.bg-pink-500,
-.bg-pink-600,
-.bg-pink-400 {
-  background-color: var(--secondary) !important;
+/* Buttons */
+.um-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.3px;
+  border: none; cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.um-btn-primary {
+  background: var(--grad-gold);
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(184,151,62,0.3);
+}
+.um-btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.um-btn-secondary {
+  background: var(--um-gold-dim);
+  color: var(--primary-dark);
+  border: 1.5px solid rgba(184,151,62,0.3);
+}
+.um-btn-secondary:hover { background: rgba(184,151,62,0.2); }
+.um-btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1.5px solid var(--border);
+}
+.um-btn-ghost:hover { background: var(--um-ivory-dark); }
+.um-btn-sm { padding: 6px 14px; font-size: 11px; border-radius: var(--radius-sm); }
+.um-btn-lg { padding: 14px 28px; font-size: 15px; border-radius: var(--radius-lg); }
+
+/* Badge / pill */
+.um-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: var(--radius-full);
+  font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.um-badge-gold  { background: var(--um-gold-dim); color: var(--primary-dark); border: 1px solid rgba(184,151,62,0.25); }
+.um-badge-green { background: var(--success-bg); color: var(--success); }
+.um-badge-blue  { background: var(--info-bg); color: var(--info); }
+.um-badge-red   { background: var(--error-bg); color: var(--error); }
+
+/* Header */
+.um-header {
+  background: var(--grad-header);
+  position: relative;
+  overflow: hidden;
+}
+.um-header::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(184,151,62,0.08);
+  pointer-events: none;
 }
 
-.text-pink-500,
-.text-pink-600 {
-  color: var(--primary) !important;
+/* Section title */
+.um-section-title {
+  font-family: var(--font-display);
+  font-size: 15px; font-weight: 700;
+  color: var(--foreground);
+  margin: 0 0 10px;
 }
 
-.bg-purple-50,
-.bg-pink-50,
-.bg-rose-50 {
-  background-color: color-mix(in srgb, var(--secondary) 25%, var(--card)) !important;
+/* Divider */
+.um-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  border: none; margin: 0;
 }
 
-.shadow-lg,
-.shadow-xl,
-.shadow-2xl,
-.shadow-md {
-  box-shadow: var(--shadow) !important;
+/* Gold ornament rule (used in invite cards) */
+.um-rule {
+  display: flex; align-items: center; gap: 10px;
+}
+.um-rule::before, .um-rule::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--um-gold-light));
+}
+.um-rule::after {
+  background: linear-gradient(90deg, var(--um-gold-light), transparent);
 }
 
-/* Tailwind gradient helpers */
+/* Input group */
+.um-input {
+  width: 100%; height: 46px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 14px; color: var(--foreground);
+  font-family: var(--font-body);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.um-input:focus {
+  outline: none;
+  border-color: var(--um-gold);
+  box-shadow: 0 0 0 3px var(--um-gold-dim);
+}
+
+/* Status chips */
+.um-chip {
+  display: inline-flex; align-items: center;
+  padding: 4px 10px; border-radius: var(--radius-full);
+  font-size: 11px; font-weight: 600;
+  border: 1px solid transparent;
+}
+.um-chip-gold    { background: var(--um-gold-dim); color: var(--primary-dark); border-color: rgba(184,151,62,0.25); }
+.um-chip-success { background: var(--success-bg);  color: var(--success); }
+.um-chip-info    { background: var(--info-bg);     color: var(--info); }
+.um-chip-error   { background: var(--error-bg);    color: var(--error); }
+
+/* Bottom sheet */
+.um-sheet {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.18);
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+}
+.um-sheet-handle {
+  width: 40px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
+
+/* Loading spinner */
+.um-spinner {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 3px solid rgba(184,151,62,0.15);
+  border-top-color: var(--um-gold);
+  animation: um-spin 0.8s linear infinite;
+}
+
+/* ── Tailwind overrides — map purple/pink to brand gold ─────── */
+
+/* Purple → gold */
+.bg-purple-600, .bg-purple-700, .bg-purple-500, .bg-purple-800, .bg-purple-900 {
+  background-color: var(--um-gold) !important;
+}
+.bg-purple-50, .bg-pink-50, .bg-rose-50 {
+  background-color: var(--um-gold-dim) !important;
+}
+.text-purple-600, .text-purple-700, .text-purple-500, .text-purple-800 {
+  color: var(--primary-dark) !important;
+}
+.text-purple-100, .text-purple-200 {
+  color: var(--um-gold-hi) !important;
+}
+.border-purple-600, .border-purple-500, .border-purple-300, .border-purple-200 {
+  border-color: rgba(184,151,62,0.4) !important;
+}
+.ring-purple-200, .ring-purple-300 {
+  --tw-ring-color: rgba(184,151,62,0.3) !important;
+}
+.hover\:bg-purple-50:hover  { background-color: var(--um-gold-dim) !important; }
+.hover\:bg-purple-700:hover { background-color: var(--primary-dark) !important; }
+.focus\:ring-purple-200:focus { --tw-ring-color: rgba(184,151,62,0.3) !important; }
+
+/* Pink */
+.bg-pink-500, .bg-pink-600 { background-color: var(--um-gold) !important; }
+.text-pink-500, .text-pink-600 { color: var(--primary-dark) !important; }
+
+/* White/gray system */
+.bg-white { background-color: var(--surface) !important; }
+.bg-gray-50 { background-color: var(--um-ivory) !important; }
+
+/* Shadows */
+.shadow-lg, .shadow-xl, .shadow-2xl { box-shadow: var(--shadow-lg) !important; }
+.shadow-md { box-shadow: var(--shadow-md) !important; }
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+
+/* Gradient stops */
 .from-purple-500 {
-  --tw-gradient-from: var(--primary) !important;
-  --tw-gradient-to: color-mix(in srgb, var(--primary) 0%, transparent) !important;
+  --tw-gradient-from: var(--um-gold) !important;
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
 }
+.to-pink-500 { --tw-gradient-to: #8a6010 !important; }
 
-.via-purple-600 {
-  --tw-gradient-via: color-mix(in srgb, var(--primary) 80%, var(--secondary)) !important;
-  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-via), var(--tw-gradient-to) !important;
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes um-spin {
+  to { transform: rotate(360deg); }
 }
-
-.to-pink-500 {
-  --tw-gradient-to: var(--secondary) !important;
+@keyframes um-fade-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
 }
-
-/* ── uMshado brand animations ── */
-@keyframes umshado-fade-in {
-  from { opacity: 0; transform: scale(0.92) translateY(8px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes um-slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-@keyframes umshado-pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.45; }
-}
-.animate-umshado-in {
-  animation: umshado-fade-in 300ms ease-out both;
-}
-.animate-umshado-pulse {
-  animation: umshado-pulse 1.8s ease-in-out infinite;
+@keyframes um-pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(184,151,62,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(184,151,62,0); }
 }
 
-/* Make web background transparent so native WebView background shows through */
-:root, html, body, #__next, #root {
-  background: transparent !important;
-  background-color: transparent !important;
-}
+.animate-um-in       { animation: um-fade-in 280ms ease-out both; }
+.animate-um-slide-up { animation: um-slide-up 320ms ease-out both; }
+.animate-um-pulse    { animation: um-pulse-gold 2s ease-in-out infinite; }
 
-/* Ensure commonly used loading / card containers don't force a white background */
-.loading-container, .loading, .splash, .splash-screen, .app-shell {
-  background: transparent !important;
-  background-color: transparent !important;
-}
+/* Staggered children */
+.um-stagger > *:nth-child(1) { animation-delay: 0ms; }
+.um-stagger > *:nth-child(2) { animation-delay: 60ms; }
+.um-stagger > *:nth-child(3) { animation-delay: 120ms; }
+.um-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.um-stagger > *:nth-child(5) { animation-delay: 240ms; }
+
+/* Legacy class names kept for backwards compat */
+.animate-umshado-in    { animation: um-fade-in 300ms ease-out both; }
+.animate-umshado-pulse { animation: um-pulse-gold 1.8s ease-in-out infinite; }
+
+/* ── Utility helpers ────────────────────────────────────────── */
+.text-gold    { color: var(--um-gold) !important; }
+.text-display { font-family: var(--font-display) !important; }
+.bg-gold-dim  { background: var(--um-gold-dim) !important; }
+.bg-ivory     { background: var(--um-ivory) !important; }
+.border-gold  { border-color: rgba(184,151,62,0.3) !important; }
+.grad-gold    { background: var(--grad-gold) !important; }
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Safe area padding helpers */
+.pb-safe    { padding-bottom: env(safe-area-inset-bottom); }
+.pb-nav     { padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
+.pt-safe    { padding-top: env(safe-area-inset-top); }
