@@ -318,6 +318,11 @@ export default function Marketplace() {
 
   return (
     <div style={{ minHeight: '100svh', background: '#faf7f2' }}>
+      <style>{`
+        input[placeholder*="Search vendors"]::placeholder {
+          color: rgba(255, 255, 255, 0.6) !important;
+        }
+      `}</style>
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100svh', paddingBottom: 90 }}>
 
         {/* ── Header ── */}
