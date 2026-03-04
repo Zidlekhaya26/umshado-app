@@ -279,7 +279,13 @@ export default function Marketplace() {
       setCatalogServices(catalog);
       const { data, error } = await supabase.from('marketplace_vendors').select('*');
       if (error) { console.error(error); return; }
-      const { data: actData } = await supabase.rpc('get_vendor_activity_7d').catch(() => ({ data: [] }));
+      let actData = [];
+      try {
+        const result = await supabase.rpc('get_vendor_activity_7d');
+        if (result.data) actData = result.data;
+      } catch (err) {
+        console.warn('marketplace: failed to load vendor activity counts', err);
+      }
       const actMap = new Map<string, VendorActivityScore>();
       (actData || []).forEach((r: VendorActivityScore) => actMap.set(r.vendor_id, r));
       const mapped: Vendor[] = (data || []).map((v: MarketplaceVendor) => ({
