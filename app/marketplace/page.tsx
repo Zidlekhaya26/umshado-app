@@ -329,7 +329,7 @@ export default function Marketplace() {
             <UmshadoIcon size={26} />
             <div>
               <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>Marketplace</h1>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Find trusted wedding vendors</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Find trusted wedding vendors</p>
             </div>
           </div>
 
