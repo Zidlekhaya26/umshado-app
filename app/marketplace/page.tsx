@@ -326,7 +326,7 @@ export default function Marketplace() {
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100svh', paddingBottom: 90 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#5a4633 0%,#7a5d46 60%,#9a7a5a 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg,#b8973e 0%,#8a6010 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(184,151,62,0.08)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: 20, right: 50, width: 80, height: 80, borderRadius: '50%', background: 'rgba(184,151,62,0.05)', pointerEvents: 'none' }} />
 
