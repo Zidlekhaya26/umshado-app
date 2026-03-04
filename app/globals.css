@@ -83,40 +83,6 @@
   --shadow: var(--shadow-md);
 }
 
-/* ── Dark mode — charcoal-slate premium, gold accents, full legibility ── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Backgrounds — neutral dark, not brown */
-    --background:     #121214;
-    --surface:        #1c1c1f;
-    --surface-raised: #26262a;
-
-    /* Text — crisp white-warm, never muddy */
-    --foreground:     #f2ede8;
-    --muted:          #a09585;
-
-    /* Borders — subtle, still gold-tinted */
-    --border:         rgba(184,151,62,0.22);
-    --border-subtle:  rgba(255,255,255,0.07);
-
-    /* Gold stays vivid on dark */
-    --um-gold:        #c9a84c;
-    --um-gold-light:  #e0be7a;
-    --um-gold-hi:     #edd99e;
-    --um-gold-dim:    rgba(201,168,76,0.16);
-    --primary:        #c9a84c;
-    --primary-dark:   #a07828;
-
-    /* Header gradient — deep slate, not brown */
-    --grad-header: linear-gradient(160deg, #0e0e12 0%, #191922 55%, #1e1e2a 100%);
-
-    /* Status colors — slightly brighter for dark bg */
-    --success:    #3d9e6a;
-    --error:      #e04444;
-    --info:       #3a8ed4;
-    --warning:    #c9a84c;
-  }
-}
 
 /* ── Tailwind theme bridge ────────────────────────────────── */
 @theme inline {
