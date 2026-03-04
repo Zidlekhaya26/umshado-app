@@ -109,8 +109,8 @@ export default function SeatingPlanner({ guests = [], onApply }: Props) {
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <span style={{ fontSize:20 }}>💺</span>
           <div style={{ textAlign:'left' }}>
-            <p style={{ margin:0, fontSize:14, fontWeight:700 }}>Seating Arrangement</p>
-            <p style={{ margin:0, fontSize:11, opacity:0.8 }}>
+            <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#fff' }}>Seating Arrangement</p>
+            <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.88)' }}>
               {tables.length === 0 ? 'Tap to set up tables & seats' : `${tables.length} table${tables.length !== 1 ? 's' : ''} · ${totalFilled}/${totalSeats} seats filled`}
             </p>
           </div>

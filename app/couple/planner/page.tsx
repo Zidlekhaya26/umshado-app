@@ -703,12 +703,12 @@ function CouplePlannerContent() {
                 <>
                   {/* Summary Card */}
                   <div style={{ background:'linear-gradient(135deg,#b8973e,#8a6010)', borderRadius:20, padding:'20px', color:'#fff', boxShadow:'0 4px 20px rgba(184,151,62,0.3)' }}>
-                    <p style={{ margin:'0 0 4px', fontSize:12, opacity:0.75, letterSpacing:1, textTransform:'uppercase' }}>Total Guests</p>
-                    <p style={{ margin:'0 0 16px', fontSize:32, fontWeight:700, fontFamily:'Georgia,serif' }}>{totalGuestCount}</p>
+                    <p style={{ margin:'0 0 4px', fontSize:12, color:'rgba(255,255,255,0.92)', letterSpacing:1, textTransform:'uppercase' }}>Total Guests</p>
+                    <p style={{ margin:'0 0 16px', fontSize:32, fontWeight:700, fontFamily:'Georgia,serif', color:'#fff' }}>{totalGuestCount}</p>
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, paddingTop:14, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Accepted</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{acceptedGuests}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Pending</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{pendingGuests}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Declined</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{declinedGuests}</p></div>
+                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Accepted</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{acceptedGuests}</p></div>
+                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Pending</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{pendingGuests}</p></div>
+                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Declined</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{declinedGuests}</p></div>
                     </div>
                   </div>
 
