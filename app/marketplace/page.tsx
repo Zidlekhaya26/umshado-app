@@ -275,7 +275,7 @@ export default function Marketplace() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const catalog = getServicesCatalog();
+      const catalog = await getServicesCatalog();
       setCatalogServices(catalog);
       const { data, error } = await supabase.from('marketplace_vendors').select('*');
       if (error) { console.error(error); return; }
