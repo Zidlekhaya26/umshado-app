@@ -100,10 +100,10 @@ export default function CoupleOnboarding() {
           </div>
         </div>
 
-        {/* Partner's Name */}
+        {/* Your Names */}
         <div>
           <label htmlFor="partnerName" className="block text-sm font-semibold text-gray-700 mb-2">
-            Partner&apos;s Name <span className="text-red-500 ml-1">*</span>
+            Your Names <span className="text-red-500 ml-1">*</span>
           </label>
           <input
             type="text"
@@ -112,7 +112,7 @@ export default function CoupleOnboarding() {
             value={formData.partnerName}
             onChange={handleChange}
             required
-            placeholder="Enter your partner's name"
+            placeholder="e.g. Mthabisi & Sthabiso"
             className="w-full max-w-full px-4 h-12 pr-10 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-base placeholder:text-gray-400"
           />
         </div>
