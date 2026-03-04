@@ -89,7 +89,7 @@ export default function BottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-purple-600 text-white text-[10px] font-bold px-1 leading-none">
+            <span style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}>
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -107,23 +107,30 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="w-full max-w-full sm:max-w-md mx-auto">
-        <div className="flex items-center justify-around px-2 py-2">
+    <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
+      <div style={{ maxWidth:520, margin:'0 auto' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-around', padding:'8px 4px', paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors min-w-[64px] ${
-                  active
-                    ? 'text-purple-600'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
+                style={{
+                  display:'flex',
+                  flexDirection:'column',
+                  alignItems:'center',
+                  justifyContent:'center',
+                  padding:'6px 12px',
+                  borderRadius:12,
+                  minWidth:52,
+                  textDecoration:'none',
+                  color: active ? 'var(--um-gold)' : 'var(--muted)',
+                  transition:'color 0.15s',
+                }}
               >
                 {item.icon(active)}
-                <span className={`text-xs mt-1 font-medium ${active ? 'font-semibold' : ''}`}>
+                <span style={{ fontSize:10, marginTop:3, fontWeight: active ? 700 : 500, letterSpacing:0.2 }}>
                   {item.name}
                 </span>
               </Link>
