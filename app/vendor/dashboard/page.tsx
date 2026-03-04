@@ -289,7 +289,7 @@ export default function VendorDashboard() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#18100a 0%,#2e1d0e 60%,#3d2810 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(135deg,#b8973e 0%,#8a6010 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(184,151,62,0.07)', pointerEvents: 'none' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>

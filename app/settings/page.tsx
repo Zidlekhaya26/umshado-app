@@ -364,7 +364,7 @@ function SettingsContent() {
           <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleAvatarUpload} />
 
           {/* ── Profile hero card ── */}
-          <div style={{ background:'linear-gradient(135deg,#2c1a0e,#4a2e14)', borderRadius:20, padding:'20px', overflow:'hidden', position:'relative', boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
+          <div style={{ background:'linear-gradient(135deg,#b8973e,#8a6010)', borderRadius:20, padding:'20px', overflow:'hidden', position:'relative', boxShadow:'0 4px 20px rgba(0,0,0,0.25)' }}>
             <div style={{ position:'absolute', top:-30, right:-30, width:130, height:130, borderRadius:'50%', background:'rgba(184,151,62,0.1)', pointerEvents:'none' }} />
             <div style={{ display:'flex', alignItems:'center', gap:16 }}>
               {/* Avatar */}

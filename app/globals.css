@@ -70,7 +70,7 @@
 
   /* Gradients */
   --grad-gold:   linear-gradient(135deg, #b8973e 0%, #8a6010 100%);
-  --grad-header: linear-gradient(160deg, #2c1a0e 0%, #3d2510 55%, #4a2e14 100%);
+  --grad-header: linear-gradient(135deg, #b8973e 0%, #8a6010 100%);
   --grad-ivory:  linear-gradient(135deg, #faf7f2 0%, #f0ebe0 100%);
 
   /* Transitions */
