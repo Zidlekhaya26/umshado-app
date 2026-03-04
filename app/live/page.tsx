@@ -21,15 +21,20 @@ interface WellWish {
 type PostCategory = 'inspiration' | 'our_story' | 'lobola' | 'vendor_tip' | 'moment' | 'general';
 
 interface CommunityPost {
-  id: string; author: string; category: PostCategory;
-  content: string; image_url?: string; likes: number;
-  liked: boolean; created_at: string;
+  id: string; user_id: string; author: string; category: PostCategory;
+  content: string; image_url: string | null; likes_count: number;
+  comments_count: number; created_at: string; liked?: boolean;
+}
+
+interface CommunityComment {
+  id: string; post_id: string; user_id: string; author: string;
+  content: string; created_at: string;
 }
 
 // ─── Constants ───────────────────────────────────────────
 
-const COMMUNITY_KEY = 'umshado_community_v1';
 const G = '#b8973e'; const G2 = '#8a6010'; const IVORY = '#faf7f2';
+const BUCKET = 'community-images';
 
 const CATEGORIES: { key: PostCategory; label: string; emoji: string; color: string; bg: string }[] = [
   { key: 'inspiration', label: 'Inspiration',  emoji: '✨', color: '#8a6010', bg: 'rgba(184,151,62,0.12)' },
@@ -38,14 +43,6 @@ const CATEGORIES: { key: PostCategory; label: string; emoji: string; color: stri
   { key: 'vendor_tip',  label: 'Vendor Tips',  emoji: '🌟', color: '#7a5200', bg: 'rgba(200,140,0,0.1)'  },
   { key: 'moment',      label: 'Moments',      emoji: '📸', color: '#2d7a52', bg: 'rgba(45,122,82,0.1)'  },
   { key: 'general',     label: 'General',      emoji: '💬', color: '#5a4030', bg: 'rgba(90,64,48,0.08)'  },
-];
-
-const SEED_POSTS: CommunityPost[] = [
-  { id: 'seed1', author: 'Thabo & Lerato', category: 'inspiration', content: 'We chose white and gold as our wedding colours — it felt so regal and timeless. The décor with fresh roses and fairy lights was breathtaking! 🌹 Highly recommend The Event Shed in Johannesburg for the florals.', likes: 24, liked: false, created_at: new Date(Date.now() - 3600000 * 2).toISOString() },
-  { id: 'seed2', author: 'Sipho & Nomvula', category: 'lobola', content: 'We just completed our lobola negotiations last weekend! The whole process was beautiful — brought both families together in such a meaningful way. To all couples going through this, cherish every moment. Our union is truly blessed. 🙏', likes: 47, liked: false, created_at: new Date(Date.now() - 3600000 * 18).toISOString() },
-  { id: 'seed3', author: 'Kagiso & Amahle', category: 'vendor_tip', content: 'Tip for couples: book your photographer AT LEAST 12 months in advance. We used @LensMoments_Photography in Cape Town and honestly the photos are out of this world. They also offered an engagement shoot — do it! Worth every cent. ⭐⭐⭐⭐⭐', likes: 31, liked: false, created_at: new Date(Date.now() - 3600000 * 36).toISOString() },
-  { id: 'seed4', author: 'Mandla & Zintle', category: 'our_story', content: 'We met at a mutual friend\'s wedding 3 years ago — and now we\'re planning our own! Life is truly beautiful. Our date is set for October and we can\'t wait to celebrate with everyone we love. 💑', likes: 58, liked: false, created_at: new Date(Date.now() - 3600000 * 48).toISOString() },
-  { id: 'seed5', author: 'Bongani & Thandeka', category: 'moment', content: 'Our first dance was to "Unbreakable" by Westlife and we ugly-cried the whole way through 😂 Our guests loved it! The venue, Sun City Resort, looked absolutely magical at night. 10/10 would recommend. 🌙', likes: 39, liked: false, created_at: new Date(Date.now() - 3600000 * 72).toISOString() },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -69,9 +66,35 @@ const timeAgo = (d: string) => {
   return `${Math.floor(hrs / 24)}d ago`;
 };
 
-function uid() {
+function genId() {
   return typeof crypto !== 'undefined' && (crypto as any).randomUUID
     ? (crypto as any).randomUUID() : Math.random().toString(36).slice(2);
+}
+
+async function compressImage(file: File, maxDim = 1200, quality = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const ratio = Math.min(maxDim / width, maxDim / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        blob => blob ? resolve(blob) : reject(new Error('Compression failed')),
+        'image/webp', quality
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Load failed')); };
+    img.src = url;
+  });
 }
 
 function catInfo(key: PostCategory) {
@@ -104,19 +127,31 @@ function LivePageContent() {
   const [loaded, setLoaded] = useState(false);
 
   // Live day data
-  const [schedule, setSchedule]   = useState<LiveEvent[]>([]);
-  const [wishes, setWishes]       = useState<WellWish[]>([]);
+  const [schedule, setSchedule]     = useState<LiveEvent[]>([]);
+  const [wishes, setWishes]         = useState<WellWish[]>([]);
   const [guestToken, setGuestToken] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
   // Community feed
-  const [posts, setPosts]               = useState<CommunityPost[]>([]);
-  const [filterCat, setFilterCat]       = useState<PostCategory | 'all'>('all');
-  const [showPostModal, setShowPostModal] = useState(false);
-  const [newContent, setNewContent]     = useState('');
-  const [newCategory, setNewCategory]   = useState<PostCategory>('general');
-  const [newImageUrl, setNewImageUrl]   = useState('');
-  const [authorName, setAuthorName]     = useState('');
+  const [posts, setPosts]                   = useState<CommunityPost[]>([]);
+  const [myLikes, setMyLikes]               = useState<Set<string>>(new Set());
+  const [filterCat, setFilterCat]           = useState<PostCategory | 'all'>('all');
+  const [showPostModal, setShowPostModal]   = useState(false);
+  const [newContent, setNewContent]         = useState('');
+  const [newCategory, setNewCategory]       = useState<PostCategory>('general');
+  const [authorName, setAuthorName]         = useState('');
+  const [imageFile, setImageFile]           = useState<File | null>(null);
+  const [imagePreview, setImagePreview]     = useState<string | null>(null);
+  const [uploading, setUploading]           = useState(false);
+  const [loadingPosts, setLoadingPosts]     = useState(false);
+  const fileInputRef                        = useRef<HTMLInputElement>(null);
+
+  // Comments
+  const [expandedPost, setExpandedPost]         = useState<string | null>(null);
+  const [comments, setComments]                 = useState<Record<string, CommunityComment[]>>({});
+  const [loadingComments, setLoadingComments]   = useState<string | null>(null);
+  const [newComment, setNewComment]             = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
   // Schedule form
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -128,38 +163,114 @@ function LivePageContent() {
   const [editTime, setEditTime]                   = useState('');
   const [editLocation, setEditLocation]           = useState('');
 
-  // ─── Community: load / seed ──────────────────────────
+  // ─── Community: Supabase CRUD ─────────────────────────
 
-  useEffect(() => {
+  const loadPosts = useCallback(async (uid: string) => {
+    setLoadingPosts(true);
     try {
-      const raw = localStorage.getItem(COMMUNITY_KEY);
-      if (raw) { setPosts(JSON.parse(raw)); }
-      else { setPosts(SEED_POSTS); localStorage.setItem(COMMUNITY_KEY, JSON.stringify(SEED_POSTS)); }
-    } catch { setPosts(SEED_POSTS); }
+      const [postsRes, likesRes] = await Promise.all([
+        supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
+        supabase.from('community_likes').select('post_id').eq('user_id', uid),
+      ]);
+      const likedSet = new Set<string>((likesRes.data ?? []).map((l: { post_id: string }) => l.post_id));
+      setMyLikes(likedSet);
+      setPosts((postsRes.data ?? []).map((p: CommunityPost) => ({ ...p, liked: likedSet.has(p.id) })));
+    } finally {
+      setLoadingPosts(false);
+    }
   }, []);
 
-  const savePosts = (next: CommunityPost[]) => {
-    setPosts(next);
-    try { localStorage.setItem(COMMUNITY_KEY, JSON.stringify(next)); } catch {}
+  const uploadImage = async (file: File, uid: string): Promise<string | null> => {
+    try {
+      const compressed = await compressImage(file);
+      const path = `${uid}/${genId()}.webp`;
+      const { error } = await supabase.storage.from(BUCKET).upload(path, compressed, {
+        contentType: 'image/webp', upsert: false,
+      });
+      if (error) throw error;
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      return data.publicUrl;
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      return null;
+    }
   };
 
-  const toggleLike = (id: string) => {
-    savePosts(posts.map(p => p.id === id ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 } : p));
+  const submitPost = async () => {
+    if (!newContent.trim() || !userId) return;
+    setUploading(true);
+    try {
+      const image_url = imageFile ? await uploadImage(imageFile, userId) : null;
+      const { data, error } = await supabase.from('community_posts').insert({
+        user_id: userId,
+        author: authorName.trim() || 'Anonymous Couple',
+        category: newCategory,
+        content: newContent.trim(),
+        image_url,
+      }).select().single();
+      if (!error && data) {
+        setPosts(prev => [{ ...data, liked: false }, ...prev]);
+        setNewContent(''); setImageFile(null); setImagePreview(null);
+        setNewCategory('general'); setShowPostModal(false);
+      }
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const submitPost = () => {
-    if (!newContent.trim()) return;
-    const post: CommunityPost = {
-      id: uid(), author: authorName.trim() || 'Anonymous Couple',
-      category: newCategory, content: newContent.trim(),
-      image_url: newImageUrl.trim() || undefined,
-      likes: 0, liked: false, created_at: new Date().toISOString(),
-    };
-    savePosts([post, ...posts]);
-    setNewContent(''); setNewImageUrl(''); setNewCategory('general'); setShowPostModal(false);
+  const toggleLike = async (postId: string) => {
+    if (!userId) return;
+    const liked = myLikes.has(postId);
+    // Optimistic update
+    setMyLikes(prev => { const s = new Set(prev); liked ? s.delete(postId) : s.add(postId); return s; });
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, liked: !liked, likes_count: liked ? p.likes_count - 1 : p.likes_count + 1 }
+      : p));
+    if (liked) {
+      await supabase.from('community_likes').delete().eq('post_id', postId).eq('user_id', userId);
+    } else {
+      await supabase.from('community_likes').insert({ post_id: postId, user_id: userId });
+    }
   };
 
-  const deletePost = (id: string) => savePosts(posts.filter(p => p.id !== id));
+  const deletePost = async (postId: string) => {
+    await supabase.from('community_posts').delete().eq('id', postId).eq('user_id', userId!);
+    setPosts(prev => prev.filter(p => p.id !== postId));
+    setComments(prev => { const n = { ...prev }; delete n[postId]; return n; });
+  };
+
+  const toggleComments = async (postId: string) => {
+    if (expandedPost === postId) { setExpandedPost(null); return; }
+    setExpandedPost(postId);
+    if (comments[postId]) return;
+    setLoadingComments(postId);
+    const { data } = await supabase.from('community_comments')
+      .select('*').eq('post_id', postId).order('created_at');
+    setComments(prev => ({ ...prev, [postId]: data ?? [] }));
+    setLoadingComments(null);
+  };
+
+  const addComment = async (postId: string) => {
+    if (!newComment.trim() || !userId || submittingComment) return;
+    setSubmittingComment(true);
+    const { data, error } = await supabase.from('community_comments').insert({
+      post_id: postId, user_id: userId,
+      author: authorName.trim() || 'Anonymous Couple',
+      content: newComment.trim(),
+    }).select().single();
+    if (!error && data) {
+      setComments(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), data] }));
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p));
+      setNewComment('');
+    }
+    setSubmittingComment(false);
+  };
+
+  const deleteComment = async (commentId: string, postId: string) => {
+    await supabase.from('community_comments').delete().eq('id', commentId).eq('user_id', userId!);
+    setComments(prev => ({ ...prev, [postId]: (prev[postId] ?? []).filter(c => c.id !== commentId) }));
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: Math.max(0, p.comments_count - 1) } : p));
+  };
 
   const filteredPosts = filterCat === 'all' ? posts : posts.filter(p => p.category === filterCat);
 
@@ -191,10 +302,10 @@ function LivePageContent() {
         const { data } = await supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
         if (data?.full_name) setAuthorName(data.full_name + ' & Partner');
       } catch {}
-      await Promise.all([loadData(session.user.id), loadGuestToken(session.access_token)]);
+      await Promise.all([loadPosts(session.user.id), loadData(session.user.id), loadGuestToken(session.access_token)]);
       setLoaded(true);
     })();
-  }, [router, loadData, loadGuestToken]);
+  }, [router, loadPosts, loadData, loadGuestToken]);
 
   useEffect(() => {
     if (['community', 'day', 'wishes'].includes(urlTab) && urlTab !== activeTab) {
@@ -401,11 +512,68 @@ function LivePageContent() {
                             <button onClick={() => toggleLike(post.id)}
                               style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: post.liked ? '#e04444' : '#9a7c58', fontSize: 13, fontWeight: 600 }}>
                               <span style={{ fontSize: 16 }}>{post.liked ? '❤️' : '🤍'}</span>
-                              {post.likes}
+                              {post.likes_count}
                             </button>
                             <span style={{ fontSize: 12, color: '#c0a87c' }}>·</span>
-                            <span style={{ fontSize: 12, color: '#9a7c58' }}>💬 Comment (coming soon)</span>
+                            <button onClick={() => toggleComments(post.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: expandedPost === post.id ? G2 : '#9a7c58', fontSize: 13, fontWeight: 600 }}>
+                              💬 {post.comments_count} {post.comments_count === 1 ? 'comment' : 'comments'}
+                            </button>
                           </div>
+
+                          {/* ── Comments section ── */}
+                          {expandedPost === post.id && (
+                            <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(184,151,62,0.08)' }}>
+                              {loadingComments === post.id ? (
+                                <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
+                                  <div style={{ width: 20, height: 20, borderRadius: '50%', border: '2px solid rgba(184,151,62,0.15)', borderTopColor: G, animation: 'spin 0.8s linear infinite' }} />
+                                </div>
+                              ) : (
+                                <>
+                                  {(comments[post.id] ?? []).length === 0 && (
+                                    <p style={{ margin: '0 0 10px', fontSize: 12, color: '#9a7c58', textAlign: 'center' }}>No comments yet — be the first!</p>
+                                  )}
+                                  {(comments[post.id] ?? []).map(c => (
+                                    <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-start' }}>
+                                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(184,151,62,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                        <span style={{ fontSize: 9, fontWeight: 700, color: G2 }}>{initials(c.author)}</span>
+                                      </div>
+                                      <div style={{ flex: 1, background: 'rgba(184,151,62,0.06)', borderRadius: 10, padding: '7px 10px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                                          <span style={{ fontSize: 11, fontWeight: 700, color: '#3d2510' }}>{c.author}</span>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                            <span style={{ fontSize: 10, color: '#9a7c58' }}>{timeAgo(c.created_at)}</span>
+                                            {c.user_id === userId && (
+                                              <button onClick={() => deleteComment(c.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <p style={{ margin: 0, fontSize: 12, color: '#3d2510', lineHeight: 1.5 }}>{c.content}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {/* Add comment input */}
+                                  <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                    <input
+                                      value={newComment}
+                                      onChange={e => setNewComment(e.target.value)}
+                                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(post.id); } }}
+                                      placeholder="Write a comment…"
+                                      style={{ flex: 1, padding: '8px 12px', border: '1.5px solid rgba(184,151,62,0.25)', borderRadius: 20, fontSize: 12, outline: 'none', background: IVORY, color: '#3d2510' }}
+                                    />
+                                    <button
+                                      onClick={() => addComment(post.id)}
+                                      disabled={!newComment.trim() || submittingComment}
+                                      style={{ padding: '8px 14px', borderRadius: 20, background: newComment.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: newComment.trim() ? '#fff' : '#9a8a70', fontSize: 12, fontWeight: 700, border: 'none', cursor: newComment.trim() ? 'pointer' : 'default', flexShrink: 0 }}>
+                                      {submittingComment ? '…' : 'Post'}
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -586,19 +754,49 @@ function LivePageContent() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5c30', letterSpacing: 1, marginBottom: 8 }}>IMAGE URL (OPTIONAL)</label>
-                <input value={newImageUrl} onChange={e => setNewImageUrl(e.target.value)} placeholder="https://..." style={inp} />
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5c30', letterSpacing: 1, marginBottom: 8 }}>PHOTO (OPTIONAL)</label>
+                {imagePreview ? (
+                  <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', background: '#f5f0e8' }}>
+                    <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block' }} />
+                    <button
+                      onClick={() => { setImageFile(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                      style={{ position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      ✕
+                    </button>
+                    <div style={{ position: 'absolute', bottom: 6, left: 8, fontSize: 10, color: 'rgba(255,255,255,0.8)', background: 'rgba(0,0,0,0.4)', borderRadius: 6, padding: '2px 6px' }}>Will be compressed to WebP on upload</div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ width: '100%', padding: '14px', borderRadius: 12, border: '2px dashed rgba(184,151,62,0.3)', background: IVORY, color: '#9a7c58', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    📷 Tap to add a photo
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setImageFile(file);
+                    const prev = imagePreview;
+                    if (prev) URL.revokeObjectURL(prev);
+                    setImagePreview(URL.createObjectURL(file));
+                  }}
+                />
               </div>
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <button onClick={() => { setShowPostModal(false); setNewContent(''); setNewImageUrl(''); setNewCategory('general'); }}
+              <button onClick={() => { setShowPostModal(false); setNewContent(''); setImageFile(null); setImagePreview(null); setNewCategory('general'); }}
                 style={{ flex: 1, padding: '13px', borderRadius: 14, background: '#f5f0e8', color: '#7a5c30', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                 Cancel
               </button>
-              <button onClick={submitPost} disabled={!newContent.trim()}
-                style={{ flex: 2, padding: '13px', borderRadius: 14, background: newContent.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: newContent.trim() ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: newContent.trim() ? 'pointer' : 'default', boxShadow: newContent.trim() ? '0 4px 14px rgba(184,151,62,0.3)' : 'none' }}>
-                Share Post
+              <button onClick={submitPost} disabled={!newContent.trim() || uploading}
+                style={{ flex: 2, padding: '13px', borderRadius: 14, background: newContent.trim() && !uploading ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: newContent.trim() && !uploading ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: newContent.trim() && !uploading ? 'pointer' : 'default', boxShadow: newContent.trim() && !uploading ? '0 4px 14px rgba(184,151,62,0.3)' : 'none' }}>
+                {uploading ? (imageFile ? 'Uploading photo…' : 'Posting…') : 'Share Post'}
               </button>
             </div>
           </div>
