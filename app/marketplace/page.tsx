@@ -1,630 +1,469 @@
 ﻿'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
-import FilterSelect from '@/components/ui/FilterSelect';
-import LuxuryFilters from '@/components/marketplace/LuxuryFilters';
 import ImageLightbox from '@/components/ui/ImageLightbox';
-import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
-import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
+import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
-import VerifiedBadge from '@/components/ui/VerifiedBadge';
+import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 
+
+/* ─── Types ─────────────────────────────────────────────── */
 interface MarketplaceVendor {
-  vendor_id: string;
-  business_name: string;
-  category: string;
-  city: string;
-  country: string;
-  description: string;
-  verified?: boolean;
-  created_at: string;
-  updated_at: string;
-  featured?: boolean | null;
-  featured_until?: string | null;
-  plan?: string | null;
-  plan_until?: string | null;
-  logo_url?: string | null;
-  is_published?: boolean;
-  min_from_price: number | null;
-  services: string[];
-  package_count: number;
+  vendor_id: string; business_name: string; category: string;
+  city: string; country: string; description: string;
+  verified?: boolean; created_at: string; updated_at: string;
+  featured?: boolean | null; featured_until?: string | null;
+  plan?: string | null; plan_until?: string | null;
+  logo_url?: string | null; is_published?: boolean;
+  min_from_price: number | null; services: string[]; package_count: number;
 }
-
 interface VendorActivityScore {
-  vendor_id: string;
-  profile_views: number;
-  quotes: number;
-  messages: number;
-  saves: number;
-  activity_score: number;
+  vendor_id: string; profile_views: number; quotes: number;
+  messages: number; saves: number; activity_score: number;
 }
-
 interface Vendor {
-  id: string;
-  name: string;
-  category: string;
-  location: string;
-  fromPrice: number;
-  services: string[];
-  score: number;
-  logoUrl?: string | null;
-  verified?: boolean;
-  preferredCurrency?: string | null;
-  isDemo?: boolean;
+  id: string; name: string; category: string; location: string;
+  fromPrice: number; services: string[]; score: number;
+  logoUrl?: string | null; verified?: boolean;
+  preferredCurrency?: string | null; isDemo?: boolean;
 }
-
 type SortOption = 'recommended' | 'price_low' | 'price_high' | 'newest';
 
+/* ─── Category icon map ──────────────────────────────────── */
+const CAT_ICONS: Record<string, string> = {
+  'Catering & Food': '🍽️', 'Décor & Styling': '💐',
+  'Photography & Video': '📸', 'Music, DJ & Sound': '🎵',
+  'Makeup & Hair': '💄', 'Attire & Fashion': '👗',
+  'Wedding Venues': '🏛️', 'Transport': '🚗',
+  'Honeymoon & Travel': '✈️', 'Support Services': '🛡️',
+  'Furniture & Equipment Hire': '🪑',
+  'Special Effects & Experiences': '✨',
+  'Planning & Coordination': '📋',
+};
+
+/* ─── Score helper ──────────────────────────────────────── */
+function calculateScore(v: MarketplaceVendor, prefs: { category?: string }, activity?: VendorActivityScore): number {
+  let score = 0;
+  if (v.featured && v.featured_until && new Date(v.featured_until) > new Date()) score += 100;
+  const plan = v.plan ?? 'free';
+  if (plan === 'elite') score += 60;
+  else if (plan === 'pro') score += 40;
+  else if (plan === 'starter') score += 20;
+  if (v.verified) score += 30;
+  if (v.logo_url) score += 10;
+  if (v.description && v.description.length > 80) score += 10;
+  if (v.min_from_price && v.min_from_price > 0) score += 5;
+  if ((v.services || []).length > 2) score += 5;
+  if (prefs.category && v.category === prefs.category) score += 20;
+  if (activity) {
+    score += Math.min(activity.profile_views * 0.1, 10);
+    score += Math.min(activity.quotes * 2, 20);
+    score += Math.min(activity.messages * 1, 10);
+    score += Math.min(activity.saves * 3, 15);
+  }
+  return score;
+}
+
+/* ─── Skeleton card ─────────────────────────────────────── */
+function SkeletonCard() {
+  return (
+    <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+      <div style={{ background: 'linear-gradient(135deg,#faf7f2,#f0ebe0)', padding: '24px 20px 16px', display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#e8e0d4' }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ height: 16, width: '60%', background: '#e8e0d4', borderRadius: 8, marginBottom: 8 }} />
+          <div style={{ height: 12, width: '40%', background: '#ede6db', borderRadius: 8 }} />
+        </div>
+      </div>
+      <div style={{ padding: '12px 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ height: 12, width: '50%', background: '#f0ebe0', borderRadius: 8 }} />
+        <div style={{ display: 'flex', gap: 6 }}>
+          {[70, 80, 60].map((w, i) => <div key={i} style={{ height: 24, width: w, background: '#f5f0e8', borderRadius: 20 }} />)}
+        </div>
+        <div style={{ height: 1, background: '#f0ebe0', margin: '2px 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ height: 18, width: 80, background: '#ede6db', borderRadius: 8 }} />
+          <div style={{ height: 32, width: 60, background: '#e8e0d4', borderRadius: 10 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Vendor Card ───────────────────────────────────────── */
+function VendorCard({ vendor, isVendor, format, onLogoClick }: {
+  vendor: Vendor; isVendor: boolean;
+  format: (n: number) => string;
+  onLogoClick: (src: string, alt: string) => void;
+}) {
+  const router = useRouter();
+  const isFeatured = vendor.score > 240;
+  const isRecommended = vendor.score > 120;
+
+  return (
+    <Link href={'/marketplace/vendor/' + vendor.id} style={{ textDecoration: 'none' }}>
+      <div
+        style={{
+          background: '#fff', borderRadius: 20, overflow: 'hidden',
+          boxShadow: isFeatured ? '0 8px 32px rgba(184,151,62,0.18), 0 2px 8px rgba(0,0,0,0.06)' : '0 2px 12px rgba(0,0,0,0.07)',
+          border: isFeatured ? '1.5px solid rgba(184,151,62,0.5)' : '1.5px solid rgba(0,0,0,0.06)',
+          transition: 'box-shadow 0.2s, transform 0.15s',
+          position: 'relative', display: 'flex', flexDirection: 'column', height: '100%',
+        }}
+      >
+        {/* Featured ribbon */}
+        {isFeatured && (
+          <div style={{
+            position: 'absolute', top: 14, right: 0, zIndex: 2,
+            background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
+            color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 1,
+            padding: '4px 12px 4px 10px', borderRadius: '4px 0 0 4px',
+            boxShadow: '0 2px 8px rgba(184,151,62,0.4)', fontFamily: 'Georgia,serif',
+          }}>FEATURED</div>
+        )}
+
+        {/* Logo bar */}
+        <div style={{ background: 'linear-gradient(135deg,#faf7f2 0%,#f0ebe0 100%)', padding: '22px 20px 14px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          {vendor.logoUrl ? (
+            <button type="button"
+              onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
+              style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(184,151,62,0.3)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in', padding: 0, flexShrink: 0 }}
+            >
+              <img src={vendor.logoUrl} alt={vendor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </button>
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#b8973e,#d4aa5a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
+              {vendor.name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase()}
+            </div>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18100a', fontFamily: 'Georgia,serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.name}</h3>
+              {vendor.verified && <VerifiedBadge verified />}
+              {vendor.isDemo && <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 20, background: '#f1f1f1', color: '#888', border: '1px solid #ddd', fontWeight: 600 }}>TEST</span>}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
+              <span style={{ fontSize: 13 }}>{CAT_ICONS[vendor.category] ?? '🏢'}</span>
+              <span style={{ fontSize: 12, color: '#8a6e4a', fontWeight: 500 }}>{vendor.category}</span>
+            </div>
+          </div>
+          {isRecommended && !isFeatured && (
+            <div style={{ flexShrink: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '3px 8px', borderRadius: 20, background: 'rgba(184,151,62,0.12)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.3)' }}>✦ TOP</div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '12px 20px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b8973e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+            </svg>
+            <span style={{ fontSize: 12, color: '#7a6050' }}>{vendor.location}</span>
+          </div>
+
+          {vendor.services.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+              {vendor.services.slice(0, 3).map((s, i) => (
+                <span key={i} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'rgba(184,151,62,0.08)', color: '#7a5c30', border: '1px solid rgba(184,151,62,0.2)', fontWeight: 500 }}>{s}</span>
+              ))}
+              {vendor.services.length > 3 && (
+                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#f5f5f5', color: '#888', border: '1px solid #eee' }}>+{vendor.services.length - 3}</span>
+              )}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: 'auto' }}>
+            <div>
+              {vendor.fromPrice > 0 ? (
+                <>
+                  <div style={{ fontSize: 10, color: '#9a7c58', marginBottom: 1, fontWeight: 500 }}>From</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: '#b8973e', fontFamily: 'Georgia,serif' }}>{format(vendor.fromPrice)}</div>
+                </>
+              ) : (
+                <div style={{ fontSize: 12, color: '#9a7c58', fontStyle: 'italic' }}>Contact for pricing</div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {!isVendor && (
+                <button type="button"
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); router.push('/messages/new?vendorId=' + vendor.id); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.4)', background: 'rgba(184,151,62,0.06)', color: '#8a6010', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                >
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                  Chat
+                </button>
+              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '7px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontSize: 12, fontWeight: 700 }}>
+                View
+                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── Main Page ─────────────────────────────────────────── */
 export default function Marketplace() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [serviceFilter, setServiceFilter] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<SortOption>('recommended');
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [allVendors, setAllVendors] = useState<Vendor[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [allServices, setAllServices] = useState<string[]>([]);
   const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
-  const [couplePreferences, setCouplePreferences] = useState<{category?: string; services?: string[]}>({});
-  const [displayedCount, setDisplayedCount] = useState(10);
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [displayedCount, setDisplayedCount] = useState(12);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { user, role } = useAuthRole();
   const isVendor = role === 'vendor';
   const { format } = useCurrency();
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
+  const categories = Array.from(LOCKED_CATEGORIES);
 
-  useEffect(() => {
-    loadData();
-  }, [user]);
+  const handleLogoClick = useCallback((src: string, alt: string) => { setLogoSrc(src); setLogoAlt(alt); setLogoOpen(true); }, []);
 
-  useEffect(() => {
-    applyFiltersAndSort();
-    setDisplayedCount(10);
-  }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
+  useEffect(() => { loadData(); }, [user]);
+  useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
+  useEffect(() => { setServiceFilter([]); }, [categoryFilter]);
 
-  // IntersectionObserver: load more when bottom sentinel intersects
   useEffect(() => {
     if (!loadMoreRef.current) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      const ent = entries[0];
-      const hasMore = vendors.length > displayedCount;
-      if (ent.isIntersecting && hasMore && !loading && !isFetchingMore) {
-        // guard to prevent double requests
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && vendors.length > displayedCount && !isFetchingMore) {
         setIsFetchingMore(true);
-        // emulate fetch behavior by increasing displayedCount
-        setDisplayedCount((prev) => Math.min(prev + 10, vendors.length));
-        // small timeout to show skeleton briefly while 'loading'
+        setDisplayedCount(p => Math.min(p + 12, vendors.length));
         setTimeout(() => setIsFetchingMore(false), 300);
       }
-    }, { root: null, rootMargin: '0px', threshold: 0.1 });
+    }, { threshold: 0.1 });
+    obs.observe(loadMoreRef.current);
+    return () => obs.disconnect();
+  }, [vendors.length, displayedCount, isFetchingMore]);
 
-    observer.observe(loadMoreRef.current);
-    return () => observer.disconnect();
-  }, [loadMoreRef, vendors.length, displayedCount, loading, isFetchingMore]);
+  const displayedServices = categoryFilter
+    ? catalogServices.filter(s => s.category === categoryFilter).map(s => s.name)
+    : allServices;
 
-  const clearAllFilters = () => {
-    setSearchQuery('');
-    setCategoryFilter('');
-    setServiceFilter([]);
-    setSortBy('recommended');
-    setDisplayedCount(10);
-  };
-
-  const activeFilterCount = () => {
+  const activeCount = () => {
     let c = 0;
-    if (searchQuery && searchQuery.trim() !== '') c += 1;
-    if (categoryFilter && categoryFilter !== '') c += 1;
-    c += serviceFilter.length || 0;
-    if (sortBy && sortBy !== 'recommended') c += 1;
+    if (searchQuery.trim()) c++;
+    if (categoryFilter) c++;
+    c += serviceFilter.length;
+    if (sortBy !== 'recommended') c++;
     return c;
   };
 
-  // When category changes, clear service filter chips (old selections may not apply)
-  useEffect(() => {
-    setServiceFilter([]);
-  }, [categoryFilter]);
-
-  // Derive displayed services: if a category is selected, show catalog services for that category;
-  // otherwise show the union of all vendor services
-  const displayedServices = categoryFilter
-    ? catalogServices
-        .filter(s => s.category === categoryFilter)
-        .map(s => s.name)
-    : allServices;
+  const clearAll = () => { setSearchQuery(''); setCategoryFilter(''); setServiceFilter([]); setSortBy('recommended'); };
+  const toggleService = (s: string) => setServiceFilter(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      // Fetch couple preferences for ranking
-      const u = user ?? null;
-      if (u) {
-        try {
-          const { data: coupleData } = await supabase
-            .from('couples')
-            .select('location, country')
-            .eq('id', u.id)
-            .maybeSingle();
-          if (coupleData) setCouplePreferences({ category: coupleData.location });
-        } catch {}
-      }
-
-      // Fetch marketplace vendors
-      const { data, error } = await supabase
-        .from('marketplace_vendors')
-        .select('*');
-
-      if (error) {
-        console.error('marketplace: failed to load vendors', error);
-        setLoading(false);
-        return;
-      }
-
-      const { data: activityData, error: activityError } = await supabase
-        .rpc('get_vendor_activity_7d');
-
-      if (activityError) {
-        if (activityError.code !== 'PGRST202') {
-          console.warn('marketplace: failed to load vendor activity counts', activityError);
-        }
-      }
-
-      const activityMap = new Map<string, VendorActivityScore>();
-      (activityData || []).forEach((row: VendorActivityScore) => {
-        activityMap.set(row.vendor_id, row);
-      });
-
-      // Pre-map basic vendor info
-      const prelim: Vendor[] = (data || []).map((v: MarketplaceVendor) => {
-        const activity = activityMap.get(v.vendor_id);
-        const lowerName = (v.business_name || '').toLowerCase();
-        const isDemo = !!(v.plan === 'demo' || /\b(test|demo|sample|seed)\b/i.test(lowerName));
-        return {
-          id: v.vendor_id,
-          name: v.business_name || 'Unnamed Vendor',
-          category: v.category || 'Other',
-          location: [v.city, v.country].filter(Boolean).join(', ') || 'Location not set',
-          fromPrice: v.min_from_price || 0,
-          services: v.services || [],
-          score: calculateScore(v, couplePreferences, activity),
-          logoUrl: v.logo_url || null,
-          verified: !!v.verified,
-          preferredCurrency: null,
-          isDemo
-        };
-      });
-
-      // Fetch vendor user preferences to surface vendor-chosen currency (if any)
-      try {
-        const vendorIds = prelim.map(p => p.id).filter(Boolean);
-        if (vendorIds.length > 0) {
-          const { data: prefsData } = await supabase
-            .from('user_preferences')
-            .select('user_id, currency')
-            .in('user_id', vendorIds as string[]);
-
-          const prefMap = new Map<string, string>();
-          (prefsData || []).forEach((r: any) => {
-            if (r.user_id && r.currency) prefMap.set(r.user_id, r.currency);
-          });
-
-          // attach currency to vendor objects
-          prelim.forEach(p => {
-            const c = prefMap.get(p.id);
-            if (c) p.preferredCurrency = c;
-          });
-        }
-      } catch (err) {
-        console.warn('marketplace: failed to load vendor preferences', err);
-      }
-
-      const mapped: Vendor[] = prelim;
-
-      // Extract unique services from vendors (used when no category is selected)
-      const servs = Array.from(new Set(mapped.flatMap(v => v.services)));
-      setAllServices(servs);
-
-      // Load full service catalog for category-aware filtering
-      try {
-        const catalog = await getServicesCatalog();
-        setCatalogServices(catalog);
-      } catch (err) {
-        console.warn('marketplace: failed to load service catalog', err);
-      }
-
+      const catalog = getServicesCatalog();
+      setCatalogServices(catalog);
+      const { data, error } = await supabase.from('marketplace_vendors').select('*');
+      if (error) { console.error(error); return; }
+      const { data: actData } = await supabase.rpc('get_vendor_activity_7d').catch(() => ({ data: [] }));
+      const actMap = new Map<string, VendorActivityScore>();
+      (actData || []).forEach((r: VendorActivityScore) => actMap.set(r.vendor_id, r));
+      const mapped: Vendor[] = (data || []).map((v: MarketplaceVendor) => ({
+        id: v.vendor_id, name: v.business_name || 'Unnamed Vendor', category: v.category || 'Other',
+        location: [v.city, v.country].filter(Boolean).join(', ') || 'Location not set',
+        fromPrice: v.min_from_price || 0, services: v.services || [],
+        score: calculateScore(v, {}, actMap.get(v.vendor_id)),
+        logoUrl: v.logo_url, verified: v.verified,
+        isDemo: !!(v.plan === 'demo' || /\b(test|demo|sample|seed)\b/i.test(v.business_name || '')),
+      }));
+      setAllServices(Array.from(new Set(mapped.flatMap(v => v.services))).sort());
       setAllVendors(mapped);
-    } catch (err) {
-      console.error('marketplace: unexpected error loading vendors', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateScore = (
-    vendor: MarketplaceVendor,
-    preferences: {category?: string; services?: string[]},
-    activity?: VendorActivityScore
-  ): number => {
-    let score = 0;
-
-    // +50 if vendor category matches couple preferred category
-    if (preferences.category && vendor.category && 
-        vendor.category.toLowerCase().includes(preferences.category.toLowerCase())) {
-      score += 50;
-    }
-
-    // +10 per matched service (if couple has preferred services)
-    if (preferences.services && preferences.services.length > 0) {
-      const matches = vendor.services.filter(s => 
-        preferences.services!.some(ps => s.toLowerCase().includes(ps.toLowerCase()))
-      );
-      score += matches.length * 10;
-    }
-
-    // +25 if vendor has 2-3 packages and services (complete profile)
-    if (vendor.package_count >= 2 && vendor.package_count <= 3 && vendor.services.length > 0) {
-      score += 25;
-    }
-
-    // +5 if has pricing
-    if (vendor.min_from_price && vendor.min_from_price > 0) {
-      score += 5;
-    }
-
-    // + activity-based boost from true counts (last 7 days)
-    if (activity) {
-      score += Math.min(30, activity.activity_score);
-    }
-
-    // Strong boost for active featured vendors
-    if (vendor.featured && vendor.featured_until) {
-      const until = new Date(vendor.featured_until).getTime();
-      if (!Number.isNaN(until) && until > Date.now()) {
-        score += 250;
-      }
-    }
-
-    return score;
+    } finally { setLoading(false); }
   };
 
   const applyFiltersAndSort = () => {
-    let filtered = [...allVendors];
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(v => 
-        v.name.toLowerCase().includes(query) ||
-        v.category.toLowerCase().includes(query) ||
-        v.location.toLowerCase().includes(query)
-      );
-    }
-
-    // Apply category filter
-    if (categoryFilter) {
-      filtered = filtered.filter(v => v.category === categoryFilter);
-    }
-
-    // Apply service filter
-    if (serviceFilter.length > 0) {
-      filtered = filtered.filter(v => 
-        serviceFilter.some(sf => v.services.some(s => s.toLowerCase().includes(sf.toLowerCase())))
-      );
-    }
-
-    // Apply sorting
+    let f = [...allVendors];
+    const q = searchQuery.toLowerCase().trim();
+    if (q) f = f.filter(v => v.name.toLowerCase().includes(q) || v.category.toLowerCase().includes(q) || v.location.toLowerCase().includes(q) || v.services.some(s => s.toLowerCase().includes(q)));
+    if (categoryFilter) f = f.filter(v => v.category === categoryFilter);
+    if (serviceFilter.length) f = f.filter(v => serviceFilter.every(s => v.services.includes(s)));
     switch (sortBy) {
-      case 'recommended':
-        filtered.sort((a, b) => b.score - a.score);
-        break;
-      case 'price_low':
-        filtered.sort((a, b) => {
-          if (a.fromPrice === 0) return 1;
-          if (b.fromPrice === 0) return -1;
-          return a.fromPrice - b.fromPrice;
-        });
-        break;
-      case 'price_high':
-        filtered.sort((a, b) => b.fromPrice - a.fromPrice);
-        break;
-      case 'newest':
-        // Already have score, but can sort by id or name as fallback
-        filtered.sort((a, b) => b.name.localeCompare(a.name));
-        break;
+      case 'recommended': f.sort((a, b) => b.score - a.score); break;
+      case 'price_low': f.sort((a, b) => { if (!a.fromPrice) return 1; if (!b.fromPrice) return -1; return a.fromPrice - b.fromPrice; }); break;
+      case 'price_high': f.sort((a, b) => b.fromPrice - a.fromPrice); break;
+      case 'newest': f.sort((a, b) => b.name.localeCompare(a.name)); break;
     }
-
-    setVendors(filtered);
-  };
-
-  const filterOptions = [
-    { label: 'Category', icon: '≡ƒôï' },
-    { label: 'Location', icon: '≡ƒôì' },
-    { label: 'Price', icon: '≡ƒÆ░' },
-    { label: 'Availability', icon: '≡ƒôà' }
-  ];
-
-  const toggleServiceFilter = (service: string) => {
-    if (serviceFilter.includes(service)) {
-      setServiceFilter(serviceFilter.filter(s => s !== service));
-    } else {
-      setServiceFilter([...serviceFilter, service]);
-    }
+    setVendors(f);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-2 sm:px-4">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <div className="flex items-center gap-3">
-            <UmshadoIcon size={28} />
+    <div style={{ minHeight: '100svh', background: '#faf7f2' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100svh', paddingBottom: 90 }}>
+
+        {/* ── Header ── */}
+        <div style={{ background: 'linear-gradient(160deg,#18100a 0%,#2e1d0e 60%,#3d2810 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(184,151,62,0.08)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 20, right: 50, width: 80, height: 80, borderRadius: '50%', background: 'rgba(184,151,62,0.05)', pointerEvents: 'none' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, position: 'relative' }}>
+            <UmshadoIcon size={26} />
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Marketplace</h1>
-              <p className="text-sm text-gray-600 mt-0.5">Discover amazing vendors for your special day</p>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>Marketplace</h1>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Find trusted wedding vendors</p>
             </div>
+          </div>
+
+          {/* Search */}
+          <div style={{ position: 'relative', marginBottom: 12 }}>
+            <svg style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="15" height="15" fill="none" stroke="rgba(184,151,62,0.7)" strokeWidth={2} viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="m21 21-4.35-4.35" />
+            </svg>
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search vendors, categories, services…"
+              style={{ width: '100%', height: 44, paddingLeft: 42, paddingRight: 16, borderRadius: 14, border: '1.5px solid rgba(184,151,62,0.2)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
+            />
+          </div>
+
+          {/* Sort + Filter */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+            <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)}
+              style={{ flex: 1, height: 38, borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.2)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 13, padding: '0 12px', outline: 'none', cursor: 'pointer' }}>
+              <option value="recommended" style={{ color: '#18100a', background: '#fff' }}>⭐ Recommended</option>
+              <option value="price_low" style={{ color: '#18100a', background: '#fff' }}>↑ Price: Low to High</option>
+              <option value="price_high" style={{ color: '#18100a', background: '#fff' }}>↓ Price: High to Low</option>
+              <option value="newest" style={{ color: '#18100a', background: '#fff' }}>✦ Newest</option>
+            </select>
+            <button onClick={() => setFilterOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 38, borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.35)', background: activeCount() > 0 ? 'rgba(184,151,62,0.18)' : 'rgba(255,255,255,0.06)', color: activeCount() > 0 ? '#e8c84a' : 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" d="M3 6h18M7 12h10M11 18h2" /></svg>
+              Filters
+              {activeCount() > 0 && <span style={{ background: '#b8973e', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 20 }}>{activeCount()}</span>}
+            </button>
+          </div>
+
+          {/* Category pills */}
+          <div style={{ margin: '0 -20px', paddingBottom: 16, overflowX: 'auto', display: 'flex', gap: 8, padding: '0 16px 16px', scrollbarWidth: 'none' }}>
+            {['', ...categories].map(cat => (
+              <button key={cat || '__all'} onClick={() => setCategoryFilter(cat)}
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: categoryFilter === cat ? 'linear-gradient(135deg,#b8973e,#8a6010)' : 'rgba(255,255,255,0.1)', color: categoryFilter === cat ? '#fff' : 'rgba(255,255,255,0.75)', boxShadow: categoryFilter === cat ? '0 2px 8px rgba(184,151,62,0.4)' : 'none', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
+                {cat ? <><span>{CAT_ICONS[cat] ?? '🏢'}</span><span>{cat.split(' ')[0]}</span></> : 'All'}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Luxury Filter Header (UI only) */}
-        <LuxuryFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          categoryFilter={categoryFilter}
-          setCategoryFilter={setCategoryFilter}
-          sortBy={sortBy}
-          setSortBy={(v: string) => setSortBy(v as SortOption)}
-          categories={Array.from(LOCKED_CATEGORIES)}
-          displayedServices={displayedServices}
-          serviceFilter={serviceFilter}
-          toggleServiceFilter={toggleServiceFilter}
-          onClear={clearAllFilters}
-          activeCount={activeFilterCount()}
-        />
-
-        {/* Testing / Preview banner - shown while demo/test vendors exist */}
-        <div className="px-4 mt-3">
-          <div className="bg-amber-50 border border-amber-100 text-amber-800 rounded-xl p-3 text-sm">
-            You are viewing a preview marketplace. Some vendors are test profiles used during development. These vendors are not officially verified or affiliated with uMshado. Treat listings as preview content while we continue improving the platform.
+        {/* ── Active service chips ── */}
+        {serviceFilter.length > 0 && (
+          <div style={{ display: 'flex', gap: 6, padding: '10px 16px', overflowX: 'auto', scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            {serviceFilter.map(s => (
+              <button key={s} onClick={() => toggleService(s)}
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(184,151,62,0.12)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.3)', cursor: 'pointer' }}>
+                {s} <span style={{ fontSize: 10, opacity: 0.6 }}>✕</span>
+              </button>
+            ))}
+            <button onClick={() => setServiceFilter([])}
+              style={{ flexShrink: 0, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: '#f5f5f5', color: '#888', border: '1px solid #e5e5e5', cursor: 'pointer' }}>Clear</button>
           </div>
+        )}
+
+        {/* ── Count bar ── */}
+        <div style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {!loading && <span style={{ fontSize: 12, color: '#9a7c58', fontWeight: 500 }}>{vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found</span>}
+          {activeCount() > 0 && <button onClick={clearAll} style={{ fontSize: 12, color: '#b8973e', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear all filters</button>}
         </div>
 
-        {/* Vendor Cards List - responsive grid */}
-        <div className="flex-1 px-2 sm:px-4 pb-28 overflow-y-auto">
-          <div className="mb-2">
-            {!loading ? (
-              <p className="text-xs font-medium text-gray-500">{`${vendors.length} vendor${vendors.length !== 1 ? 's' : ''} available`}</p>
-            ) : (
-              <p className="sr-only">Loading vendors</p>
-            )}
-          </div>
-
-          {!loading && vendors.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="opacity-15 mb-4"><UmshadoIcon size={64} /></div>
-              <p className="text-sm text-gray-500 font-medium">No vendors found</p>
-              <p className="text-xs text-gray-400 mt-1">Try adjusting your filters or check back soon</p>
-              <div className="mt-4 flex gap-2">
-                <button onClick={clearAllFilters} className="px-3 py-2 bg-white border border-gray-200 rounded-md text-sm font-semibold">Clear filters</button>
-              </div>
-              <div className="mt-4 flex gap-2 flex-wrap justify-center">
-                {Array.from(LOCKED_CATEGORIES).slice(0,6).map((cat) => (
-                  <button key={cat} onClick={() => setCategoryFilter(cat)} className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200">{cat}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
+        {/* ── Grid ── */}
+        <div style={{ padding: '4px 16px 20px', flex: 1 }}>
           {loading ? (
-            <div className="p-4 bg-white/60 rounded-2xl">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm h-44">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gray-200" />
-                        <div className="w-40 h-4 bg-gray-200 rounded-md" />
-                      </div>
-                      <div className="w-12 h-4 bg-gray-200 rounded-md" />
-                    </div>
-                    <div className="mt-4 flex items-center gap-2">
-                      <div className="w-32 h-3 bg-gray-200 rounded-md" />
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <div className="w-16 h-6 bg-gray-200 rounded-md" />
-                      <div className="w-10 h-6 bg-gray-200 rounded-md" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
+              {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : vendors.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
+              <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🔍</div>
+              <p style={{ fontSize: 16, fontWeight: 700, color: '#18100a', margin: '0 0 6px', fontFamily: 'Georgia,serif' }}>No vendors found</p>
+              <p style={{ fontSize: 13, color: '#9a7c58', margin: '0 0 20px' }}>Try adjusting your search or filters</p>
+              <button onClick={clearAll} style={{ padding: '10px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>Clear filters</button>
             </div>
           ) : (
-            <div className="p-4 bg-white/60 rounded-2xl">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {vendors.slice(0, displayedCount).map((vendor) => (
-              <Link
-                key={vendor.id}
-                href={`/marketplace/vendor/${vendor.id}`}
-                className={[
-                  "block bg-white rounded-xl p-3 sm:p-4 transition-all active:scale-[0.98] h-full w-full",
-                  vendor.score > 200
-                    ? "border-2 border-purple-200 shadow-md"
-                    : "border-2 border-gray-100 shadow-sm",
-                  "hover:shadow-md hover:border-purple-300 relative"
-                ].join(" ")}
-              >
-                <div className="space-y-3 h-full flex flex-col justify-between relative">
-                  {vendor.score > 240 && (
-                    <div className="absolute top-2 right-2 text-[10px] font-bold px-2 py-1 rounded-full bg-purple-600 text-white shadow">
-                      Featured
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3">
-                    <VerifiedBadge verified={vendor.verified} />
-                  </div>
-                  {/* Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex-shrink-0">
-                        {vendor.logoUrl ? (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLogoSrc(vendor.logoUrl ?? null); setLogoAlt(vendor.name || 'vendor'); setLogoOpen(true); }}
-                            className="w-12 h-12 rounded-full overflow-hidden ring-1 ring-purple-50 flex items-center justify-center bg-white"
-                            aria-label={`View ${vendor.name || 'vendor'} logo`}
-                          >
-                            <img src={vendor.logoUrl} alt={vendor.name || 'vendor'} className="w-full h-full object-contain p-2" />
-                          </button>
-                        ) : (
-                          <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 font-semibold">
-                            {vendor.name ? vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase() : 'V'}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <div className="flex flex-wrap items-center gap-2 w-full">
-                            <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-                              {vendor.name}
-                            </h3>
-
-                            {sortBy === "recommended" && vendor.score > 120 && (
-                                <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-semibold border border-purple-200">
-                                Recommended
-                              </span>
-                            )}
-
-                            {vendor.isDemo && (
-                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-800 text-[10px] font-semibold border border-gray-200">
-                                Testing Vendor
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-600 mt-0.5">{vendor.category}</p>
-                      </div>
-                    </div>
-
-                    {/* verified badge moved to top-right for a cleaner header */}
-                  </div>
-
-                  {/* Location */}
-                  <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <span>{vendor.location}</span>
-                  </div>
-
-                  {/* Services Chips (top 4) */}
-                  {vendor.services.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {vendor.services.slice(0, 4).map((service, idx) => (
-                        <span
-                          key={idx}
-                          className="inline-block px-2 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-200"
-                        >
-                          {service}
-                        </span>
-                      ))}
-                      {vendor.services.length > 4 && (
-                        <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-md">
-                          +{vendor.services.length - 4} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Price & CTA */}
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    {vendor.fromPrice > 0 ? (
-                      <div className="flex flex-col">
-                        <p className="text-lg font-bold text-purple-600">{format(vendor.fromPrice)}</p>
-                        {vendor.preferredCurrency && (
-                          <p className="text-xs text-gray-500">Vendor currency: {vendor.preferredCurrency}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">Contact for pricing</p>
-                    )}
-                    <div className="flex items-center gap-2">
-                      {!isVendor && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            router.push(`/messages/new?vendorId=${vendor.id}`);
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 border-2 border-purple-200 text-purple-600 rounded-lg text-xs font-semibold hover:bg-purple-50 transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                          Chat
-                        </button>
-                      )}
-                      <div className="flex items-center gap-1 text-purple-600">
-                        <span className="text-sm font-semibold">View</span>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
+              {vendors.slice(0, displayedCount).map(v => (
+                <VendorCard key={v.id} vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} />
+              ))}
             </div>
-          </div>
-
           )}
-
-          {/* Infinite scroll sentinel (replaces Load More button) */}
-          <div ref={loadMoreRef} className="h-10 w-full" />
-          {/* Small skeleton while fetching next batch */}
+          <div ref={loadMoreRef} style={{ height: 40 }} />
           {isFetchingMore && (
-            <div className="mt-4 p-4 bg-white/60 rounded-2xl">
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="animate-pulse bg-white rounded-xl p-4 shadow-sm h-44">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-gray-200" />
-                        <div className="w-40 h-4 bg-gray-200 rounded-md" />
-                      </div>
-                      <div className="w-12 h-4 bg-gray-200 rounded-md" />
-                    </div>
-                    <div className="mt-4 flex items-center gap-2">
-                      <div className="w-32 h-3 bg-gray-200 rounded-md" />
-                    </div>
-                    <div className="mt-4 flex gap-2">
-                      <div className="w-16 h-6 bg-gray-200 rounded-md" />
-                      <div className="w-10 h-6 bg-gray-200 rounded-md" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', marginTop: 14 }}>
+              {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           )}
         </div>
-
-        {isVendor ? <VendorBottomNav /> : <BottomNav />}
-        <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
       </div>
+
+      {/* ── Filter sheet ── */}
+      {filterOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
+          <button style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', border: 'none', cursor: 'pointer' }} onClick={() => setFilterOpen(false)} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+              <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e0d8cc' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+              <div>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#18100a', fontFamily: 'Georgia,serif' }}>Filter vendors</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#9a7c58' }}>Refine by service type</p>
+              </div>
+              <button onClick={() => setFilterOpen(false)} style={{ padding: '6px 14px', borderRadius: 10, border: '1.5px solid #e0d8cc', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#7a5c30' }}>Done</button>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px' }}>
+              {displayedServices.length > 0 ? (
+                <>
+                  <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#18100a' }}>
+                    Services{categoryFilter ? ' · ' + categoryFilter : ''}
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {displayedServices.map(s => {
+                      const active = serviceFilter.includes(s);
+                      return (
+                        <button key={s} onClick={() => toggleService(s)}
+                          style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: active ? 'linear-gradient(135deg,#b8973e,#8a6010)' : '#faf7f2', color: active ? '#fff' : '#7a5c30', boxShadow: active ? '0 2px 8px rgba(184,151,62,0.3)' : '0 1px 3px rgba(0,0,0,0.07)', transition: 'all 0.15s' }}>
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                <p style={{ color: '#9a7c58', fontSize: 13 }}>Select a category above to see available services.</p>
+              )}
+            </div>
+            <div style={{ padding: '12px 20px 24px', display: 'flex', gap: 10, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+              <button onClick={() => setServiceFilter([])} style={{ flex: 1, height: 44, borderRadius: 12, border: '1.5px solid #e0d8cc', background: '#fff', fontSize: 13, fontWeight: 600, color: '#7a5c30', cursor: 'pointer' }}>Clear</button>
+              <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 44, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(184,151,62,0.35)' }}>
+                Apply{serviceFilter.length > 0 ? ' (' + serviceFilter.length + ')' : ''}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isVendor ? <VendorBottomNav /> : <BottomNav />}
+      <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
     </div>
   );
 }
