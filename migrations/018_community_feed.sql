@@ -28,21 +28,25 @@ CREATE TABLE IF NOT EXISTS public.community_posts (
 ALTER TABLE public.community_posts ENABLE ROW LEVEL SECURITY;
 
 -- All authenticated users can read all posts
+DROP POLICY IF EXISTS "community_posts: anyone authenticated can read" ON public.community_posts;
 CREATE POLICY "community_posts: anyone authenticated can read"
 ON public.community_posts FOR SELECT
 TO authenticated USING (true);
 
 -- Users can only insert their own posts
+DROP POLICY IF EXISTS "community_posts: authenticated insert own" ON public.community_posts;
 CREATE POLICY "community_posts: authenticated insert own"
 ON public.community_posts FOR INSERT
 TO authenticated WITH CHECK (user_id = auth.uid());
 
 -- Users can only delete their own posts
+DROP POLICY IF EXISTS "community_posts: authenticated delete own" ON public.community_posts;
 CREATE POLICY "community_posts: authenticated delete own"
 ON public.community_posts FOR DELETE
 TO authenticated USING (user_id = auth.uid());
 
 -- System can update counts via triggers (using SECURITY DEFINER function)
+DROP POLICY IF EXISTS "community_posts: authenticated update own" ON public.community_posts;
 CREATE POLICY "community_posts: authenticated update own"
 ON public.community_posts FOR UPDATE
 TO authenticated USING (user_id = auth.uid());
@@ -59,15 +63,17 @@ CREATE TABLE IF NOT EXISTS public.community_likes (
 );
 
 ALTER TABLE public.community_likes ENABLE ROW LEVEL SECURITY;
-
+DROP POLICY IF EXISTS "community_likes: authenticated read all" ON public.community_likes;
 CREATE POLICY "community_likes: authenticated read all"
 ON public.community_likes FOR SELECT
 TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "community_likes: authenticated insert own" ON public.community_likes;
 CREATE POLICY "community_likes: authenticated insert own"
 ON public.community_likes FOR INSERT
 TO authenticated WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "community_likes: authenticated delete own" ON public.community_likes;
 CREATE POLICY "community_likes: authenticated delete own"
 ON public.community_likes FOR DELETE
 TO authenticated USING (user_id = auth.uid());
@@ -86,15 +92,17 @@ CREATE TABLE IF NOT EXISTS public.community_comments (
 );
 
 ALTER TABLE public.community_comments ENABLE ROW LEVEL SECURITY;
-
+DROP POLICY IF EXISTS "community_comments: authenticated read all" ON public.community_comments;
 CREATE POLICY "community_comments: authenticated read all"
 ON public.community_comments FOR SELECT
 TO authenticated USING (true);
 
+DROP POLICY IF EXISTS "community_comments: authenticated insert own" ON public.community_comments;
 CREATE POLICY "community_comments: authenticated insert own"
 ON public.community_comments FOR INSERT
 TO authenticated WITH CHECK (user_id = auth.uid());
 
+DROP POLICY IF EXISTS "community_comments: authenticated delete own" ON public.community_comments;
 CREATE POLICY "community_comments: authenticated delete own"
 ON public.community_comments FOR DELETE
 TO authenticated USING (user_id = auth.uid());
