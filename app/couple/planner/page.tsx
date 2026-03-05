@@ -56,11 +56,15 @@ function EmptyState({ icon, title, description, actionLabel, onAction }: {
   icon: string; title: string; description: string; actionLabel: string; onAction: () => void;
 }) {
   return (
-    <div style={{ background:'#fff', borderRadius:20, border:'2px dashed rgba(184,151,62,0.3)', padding:'32px 20px', textAlign:'center' }}>
-      <div style={{ width:56, height:56, background:'rgba(184,151,62,0.1)', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', fontSize:24 }}>{icon}</div>
-      <h3 style={{ margin:'0 0 4px', fontSize:15, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>{title}</h3>
-      <p style={{ margin:'0 0 18px', fontSize:13, color:'#9a7c58', lineHeight:1.6 }}>{description}</p>
-      <button onClick={onAction} style={{ padding:'10px 22px', borderRadius:20, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 12px rgba(184,151,62,0.3)' }}>{actionLabel}</button>
+    <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
+      <div className="w-14 h-14 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
+        <span className="text-2xl">{icon}</span>
+      </div>
+      <h3 className="text-base font-bold text-gray-900 mb-1">{title}</h3>
+      <p className="text-sm text-gray-600 mb-5">{description}</p>
+      <button onClick={onAction} className="px-5 py-2.5 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">
+        {actionLabel}
+      </button>
     </div>
   );
 }
@@ -552,9 +556,9 @@ function CouplePlannerContent() {
   const bothGuests = guests.filter(g => g.side === 'both').reduce((s, g) => s + (g.plus_one ? 2 : 1), 0);
 
   const statusLabel = (s: DbGuest['rsvp_status']) => s === 'pending' ? 'Pending' : s === 'accepted' ? 'Accepted' : 'Declined';
-  const statusColor = (s: DbGuest['rsvp_status']) => s === 'accepted' ? 'bg-green-100 text-green-700 hover:bg-green-200' : s === 'pending' ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-red-100 text-red-700 hover:bg-red-200';
+  const statusColor = (s: DbGuest['rsvp_status']) => s === 'accepted' ? 'bg-green-100 text-green-700 hover:bg-green-200' : s === 'pending' ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' : 'bg-red-100 text-red-700 hover:bg-red-200';
   const sideLabel = (s: string) => s === 'groom' ? '🤵 Groom' : s === 'bride' ? '👰 Bride' : '💑 Both';
-  const sideColor = (s: string) => s === 'groom' ? 'text-amber-700' : s === 'bride' ? 'text-rose-600' : 'text-stone-500';
+  const sideColor = (s: string) => s === 'groom' ? 'text-blue-600' : s === 'bride' ? 'text-pink-600' : 'text-purple-600';
 
   const budgetStatusLabel = (item: DbBudgetItem) => {
     if (item.status === 'paid' || item.amount_paid >= item.amount) return '✓ Fully Paid';
@@ -567,60 +571,53 @@ function CouplePlannerContent() {
     return 'bg-yellow-100 text-yellow-700';
   };
 
-  if (!loaded) return <div style={{ minHeight:'100svh', background:'#faf7f2', display:'flex', alignItems:'center', justifyContent:'center' }}><div style={{ width:40, height:40, borderRadius:'50%', border:'3px solid rgba(184,151,62,0.15)', borderTopColor:'#b8973e', animation:'spin 0.8s linear infinite' }} /><style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style></div>;
+  if (!loaded) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
-    <div style={{ minHeight:'100svh', background:'#faf7f2' }}>
-      <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
-      <div style={{ maxWidth:900, margin:'0 auto', minHeight:'100svh', display:'flex', flexDirection:'column', paddingBottom:'calc(80px + env(safe-area-inset-bottom))' }}>
-        {/* Header */}
-        <div style={{ background:'linear-gradient(135deg,#b8973e,#8a6010)', padding:'22px 20px 18px', position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:-40, right:-40, width:140, height:140, borderRadius:'50%', background:'rgba(255,255,255,0.06)', pointerEvents:'none' }} />
-          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+    <div className="min-h-screen bg-gray-50">
+      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
+        <div className="bg-white border-b border-gray-200 px-4 py-5">
+          <div className="flex items-center gap-3">
             <UmshadoIcon size={28} />
             <div>
-              <p style={{ margin:0, fontSize:10, color:'rgba(255,255,255,0.55)', letterSpacing:2.5, textTransform:'uppercase' }}>uMshado</p>
-              <h1 style={{ margin:0, fontSize:22, fontWeight:700, color:'#fff', fontFamily:'Georgia,serif', lineHeight:1.1 }}>Wedding Planner</h1>
+              <h1 className="text-xl font-bold text-gray-900">Planner</h1>
+              <p className="text-sm text-gray-600 mt-0.5">Tasks, budget, and guests in one place</p>
             </div>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ background:'#fff', borderBottom:'1px solid rgba(184,151,62,0.15)', padding:'12px 16px' }}>
-          <div style={{ display:'flex', gap:8 }}>
+        <div className="bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex gap-2">
             {(['tasks', 'budget', 'guests'] as const).map(tab => (
-              <button key={tab} onClick={() => handleTabChange(tab)}
-                style={{ flex:1, padding:'9px 4px', borderRadius:12, fontSize:13, fontWeight:700, border:'none', cursor:'pointer', transition:'all 0.15s', background: activeTab === tab ? 'linear-gradient(135deg,#b8973e,#8a6010)' : 'rgba(184,151,62,0.07)', color: activeTab === tab ? '#fff' : '#7a5c30', boxShadow: activeTab === tab ? '0 3px 10px rgba(184,151,62,0.25)' : 'none', textTransform:'capitalize' }}>
-                {tab === 'tasks' ? '✓ Tasks' : tab === 'budget' ? '💰 Budget' : '👥 Guests'}
+              <button key={tab} onClick={() => handleTabChange(tab)} className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize ${activeTab === tab ? 'bg-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                {tab}
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ flex:1, overflowY:'auto' }}>
+        <div className="flex-1 overflow-y-auto">
           {/* ════════════ TASKS ════════════ */}
           {activeTab === 'tasks' && (
-            <div style={{ padding:'16px', display:'flex', flexDirection:'column', gap:14 }}>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                <p style={{ margin:0, fontSize:13, color:'#9a7c58', fontWeight:500 }}>{tasks.length > 0 ? `${tasks.filter(t => t.is_done).length} of ${tasks.length} completed` : 'No tasks yet'}</p>
-                <button onClick={() => setShowTaskModal(true)} style={{ padding:'8px 18px', borderRadius:20, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 3px 10px rgba(184,151,62,0.25)' }}>+ Add Task</button>
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">{tasks.length > 0 ? `${tasks.filter(t => t.is_done).length} of ${tasks.length} completed` : 'No tasks yet'}</p>
+                <button onClick={() => setShowTaskModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Task</button>
               </div>
               {tasks.length === 0 ? (
                 <EmptyState icon="📋" title="No tasks yet" description="Add your first wedding planning task to get started." actionLabel="+ Add Task" onAction={() => setShowTaskModal(true)} />
               ) : (
-                <div style={{ background:'#fff', borderRadius:20, border:'1.5px solid rgba(184,151,62,0.15)', overflow:'hidden' }}>
-                  {tasks.map((task, i) => (
-                    <div key={task.id} style={{ padding:'14px 16px', borderBottom: i < tasks.length - 1 ? '1px solid rgba(184,151,62,0.1)' : 'none' }}>
-                      <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
-                        <button onClick={() => toggleTask(task)} style={{ width:22, height:22, borderRadius:6, border:`2px solid ${task.is_done ? '#3d9e6a' : 'rgba(184,151,62,0.4)'}`, background: task.is_done ? '#3d9e6a' : 'transparent', flexShrink:0, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', marginTop:1, transition:'all 0.15s' }}>
-                          {task.is_done && <svg width="11" height="11" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
-                        </button>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <p style={{ margin:0, fontSize:14, fontWeight:600, color: task.is_done ? '#bbb' : '#3d2510', textDecoration: task.is_done ? 'line-through' : 'none' }}>{task.title}</p>
-                          <p style={{ margin:'3px 0 0', fontSize:11, color:'#9a7c58' }}>{task.due_date ? new Date(task.due_date).toLocaleDateString('en-ZA', { year:'numeric', month:'short', day:'numeric' }) : 'No due date'}</p>
+                <div className="bg-white rounded-xl border-2 border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                  {tasks.map(task => (
+                    <div key={task.id} className="px-4 py-3.5 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start gap-3">
+                        <input type="checkbox" checked={task.is_done} onChange={() => toggleTask(task)} className="mt-0.5 w-5 h-5 rounded border-2 border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500 cursor-pointer" />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-sm font-semibold ${task.is_done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date set'}</p>
                         </div>
-                        <button onClick={() => deleteTask(task.id)} style={{ padding:6, color:'#ccc', cursor:'pointer', background:'none', border:'none', flexShrink:0 }} aria-label="Delete task">
-                          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete task">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                       </div>
                     </div>
@@ -632,57 +629,69 @@ function CouplePlannerContent() {
 
           {/* ════════════ BUDGET ════════════ */}
           {activeTab === 'budget' && (
-            <div style={{ padding:'16px', display:'flex', flexDirection:'column', gap:14 }}>
+            <div className="p-4 space-y-4">
               {budgetItems.length === 0 ? (
                 <EmptyState icon="💰" title="No budget items" description="Add budget items to start tracking your wedding spending." actionLabel="+ Add Item" onAction={() => setShowBudgetModal(true)} />
               ) : (
                 <>
                   {/* Summary Card */}
-                  <div style={{ background:'linear-gradient(135deg,#b8973e,#8a6010)', borderRadius:20, padding:'20px', color:'#fff', boxShadow:'0 4px 20px rgba(184,151,62,0.3)' }}>
-                    <p style={{ margin:'0 0 4px', fontSize:12, opacity:0.75, letterSpacing:1, textTransform:'uppercase' }}>Total Budget</p>
-                    <p style={{ margin:'0 0 16px', fontSize:32, fontWeight:700, fontFamily:'Georgia,serif' }}>{format(totalBudget)}</p>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, paddingTop:14, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Paid</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{format(totalPaid)}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Outstanding</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{format(totalOutstanding)}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, opacity:0.7 }}>Progress</p><p style={{ margin:0, fontSize:16, fontWeight:700 }}>{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
+                  <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
+                    <p className="text-sm font-medium opacity-90 mb-2">Total Budget</p>
+                    <p className="text-3xl font-bold">{format(totalBudget)}</p>
+                    <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
+                      <div><p className="text-xs opacity-90">Paid</p><p className="text-lg font-bold">{format(totalPaid)}</p></div>
+                      <div><p className="text-xs opacity-90">Outstanding</p><p className="text-lg font-bold">{format(totalOutstanding)}</p></div>
+                      <div><p className="text-xs opacity-90">Progress</p><p className="text-lg font-bold">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
                     </div>
-                    <div style={{ marginTop:12, height:6, background:'rgba(255,255,255,0.2)', borderRadius:3, overflow:'hidden' }}>
-                      <div style={{ height:'100%', background:'#fff', borderRadius:3, transition:'width 0.5s', width:`${totalBudget > 0 ? Math.min((totalPaid / totalBudget) * 100, 100) : 0}%` }} />
+                    {/* Progress bar */}
+                    <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${totalBudget > 0 ? Math.min((totalPaid / totalBudget) * 100, 100) : 0}%` }} />
                     </div>
                   </div>
 
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#3d2510' }}>Budget Items</p>
-                    <button onClick={() => setShowBudgetModal(true)} style={{ padding:'8px 18px', borderRadius:20, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 3px 10px rgba(184,151,62,0.25)' }}>+ Add Item</button>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-gray-900">Budget Items</p>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setShowBudgetModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Item</button>
+                    </div>
                   </div>
 
-                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  <div className="space-y-3">
                     {budgetItems.map(item => (
-                      <div key={item.id} style={{ background:'#fff', borderRadius:16, border:'1.5px solid rgba(184,151,62,0.15)', padding:'14px 16px' }}>
-                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:8 }}>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#3d2510' }}>{item.title}</p>
-                            {item.category && <p style={{ margin:'2px 0 0', fontSize:11, color:'#9a7c58' }}>{item.category}</p>}
+                      <div key={item.id} className="bg-white rounded-xl border-2 border-gray-200 p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-gray-900">{item.title}</p>
+                            {item.category && <p className="text-xs text-gray-500 mt-0.5">🏪 {item.category}</p>}
                           </div>
-                          <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0, marginLeft:8 }}>
-                            <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#3d2510' }}>{format(Number(item.amount))}</p>
-                            <button onClick={() => startEditBudget(item)} style={{ padding:5, color:'#ccc', cursor:'pointer', background:'none', border:'none' }} aria-label="Edit item">
-                              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                            <p className="text-sm font-semibold text-gray-700">{format(Number(item.amount))}</p>
+                            <button onClick={() => startEditBudget(item)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit item">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            <button onClick={() => deleteBudgetItem(item.id)} style={{ padding:5, color:'#ccc', cursor:'pointer', background:'none', border:'none' }} aria-label="Delete item">
-                              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            <button onClick={() => deleteBudgetItem(item.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete item">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                           </div>
                         </div>
+
+                        {/* Payment progress bar */}
                         {item.amount > 0 && (
-                          <div style={{ marginBottom:8, height:5, background:'rgba(184,151,62,0.12)', borderRadius:3, overflow:'hidden' }}>
-                            <div style={{ height:'100%', borderRadius:3, transition:'width 0.3s', background: item.amount_paid >= item.amount ? '#3d9e6a' : item.amount_paid > 0 ? '#e8a820' : 'rgba(184,151,62,0.3)', width:`${Math.min((Number(item.amount_paid || 0) / Number(item.amount)) * 100, 100)}%` }} />
+                          <div className="mb-2">
+                            <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div className={`h-full rounded-full transition-all duration-300 ${item.amount_paid >= item.amount ? 'bg-green-500' : item.amount_paid > 0 ? 'bg-orange-400' : 'bg-gray-300'}`} style={{ width: `${Math.min((Number(item.amount_paid || 0) / Number(item.amount)) * 100, 100)}%` }} />
+                            </div>
                           </div>
                         )}
-                        <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${budgetStatusColor(item)}`}>{budgetStatusLabel(item)}</span>
+
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${budgetStatusColor(item)}`}>
+                            {budgetStatusLabel(item)}
+                          </span>
                           {item.status !== 'paid' && item.amount_paid < item.amount && (
-                            <button onClick={() => openPaymentModal(item)} style={{ padding:'4px 12px', borderRadius:20, background:'rgba(184,151,62,0.1)', color:'#8a6010', fontSize:11, fontWeight:700, border:'1px solid rgba(184,151,62,0.3)', cursor:'pointer' }}>+ Record Payment</button>
+                            <button onClick={() => openPaymentModal(item)} className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors">
+                              + Record Payment
+                            </button>
                           )}
                         </div>
                       </div>
@@ -695,45 +704,45 @@ function CouplePlannerContent() {
 
           {/* ════════════ GUESTS ════════════ */}
           {activeTab === 'guests' && (
-            <div style={{ padding:'16px', display:'flex', flexDirection:'column', gap:14 }}>
-              <SeatingPlanner guests={guests} onApply={applySeatingPayload} />
+            <div className="p-4 space-y-4">
+              <SeatingPlanner onApply={applySeatingPayload} />
               {guests.length === 0 ? (
                 <EmptyState icon="👥" title="No guests yet" description="Start building your guest list for the big day." actionLabel="+ Add Guest" onAction={() => setShowGuestModal(true)} />
               ) : (
                 <>
                   {/* Summary Card */}
-                  <div style={{ background:'linear-gradient(135deg,#b8973e,#8a6010)', borderRadius:20, padding:'20px', color:'#fff', boxShadow:'0 4px 20px rgba(184,151,62,0.3)' }}>
-                    <p style={{ margin:'0 0 4px', fontSize:12, color:'rgba(255,255,255,0.92)', letterSpacing:1, textTransform:'uppercase' }}>Total Guests</p>
-                    <p style={{ margin:'0 0 16px', fontSize:32, fontWeight:700, fontFamily:'Georgia,serif', color:'#fff' }}>{totalGuestCount}</p>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10, paddingTop:14, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Accepted</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{acceptedGuests}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Pending</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{pendingGuests}</p></div>
-                      <div><p style={{ margin:'0 0 2px', fontSize:10, color:'rgba(255,255,255,0.9)' }}>Declined</p><p style={{ margin:0, fontSize:16, fontWeight:700, color:'#fff' }}>{declinedGuests}</p></div>
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg">
+                    <p className="text-sm font-medium opacity-90 mb-2">Total Guests</p>
+                    <p className="text-3xl font-bold">{totalGuestCount}</p>
+                    <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white border-opacity-20">
+                      <div><p className="text-xs opacity-90">Accepted</p><p className="text-lg font-bold">{acceptedGuests}</p></div>
+                      <div><p className="text-xs opacity-90">Pending</p><p className="text-lg font-bold">{pendingGuests}</p></div>
+                      <div><p className="text-xs opacity-90">Declined</p><p className="text-lg font-bold">{declinedGuests}</p></div>
                     </div>
                   </div>
 
-                  {/* Side breakdown */}
-                  <div style={{ background:'#fff', borderRadius:16, border:'1.5px solid rgba(184,151,62,0.15)', padding:'14px 16px' }}>
-                    <p style={{ margin:'0 0 12px', fontSize:13, fontWeight:700, color:'#3d2510' }}>Guest Breakdown</p>
-                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:10 }}>
-                      <div style={{ textAlign:'center', padding:'10px 8px', background:'rgba(184,151,62,0.07)', borderRadius:12, border:'1px solid rgba(184,151,62,0.15)' }}>
-                        <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:700, color:'#8a6010' }}>{groomGuests}</p>
-                        <p style={{ margin:0, fontSize:11, fontWeight:600, color:'#7a5c30' }}>🤵 Groom</p>
+                  {/* Side breakdown card */}
+                  <div className="bg-white rounded-xl border-2 border-gray-200 p-4">
+                    <p className="text-sm font-bold text-gray-900 mb-3">Guest Breakdown</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                        <p className="text-2xl font-bold text-blue-600">{groomGuests}</p>
+                        <p className="text-xs font-semibold text-blue-700 mt-1">🤵 Groom</p>
                       </div>
-                      <div style={{ textAlign:'center', padding:'10px 8px', background:'rgba(220,80,100,0.06)', borderRadius:12, border:'1px solid rgba(220,80,100,0.12)' }}>
-                        <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:700, color:'#b83050' }}>{brideGuests}</p>
-                        <p style={{ margin:0, fontSize:11, fontWeight:600, color:'#b83050' }}>👰 Bride</p>
+                      <div className="text-center p-3 bg-pink-50 rounded-lg">
+                        <p className="text-2xl font-bold text-pink-600">{brideGuests}</p>
+                        <p className="text-xs font-semibold text-pink-700 mt-1">👰 Bride</p>
                       </div>
-                      <div style={{ textAlign:'center', padding:'10px 8px', background:'rgba(90,70,50,0.06)', borderRadius:12, border:'1px solid rgba(90,70,50,0.12)' }}>
-                        <p style={{ margin:'0 0 3px', fontSize:22, fontWeight:700, color:'#5a4030' }}>{bothGuests}</p>
-                        <p style={{ margin:0, fontSize:11, fontWeight:600, color:'#5a4030' }}>💑 Both</p>
+                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                        <p className="text-2xl font-bold text-purple-600">{bothGuests}</p>
+                        <p className="text-xs font-semibold text-purple-700 mt-1">💑 Both</p>
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
-                    <p style={{ margin:0, fontSize:14, fontWeight:700, color:'#3d2510' }}>Guest List</p>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <p className="text-sm font-semibold text-gray-900">Guest List</p>
+                    <div className="flex items-center gap-2 flex-wrap">
                       {guests.filter(g => g.rsvp_status === 'pending' && g.phone).length > 0 && (
                         <button
                           onClick={() => {
@@ -741,41 +750,42 @@ function CouplePlannerContent() {
                             if (!window.confirm('Send WhatsApp invites to ' + pending.length + ' pending guest' + (pending.length > 1 ? 's' : '') + ' with a phone number?')) return;
                             pending.forEach((g, i) => { setTimeout(() => inviteViaWhatsapp(g), i * 800); });
                           }}
-                          style={{ padding:'8px 14px', borderRadius:20, background:'#25D366', color:'#fff', fontSize:12, fontWeight:700, border:'none', cursor:'pointer' }}
+                          className="px-3 py-2 bg-green-500 text-white rounded-full text-sm font-semibold hover:bg-green-600 transition-colors"
                         >
                           Invite All ({guests.filter(g => g.rsvp_status === 'pending' && g.phone).length})
                         </button>
                       )}
-                      <button onClick={() => setShowGuestModal(true)} style={{ padding:'8px 18px', borderRadius:20, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:13, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 3px 10px rgba(184,151,62,0.25)' }}>+ Add Guest</button>
-                      <button onClick={importContacts} disabled={importInProgress} style={{ padding:'8px 14px', borderRadius:20, background:'#fff', color: importInProgress ? '#ccc' : '#7a5c30', fontSize:12, fontWeight:600, border:'1.5px solid rgba(184,151,62,0.25)', cursor: importInProgress ? 'default' : 'pointer' }}>{importInProgress ? 'Importing…' : 'Import'}</button>
+                      <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
+                      <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
                     </div>
                   </div>
 
-                  <div style={{ background:'#fff', borderRadius:16, border:'1.5px solid rgba(184,151,62,0.15)', overflow:'hidden' }}>
-                    {guests.map((guest, i) => (
-                      <div key={guest.id} style={{ padding:'14px 16px', borderBottom: i < guests.length - 1 ? '1px solid rgba(184,151,62,0.1)' : 'none' }}>
-                        <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8 }}>
-                          <div style={{ flex:1, minWidth:0 }}>
-                            <p style={{ margin:0, fontSize:14, fontWeight:600, color:'#3d2510' }}>{guest.full_name}</p>
-                            {guest.phone && <p style={{ margin:'2px 0 0', fontSize:11, color:'#9a7c58' }}>{guest.phone}</p>}
+                  <div className="bg-white rounded-xl border-2 border-gray-200 divide-y divide-gray-100 overflow-hidden">
+                    {guests.map(guest => (
+                      <div key={guest.id} className="px-4 py-3.5 hover:bg-gray-50 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{guest.full_name}</p>
+                            {guest.phone && <p className="text-xs text-gray-500 mt-1">{guest.phone}</p>}
                             {seatingAssignments[guest.id] && (
-                              <p style={{ margin:'2px 0 0', fontSize:11, color:'#9a7c58' }}>💺 <span style={{ fontWeight:700, color:'#3d2510' }}>{seatingAssignments[guest.id].tableId}</span></p>
+                              <p className="text-xs text-gray-500 mt-1">Table: <span className="font-semibold text-gray-900">{seatingAssignments[guest.id].tableId}</span></p>
                             )}
-                            <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4, flexWrap:'wrap' }}>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <span className={`text-xs font-semibold ${sideColor(guest.side)}`}>{sideLabel(guest.side)}</span>
-                              {guest.plus_one && <span style={{ fontSize:10, background:'rgba(184,151,62,0.1)', color:'#8a6010', padding:'1px 7px', borderRadius:20, fontWeight:600 }}>+1</span>}
+                              {guest.plus_one && <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">+1</span>}
                             </div>
                           </div>
-                          <div style={{ display:'flex', alignItems:'center', gap:6, flexShrink:0 }}>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
                             <button onClick={() => cycleGuestStatus(guest)} className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${statusColor(guest.rsvp_status)}`}>{statusLabel(guest.rsvp_status)}</button>
-                            <button onClick={() => startEditGuest(guest)} style={{ padding:5, color:'#ccc', cursor:'pointer', background:'none', border:'none' }} aria-label="Edit guest">
-                              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            <button onClick={() => startEditGuest(guest)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit guest">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            <button onClick={() => inviteViaWhatsapp(guest)} style={{ padding:5, color:'#25D366', cursor:'pointer', background:'none', border:'none' }} aria-label="Invite via WhatsApp">
-                              <WhatsAppIcon className="w-4 h-4" />
+                            <button onClick={() => inviteViaWhatsapp(guest)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${guest.phone ? 'text-gray-400 hover:text-green-600' : 'text-gray-400 bg-gray-100 hover:bg-gray-200'}`} aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
+                              <WhatsAppIcon className="w-4 h-4 text-green-600" />
+                              <span className="hidden sm:inline">Invite</span>
                             </button>
-                            <button onClick={() => deleteGuest(guest.id)} style={{ padding:5, color:'#ccc', cursor:'pointer', background:'none', border:'none' }} aria-label="Delete guest">
-                              <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
                           </div>
                         </div>
@@ -793,16 +803,16 @@ function CouplePlannerContent() {
 
       {/* Add Task Modal */}
       {showTaskModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Add New Task</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>TASK TITLE</label><input type="text" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="e.g., Book hair & makeup artist" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>DUE DATE (OPTIONAL)</label><input type="date" value={newTaskDate} onChange={e => setNewTaskDate(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Task</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Task Title</label><input type="text" value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="e.g., Book hair & makeup artist" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date (Optional)</label><input type="date" value={newTaskDate} onChange={e => setNewTaskDate(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
             </div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => setShowTaskModal(false)} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={addTask} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.3)' }}>Add Task</button>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowTaskModal(false)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={addTask} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Add Task</button>
             </div>
           </div>
         </div>
@@ -810,17 +820,17 @@ function CouplePlannerContent() {
 
       {/* Add Budget Modal */}
       {showBudgetModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Add Budget Item</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>ITEM NAME</label><input type="text" value={newBudgetTitle} onChange={e => setNewBudgetTitle(e.target.value)} placeholder="e.g., Catering deposit" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>TOTAL AMOUNT</label><input type="number" value={newBudgetAmount} onChange={e => setNewBudgetAmount(e.target.value)} placeholder="e.g., 15000" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>CATEGORY (OPTIONAL)</label><input type="text" value={newBudgetCategory} onChange={e => setNewBudgetCategory(e.target.value)} placeholder="e.g., Venue, Catering, Décor" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Add Budget Item</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Item Name</label><input type="text" value={newBudgetTitle} onChange={e => setNewBudgetTitle(e.target.value)} placeholder="e.g., Catering deposit" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Amount (R)</label><input type="number" value={newBudgetAmount} onChange={e => setNewBudgetAmount(e.target.value)} placeholder="e.g., 15000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Vendor Name (Optional)</label><input type="text" value={newBudgetCategory} onChange={e => setNewBudgetCategory(e.target.value)} placeholder="e.g., The Venue, Elegant Catering" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
             </div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => setShowBudgetModal(false)} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={addBudgetItem} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.3)' }}>Add Item</button>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowBudgetModal(false)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={addBudgetItem} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Add Item</button>
             </div>
           </div>
         </div>
@@ -828,18 +838,18 @@ function CouplePlannerContent() {
 
       {/* Edit Budget Modal */}
       {editingBudgetItem && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Edit Budget Item</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>ITEM NAME</label><input type="text" value={editBudgetTitle} onChange={e => setEditBudgetTitle(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>TOTAL AMOUNT</label><input type="number" value={editBudgetAmount} onChange={e => setEditBudgetAmount(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>AMOUNT PAID</label><input type="number" value={editBudgetAmountPaid} onChange={e => setEditBudgetAmountPaid(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>CATEGORY (OPTIONAL)</label><input type="text" value={editBudgetCategory} onChange={e => setEditBudgetCategory(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Budget Item</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Item Name</label><input type="text" value={editBudgetTitle} onChange={e => setEditBudgetTitle(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Total Amount (R)</label><input type="number" value={editBudgetAmount} onChange={e => setEditBudgetAmount(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Amount Paid (R)</label><input type="number" value={editBudgetAmountPaid} onChange={e => setEditBudgetAmountPaid(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Vendor Name (Optional)</label><input type="text" value={editBudgetCategory} onChange={e => setEditBudgetCategory(e.target.value)} placeholder="e.g., The Venue, Elegant Catering" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
             </div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => setEditingBudgetItem(null)} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={saveEditBudget} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.3)' }}>Save Changes</button>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setEditingBudgetItem(null)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={saveEditBudget} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Save Changes</button>
             </div>
           </div>
         </div>
@@ -847,14 +857,16 @@ function CouplePlannerContent() {
 
       {/* Record Payment Modal */}
       {showPaymentModal && paymentItem && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 4px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Record Payment</h3>
-            <p style={{ margin:'0 0 18px', fontSize:13, color:'#9a7c58' }}>{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
-            <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>PAYMENT AMOUNT</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} autoFocus /></div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => { setShowPaymentModal(false); setPaymentItem(null); }} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={recordPayment} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#3d9e6a,#2d7a52)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(61,158,106,0.3)' }}>Record Payment</button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
+            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Amount</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" autoFocus /></div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => { setShowPaymentModal(false); setPaymentItem(null); }} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={recordPayment} className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors shadow-lg shadow-green-200">Record Payment</button>
             </div>
           </div>
         </div>
@@ -862,28 +874,27 @@ function CouplePlannerContent() {
 
       {/* Add Guest Modal */}
       {showGuestModal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Add New Guest</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>GUEST NAME</label><input type="text" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} placeholder="e.g., Mthabisi" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>PHONE (OPTIONAL)</label><input type="tel" value={newGuestPhone} onChange={e => setNewGuestPhone(e.target.value)} placeholder="e.g., +27831234567" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Guest</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={newGuestName} onChange={e => setNewGuestName(e.target.value)} placeholder="e.g., Mthabisi" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (optional)</label><input type="tel" value={newGuestPhone} onChange={e => setNewGuestPhone(e.target.value)} placeholder="e.g., +27831234567" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div>
-                <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>SIDE</label>
-                <div style={{ display:'flex', gap:8 }}>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Side</label>
+                <div className="flex gap-2">
                   {(['groom', 'bride', 'both'] as const).map(side => (
-                    <button key={side} onClick={() => setNewGuestSide(side)}
-                      style={{ flex:1, padding:'9px 4px', borderRadius:12, fontSize:12, fontWeight:700, border:`1.5px solid ${newGuestSide === side ? '#b8973e' : 'rgba(184,151,62,0.2)'}`, background: newGuestSide === side ? 'linear-gradient(135deg,#b8973e,#8a6010)' : '#faf7f2', color: newGuestSide === side ? '#fff' : '#7a5c30', cursor:'pointer', transition:'all 0.15s' }}>
+                    <button key={side} onClick={() => setNewGuestSide(side)} className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${newGuestSide === side ? (side === 'groom' ? 'bg-blue-600 text-white' : side === 'bride' ? 'bg-pink-600 text-white' : 'bg-purple-600 text-white') : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {side === 'groom' ? '🤵 Groom' : side === 'bride' ? '👰 Bride' : '💑 Both'}
                     </button>
                   ))}
                 </div>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}><input type="checkbox" id="plusOne" checked={newGuestPlusOne} onChange={e => setNewGuestPlusOne(e.target.checked)} style={{ width:18, height:18, accentColor:'#b8973e', cursor:'pointer' }} /><label htmlFor="plusOne" style={{ fontSize:13, fontWeight:600, color:'#5c3d28', cursor:'pointer' }}>Allow +1</label></div>
+              <div className="flex items-center gap-2"><input type="checkbox" id="plusOne" checked={newGuestPlusOne} onChange={e => setNewGuestPlusOne(e.target.checked)} className="w-5 h-5 rounded border-2 border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500" /><label htmlFor="plusOne" className="text-sm font-semibold text-gray-700">Allow +1</label></div>
             </div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => setShowGuestModal(false)} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={addGuest} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.3)' }}>Add Guest</button>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setShowGuestModal(false)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={addGuest} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Add Guest</button>
             </div>
           </div>
         </div>
@@ -891,28 +902,27 @@ function CouplePlannerContent() {
 
       {/* Edit Guest Modal */}
       {editingGuest && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:16 }}>
-          <div style={{ background:'#fff', borderRadius:24, boxShadow:'0 16px 48px rgba(0,0,0,0.18)', width:'100%', maxWidth:400, padding:24 }}>
-            <h3 style={{ margin:'0 0 18px', fontSize:17, fontWeight:700, color:'#3d2510', fontFamily:'Georgia,serif' }}>Edit Guest</h3>
-            <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>GUEST NAME</label><input type="text" value={editGuestName} onChange={e => setEditGuestName(e.target.value)} style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
-              <div><label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>PHONE (OPTIONAL)</label><input type="tel" value={editGuestPhone} onChange={e => setEditGuestPhone(e.target.value)} placeholder="e.g., +27831234567" style={{ width:'100%', padding:'10px 14px', border:'1.5px solid rgba(184,151,62,0.3)', borderRadius:12, fontSize:14, outline:'none', background:'#faf7f2', color:'#3d2510', boxSizing:'border-box' }} /></div>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Guest</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Guest Name</label><input type="text" value={editGuestName} onChange={e => setEditGuestName(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone (optional)</label><input type="tel" value={editGuestPhone} onChange={e => setEditGuestPhone(e.target.value)} placeholder="e.g., +27831234567" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
               <div>
-                <label style={{ display:'block', fontSize:12, fontWeight:700, color:'#5c3d28', marginBottom:6, letterSpacing:0.5 }}>SIDE</label>
-                <div style={{ display:'flex', gap:8 }}>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Side</label>
+                <div className="flex gap-2">
                   {(['groom', 'bride', 'both'] as const).map(side => (
-                    <button key={side} onClick={() => setEditGuestSide(side)}
-                      style={{ flex:1, padding:'9px 4px', borderRadius:12, fontSize:12, fontWeight:700, border:`1.5px solid ${editGuestSide === side ? '#b8973e' : 'rgba(184,151,62,0.2)'}`, background: editGuestSide === side ? 'linear-gradient(135deg,#b8973e,#8a6010)' : '#faf7f2', color: editGuestSide === side ? '#fff' : '#7a5c30', cursor:'pointer', transition:'all 0.15s' }}>
+                    <button key={side} onClick={() => setEditGuestSide(side)} className={`flex-1 px-3 py-2 rounded-xl text-sm font-semibold transition-all ${editGuestSide === side ? (side === 'groom' ? 'bg-blue-600 text-white' : side === 'bride' ? 'bg-pink-600 text-white' : 'bg-purple-600 text-white') : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                       {side === 'groom' ? '🤵 Groom' : side === 'bride' ? '👰 Bride' : '💑 Both'}
                     </button>
                   ))}
                 </div>
               </div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}><input type="checkbox" id="editPlusOne" checked={editGuestPlusOne} onChange={e => setEditGuestPlusOne(e.target.checked)} style={{ width:18, height:18, accentColor:'#b8973e', cursor:'pointer' }} /><label htmlFor="editPlusOne" style={{ fontSize:13, fontWeight:600, color:'#5c3d28', cursor:'pointer' }}>Allow +1</label></div>
+              <div className="flex items-center gap-2"><input type="checkbox" id="editPlusOne" checked={editGuestPlusOne} onChange={e => setEditGuestPlusOne(e.target.checked)} className="w-5 h-5 rounded border-2 border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500" /><label htmlFor="editPlusOne" className="text-sm font-semibold text-gray-700">Allow +1</label></div>
             </div>
-            <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button onClick={() => setEditingGuest(null)} style={{ flex:1, padding:'12px', borderRadius:14, background:'#f5f0e8', color:'#7a5c30', fontSize:14, fontWeight:700, border:'none', cursor:'pointer' }}>Cancel</button>
-              <button onClick={saveEditGuest} style={{ flex:1, padding:'12px', borderRadius:14, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, border:'none', cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.3)' }}>Save Changes</button>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setEditingGuest(null)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={saveEditGuest} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Save Changes</button>
             </div>
           </div>
         </div>
@@ -937,7 +947,7 @@ function CouplePlannerContent() {
 
 export default function CouplePlanner() {
   return (
-    <Suspense fallback={<div style={{ minHeight:'100svh', background:'#faf7f2', display:'flex', alignItems:'center', justifyContent:'center' }}><div style={{ width:40, height:40, borderRadius:'50%', border:'3px solid rgba(184,151,62,0.15)', borderTopColor:'#b8973e', animation:'spin 0.8s linear infinite' }} /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>}>
       <CouplePlannerContent />
     </Suspense>
   );

@@ -35,6 +35,23 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
         featured: mv.featured,
         featured_until: mv.featured_until,
       } as any;
+      // Try to enrich from the vendors table (portfolio, cover, contact)
+      try {
+        const { data: vExtra, error: vExtraErr } = await supabase
+          .from('vendors')
+          .select('portfolio_urls, cover_url, logo_url, contact')
+          .eq('id', mv.vendor_id)
+          .maybeSingle();
+        if (vExtra) {
+          vendor.portfolio_urls = vExtra.portfolio_urls || vendor.portfolio_urls;
+          vendor.cover_url = vExtra.cover_url || vendor.cover_url || null;
+          vendor.logo_url = vExtra.logo_url || vendor.logo_url || null;
+          vendor.contact = vExtra.contact || vendor.contact || null;
+        }
+        if (vExtraErr) console.warn('vendors enrich error:', vExtraErr);
+      } catch (err) {
+        console.warn('vendors enrich fetch failed:', err);
+      }
     }
     if (mvError) console.warn('marketplace_vendors query error:', mvError);
   } catch (err) {
@@ -67,15 +84,16 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
 
   const portfolio: string[] = Array.isArray(vendor.portfolio_urls) ? vendor.portfolio_urls : [];
   const whatsapp = vendor.contact?.whatsapp ?? null;
+  const coverImg = portfolio[0] || vendor.cover_url || vendor.logo_url || null;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto px-4 py-6">
         {/* Hero / cover */}
         <div className="bg-white rounded-xl overflow-hidden shadow-sm">
-          {portfolio[0] ? (
+          {coverImg ? (
             <div className="w-full h-64 relative">
-              <Image src={portfolio[0]} alt={vendor.business_name || 'Cover'} fill style={{ objectFit: 'cover' }} />
+              <Image src={coverImg} alt={vendor.business_name || 'Cover'} fill style={{ objectFit: 'cover' }} />
             </div>
           ) : (
             <div className="w-full h-64 bg-gray-100 flex items-center justify-center">
@@ -149,4 +167,33 @@ async function PackagesList({ vendorId }: { vendorId: string }) {
       ))}
     </ul>
   );
+}
+
+// Only include open graph image if it's an absolute https URL
+export async function generateMetadata({ params }: { params: { vendorId: string } }) {
+  const { vendorId } = params;
+  try {
+    const { data: mv } = await supabase
+      .from('marketplace_vendors')
+      .select('vendor_id, business_name, logo_url')
+      .eq('vendor_id', vendorId)
+      .maybeSingle();
+
+    let logoUrl = mv?.logo_url || null;
+
+    if (!logoUrl) {
+      const { data: v } = await supabase.from('vendors').select('logo_url').eq('id', vendorId).maybeSingle();
+      logoUrl = v?.logo_url || null;
+    }
+
+    const images = [] as { url: string }[];
+    if (logoUrl && String(logoUrl).startsWith('https://')) images.push({ url: logoUrl });
+
+    return {
+      title: mv?.business_name || 'Vendor',
+      openGraph: { images },
+    };
+  } catch (err) {
+    return { title: 'Vendor' };
+  }
 }

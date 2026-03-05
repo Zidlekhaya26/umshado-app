@@ -14,7 +14,7 @@ test('handler returns assigned tables for valid payload', async () => {
   const res = await handleAutoAssignPayload(payload);
   expect(res.status).toBe(200);
   expect(Array.isArray(res.tables)).toBe(true);
-  const assigned = res.tables.reduce((s: number, t: any) => s + (t.seats?.length ?? 0), 0);
+  const assigned = (Array.isArray(res.tables) ? res.tables : []).reduce((s: number, t: any) => s + (t.seats?.length ?? 0), 0);
   expect(assigned).toBe(2);
 });
 
