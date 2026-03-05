@@ -636,12 +636,12 @@ function CouplePlannerContent() {
                 <>
                   {/* Summary Card */}
                   <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
-                    <p className="text-sm font-medium opacity-90 mb-2">Total Budget</p>
-                    <p className="text-3xl font-bold">{format(totalBudget)}</p>
+                    <p className="text-sm font-medium opacity-90 mb-2 text-white">Total Budget</p>
+                    <p className="text-3xl font-bold text-white">{format(totalBudget)}</p>
                     <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
-                      <div><p className="text-xs opacity-90">Paid</p><p className="text-lg font-bold">{format(totalPaid)}</p></div>
-                      <div><p className="text-xs opacity-90">Outstanding</p><p className="text-lg font-bold">{format(totalOutstanding)}</p></div>
-                      <div><p className="text-xs opacity-90">Progress</p><p className="text-lg font-bold">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
+                      <div><p className="text-xs opacity-90 text-white">Paid</p><p className="text-lg font-bold text-white">{format(totalPaid)}</p></div>
+                      <div><p className="text-xs opacity-90 text-white">Outstanding</p><p className="text-lg font-bold text-white">{format(totalOutstanding)}</p></div>
+                      <div><p className="text-xs opacity-90 text-white">Progress</p><p className="text-lg font-bold text-white">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
                     </div>
                     {/* Progress bar */}
                     <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
