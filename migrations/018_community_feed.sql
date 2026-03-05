@@ -231,6 +231,7 @@ VALUES (
 ON CONFLICT (id) DO NOTHING;
 
 -- Authenticated users can upload to their own folder
+DROP POLICY IF EXISTS "community-images: auth upload" ON storage.objects;
 CREATE POLICY "community-images: auth upload"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -240,12 +241,14 @@ WITH CHECK (
 );
 
 -- Anyone (including anon) can view community images (public feed)
+DROP POLICY IF EXISTS "community-images: public read" ON storage.objects;
 CREATE POLICY "community-images: public read"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'community-images');
 
 -- Users can delete their own images
+DROP POLICY IF EXISTS "community-images: auth delete own" ON storage.objects;
 CREATE POLICY "community-images: auth delete own"
 ON storage.objects FOR DELETE
 TO authenticated
