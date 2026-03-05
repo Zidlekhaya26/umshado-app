@@ -476,7 +476,7 @@ export default function VendorProfile() {
                   <button
                     type="button"
                     onClick={handleToggleSave}
-                    className="px-4 py-2 rounded-xl border border-purple-300 text-purple-700 font-semibold text-sm bg-white hover:bg-purple-50 active:scale-[0.98] transition"
+                    className="px-4 py-2 rounded-xl border border-amber-300 text-amber-900 font-semibold text-sm bg-white hover:bg-amber-50 active:scale-[0.98] transition"
                   >
                     {isSaved ? 'Saved' : 'Save'}
                   </button>
@@ -699,7 +699,7 @@ export default function VendorProfile() {
                       </p>
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="text-xl font-bold text-purple-600 whitespace-nowrap">{format(pkg.fromPrice)}</p>
+                      <p className="text-xl font-bold text-amber-900 whitespace-nowrap">{format(pkg.fromPrice)}</p>
                       {vendor.preferredCurrency && (
                         <p className="text-xs text-gray-500">Vendor currency: {vendor.preferredCurrency}</p>
                       )}
@@ -744,7 +744,7 @@ export default function VendorProfile() {
                         package_name: pkg.name
                       })
                     }
-                    className="block w-full px-4 py-3 bg-purple-600 text-white rounded-xl font-semibold text-sm text-center hover:bg-purple-700 active:scale-95 transition-all shadow-sm"
+                    className="block w-full px-4 py-3 bg-[#b8973e] text-white rounded-xl font-semibold text-sm text-center hover:bg-[#8a6010] active:scale-95 transition-all shadow-sm"
                   >
                     Request Quote
                   </Link>
@@ -769,16 +769,16 @@ export default function VendorProfile() {
                     </div>
                     <Link
                       href="/vendor/dashboard"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-purple-600 text-white rounded-xl font-semibold text-base hover:bg-purple-700 active:scale-95 transition-all shadow-lg shadow-purple-200"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-[#b8973e] text-white rounded-xl font-semibold text-base hover:bg-[#8a6010] active:scale-95 transition-all shadow-lg shadow-amber-200"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
                       Back to Dashboard
                     </Link>
                   </>
                 ) : (
-                  <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3 text-center">
-                    <p className="text-sm font-semibold text-purple-800">View only</p>
-                    <p className="text-xs text-purple-700 mt-1">You&apos;re browsing as a vendor. Couple actions are hidden.</p>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center">
+                    <p className="text-sm font-semibold text-amber-800">View only</p>
+                    <p className="text-xs text-amber-700 mt-1">You&apos;re browsing as a vendor. Couple actions are hidden.</p>
                   </div>
                 )}
               </div>
@@ -788,7 +788,7 @@ export default function VendorProfile() {
                 <div className="space-y-2.5">
                   <Link
                     href={`/messages/new?vendorId=${vendor.id}`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-purple-600 text-white rounded-xl font-semibold text-base hover:bg-purple-700 active:scale-95 transition-all shadow-lg shadow-purple-200"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-[#b8973e] text-white rounded-xl font-semibold text-base hover:bg-[#8a6010] active:scale-95 transition-all shadow-lg shadow-amber-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

@@ -316,7 +316,7 @@ export default function VendorPackagesPage() {
 
         <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
           {showDebug && (
-            <div className="mb-3 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2 text-sm text-yellow-800">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-xs text-yellow-900">
               <span className="font-semibold">DEBUG:</span>
               <span className="ml-2">isFormOpen: {String(isFormOpen)}</span>
               <span className="ml-2">vendorId: {vendorId ?? 'null'}</span>
@@ -327,8 +327,8 @@ export default function VendorPackagesPage() {
               )}
             </div>
           )}
-          <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3.5">
-            <p className="text-sm text-purple-900"><span className="font-semibold">{packages.length} package{packages.length !== 1 ? 's' : ''}</span> created{packages.length < 2 && <span className="block mt-1 text-purple-700">Add at least 2 packages to continue</span>}</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3.5">
+            <p className="text-sm text-amber-900"><span className="font-semibold">{packages.length} package{packages.length !== 1 ? 's' : ''}</span> created{packages.length < 2 && <span className="block mt-1 text-amber-800">Add at least 2 packages to continue</span>}</p>
           </div>
 
           {packages.map((pkg) => (
@@ -339,7 +339,7 @@ export default function VendorPackagesPage() {
                     <h3 className="text-base font-bold text-gray-900">{pkg.name}</h3>
                     {pkg.isPopular && <span className="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">Most popular</span>}
                   </div>
-                  <p className="text-xl font-bold text-purple-600 mt-1.5">{format(pkg.fromPrice)}</p>
+                  <p className="text-xl font-bold text-amber-900 mt-1.5">{format(pkg.fromPrice)}</p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
                   <button onClick={() => openForm(pkg)} className="p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors" aria-label="Edit package">
@@ -355,18 +355,18 @@ export default function VendorPackagesPage() {
 
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-2">Included services:</p>
-                <div className="flex flex-wrap gap-1.5">{pkg.includedServices.map(s => <span key={s} className="px-2.5 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-100">{s}</span>)}</div>
+                <div className="flex flex-wrap gap-1.5">{pkg.includedServices.map(s => <span key={s} className="px-2.5 py-1 bg-amber-50 text-amber-900 text-xs font-medium rounded-md border border-amber-200">{s}</span>)}</div>
               </div>
             </div>
           ))}
 
-          {!loading && <button onClick={() => openForm()} disabled={loading} className="w-full py-5 border-2 border-dashed border-purple-300 rounded-xl text-purple-600 font-semibold hover:border-purple-400 hover:bg-purple-50 transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Package</button>}
+          {!loading && <button onClick={() => openForm()} disabled={loading} className="w-full py-5 border-2 border-dashed border-amber-300 rounded-xl text-amber-900 font-semibold hover:border-amber-400 hover:bg-amber-50 transition-colors flex items-center justify-center gap-2.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>Add Package</button>}
 
           {isOnboarding && (
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
               <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto flex gap-3 px-4">
                 <Link href={`/vendor/services?mode=onboarding`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50">Back</Link>
-                <button onClick={() => { if (canContinue) window.location.href = '/vendor/media?mode=onboarding'; }} disabled={!canContinue} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>Continue</button>
+                <button onClick={() => { if (canContinue) window.location.href = '/vendor/media?mode=onboarding'; }} disabled={!canContinue} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center ${canContinue ? 'bg-[#b8973e] text-white hover:bg-[#8a6010]' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}>Continue</button>
               </div>
             </div>
           )}
@@ -526,7 +526,7 @@ export default function VendorPackagesPage() {
                           {availableServices.map((s) => {
                             const selected = formData.includedServices.includes(s);
                             return (
-                              <button key={s} type="button" onClick={() => setFormData({ ...formData, includedServices: selected ? formData.includedServices.filter(x => x !== s) : [...formData.includedServices, s] })} className={`px-2.5 py-1 rounded-md text-sm ${selected ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 border border-purple-100'}`}>
+                              <button key={s} type="button" onClick={() => setFormData({ ...formData, includedServices: selected ? formData.includedServices.filter(x => x !== s) : [...formData.includedServices, s] })} className={`px-2.5 py-1 rounded-md text-sm ${selected ? 'bg-[#b8973e] text-white' : 'bg-amber-50 text-amber-900 border border-amber-200'}`}>
                                 {s}
                               </button>
                             );
@@ -550,7 +550,7 @@ export default function VendorPackagesPage() {
                     (formData.pricingMode !== 'guest-based' || ((formData.guestRange?.min || 0) > 0 && (formData.guestRange?.min || 0) <= (formData.guestRange?.max || 0))) &&
                     (formData.pricingMode !== 'time-based' || (formData.hours && formData.hours > 0)) &&
                     !Object.values(formErrors).some(Boolean)
-                  )} className={`flex-1 px-4 py-3 ${loading ? 'bg-gray-300 text-gray-700' : 'bg-purple-600 text-white'} rounded-xl font-semibold text-sm`}>{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
+                  )} className={`flex-1 px-4 py-3 ${loading ? 'bg-gray-300 text-gray-700' : 'bg-[#b8973e] text-white hover:bg-[#8a6010]'} rounded-xl font-semibold text-sm`}>{loading ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Package')}</button>
                 </div>
               </div>
             </div>
@@ -563,7 +563,7 @@ export default function VendorPackagesPage() {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
         <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 flex gap-3">
           <Link href={`/vendor/services${modeQuery}`} className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
-          <Link href={editMode ? `/vendor/dashboard` : `/vendor/media${modeQuery}`} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'}`}>{editMode ? 'Save' : 'Continue'}</Link>
+          <Link href={editMode ? `/vendor/dashboard` : `/vendor/media${modeQuery}`} className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${canContinue ? 'bg-[#b8973e] text-white hover:bg-[#8a6010] active:scale-95 shadow-lg shadow-amber-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed pointer-events-none'}`}>{editMode ? 'Save' : 'Continue'}</Link>
         </div>
       </div>
     </div>
