@@ -203,7 +203,6 @@ function LivePageContent() {
       const image_url = imageFile ? await uploadImage(imageFile, userId) : null;
       const { data, error } = await supabase.from('community_posts').insert({
         user_id: userId,
-        author: authorName.trim() || 'Anonymous Couple',
         category: newCategory,
         content: newContent.trim(),
         image_url,
@@ -254,8 +253,8 @@ function LivePageContent() {
     if (!newComment.trim() || !userId || submittingComment) return;
     setSubmittingComment(true);
     const { data, error } = await supabase.from('community_comments').insert({
-      post_id: postId, user_id: userId,
-      author: authorName.trim() || 'Anonymous Couple',
+      post_id: postId,
+      user_id: userId,
       content: newComment.trim(),
     }).select().single();
     if (!error && data) {
@@ -297,10 +296,16 @@ function LivePageContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { router.replace('/auth/sign-in'); return; }
       setUserId(session.user.id);
-      // Try to prefill author from couple profile
+      // Resolve the logged-in user's display name (profile → couples)
       try {
-        const { data } = await supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle();
-        if (data?.full_name) setAuthorName(data.full_name + ' & Partner');
+        const [profileRes, coupleRes] = await Promise.all([
+          supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle(),
+          supabase.from('couples').select('partner_name').eq('id', session.user.id).maybeSingle(),
+        ]);
+        const myName = profileRes.data?.full_name || session.user.email?.split('@')[0] || 'Couple';
+        const partnerName = coupleRes.data?.partner_name;
+        const displayName = partnerName ? `${myName} & ${partnerName}` : myName;
+        setAuthorName(displayName);
       } catch {}
       await Promise.all([loadPosts(session.user.id), loadData(session.user.id), loadGuestToken(session.access_token)]);
       setLoaded(true);
@@ -728,7 +733,7 @@ function LivePageContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5c30', letterSpacing: 1, marginBottom: 8 }}>YOUR NAMES</label>
-                <input value={authorName} onChange={e => setAuthorName(e.target.value)} placeholder="e.g., Thabo & Lerato" style={inp} />
+                <input value={authorName} readOnly placeholder="e.g., Thabo & Lerato" style={inp} />
               </div>
 
               <div>

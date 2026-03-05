@@ -153,6 +153,47 @@ CREATE TRIGGER trg_sync_comments_count
 AFTER INSERT OR DELETE ON public.community_comments
 FOR EACH ROW EXECUTE FUNCTION public.sync_community_comments_count();
 
+-- ==========================================================================
+-- Trigger: stamp authoritative author name from profiles + couples
+-- ==========================================================================
+
+CREATE OR REPLACE FUNCTION public.set_community_author()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_full text;
+  v_partner text;
+BEGIN
+  -- Try to fetch profile full_name and couple partner_name for this user
+  SELECT p.full_name, c.partner_name
+    INTO v_full, v_partner
+    FROM public.profiles p
+    LEFT JOIN public.couples c ON c.id = p.id
+    WHERE p.id = COALESCE(NEW.user_id, NEW.user_id);
+
+  IF v_full IS NULL THEN
+    -- Fallback to simple placeholder
+    NEW.author := COALESCE(NEW.author, 'Couple');
+  ELSE
+    IF v_partner IS NOT NULL AND v_partner <> '' THEN
+      NEW.author := v_full || ' & ' || v_partner;
+    ELSE
+      NEW.author := v_full;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_set_author_posts ON public.community_posts;
+CREATE TRIGGER trg_set_author_posts
+BEFORE INSERT OR UPDATE ON public.community_posts
+FOR EACH ROW EXECUTE FUNCTION public.set_community_author();
+
+DROP TRIGGER IF EXISTS trg_set_author_comments ON public.community_comments;
+CREATE TRIGGER trg_set_author_comments
+BEFORE INSERT OR UPDATE ON public.community_comments
+FOR EACH ROW EXECUTE FUNCTION public.set_community_author();
+
 -- ============================================================================
 -- INDEXES
 -- ============================================================================
