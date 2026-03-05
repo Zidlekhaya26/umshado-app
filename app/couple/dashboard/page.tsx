@@ -269,9 +269,9 @@ export default function CoupleDashboard() {
     </div>
   );
 
-  const coupleTitle = userName && coupleProfile?.partner_name
-    ? `${userName} & ${coupleProfile.partner_name}`
-    : userName ? `Hi, ${userName} 👋` : coupleProfile?.partner_name ? `Hi, ${coupleProfile.partner_name} 👋` : 'Your Wedding';
+  const coupleTitle = coupleProfile?.partner_name
+    ? `Hi, ${coupleProfile.partner_name} 👋`
+    : userName ? `Hi, ${userName} 👋` : 'Your Wedding';
 
   const quickNav = [
     { icon:'📋', label:'Planner',  href:'/couple/planner' },

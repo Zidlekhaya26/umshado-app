@@ -302,9 +302,10 @@ function LivePageContent() {
           supabase.from('profiles').select('full_name').eq('id', session.user.id).maybeSingle(),
           supabase.from('couples').select('partner_name').eq('id', session.user.id).maybeSingle(),
         ]);
-        const myName = profileRes.data?.full_name || session.user.email?.split('@')[0] || 'Couple';
-        const partnerName = coupleRes.data?.partner_name;
-        const displayName = partnerName ? `${myName} & ${partnerName}` : myName;
+        const profileName = profileRes.data?.full_name;
+        const coupleName = coupleRes.data?.partner_name;
+        // Prefer the couple-level canonical name if present; otherwise fall back to profile full_name or email
+        const displayName = coupleName || profileName || session.user.email?.split('@')[0] || 'Couple';
         setAuthorName(displayName);
       } catch {}
       await Promise.all([loadPosts(session.user.id), loadData(session.user.id), loadGuestToken(session.access_token)]);
