@@ -75,7 +75,7 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
 
 // Only include open graph image if it's an absolute https URL
 export async function generateMetadata({ params }: { params: { vendorId: string } }) {
-  const { vendorId } = params;
+  const { vendorId } = await params;
   try {
     const { data: mv } = await supabase
       .from('marketplace_vendors')
