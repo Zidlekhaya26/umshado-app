@@ -226,7 +226,7 @@ export default function AdminVerificationsPage() {
 
                   {/* View vendor link */}
                   <a
-                    href={`/marketplace/vendor/${req.vendor_id}`}
+                    href={`/v/${req.vendor_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-purple-600 font-medium hover:text-purple-800 whitespace-nowrap"
