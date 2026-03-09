@@ -3,21 +3,28 @@ import { notFound } from 'next/navigation';
 import VendorPublicClient from './VendorPublicClient';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-const supabase = createClient(supabaseUrl, supabaseAnon);
+const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
+// Use service role client to bypass RLS for reading published vendors
+const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
 export default async function VendorPublicPage({ params }: { params: { vendorId: string } }) {
   const { vendorId } = await params;
 
-  // Fetch vendor data from vendors table
+  // Fetch vendor data from vendors table (only published vendors)
   const { data: vendorData, error: vendorError } = await supabase
     .from('vendors')
-    .select('id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, contact, social_links, verified, top_rated, rating, review_count')
+    .select('id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, contact, social_links, verified, top_rated, rating, review_count, is_published')
     .eq('id', vendorId)
+    .eq('is_published', true)
     .maybeSingle();
 
-  if (vendorError || !vendorData) {
+  if (vendorError) {
     console.error('Error fetching vendor:', vendorError);
+    notFound();
+  }
+
+  if (!vendorData) {
+    console.error('Vendor not found or not published:', vendorId);
     notFound();
   }
 
