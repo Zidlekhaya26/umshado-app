@@ -102,7 +102,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Try to locate an access token cookie commonly used by Supabase clients
-  const cookieNames = ['sb-access-token', 'sb:token', 'supabase-auth-token', 'sb-session'];
+  const cookieNames = ['sb-access-token', 'supabase.auth.token', 'sb:token', 'supabase-auth-token', 'sb-session'];
   let accessToken: string | null = null;
   for (const name of cookieNames) {
     const c = req.cookies.get(name);
@@ -112,11 +112,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // If no token, redirect to sign-in preserving intended path
+  // If no token in cookies, allow the request through and let client-side auth handle it
+  // This is important for mobile browsers that may not persist cookies properly
+  // The client-side auth (AuthRoleProvider) will redirect to sign-in if needed
   if (!accessToken) {
-    const signInUrl = new URL('/auth/sign-in', req.url);
-    signInUrl.searchParams.set('redirect', req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+    // For now, let it through - client-side will handle auth
+    return NextResponse.next();
+    
+    // Alternative: redirect (commented out to allow mobile localStorage auth to work)
+    // const signInUrl = new URL('/auth/sign-in', req.url);
+    // signInUrl.searchParams.set('redirect', req.nextUrl.pathname + req.nextUrl.search);
+    // return NextResponse.redirect(signInUrl);
   }
 
   const user = await fetchUserFromToken(accessToken);

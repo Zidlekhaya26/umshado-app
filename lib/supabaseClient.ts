@@ -25,18 +25,50 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Helper function to set auth cookies
 function setAuthCookies(accessToken: string, refreshToken: string) {
-  const maxAge = 60 * 60 * 24 * 7; // 7 days
-  const secure = window.location.protocol === 'https:';
-  const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${secure ? '; secure' : ''}`;
-  
-  document.cookie = `sb-access-token=${accessToken}; ${cookieOptions}`;
-  document.cookie = `sb-refresh-token=${refreshToken}; ${cookieOptions}`;
+  try {
+    const maxAge = 60 * 60 * 24 * 7; // 7 days
+    const isSecure = typeof window !== 'undefined' && window.location.protocol === 'https:';
+    
+    // For mobile: on HTTP, omit SameSite to allow default browser behavior
+    // On HTTPS, use SameSite=Lax with Secure for security
+    let cookieOptions: string;
+    if (isSecure) {
+      cookieOptions = `path=/; max-age=${maxAge}; samesite=lax; secure`;
+    } else {
+      // HTTP: no SameSite or Secure (for local dev on mobile)
+      cookieOptions = `path=/; max-age=${maxAge}`;
+    }
+    
+    // Set multiple cookie names for compatibility with different scenarios
+    document.cookie = `sb-access-token=${accessToken}; ${cookieOptions}`;
+    document.cookie = `sb-refresh-token=${refreshToken}; ${cookieOptions}`;
+    document.cookie = `supabase.auth.token=${accessToken}; ${cookieOptions}`;
+    
+    // Store in localStorage as backup (primary storage for mobile)
+    try {
+      localStorage.setItem('sb-access-token', accessToken);
+      localStorage.setItem('sb-refresh-token', refreshToken);
+    } catch (e) {
+      // Ignore localStorage errors (might be disabled)
+    }
+  } catch (error) {
+    console.warn('[supabaseClient] Failed to set auth cookies:', error);
+  }
 }
 
 // Helper function to clear auth cookies
 function clearAuthCookies() {
   document.cookie = 'sb-access-token=; path=/; max-age=0';
   document.cookie = 'sb-refresh-token=; path=/; max-age=0';
+  document.cookie = 'supabase.auth.token=; path=/; max-age=0';
+  
+  // Also clear localStorage
+  try {
+    localStorage.removeItem('sb-access-token');
+    localStorage.removeItem('sb-refresh-token');
+  } catch (e) {
+    // Ignore
+  }
 }
 
 // Sync auth state to cookies whenever it changes (for middleware compatibility)
