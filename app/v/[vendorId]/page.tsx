@@ -2,13 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import VendorPublicClient from './VendorPublicClient';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY as string;
-// Use service role client to bypass RLS for reading published vendors
-const supabase = createClient(supabaseUrl, supabaseServiceRole);
-
 export default async function VendorPublicPage({ params }: { params: { vendorId: string } }) {
   const { vendorId } = await params;
+
+  // Create Supabase client at request time with service role to bypass RLS
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabase = createClient(supabaseUrl, supabaseServiceRole);
 
   // Fetch vendor data from vendors table (only published vendors)
   const { data: vendorData, error: vendorError } = await supabase
@@ -83,6 +83,12 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
 // Only include open graph image if it's an absolute https URL
 export async function generateMetadata({ params }: { params: { vendorId: string } }) {
   const { vendorId } = await params;
+  
+  // Create Supabase client at request time
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const supabase = createClient(supabaseUrl, supabaseServiceRole);
+  
   try {
     const { data: v } = await supabase
       .from('vendors')
