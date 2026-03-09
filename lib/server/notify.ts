@@ -1,8 +1,10 @@
 import { createServiceClient } from '@/lib/supabaseServer';
+import { sendWebPush, type PushSubscription } from './webpush';
 
 /**
  * Server-side notification creator — single source of truth.
  * Uses SUPABASE_SERVICE_ROLE_KEY so it bypasses RLS.
+ * Also fires Web Push to any registered browser subscriptions.
  *
  * NEVER import this file from a 'use client' component.
  */
@@ -17,20 +19,20 @@ export interface NotifyPayload {
 }
 
 /**
- * Insert one notification per userId into public.notifications.
- * Silently skips empty userIds. Logs errors but never throws
- * (notifications should never break a primary flow).
+ * Insert one notification per userId into public.notifications,
+ * then fire Web Push to all registered subscriptions for those users.
+ * Silently skips empty userIds. Logs errors but never throws.
  */
 export async function notifyUsers(payload: NotifyPayload): Promise<void> {
   const { userIds, type, title, body, link, meta } = payload;
 
-  // De-duplicate and filter empties
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return;
 
   try {
     const supabase = createServiceClient();
 
+    // 1. Insert in-app notifications
     const rows = ids.map((uid) => ({
       user_id: uid,
       type,
@@ -42,9 +44,51 @@ export async function notifyUsers(payload: NotifyPayload): Promise<void> {
     }));
 
     const { error } = await supabase.from('notifications').insert(rows);
-
     if (error) {
       console.error('[notify] Failed to insert notifications:', error);
+    }
+
+    // 2. Fire Web Push to all subscriptions for these users (fire-and-forget)
+    try {
+      const { data: subs } = await supabase
+        .from('push_subscriptions')
+        .select('endpoint, p256dh, auth')
+        .in('user_id', ids);
+
+      if (subs && subs.length > 0) {
+        const pushPayload = {
+          title,
+          body,
+          icon: '/logo-icon.png',
+          badge: '/logo-icon.png',
+          tag: type,
+          url: link || '/',
+          data: { link, type, ...(meta || {}) },
+        };
+
+        const results = await Promise.allSettled(
+          subs.map((sub: any) => {
+            const subscription: PushSubscription = {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            };
+            return sendWebPush(subscription, pushPayload);
+          })
+        );
+
+        // Clean up expired / invalid subscriptions (410 Gone = unsubscribed)
+        const expiredEndpoints: string[] = [];
+        results.forEach((result, i) => {
+          if (result.status === 'fulfilled' && result.value.status === 410) {
+            expiredEndpoints.push(subs[i].endpoint);
+          }
+        });
+        if (expiredEndpoints.length > 0) {
+          await supabase.from('push_subscriptions').delete().in('endpoint', expiredEndpoints);
+        }
+      }
+    } catch (pushErr) {
+      console.error('[notify] Web push error:', pushErr);
     }
   } catch (err) {
     console.error('[notify] Unexpected error:', err);
@@ -52,9 +96,8 @@ export async function notifyUsers(payload: NotifyPayload): Promise<void> {
 }
 
 /**
- * Anti-spam check for message notifications.
- * Returns true if we should SKIP sending the notification
- * (i.e. one was already sent within the cooldown window).
+ * Anti-spam: returns true if we should SKIP sending the notification
+ * (one was already sent within the cooldown window for this thread).
  */
 export async function shouldThrottleMessageNotification(
   receiverUserId: string,
@@ -63,7 +106,6 @@ export async function shouldThrottleMessageNotification(
 ): Promise<boolean> {
   try {
     const supabase = createServiceClient();
-
     const since = new Date(Date.now() - cooldownSeconds * 1000).toISOString();
 
     const { data, error } = await supabase
@@ -76,13 +118,10 @@ export async function shouldThrottleMessageNotification(
 
     if (error) {
       console.error('[notify] throttle check error:', error);
-      return false; // fail open — send the notification
+      return false;
     }
 
-    // Also check meta for the specific threadId
-    // Since we store threadId in meta, let's do a secondary filter
     if (data && data.length > 0) {
-      // There's a recent message notification — check if it's for the same thread
       const { data: exactMatch } = await supabase
         .from('notifications')
         .select('id')
@@ -91,7 +130,6 @@ export async function shouldThrottleMessageNotification(
         .gte('created_at', since)
         .contains('meta', { threadId })
         .limit(1);
-
       return (exactMatch?.length ?? 0) > 0;
     }
 
@@ -101,3 +139,4 @@ export async function shouldThrottleMessageNotification(
     return false;
   }
 }
+

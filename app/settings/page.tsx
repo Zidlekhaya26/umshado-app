@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import PushNotificationsToggle from '@/components/PushNotificationsToggle';
 
 function SettingsContent() {
   const router = useRouter();
@@ -493,6 +494,9 @@ function SettingsContent() {
                   Currently in-app only. Triggers: quote status changes, new messages, vendor publish approvals.
                 </p>
               </div>
+
+              {/* Push Notifications Toggle */}
+              <PushNotificationsToggle />
 
               {/* Dark Mode Toggle */}
               <div className="px-4 py-4 flex items-center justify-between">

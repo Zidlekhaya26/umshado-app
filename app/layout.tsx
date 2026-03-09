@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono } from "next/font/google";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthRoleProvider } from "./providers/AuthRoleProvider";
 import { CurrencyProvider } from "./providers/CurrencyProvider";
@@ -8,20 +7,11 @@ import { ToastProvider } from '@/components/ui/ToastProvider';
 import CurrencySelector from '@/components/CurrencySelector';
 import FullscreenPrompt from '@/components/FullscreenPrompt';
 import RoleGate from "@/components/RoleGate";
+import PushPermissionPrompt from '@/components/PushPermissionPrompt';
 
-const playfair = Playfair_Display({
-  variable: "--font-display",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  weight: ["400","600","700"],
-  style: ["normal","italic"],
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["300","400","500","600","700"],
-  display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -32,7 +22,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "uMshado",
   description: "Plan your dream wedding with uMshado",
-  themeColor: '#F7F0EA',
   icons: {
     apple: '/apple-touch-icon.png',
   }
@@ -43,6 +32,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  themeColor: '#F7F0EA',
 };
 
 export default function RootLayout({
@@ -64,7 +54,7 @@ export default function RootLayout({
         <link rel="icon" href="/logo-icon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className={`${playfair.variable} ${dmSans.variable} ${geistMono.variable} antialiased bg-[#faf7f2]`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         {/* ✅ No centering, no max-width here */}
         <AuthRoleProvider>
           <CurrencyProvider>
@@ -78,6 +68,7 @@ export default function RootLayout({
               </header>
               <RoleGate>
                 <div className="min-h-screen w-full">{children}</div>
+                <PushPermissionPrompt />
               </RoleGate>
             </div>
             </ToastProvider>
