@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import Link from 'next/link';
 import { trackVendorEvent } from '@/lib/analytics';
 import { getVendorSelectedServices, getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 interface VendorPackage {
   id: string;
@@ -40,6 +41,7 @@ interface AddOn {
 function QuoteSummaryContent() {
   const router = useRouter();
   const { format } = useCurrency();
+  const { role } = useAuthRole();
   const searchParams = useSearchParams();
   const vendorId = searchParams.get('vendorId');
   const packageId = searchParams.get('packageId');
@@ -61,12 +63,20 @@ function QuoteSummaryContent() {
 
   useEffect(() => {
     loadData();
-  }, [vendorId, packageId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vendorId, packageId, role]);
 
   const loadData = async () => {
     if (!vendorId || !packageId) {
       setError('Missing vendor or package ID');
       setLoading(false);
+      return;
+    }
+
+    // Block vendors from requesting quotes from other vendors
+    if (role === 'vendor') {
+      alert('Vendors cannot request quotes from other vendors. Only couples can request quotes for their wedding.');
+      router.replace('/marketplace');
       return;
     }
 

@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { trackVendorEvent } from '@/lib/analytics';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 /* ------------------------------------------------------------------ */
 /*  Vendor type ΓÇô minimal fields from the vendors table                */
@@ -31,6 +32,7 @@ const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0
 function StartChatContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { role } = useAuthRole();
   const vendorId = searchParams.get('vendorId');            // vendors.id (= auth uid of vendor)
   const prefillMessage = searchParams.get('message') || '';
 
@@ -64,7 +66,14 @@ function StartChatContent() {
         return;
       }
 
-      // 3. Look up vendor by id (vendors.id = auth user id)
+      // 3. Block vendors from messaging other vendors
+      if (role === 'vendor') {
+        alert('Vendors cannot message other vendors. Only couples can request quotes and start conversations with vendors.');
+        router.replace('/marketplace');
+        return;
+      }
+
+      // 4. Look up vendor by id (vendors.id = auth user id)
       const { data, error } = await supabase
         .from('vendors')
         .select('id, business_name, category, location')
@@ -85,7 +94,7 @@ function StartChatContent() {
         location: data.location || '',
       });
 
-      // 4. If a conversation already exists, skip straight to it
+      // 5. If a conversation already exists, skip straight to it
       //    (unless user has a prefilled message they want to compose)
       if (!prefillMessage) {
         const { data: existing } = await supabase
@@ -103,7 +112,7 @@ function StartChatContent() {
 
       setVendorLoading(false);
     })();
-  }, [vendorId]);
+  }, [vendorId, role, router, prefillMessage]);
 
   /* ΓöÇΓöÇ Attachment helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleAddAttachment = (files: FileList | null) => {
