@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -25,6 +25,8 @@ interface Message {
   message_text: string;
   created_at: string;
   attachments?: MessageAttachment[];
+  // local-only flag to avoid re-appending from realtime
+  _optimistic?: boolean;
 }
 
 interface Conversation {
@@ -42,7 +44,6 @@ interface Quote {
   couple_id: string;
   vendor_id: string;
   created_at: string;
-  // Optional fields pulled from the quotes row for UI
   add_ons?: any[];
   package_name?: string | null;
   base_from_price?: number | null;
@@ -83,6 +84,17 @@ export default function ChatThread() {
   const [logoOpen, setLogoOpen] = useState(false);
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
+
+  // Typing indicator and presence
+  const [otherUserTyping, setOtherUserTyping] = useState(false);
+  const [otherUserOnline, setOtherUserOnline] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Smart scroll
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const userScrolledUpRef = useRef(false); // Ref to avoid stale closures in realtime subscription
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
 
   // Quote management
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -238,7 +250,7 @@ export default function ChatThread() {
 
     loadInitial();
 
-    // Realtime: append new messages only
+    // Realtime: append new messages only (skip if _optimistic flag is set to avoid duplicates)
     const channel = supabase
       .channel(`conversation:${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, async (payload) => {
@@ -250,13 +262,141 @@ export default function ChatThread() {
               return { ...att, signed_url: s?.signedUrl };
             })
           );
-          setMessages((prev) => [...prev, { ...(payload.new as Message), attachments: signed }]);
+          
+          const newMsg = { ...(payload.new as Message), attachments: signed };
+          
+          setMessages((prev) => {
+            // Avoid duplicate if we already have this message with exact same ID
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            
+            // Check if this is a real message matching a recent optimistic message
+            // (same sender, text, and within 10 seconds - indicates optimistic -> real transition)
+            const matchingOptimistic = prev.find(m => 
+              m._optimistic && 
+              m.sender_id === newMsg.sender_id &&
+              m.message_text === newMsg.message_text &&
+              Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 10000
+            );
+            
+            if (matchingOptimistic) {
+              // Replace the optimistic message with the real one
+              return prev.map(m => m.id === matchingOptimistic.id ? newMsg : m);
+            }
+            
+            // If user scrolled up, increment badge counter (use ref to avoid stale closure)
+            if (userScrolledUpRef.current && newMsg.sender_id !== currentUserId) {
+              setNewMessagesCount(c => c + 1);
+            }
+            
+            return [...prev, newMsg];
+          });
         } catch (e) { console.warn('Realtime message handling error', e); }
       })
       .subscribe();
 
     return () => { mounted = false; supabase.removeChannel(channel); };
-  }, [conversationId]);
+  }, [conversationId, currentUserId]); // Removed userScrolledUp from deps to prevent re-subscription on scroll
+
+  /* ── Presence channel for typing indicator and online status ─── */
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+
+    const presenceChannel = supabase.channel(`presence:${conversationId}`, {
+      config: { presence: { key: currentUserId } },
+    });
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const otherUsers = Object.keys(state).filter(k => k !== currentUserId);
+        setOtherUserOnline(otherUsers.length > 0);
+      })
+      .on('presence', { event: 'join' }, ({ key }) => {
+        if (key !== currentUserId) setOtherUserOnline(true);
+      })
+      .on('presence', { event: 'leave' }, ({ key }) => {
+        if (key !== currentUserId) {
+          const state = presenceChannel.presenceState();
+          const otherUsers = Object.keys(state).filter(k => k !== currentUserId);
+          setOtherUserOnline(otherUsers.length > 0);
+          setOtherUserTyping(false);
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ online_at: new Date().toISOString() });
+        }
+      });
+
+    return () => { supabase.removeChannel(presenceChannel); };
+  }, [conversationId, currentUserId]);
+
+  /* ── Broadcast channel for typing events ───────────────────── */
+  useEffect(() => {
+    if (!conversationId || !currentUserId) return;
+
+    const typingChannel = supabase.channel(`typing:${conversationId}`);
+
+    typingChannel
+      .on('broadcast', { event: 'typing' }, (payload: any) => {
+        if (payload.payload?.userId !== currentUserId) {
+          setOtherUserTyping(true);
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+          typingTimeoutRef.current = setTimeout(() => setOtherUserTyping(false), 3000);
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(typingChannel); };
+  }, [conversationId, currentUserId]);
+
+  /* ── Broadcast typing events when user types ────────────────── */
+  const broadcastTyping = useCallback(() => {
+    if (!conversationId || !currentUserId) return;
+    supabase.channel(`typing:${conversationId}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { userId: currentUserId },
+    });
+  }, [conversationId, currentUserId]);
+
+  /* ── Smart auto-scroll: only scroll if near bottom or own message ── */
+  useEffect(() => {
+    if (messages.length === 0) return;
+    
+    const container = messagesContainerRef.current;
+    if (!container) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 200;
+    const lastMessage = messages[messages.length - 1];
+    const isMyMessage = lastMessage?.sender_id === currentUserId;
+    
+    // Auto-scroll if: near bottom OR it's my own message
+    if (isNearBottom || isMyMessage) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      setUserScrolledUp(false);
+      userScrolledUpRef.current = false;
+      setNewMessagesCount(0);
+    }
+  }, [messages, currentUserId]);
+
+  /* ── Track scroll position ──────────────────────────────────── */
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    const scrolledUp = !isNearBottom;
+    setUserScrolledUp(scrolledUp);
+    userScrolledUpRef.current = scrolledUp; // Keep ref in sync
+    
+    if (isNearBottom) {
+      setNewMessagesCount(0);
+    }
+  }, []);
 
   /* ── Realtime: listen for quote updates for this conversation/thread ── */
   useEffect(() => {
@@ -288,17 +428,30 @@ export default function ChatThread() {
     return () => { supabase.removeChannel(channel); };
   }, [conversationId]);
 
-  /* ── Auto-scroll to bottom ─────────────────────────────────── */
-  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
   /* ── Send message (via API route for server-side notifications) ── */
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !conversationId || isSending) return;
 
     setIsSending(true);
+    const tempId = `optimistic-${Date.now()}`;
+    const messageText = newMessage.trim();
+    
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) { alert('You must be signed in to send messages.'); return; }
+
+      // Optimistic message: show immediately with _optimistic flag
+      const optimisticMessage: Message = {
+        id: tempId,
+        sender_id: session.user.id,
+        message_text: messageText,
+        created_at: new Date().toISOString(),
+        attachments: [],
+        _optimistic: true,
+      };
+      
+      setMessages((prev) => [...prev, optimisticMessage]);
+      setNewMessage('');
 
       const res = await fetch('/api/messages/send', {
         method: 'POST',
@@ -308,32 +461,34 @@ export default function ChatThread() {
         },
         body: JSON.stringify({
           conversationId,
-          messageText: newMessage.trim(),
+          messageText,
         }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        setNewMessage(messageText);
         alert('Failed to send message: ' + (err.error || 'Unknown error'));
         return;
       }
 
-      // Append optimistically so the sender sees the message immediately
+      // Replace optimistic message with real one
       const json = await res.json().catch(() => ({ success: true }));
-      const createdAt = json.createdAt || new Date().toISOString();
-      const messageId = json.messageId || `local-${Date.now()}`;
-
-      setMessages((prev) => ([...prev, {
-        id: messageId,
-        sender_id: session.user.id,
-        message_text: newMessage.trim(),
-        created_at: createdAt,
-        attachments: [],
-      }]));
-
-      setNewMessage('');
+      const realMessageId = json.messageId;
+      
+      if (realMessageId) {
+        setMessages(prev => prev.map(m => 
+          m.id === tempId 
+            ? { ...m, id: realMessageId, _optimistic: false }
+            : m
+        ));
+      }
     } catch (err) {
       console.error('Unexpected error sending message:', err);
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      setNewMessage(messageText);
       alert('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
@@ -621,7 +776,7 @@ export default function ChatThread() {
             </button>
 
             {/* Avatar */}
-            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center relative">
               {otherPartyLogo ? (
                 <button type="button" onClick={() => { setLogoSrc(otherPartyLogo ?? null); setLogoAlt(otherPartyName || 'Logo'); setLogoOpen(true); }} className="w-full h-full flex items-center justify-center" aria-label="View logo">
                   <img src={otherPartyLogo} alt="" className="w-full h-full object-contain p-2" />
@@ -631,18 +786,28 @@ export default function ChatThread() {
                   {otherPartyName.charAt(0).toUpperCase() || '?'}
                 </span>
               )}
+              {/* Online indicator */}
+              {otherUserOnline && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+              )}
             </div>
             <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
 
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold text-gray-900 truncate">{otherPartyName || 'Loading…'}</h1>
-              <p className="text-xs text-gray-500">{otherPartyLocation ? otherPartyLocation : ''}</p>
+              <p className="text-xs text-gray-500">
+                {otherUserTyping ? 'typing...' : otherUserOnline ? 'online' : otherPartyLocation ? otherPartyLocation : ''}
+              </p>
             </div>
           </div>
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50">
+        <div 
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50 relative"
+        >
           {messages.length === 0 && (
             <div className="text-center py-12 text-sm text-gray-500">
               <p>No messages yet. Say hello! 👋</p>
@@ -725,6 +890,23 @@ export default function ChatThread() {
             );
           })}
           <div ref={messagesEndRef} />
+          
+          {/* New messages badge */}
+          {userScrolledUp && newMessagesCount > 0 && (
+            <div className="sticky bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex justify-center">
+              <button
+                onClick={() => {
+                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  setUserScrolledUp(false);
+                  userScrolledUpRef.current = false;
+                  setNewMessagesCount(0);
+                }}
+                className="bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
+              >
+                {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''} ↓
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Upload Error */}
@@ -814,7 +996,10 @@ export default function ChatThread() {
           </button>
           <textarea
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e) => {
+              setNewMessage(e.target.value);
+              broadcastTyping();
+            }}
             onKeyDown={handleKeyPress}
             className="flex-1 resize-none rounded-xl border-2 border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             rows={1}

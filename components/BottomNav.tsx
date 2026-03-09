@@ -9,8 +9,10 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 export default function BottomNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const { user } = useAuthRole();
 
+  // Track unread notifications
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
 
@@ -27,6 +29,52 @@ export default function BottomNav() {
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         console.error('Error loading unread notifications:', err);
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, [user]);
+
+  // Track unread messages
+  useEffect(() => {
+    if (!user) { setUnreadMessages(0); return; }
+
+    let mounted = true;
+    (async () => {
+      try {
+        // Get conversations where user is either couple or vendor
+        const { data: convs } = await supabase
+          .from('conversations')
+          .select('id, couple_id, vendor_id, last_message_at, last_read_at');
+
+        if (!convs || !mounted) return;
+
+        // Filter conversations where user is participant and has unread messages
+        let totalUnread = 0;
+        for (const conv of convs) {
+          const isParticipant = conv.couple_id === user.id || conv.vendor_id === user.id;
+          if (!isParticipant) continue;
+
+          const lastMsg = conv.last_message_at ? new Date(conv.last_message_at) : null;
+          const lastRead = conv.last_read_at ? new Date(conv.last_read_at) : null;
+
+          if (lastMsg && (!lastRead || lastMsg > lastRead)) {
+            // Count unread messages in this conversation
+            const { count } = await supabase
+              .from('messages')
+              .select('*', { count: 'exact', head: true })
+              .eq('conversation_id', conv.id)
+              .neq('sender_id', user.id)
+              .gt('created_at', lastRead?.toISOString() || '1970-01-01');
+
+            totalUnread += count || 0;
+          }
+        }
+
+        if (mounted) setUnreadMessages(totalUnread);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        console.error('Error loading unread messages:', err);
       }
     })();
 
@@ -62,21 +110,27 @@ export default function BottomNav() {
       )
     },
     {
+      name: 'Messages',
+      href: '/messages',
+      icon: (active: boolean) => (
+        <div className="relative">
+          <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          {unreadMessages > 0 && (
+            <span style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}>
+              {unreadMessages > 99 ? '99+' : unreadMessages}
+            </span>
+          )}
+        </div>
+      )
+    },
+    {
       name: 'Community',
       href: '/live',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      )
-    },
-    {
-      name: 'Settings',
-      href: '/settings',
-      icon: (active: boolean) => (
-        <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       )
     },
