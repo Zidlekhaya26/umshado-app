@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -46,6 +47,39 @@ interface Metrics {
   quotesReceived: number;
 }
 
+interface DayStat {
+  day: string;
+  profile_views: number;
+  quotes: number;
+  messages: number;
+  saves: number;
+}
+
+/* ── Mini sparkline chart ────────────────────────────────────── */
+function Sparkline({ data, dataKey, color }: { data: any[]; dataKey: string; color: string }) {
+  return (
+    <ResponsiveContainer width="100%" height={40}>
+      <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id={'sg_' + dataKey} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={color} stopOpacity={0.25} />
+            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <Area
+          type="monotone"
+          dataKey={dataKey}
+          stroke={color}
+          strokeWidth={1.5}
+          fill={'url(#sg_' + dataKey + ')'}
+          dot={false}
+        />
+        <Tooltip contentStyle={{ display: 'none' }} />
+      </AreaChart>
+    </ResponsiveContainer>
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
@@ -65,6 +99,7 @@ export default function VendorDashboard() {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
+  const [dailyStats, setDailyStats] = useState<DayStat[]>([]);
   const { format } = useCurrency();
 
   useEffect(() => {
@@ -151,6 +186,33 @@ export default function VendorDashboard() {
       setNegotiations(negWithNames);
 
       setRecentNotifications((notifsRes.data as any[]) || []);
+
+      // Load 7-day stats for sparklines
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(d.getDate() - (6 - i));
+        return d.toISOString().slice(0, 10);
+      });
+
+      const statsMap: Record<string, DayStat> = {};
+      const { data: statsRows } = await supabase
+        .from('vendor_stats_daily')
+        .select('day,profile_views,saves,quotes,messages')
+        .eq('vendor_id', vendorId)
+        .gte('day', last7Days[0]);
+
+      (statsRows || []).forEach((row: any) => {
+        statsMap[row.day] = {
+          day: row.day,
+          profile_views: row.profile_views || 0,
+          saves: row.saves || 0,
+          quotes: row.quotes || 0,
+          messages: row.messages || 0,
+        };
+      });
+
+      // Fill in missing days with zeros
+      setDailyStats(last7Days.map(day => statsMap[day] || { day, profile_views: 0, quotes: 0, messages: 0, saves: 0 }));
     } catch (err) {
       console.error('Error loading dashboard:', err);
     } finally {
@@ -225,28 +287,32 @@ export default function VendorDashboard() {
       value: metrics.profileViews,
       sub: metrics.profileViews === 0 ? 'Coming soon' : undefined,
       icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>),
-      color: 'blue',
+      color: '#3b82f6',
+      sparkKey: 'profile_views',
     },
     {
       label: 'Saved by Couples',
       value: metrics.savedByCouples,
       sub: metrics.savedByCouples === 0 ? 'Coming soon' : undefined,
       icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>),
-      color: 'pink',
+      color: '#ec4899',
+      sparkKey: 'saves',
     },
     {
       label: 'Chats Started',
       value: metrics.chatsStarted,
       sub: metrics.chatsStarted === 0 ? 'No chats yet' : undefined,
       icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>),
-      color: 'green',
+      color: '#10b981',
+      sparkKey: 'messages',
     },
     {
       label: 'Quotes Received',
       value: metrics.quotesReceived,
       sub: metrics.quotesReceived === 0 ? 'No quotes yet' : undefined,
       icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>),
-      color: 'purple',
+      color: '#8b5cf6',
+      sparkKey: 'quotes',
     },
   ];
 
@@ -412,22 +478,32 @@ export default function VendorDashboard() {
             </div>
           </div>
 
-          {/* ΓöÇΓöÇ Stats Cards (moved up) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+          {/* ΓöÇΓöÇ Stats Cards with Sparklines (moved up) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
           <div>
-            <h2 className="text-base font-semibold text-gray-900 mb-3">Your Performance</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-gray-900">Your Performance</h2>
+              <Link href="/vendor/insights" className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-[#b8973e] to-[#8a6010] text-white text-xs font-semibold hover:brightness-110 transition">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                View Insights
+              </Link>
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {stats.map((stat, i) => (
-                <div key={i} className="bg-white rounded-xl border border-gray-100 p-6 space-y-2 hover:shadow-md transition-shadow flex items-start">
-                  <div className="flex-shrink-0 mr-3">
-                    <div className="w-12 h-12 rounded-full bg-[#F7F0EA] text-[#7B1E3A] flex items-center justify-center border border-[#fdeee8]">
+                <div key={i} className="bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-[#F7F0EA] text-[#7B1E3A] flex items-center justify-center border border-[#fdeee8] flex-shrink-0">
                       {stat.icon}
                     </div>
+                    <div className="min-w-0">
+                      <p className="text-2xl font-bold text-gray-900">{stat.value ?? 0}</p>
+                      <p className="text-xs font-semibold text-gray-600">{stat.label}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-2xl font-bold text-gray-900">{stat.value ?? 0}</p>
-                    <p className="text-xs font-semibold text-gray-600">{stat.label}</p>
-                    {stat.sub && <p className="text-xs text-gray-400 mt-1">{stat.sub}</p>}
-                  </div>
+                  {stat.sub ? (
+                    <p className="text-xs text-gray-400 italic pb-2">{stat.sub}</p>
+                  ) : dailyStats.length > 0 ? (
+                    <Sparkline data={dailyStats} dataKey={stat.sparkKey} color={stat.color} />
+                  ) : null}
                 </div>
               ))}
             </div>
