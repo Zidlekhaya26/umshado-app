@@ -310,7 +310,7 @@ export default function VendorProfile() {
         const u = user ?? null;
         if (!u || !vendorId) { setIsOwner(false); setIsVendorRole(false); return; }
         // Use global role
-        if ((role ?? 'couple') === 'vendor') setIsVendorRole(true);
+        setIsVendorRole((role ?? 'couple') === 'vendor');
         // Check if vendorId matches user.id directly OR via user_id column
         if (vendorId === u.id) { setIsOwner(true); return; }
         const { data } = await supabase.from('vendors').select('user_id').eq('id', vendorId).maybeSingle();
