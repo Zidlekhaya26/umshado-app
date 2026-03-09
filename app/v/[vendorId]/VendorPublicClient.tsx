@@ -181,15 +181,15 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl font-bold text-white mb-1" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{vendor.business_name}</h1>
-                <p className="text-sm text-white mb-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>{catIcon} {vendor.category}</p>
+                <h1 className="text-2xl font-bold mb-1" style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>{vendor.business_name}</h1>
+                <p className="text-sm mb-2" style={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{catIcon} {vendor.category}</p>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <div className="flex items-center gap-1.5 text-white">
+                  <div className="flex items-center gap-1.5" style={{ color: '#ffffff' }}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <span className="text-sm">{vendor.location}</span>
+                    <span className="text-sm" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>{vendor.location}</span>
                   </div>
                   {vendor.verified && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-500 text-white text-xs font-semibold rounded-md">
