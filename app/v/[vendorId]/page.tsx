@@ -84,24 +84,21 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
 export async function generateMetadata({ params }: { params: { vendorId: string } }) {
   const { vendorId } = await params;
   try {
-    const { data: mv } = await supabase
-      .from('marketplace_vendors')
-      .select('vendor_id, business_name, logo_url')
-      .eq('vendor_id', vendorId)
+    const { data: v } = await supabase
+      .from('vendors')
+      .select('business_name, logo_url')
+      .eq('id', vendorId)
+      .eq('is_published', true)
       .maybeSingle();
 
-    let logoUrl = mv?.logo_url || null;
+    if (!v) return { title: 'Vendor' };
 
-    if (!logoUrl) {
-      const { data: v } = await supabase.from('vendors').select('logo_url').eq('id', vendorId).maybeSingle();
-      logoUrl = v?.logo_url || null;
-    }
-
+    const logoUrl = v.logo_url || null;
     const images = [] as { url: string }[];
     if (logoUrl && String(logoUrl).startsWith('https://')) images.push({ url: logoUrl });
 
     return {
-      title: mv?.business_name || 'Vendor',
+      title: v.business_name || 'Vendor',
       openGraph: { images },
     };
   } catch (err) {
