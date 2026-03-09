@@ -133,14 +133,22 @@ export async function getPostAuthRedirect(
 
 /**
  * Set auth cookies so middleware can detect the session.
+ * Note: The supabaseClient now handles this automatically via onAuthStateChange,
+ * but we keep this function for backward compatibility and explicit cookie setting.
  */
 export function setAuthCookies(session: any) {
   try {
+    if (typeof window === 'undefined') return; // Server-side guard
+    
     if (session?.access_token) {
-      document.cookie = `sb-access-token=${session.access_token}; path=/`;
-    }
-    if (session?.refresh_token) {
-      document.cookie = `sb-refresh-token=${session.refresh_token}; path=/`;
+      const maxAge = 60 * 60 * 24 * 7; // 7 days
+      const secure = window.location.protocol === 'https:';
+      const cookieOptions = `path=/; max-age=${maxAge}; samesite=lax${secure ? '; secure' : ''}`;
+      
+      document.cookie = `sb-access-token=${session.access_token}; ${cookieOptions}`;
+      if (session.refresh_token) {
+        document.cookie = `sb-refresh-token=${session.refresh_token}; ${cookieOptions}`;
+      }
     }
   } catch (err) {
     console.debug('Could not set auth cookies:', err);

@@ -2,20 +2,26 @@
 
 import { useState, useEffect } from 'react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 const STORAGE_KEY = 'umshado_push_prompted';
 
 /**
  * Shows a bottom-sheet permission prompt once per browser session.
  * Disappears permanently once the user either grants or dismisses.
+ * Only shows for authenticated users.
  */
 export default function PushPermissionPrompt() {
+  const { user, loading: authLoading } = useAuthRole();
   const { permission, isSubscribed, isLoading, subscribe } = usePushNotifications();
   const [visible, setVisible] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
   const [subscribeSuccess, setSubscribeSuccess] = useState(false);
 
   useEffect(() => {
+    // Don't show if auth is still loading or user is not authenticated
+    if (authLoading || !user) return;
+
     // Only show if: browser supports it, permission not yet decided, not already subscribed, not already prompted
     if (
       permission === 'unsupported' ||
@@ -34,7 +40,7 @@ export default function PushPermissionPrompt() {
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [permission, isSubscribed]);
+  }, [permission, isSubscribed, authLoading, user]);
 
   const handleEnable = async () => {
     const success = await subscribe();
