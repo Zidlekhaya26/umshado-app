@@ -68,5 +68,3 @@ export default async function RSVPPage({ params, searchParams }: Props) {
     />
   );
 }
-  );
-}
