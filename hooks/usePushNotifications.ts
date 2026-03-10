@@ -78,6 +78,11 @@ export function usePushNotifications(): UsePushNotifications {
       const token = await getAuthToken();
       if (!token) return false;
 
+      // Keys must be base64url (not standard base64) for web-push compatibility
+      const toBase64Url = (key: ArrayBuffer): string =>
+        btoa(String.fromCharCode(...new Uint8Array(key)))
+          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: {
@@ -87,8 +92,8 @@ export function usePushNotifications(): UsePushNotifications {
         body: JSON.stringify({
           endpoint: subscription.endpoint,
           keys: {
-            p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))),
-            auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))),
+            p256dh: toBase64Url(subscription.getKey('p256dh')!),
+            auth: toBase64Url(subscription.getKey('auth')!),
           },
         }),
       });
