@@ -25,10 +25,13 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient();
   const { error } = await supabase.from('couples').update({
-    wedding_theme: body.weddingTheme ?? 'champagne',
-    gift_enabled: body.giftEnabled ?? false,
-    gift_message: body.giftMessage ?? null,
-    gift_items: body.giftItems ?? [],
+    wedding_theme:   body.weddingTheme   ?? 'champagne',
+    gift_enabled:    body.giftEnabled    ?? false,
+    gift_message:    body.giftMessage    ?? null,
+    gift_items:      body.giftItems      ?? [],
+    how_we_met:      body.howWeMet       ?? null,
+    proposal_story:  body.proposalStory  ?? null,
+    couple_message:  body.coupleMessage  ?? null,
   }).eq('id', user.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

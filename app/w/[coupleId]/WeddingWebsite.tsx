@@ -11,10 +11,10 @@ export const THEMES = {
     bg: '#0e0c07',
     bgMid: '#1a1508',
     accent: '#c9a84c',
-    accentLight: 'rgba(201,168,76,0.15)',
-    accentBorder: 'rgba(201,168,76,0.25)',
+    accentLight: 'rgba(201,168,76,0.12)',
+    accentBorder: 'rgba(201,168,76,0.22)',
     text: '#f5ead8',
-    textMid: 'rgba(245,234,216,0.65)',
+    textMid: 'rgba(245,234,216,0.68)',
     textFaint: 'rgba(245,234,216,0.35)',
     card: 'rgba(255,255,255,0.04)',
     cardBorder: 'rgba(255,255,255,0.08)',
@@ -23,7 +23,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #0e0c07 0%, #1a1508 40%, #0e0c07 100%)',
     font: "'Playfair Display', Georgia, serif",
     bodyFont: "'Lora', Georgia, serif",
-    gfont: 'Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;0,500;1,400',
+    gfont: 'Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500;1,700&family=Lora:ital,wght@0,400;0,500;1,400',
+    grain: 'rgba(201,168,76,0.03)',
   },
   rose: {
     name: 'Rose & Blush',
@@ -31,10 +32,10 @@ export const THEMES = {
     bg: '#1a0810',
     bgMid: '#2a1018',
     accent: '#e8849a',
-    accentLight: 'rgba(232,132,154,0.15)',
-    accentBorder: 'rgba(232,132,154,0.28)',
+    accentLight: 'rgba(232,132,154,0.12)',
+    accentBorder: 'rgba(232,132,154,0.25)',
     text: '#fdf0f3',
-    textMid: 'rgba(253,240,243,0.65)',
+    textMid: 'rgba(253,240,243,0.68)',
     textFaint: 'rgba(253,240,243,0.35)',
     card: 'rgba(255,255,255,0.05)',
     cardBorder: 'rgba(232,132,154,0.12)',
@@ -43,7 +44,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #1a0810 0%, #2d1020 50%, #1a0810 100%)',
     font: "'Cormorant Garamond', Georgia, serif",
     bodyFont: "'EB Garamond', Georgia, serif",
-    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400',
+    grain: 'rgba(232,132,154,0.03)',
   },
   sage: {
     name: 'Sage & Ivory',
@@ -51,10 +53,10 @@ export const THEMES = {
     bg: '#06100a',
     bgMid: '#0c1c12',
     accent: '#7eb89a',
-    accentLight: 'rgba(126,184,154,0.15)',
-    accentBorder: 'rgba(126,184,154,0.28)',
+    accentLight: 'rgba(126,184,154,0.12)',
+    accentBorder: 'rgba(126,184,154,0.25)',
     text: '#f0f7f2',
-    textMid: 'rgba(240,247,242,0.65)',
+    textMid: 'rgba(240,247,242,0.68)',
     textFaint: 'rgba(240,247,242,0.35)',
     card: 'rgba(255,255,255,0.04)',
     cardBorder: 'rgba(126,184,154,0.12)',
@@ -63,7 +65,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #06100a 0%, #0f2016 50%, #06100a 100%)',
     font: "'Playfair Display', Georgia, serif",
     bodyFont: "'Lora', Georgia, serif",
-    gfont: 'Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400',
+    gfont: 'Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400',
+    grain: 'rgba(126,184,154,0.03)',
   },
   midnight: {
     name: 'Midnight Navy',
@@ -71,10 +74,10 @@ export const THEMES = {
     bg: '#040610',
     bgMid: '#080c1e',
     accent: '#7b9ef0',
-    accentLight: 'rgba(123,158,240,0.15)',
-    accentBorder: 'rgba(123,158,240,0.28)',
+    accentLight: 'rgba(123,158,240,0.12)',
+    accentBorder: 'rgba(123,158,240,0.25)',
     text: '#eef2ff',
-    textMid: 'rgba(238,242,255,0.65)',
+    textMid: 'rgba(238,242,255,0.68)',
     textFaint: 'rgba(238,242,255,0.35)',
     card: 'rgba(255,255,255,0.04)',
     cardBorder: 'rgba(123,158,240,0.12)',
@@ -83,7 +86,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #04060f 0%, #0a0e24 50%, #04060f 100%)',
     font: "'Cormorant Garamond', Georgia, serif",
     bodyFont: "'EB Garamond', Georgia, serif",
-    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    grain: 'rgba(123,158,240,0.03)',
   },
   terracotta: {
     name: 'Terracotta & Sand',
@@ -91,10 +95,10 @@ export const THEMES = {
     bg: '#120806',
     bgMid: '#1e1008',
     accent: '#d4845a',
-    accentLight: 'rgba(212,132,90,0.15)',
-    accentBorder: 'rgba(212,132,90,0.28)',
+    accentLight: 'rgba(212,132,90,0.12)',
+    accentBorder: 'rgba(212,132,90,0.25)',
     text: '#fdf3ec',
-    textMid: 'rgba(253,243,236,0.65)',
+    textMid: 'rgba(253,243,236,0.68)',
     textFaint: 'rgba(253,243,236,0.35)',
     card: 'rgba(255,255,255,0.04)',
     cardBorder: 'rgba(212,132,90,0.12)',
@@ -103,7 +107,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #120806 0%, #22100a 50%, #120806 100%)',
     font: "'Playfair Display', Georgia, serif",
     bodyFont: "'Lora', Georgia, serif",
-    gfont: 'Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400',
+    gfont: 'Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400',
+    grain: 'rgba(212,132,90,0.03)',
   },
   ivory: {
     name: 'Pure Ivory',
@@ -111,10 +116,10 @@ export const THEMES = {
     bg: '#faf8f4',
     bgMid: '#f5f0e8',
     accent: '#8b6b3d',
-    accentLight: 'rgba(139,107,61,0.1)',
-    accentBorder: 'rgba(139,107,61,0.2)',
+    accentLight: 'rgba(139,107,61,0.08)',
+    accentBorder: 'rgba(139,107,61,0.18)',
     text: '#2c1f0e',
-    textMid: 'rgba(44,31,14,0.65)',
+    textMid: 'rgba(44,31,14,0.68)',
     textFaint: 'rgba(44,31,14,0.38)',
     card: 'rgba(0,0,0,0.03)',
     cardBorder: 'rgba(139,107,61,0.15)',
@@ -123,7 +128,8 @@ export const THEMES = {
     heroBg: 'linear-gradient(160deg, #faf8f4 0%, #f0ead8 50%, #faf8f4 100%)',
     font: "'Cormorant Garamond', Georgia, serif",
     bodyFont: "'EB Garamond', Georgia, serif",
-    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    grain: 'rgba(139,107,61,0.02)',
   },
 } as const;
 
@@ -173,6 +179,10 @@ interface Props {
   schedule: ScheduleEvent[];
   wishes: WellWish[];
   moments: Moment[];
+  // New story fields
+  howWeMet: string | null;
+  proposalStory: string | null;
+  coupleMessage: string | null;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -210,140 +220,94 @@ function formatPrettyDate(dateStr: string | null) {
     year: d.getFullYear().toString(),
     weekday: d.toLocaleDateString('en-ZA', { weekday: 'long' }),
     full: d.toLocaleDateString('en-ZA', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    }),
+    short: d.toLocaleDateString('en-ZA', {
+      day: 'numeric', month: 'long', year: 'numeric',
     }),
   };
 }
 
-// ─── Countdown ────────────────────────────────────────────────────────────────
+// ─── Countdown hook ───────────────────────────────────────────────────────────
 
 function useCountdown(dateStr: string | null) {
   const [c, setC] = useState({ d: 0, h: 0, m: 0, s: 0, past: false });
-
   useEffect(() => {
     if (!dateStr) return;
     const tick = () => {
       const diff = new Date(dateStr + 'T00:00:00').getTime() - Date.now();
-      if (diff <= 0) {
-        setC((prev) => ({ ...prev, past: true }));
-        return;
-      }
-      const d = Math.floor(diff / 86400000);
-      const h = Math.floor((diff % 86400000) / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setC({ d, h, m, s, past: false });
+      if (diff <= 0) { setC(p => ({ ...p, past: true })); return; }
+      setC({
+        d: Math.floor(diff / 86400000),
+        h: Math.floor((diff % 86400000) / 3600000),
+        m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
+        past: false,
+      });
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [dateStr]);
-
   return c;
 }
 
-// ─── Fade In ──────────────────────────────────────────────────────────────────
+// ─── Scroll fade ──────────────────────────────────────────────────────────────
 
-function FadeIn({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) {
+function FadeIn({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [vis, setVis] = useState(false);
-
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) setVis(true);
-      },
-      { threshold: 0.08 }
-    );
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setVis(true); }, { threshold: 0.06 });
     obs.observe(el);
     return () => obs.disconnect();
   }, []);
-
   return (
-    <div
-      ref={ref}
-      style={{
-        opacity: vis ? 1 : 0,
-        transform: vis ? 'translateY(0)' : 'translateY(24px)',
-        transition: `opacity 0.8s ease ${delay}ms, transform 0.8s ease ${delay}ms`,
-      }}
-    >
-      {children}
+    <div ref={ref} style={{
+      opacity: vis ? 1 : 0,
+      transform: vis ? 'translateY(0)' : 'translateY(28px)',
+      transition: `opacity 0.9s cubic-bezier(.22,1,.36,1) ${delay}ms, transform 0.9s cubic-bezier(.22,1,.36,1) ${delay}ms`,
+    }}>{children}</div>
+  );
+}
+
+// ─── Ornamental divider ───────────────────────────────────────────────────────
+
+function Ornament({ color, size = 'md' }: { color: string; size?: 'sm' | 'md' }) {
+  const s = size === 'sm' ? 0.75 : 1;
+  return (
+    <div className="flex items-center justify-center gap-3 my-2" style={{ transform: `scale(${s})` }}>
+      <svg width="48" height="10" viewBox="0 0 48 10" fill="none">
+        <path d="M0 5 Q12 2 24 5 Q36 8 48 5" stroke={color} strokeWidth="0.8" opacity="0.5"/>
+      </svg>
+      <svg width="12" height="12" viewBox="0 0 12 12" fill={color} opacity="0.8">
+        <path d="M6 0L7.2 4.8L12 6L7.2 7.2L6 12L4.8 7.2L0 6L4.8 4.8Z"/>
+      </svg>
+      <svg width="48" height="10" viewBox="0 0 48 10" fill="none">
+        <path d="M0 5 Q12 8 24 5 Q36 2 48 5" stroke={color} strokeWidth="0.8" opacity="0.5"/>
+      </svg>
     </div>
   );
 }
 
-// ─── Ornamental Accent ────────────────────────────────────────────────────────
+// ─── Section heading ──────────────────────────────────────────────────────────
 
-function FloralAccent({
-  color,
-  side = 'left',
-}: {
-  color: string;
-  side?: 'left' | 'right';
-}) {
+function SectionHeading({ title, subtitle, t }: { title: string; subtitle?: string; t: any }) {
   return (
-    <svg
-      className={`absolute top-0 ${side === 'left' ? 'left-0' : 'right-0'}`}
-      width="90"
-      height="90"
-      viewBox="0 0 90 90"
-      style={{
-        opacity: 0.2,
-        transform: side === 'right' ? 'scaleX(-1)' : undefined,
-      }}
-    >
-      <path d="M14 50 Q 24 32, 40 42 T 66 44" stroke={color} strokeWidth="0.7" fill="none" />
-      <circle cx="20" cy="40" r="3" fill={color} opacity="0.4" />
-      <circle cx="40" cy="42" r="4.5" fill={color} opacity="0.25" />
-      <circle cx="58" cy="35" r="2.5" fill={color} opacity="0.55" />
-      <path d="M28 58 Q 38 44, 56 56" stroke={color} strokeWidth="0.5" fill="none" />
-    </svg>
-  );
-}
-
-// ─── Section Heading ──────────────────────────────────────────────────────────
-
-function SectionHeading({
-  title,
-  subtitle,
-  t,
-}: {
-  title: string;
-  subtitle?: string;
-  t: any;
-}) {
-  return (
-    <div className="text-center mb-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex-1 h-px" style={{ background: t.accentBorder }} />
-        <span style={{ color: t.accent, fontSize: '1rem' }}>✦</span>
-        <div className="flex-1 h-px" style={{ background: t.accentBorder }} />
-      </div>
-      <h2
-        style={{
-          fontFamily: t.font,
-          color: t.text,
-          fontSize: 'clamp(1.5rem, 5vw, 2rem)',
-          fontStyle: 'italic',
-          fontWeight: 500,
-        }}
-      >
-        {title}
-      </h2>
+    <div className="text-center mb-10">
+      <Ornament color={t.accent} size="sm" />
+      <h2 style={{
+        fontFamily: t.font,
+        color: t.text,
+        fontSize: 'clamp(1.6rem, 5vw, 2.2rem)',
+        fontStyle: 'italic',
+        fontWeight: 400,
+        letterSpacing: '-0.01em',
+        marginTop: '0.5rem',
+      }}>{title}</h2>
       {subtitle && (
-        <p className="text-sm mt-2" style={{ color: t.textFaint }}>
+        <p className="mt-2 text-sm" style={{ color: t.textFaint, fontFamily: t.bodyFont, letterSpacing: '0.02em' }}>
           {subtitle}
         </p>
       )}
@@ -351,28 +315,15 @@ function SectionHeading({
   );
 }
 
-// ─── Wish Form ────────────────────────────────────────────────────────────────
+// ─── Wish form ────────────────────────────────────────────────────────────────
 
-function WishForm({
-  coupleId,
-  t,
-  onAdded,
-}: {
-  coupleId: string;
-  t: any;
-  onAdded: (w: WellWish) => void;
-}) {
+function WishForm({ coupleId, t, onAdded }: { coupleId: string; t: any; onAdded: (w: WellWish) => void }) {
   const [name, setName] = useState('');
   const [msg, setMsg] = useState('');
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    try {
-      const n = localStorage.getItem('umshado_guest_name');
-      if (n) setName(n);
-    } catch {}
-  }, []);
+  useEffect(() => { try { const n = localStorage.getItem('umshado_guest_name'); if (n) setName(n); } catch {} }, []);
 
   const send = async () => {
     if (!name.trim() || !msg.trim()) return;
@@ -383,20 +334,10 @@ function WishForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ coupleId, guestName: name.trim(), message: msg.trim() }),
       });
-
       if (res.ok) {
         const j = await res.json();
-        try {
-          localStorage.setItem('umshado_guest_name', name.trim());
-        } catch {}
-        onAdded(
-          j.wish ?? {
-            id: Date.now().toString(),
-            guest_name: name.trim(),
-            message: msg.trim(),
-            created_at: new Date().toISOString(),
-          }
-        );
+        try { localStorage.setItem('umshado_guest_name', name.trim()); } catch {}
+        onAdded(j.wish ?? { id: Date.now().toString(), guest_name: name.trim(), message: msg.trim(), created_at: new Date().toISOString() });
         setMsg('');
         setDone(true);
         setTimeout(() => setDone(false), 3500);
@@ -405,252 +346,42 @@ function WishForm({
     setSending(false);
   };
 
-  if (done) {
-    return (
-      <div className="text-center py-6">
-        <div className="text-4xl mb-3">💌</div>
-        <p
-          style={{
-            fontFamily: t.font,
-            color: t.accent,
-            fontSize: '1.1rem',
-            fontStyle: 'italic',
-          }}
-        >
-          Your wish has been sent beautifully.
-        </p>
-        <p className="text-sm mt-2" style={{ color: t.textFaint }}>
-          The couple will treasure it forever.
-        </p>
-      </div>
-    );
-  }
+  if (done) return (
+    <div className="text-center py-10">
+      <div className="text-5xl mb-4">💌</div>
+      <p style={{ fontFamily: t.font, color: t.accent, fontSize: '1.15rem', fontStyle: 'italic' }}>
+        Your wish has been sent beautifully.
+      </p>
+      <p className="text-sm mt-3" style={{ color: t.textFaint }}>The couple will treasure it forever.</p>
+    </div>
+  );
 
-  const inputStyle = {
-    background: t.card,
-    border: `1px solid ${t.accentBorder}`,
-    color: t.text,
-    fontFamily: t.bodyFont,
-  } as React.CSSProperties;
+  const inp: React.CSSProperties = { background: t.card, border: `1px solid ${t.accentBorder}`, color: t.text, fontFamily: t.bodyFont, borderRadius: '14px', width: '100%', padding: '14px 18px', outline: 'none', fontSize: '0.95rem', transition: 'border-color 0.2s' };
 
   return (
-    <div className="space-y-3">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Your name"
-        className="w-full px-4 py-3 rounded-2xl text-sm outline-none transition-all"
-        style={inputStyle}
-      />
-      <textarea
-        value={msg}
-        onChange={(e) => setMsg(e.target.value)}
-        placeholder="Write a heartfelt message for the couple…"
-        rows={4}
-        className="w-full px-4 py-3 rounded-2xl text-sm outline-none resize-none transition-all"
-        style={inputStyle}
-      />
-      <button
-        onClick={send}
-        disabled={sending || !name.trim() || !msg.trim()}
-        className="w-full py-3.5 rounded-2xl text-sm font-semibold transition-all disabled:opacity-40"
-        style={{
-          background: t.btnPrimary,
-          color: t.btnText,
-          fontFamily: t.bodyFont,
-          letterSpacing: '0.04em',
-        }}
-      >
-        {sending ? 'Sending…' : 'Send Your Wishes'}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <input value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={inp} />
+      <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="Write a heartfelt message for the couple…" rows={4} style={{ ...inp, resize: 'none', lineHeight: 1.7 }} />
+      <button onClick={send} disabled={sending || !name.trim() || !msg.trim()}
+        style={{ background: t.btnPrimary, color: t.btnText, fontFamily: t.bodyFont, borderRadius: '50px', padding: '14px', fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.06em', border: 'none', cursor: 'pointer', opacity: (sending || !name.trim() || !msg.trim()) ? 0.5 : 1, transition: 'opacity 0.2s' }}>
+        {sending ? 'Sending…' : 'Send Your Wishes ✦'}
       </button>
     </div>
   );
 }
 
-// ─── Gift Card ────────────────────────────────────────────────────────────────
+// ─── Gift card ────────────────────────────────────────────────────────────────
 
 function GiftCard({ item, t }: { item: GiftItem; t: any }) {
   return (
-    <div
-      className="rounded-3xl p-5 relative overflow-hidden"
-      style={{
-        background: t.card,
-        border: `1px solid ${t.cardBorder}`,
-        boxShadow: `0 10px 30px ${t.accentLight}`,
-      }}
-    >
-      <FloralAccent color={t.accent} side="right" />
-      <div className="relative">
-        <div className="text-4xl mb-4">{item.emoji}</div>
-        <h4
-          style={{
-            fontFamily: t.font,
-            color: t.text,
-            fontSize: '1.15rem',
-            marginBottom: '0.5rem',
-          }}
-        >
-          {item.title}
-        </h4>
-        <p
-          className="text-sm mb-4"
-          style={{
-            color: t.textMid,
-            fontFamily: t.bodyFont,
-            lineHeight: 1.7,
-          }}
-        >
-          {item.description}
-        </p>
-        <p
-          style={{
-            fontFamily: t.font,
-            color: t.accent,
-            fontSize: '1.35rem',
-            fontWeight: 700,
-          }}
-        >
-          {formatAmount(item.amount)}
-        </p>
-        <button
-          className="mt-5 w-full py-3 rounded-2xl text-sm font-semibold transition-all"
-          style={{ background: t.btnPrimary, color: t.btnText }}
-        >
-          Contribute
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─── Share Sheet ──────────────────────────────────────────────────────────────
-
-function ShareSheet({
-  url,
-  coupleName,
-  t,
-  onClose,
-}: {
-  url: string;
-  coupleName: string;
-  t: any;
-  onClose: () => void;
-}) {
-  const [copied, setCopied] = useState(false);
-
-  const msg = `View ${coupleName}'s wedding website 💍\n${url}`;
-  const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-  const smsUrl = `sms:?body=${encodeURIComponent(msg)}`;
-  const emailUrl = `mailto:
-
-?subject=${encodeURIComponent(`${coupleName}'s Wedding`)}&body=${encodeURIComponent(msg)}`;
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {}
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.72)' }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-[28px] p-6 space-y-4"
-        style={{
-          background: t.bgMid,
-          border: `1px solid ${t.accentBorder}`,
-          boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between">
-          <h3 style={{ fontFamily: t.font, color: t.text, fontSize: '1.2rem' }}>
-            Share Website
-          </h3>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ background: t.card }}
-          >
-            <svg className="w-4 h-4" style={{ color: t.text }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="flex gap-2">
-          <div
-            className="flex-1 px-3 py-3 rounded-2xl text-xs font-mono overflow-hidden text-ellipsis whitespace-nowrap"
-            style={{ background: t.card, color: t.textMid }}
-          >
-            {url}
-          </div>
-          <button
-            onClick={copy}
-            className="px-4 py-3 rounded-2xl text-xs font-bold transition-all"
-            style={{
-              background: copied ? '#10b981' : t.accentLight,
-              color: copied ? '#fff' : t.accent,
-            }}
-          >
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3">
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener"
-            className="flex flex-col items-center gap-2 py-4 rounded-2xl transition-all"
-            style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-          >
-            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white text-lg">
-              💬
-            </div>
-            <span className="text-xs font-semibold" style={{ color: t.text }}>
-              WhatsApp
-            </span>
-          </a>
-
-          <a
-            href={smsUrl}
-            className="flex flex-col items-center gap-2 py-4 rounded-2xl transition-all"
-            style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-              style={{ background: t.accentLight, color: t.accent }}
-            >
-              💌
-            </div>
-            <span className="text-xs font-semibold" style={{ color: t.text }}>
-              SMS
-            </span>
-          </a>
-
-          <a
-            href={emailUrl}
-            className="flex flex-col items-center gap-2 py-4 rounded-2xl transition-all"
-            style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-          >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-              style={{ background: t.accentLight, color: t.accent }}
-            >
-              ✉️
-            </div>
-            <span className="text-xs font-semibold" style={{ color: t.text }}>
-              Email
-            </span>
-          </a>
-        </div>
-      </div>
+    <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: '24px', padding: '28px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>{item.emoji}</div>
+      <h4 style={{ fontFamily: t.font, color: t.text, fontSize: '1.15rem', marginBottom: '8px', fontStyle: 'italic' }}>{item.title}</h4>
+      <p style={{ color: t.textMid, fontFamily: t.bodyFont, lineHeight: 1.75, fontSize: '0.9rem', marginBottom: '16px' }}>{item.description}</p>
+      <p style={{ fontFamily: t.font, color: t.accent, fontSize: '1.4rem', fontWeight: 600, marginBottom: '16px' }}>{formatAmount(item.amount)}</p>
+      <button style={{ background: t.btnPrimary, color: t.btnText, borderRadius: '50px', padding: '12px 24px', fontSize: '0.85rem', fontWeight: 600, border: 'none', cursor: 'pointer', width: '100%', letterSpacing: '0.05em' }}>
+        Contribute
+      </button>
     </div>
   );
 }
@@ -671,261 +402,222 @@ export default function WeddingWebsite({
   schedule,
   wishes: initWishes,
   moments,
+  howWeMet,
+  proposalStory,
+  coupleMessage,
 }: Props) {
   const t = THEMES[weddingTheme as ThemeKey] ?? THEMES.champagne;
-  const [activeTab, setActiveTab] = useState<'info' | 'schedule' | 'wishes' | 'gifts' | 'moments'>('info');
+  const [activeTab, setActiveTab] = useState<'story' | 'schedule' | 'wishes' | 'gifts' | 'gallery'>('story');
   const [wishes, setWishes] = useState<WellWish[]>(initWishes);
-  const [showShare, setShowShare] = useState(false);
 
   const prettyDate = formatPrettyDate(weddingDate);
   const countdown = useCountdown(weddingDate);
 
-  const couple = coupleName && partnerName
-    ? { name1: coupleName, name2: partnerName }
-    : coupleName
-    ? { name1: coupleName, name2: null }
-    : { name1: 'The Happy', name2: 'Couple' };
+  const name1 = coupleName ?? 'The Happy';
+  const name2 = partnerName ?? 'Couple';
+  const coupleDisplay = `${name1} & ${name2}`;
 
-  const coupleDisplay = couple.name2 ? `${couple.name1} & ${couple.name2}` : couple.name1;
-  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
-
-  const tabs = [
-    { id: 'info' as const, label: 'Story' },
-    { id: 'schedule' as const, label: 'Schedule' },
-    { id: 'wishes' as const, label: `Wishes${wishes.length ? ` (${wishes.length})` : ''}` },
+  const tabs: { id: typeof activeTab; label: string }[] = [
+    { id: 'story', label: 'Our Story' },
+    { id: 'schedule', label: 'Schedule' },
+    { id: 'wishes', label: `Wishes${wishes.length ? ` · ${wishes.length}` : ''}` },
     ...(giftEnabled ? [{ id: 'gifts' as const, label: 'Registry' }] : []),
-    { id: 'moments' as const, label: 'Gallery' },
+    { id: 'gallery', label: 'Gallery' },
   ];
+
+  const hasStoryContent = howWeMet || proposalStory || coupleMessage;
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?${t.gfont}&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=${t.gfont}&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+        body { background: ${t.bg}; overflow-x: hidden; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-        body { background: ${t.bg}; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        @keyframes shimmer { from { background-position: -200% center; } to { background-position: 200% center; } }
 
-        @keyframes heroFade {
-          from { opacity: 0; transform: scale(1.04); }
-          to { opacity: 1; transform: scale(1); }
+        .hero-enter { animation: scaleIn 1.4s cubic-bezier(.22,1,.36,1) both; }
+        .a1 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.15s both; }
+        .a2 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.35s both; }
+        .a3 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.55s both; }
+        .a4 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.75s both; }
+        .a5 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 0.95s both; }
+        .a6 { animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) 1.1s both; }
+
+        .tab-rail::-webkit-scrollbar { display: none; }
+        .tab-rail { -ms-overflow-style: none; scrollbar-width: none; }
+
+        input::placeholder, textarea::placeholder { color: ${t.textFaint}; }
+        input:focus, textarea:focus { border-color: ${t.accent} !important; box-shadow: 0 0 0 3px ${t.accentLight}; }
+
+        .countdown-num {
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum";
         }
 
-        @keyframes rise {
-          from { opacity: 0; transform: translateY(24px); }
-          to { opacity: 1; transform: translateY(0); }
+        .btn-primary {
+          background: ${t.btnPrimary};
+          color: ${t.btnText};
+          border: none;
+          cursor: pointer;
+          transition: opacity 0.2s, transform 0.15s;
+        }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .tab-btn {
+          transition: all 0.25s ease;
+        }
+        .tab-btn:hover { opacity: 1 !important; }
+
+        .wish-card {
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .wish-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 16px 40px ${t.accentLight};
         }
 
-        .hero-bg { animation: heroFade 1.25s ease both; }
-        .hero-line-1 { animation: rise 0.7s ease 0.2s both; }
-        .hero-line-2 { animation: rise 0.7s ease 0.45s both; }
-        .hero-line-3 { animation: rise 0.7s ease 0.7s both; }
-        .hero-line-4 { animation: rise 0.7s ease 0.95s both; }
-        .hero-line-5 { animation: rise 0.7s ease 1.15s both; }
-
-        .tab-scroll::-webkit-scrollbar { display: none; }
-        .tab-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-
-        input::placeholder,
-        textarea::placeholder {
-          color: ${t.textFaint};
-        }
-
-        input:focus,
-        textarea:focus {
-          border-color: ${t.accent} !important;
-        }
-
-        .glass {
-          background: ${t.card};
-          border: 1px solid ${t.cardBorder};
-          backdrop-filter: blur(10px);
+        @media (max-width: 640px) {
+          .hero-names { font-size: clamp(2.8rem, 14vw, 4.5rem) !important; }
         }
       `}</style>
 
-      <div style={{ background: t.bg, minHeight: '100vh', fontFamily: t.bodyFont }}>
+      <div style={{ background: t.bg, minHeight: '100dvh', fontFamily: t.bodyFont, color: t.text }}>
 
-        {/* ── HERO ───────────────────────────────────────── */}
-        <section
-          className="hero-bg relative overflow-hidden"
-          style={{
-            minHeight: '100svh',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
+        {/* ══════════════════════════════════════════════════
+            HERO
+        ══════════════════════════════════════════════════ */}
+        <section className="hero-enter relative" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+
+          {/* Background layer */}
           {avatarUrl ? (
             <>
-              <img
-                src={avatarUrl}
-                alt=""
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{ opacity: 0.3 }}
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `linear-gradient(to bottom, ${t.bg}20 0%, ${t.bg}bb 55%, ${t.bg} 100%)`,
-                }}
-              />
+              <img src={avatarUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.25 }} />
+              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, ${t.bg}60 0%, ${t.bg}90 45%, ${t.bg} 80%)` }} />
+              {/* Vignette edges */}
+              <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, transparent 40%, ${t.bg}80 100%)` }} />
             </>
           ) : (
             <>
-              <div className="absolute inset-0" style={{ background: t.heroBg }} />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(circle at 20% 20%, ${t.accentLight} 0%, transparent 25%),
-                    radial-gradient(circle at 80% 30%, ${t.accentLight} 0%, transparent 25%),
-                    radial-gradient(circle at 50% 80%, ${t.accentLight} 0%, transparent 30%)
-                  `,
-                  opacity: 0.7,
-                }}
-              />
+              <div style={{ position: 'absolute', inset: 0, background: t.heroBg }} />
+              <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 60% 50% at 50% 30%, ${t.accentLight} 0%, transparent 100%)`, opacity: 0.8 }} />
             </>
           )}
 
-          <div className="relative px-6 py-14 max-w-4xl mx-auto w-full text-center">
-            <p
-              className="hero-line-1 text-[10px] tracking-[0.45em] uppercase mb-6"
-              style={{ color: t.textFaint }}
-            >
-              uMshado Wedding Website
+          {/* Decorative corner flourishes */}
+          <svg style={{ position: 'absolute', top: 24, left: 24, opacity: 0.18 }} width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <path d="M4 4 L4 36 Q4 4 36 4 Z" stroke={t.accent} strokeWidth="1" fill="none"/>
+            <path d="M8 8 L8 28 Q8 8 28 8 Z" stroke={t.accent} strokeWidth="0.5" fill="none" opacity="0.5"/>
+          </svg>
+          <svg style={{ position: 'absolute', top: 24, right: 24, opacity: 0.18, transform: 'scaleX(-1)' }} width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <path d="M4 4 L4 36 Q4 4 36 4 Z" stroke={t.accent} strokeWidth="1" fill="none"/>
+          </svg>
+          <svg style={{ position: 'absolute', bottom: 24, left: 24, opacity: 0.18, transform: 'scaleY(-1)' }} width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <path d="M4 4 L4 36 Q4 4 36 4 Z" stroke={t.accent} strokeWidth="1" fill="none"/>
+          </svg>
+          <svg style={{ position: 'absolute', bottom: 24, right: 24, opacity: 0.18, transform: 'scale(-1,-1)' }} width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <path d="M4 4 L4 36 Q4 4 36 4 Z" stroke={t.accent} strokeWidth="1" fill="none"/>
+          </svg>
+
+          {/* Content */}
+          <div style={{ position: 'relative', textAlign: 'center', padding: '60px 24px', width: '100%', maxWidth: '600px', margin: '0 auto' }}>
+
+            {/* Eyebrow */}
+            <p className="a1" style={{ fontSize: '10px', letterSpacing: '0.5em', textTransform: 'uppercase', color: t.textFaint, marginBottom: '32px' }}>
+              uMshado · Wedding Website
             </p>
 
+            {/* Couple photo — circular, elegant */}
             {avatarUrl && (
-              <div className="hero-line-2 mb-6 flex justify-center">
-                <div
-                  className="rounded-full overflow-hidden"
-                  style={{
-                    width: 112,
-                    height: 112,
-                    border: `2px solid ${t.accentBorder}`,
-                    boxShadow: `0 0 0 8px ${t.accentLight}`,
-                  }}
-                >
-                  <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              <div className="a2" style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+                <div style={{
+                  width: 120, height: 120, borderRadius: '50%', overflow: 'hidden',
+                  border: `1px solid ${t.accentBorder}`,
+                  boxShadow: `0 0 0 6px ${t.accentLight}, 0 20px 60px rgba(0,0,0,0.4)`,
+                  position: 'relative',
+                }}>
+                  <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               </div>
             )}
 
-            <div className="hero-line-2">
-              <p
-                style={{
-                  color: t.accent,
-                  fontFamily: t.font,
-                  fontStyle: 'italic',
-                  fontSize: '1.05rem',
-                  marginBottom: '0.6rem',
-                }}
-              >
-                Together with their loved ones
-              </p>
+            {/* Tagline */}
+            <p className="a2" style={{ fontFamily: t.font, fontStyle: 'italic', color: t.accent, fontSize: '1.05rem', marginBottom: '20px', letterSpacing: '0.02em' }}>
+              Together with their loved ones
+            </p>
 
-              <h1
-                style={{
-                  fontFamily: t.font,
-                  fontSize: 'clamp(2.5rem, 9vw, 4.5rem)',
-                  fontWeight: 400,
-                  color: t.text,
-                  lineHeight: 1.04,
-                  letterSpacing: '-0.03em',
-                }}
-              >
-                {couple.name1}
-                {couple.name2 && (
-                  <>
-                    <br />
-                    <span
-                      style={{
-                        color: t.accent,
-                        fontSize: '0.46em',
-                        letterSpacing: '0.28em',
-                        fontStyle: 'normal',
-                        fontWeight: 400,
-                      }}
-                    >
-                      &amp;
-                    </span>
-                    <br />
-                    {couple.name2}
-                  </>
-                )}
+            {/* Couple names — the centrepiece */}
+            <div className="a3">
+              <h1 className="hero-names" style={{
+                fontFamily: t.font,
+                fontWeight: 400,
+                color: t.text,
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                fontSize: 'clamp(2.8rem, 12vw, 5.5rem)',
+              }}>
+                {name1}
+              </h1>
+              <div className="a3" style={{ margin: '12px 0' }}>
+                <Ornament color={t.accent} />
+              </div>
+              <h1 className="hero-names" style={{
+                fontFamily: t.font,
+                fontWeight: 400,
+                color: t.text,
+                lineHeight: 1.05,
+                letterSpacing: '-0.02em',
+                fontSize: 'clamp(2.8rem, 12vw, 5.5rem)',
+              }}>
+                {name2}
               </h1>
             </div>
 
-            <div className="hero-line-3 mt-6 max-w-xl mx-auto">
-              <p
-                style={{
-                  color: t.textMid,
-                  fontSize: '1rem',
-                  lineHeight: 1.75,
-                }}
-              >
-                Welcome to our wedding website — a place to celebrate our journey,
-                view our special day details, send love, and share in the joy of what's ahead.
-              </p>
-            </div>
-
+            {/* Date + Location pill */}
             {prettyDate && (
-              <div className="hero-line-4 mt-8">
-                <div
-                  className="inline-flex flex-col items-center gap-2 px-5 py-4 rounded-[24px]"
-                  style={{
-                    background: t.card,
-                    border: `1px solid ${t.cardBorder}`,
-                    backdropFilter: 'blur(10px)',
-                  }}
-                >
-                  <p style={{ color: t.accent, fontFamily: t.font, fontSize: '1.15rem' }}>
-                    {prettyDate.full}
+              <div className="a4" style={{ marginTop: '36px', display: 'flex', justifyContent: 'center' }}>
+                <div style={{
+                  display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                  padding: '16px 32px', borderRadius: '100px',
+                  background: `${t.bg}90`, backdropFilter: 'blur(20px)',
+                  border: `1px solid ${t.accentBorder}`,
+                }}>
+                  <p style={{ fontFamily: t.font, color: t.accent, fontSize: '1rem', letterSpacing: '0.02em' }}>
+                    {prettyDate.short}
                   </p>
                   {location && (
-                    <p className="text-sm" style={{ color: t.textMid }}>
-                      📍 {location}
+                    <p style={{ color: t.textMid, fontSize: '0.85rem', letterSpacing: '0.04em' }}>
+                      ✦ {location}
                     </p>
                   )}
                 </div>
               </div>
             )}
 
+            {/* Countdown */}
             {weddingDate && !countdown.past && (
-              <div className="hero-line-5 mt-8">
-                <div className="grid grid-cols-4 gap-3 max-w-sm mx-auto">
-                  {[
-                    { v: countdown.d, l: 'Days' },
-                    { v: countdown.h, l: 'Hours' },
-                    { v: countdown.m, l: 'Minutes' },
-                    { v: countdown.s, l: 'Seconds' },
-                  ].map(({ v, l }) => (
-                    <div key={l} className="text-center">
-                      <div
-                        className="rounded-2xl py-3 px-2"
-                        style={{
-                          background: t.card,
-                          border: `1px solid ${t.cardBorder}`,
-                        }}
-                      >
-                        <p
-                          style={{
-                            fontFamily: t.font,
-                            fontSize: '1.7rem',
-                            fontWeight: 700,
-                            color: t.text,
-                            lineHeight: 1,
-                          }}
-                        >
+              <div className="a5" style={{ marginTop: '32px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', maxWidth: '340px', margin: '0 auto' }}>
+                  {[{ v: countdown.d, l: 'Days' }, { v: countdown.h, l: 'Hrs' }, { v: countdown.m, l: 'Min' }, { v: countdown.s, l: 'Sec' }].map(({ v, l }) => (
+                    <div key={l} style={{ textAlign: 'center' }}>
+                      <div style={{
+                        background: `${t.bg}80`, backdropFilter: 'blur(16px)',
+                        border: `1px solid ${t.accentBorder}`,
+                        borderRadius: '16px', padding: '14px 8px',
+                      }}>
+                        <p className="countdown-num" style={{
+                          fontFamily: t.font, fontSize: '1.85rem', fontWeight: 700,
+                          color: t.text, lineHeight: 1,
+                        }}>
                           {String(v).padStart(2, '0')}
                         </p>
                       </div>
-                      <p
-                        className="text-[10px] mt-2 tracking-[0.18em] uppercase"
-                        style={{ color: t.textFaint }}
-                      >
-                        {l}
-                      </p>
+                      <p style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: t.textFaint, marginTop: '8px' }}>{l}</p>
                     </div>
                   ))}
                 </div>
@@ -933,275 +625,196 @@ export default function WeddingWebsite({
             )}
 
             {countdown.past && weddingDate && (
-              <div className="hero-line-5 mt-8">
-                <p
-                  style={{
-                    color: t.accent,
-                    fontFamily: t.font,
-                    fontStyle: 'italic',
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  🎉 We are married!
-                </p>
+              <div className="a5" style={{ marginTop: '32px' }}>
+                <p style={{ fontFamily: t.font, color: t.accent, fontStyle: 'italic', fontSize: '1.3rem' }}>🎉 We are married!</p>
               </div>
             )}
 
-            <div className="hero-line-5 mt-10 flex flex-wrap items-center justify-center gap-3">
-              <button
-                onClick={() => setShowShare(true)}
-                className="px-6 py-3 rounded-full text-sm font-semibold transition-all"
-                style={{
-                  background: t.btnPrimary,
-                  color: t.btnText,
-                  boxShadow: `0 12px 30px ${t.accentLight}`,
-                }}
-              >
-                Share Website
-              </button>
-
-              <a
-                href="#content"
-                className="px-6 py-3 rounded-full text-sm transition-all"
-                style={{
-                  background: t.card,
-                  color: t.textMid,
-                  border: `1px solid ${t.cardBorder}`,
-                }}
-              >
-                Explore Details
+            {/* Explore CTA only — no Share for visitors */}
+            <div className="a6" style={{ marginTop: '40px' }}>
+              <a href="#content" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '14px 32px', borderRadius: '50px',
+                background: t.btnPrimary, color: t.btnText,
+                fontFamily: t.bodyFont, fontSize: '0.88rem', fontWeight: 600,
+                letterSpacing: '0.08em', textDecoration: 'none',
+                boxShadow: `0 16px 40px ${t.accentLight}`,
+                textTransform: 'uppercase',
+              }}>
+                Explore Our Day
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12l7 7 7-7"/>
+                </svg>
               </a>
             </div>
+
+          </div>
+
+          {/* Scroll hint */}
+          <div style={{ position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)', animation: 'pulse 2s ease infinite' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={t.textFaint} strokeWidth="1.5">
+              <path d="M12 5v14M5 15l7 7 7-7"/>
+            </svg>
           </div>
         </section>
 
-        {/* ── STICKY NAV ─────────────────────────────────── */}
-        <div
-          className="sticky top-0 z-20 tab-scroll overflow-x-auto"
-          style={{
-            background: `${t.bg}f5`,
-            backdropFilter: 'blur(16px)',
-            borderBottom: `1px solid ${t.accentBorder}`,
-          }}
-        >
-          <div className="flex min-w-max px-4 py-2 max-w-5xl mx-auto">
-            {tabs.map((tab) => (
+        {/* ══════════════════════════════════════════════════
+            STICKY TAB NAV
+        ══════════════════════════════════════════════════ */}
+        <nav id="content" className="tab-rail" style={{
+          position: 'sticky', top: 0, zIndex: 30,
+          background: `${t.bg}f0`, backdropFilter: 'blur(24px)',
+          borderBottom: `1px solid ${t.accentBorder}`,
+          overflowX: 'auto',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', padding: '10px 20px', minWidth: 'max-content', maxWidth: '700px', margin: '0 auto' }}>
+            {tabs.map(tab => (
               <button
                 key={tab.id}
+                className="tab-btn"
                 onClick={() => setActiveTab(tab.id)}
-                className="px-5 py-3 text-xs font-semibold transition-all whitespace-nowrap rounded-full"
                 style={{
-                  color: activeTab === tab.id ? t.btnText : t.textFaint,
-                  background: activeTab === tab.id ? t.btnPrimary : 'transparent',
+                  padding: '8px 18px',
+                  borderRadius: '50px',
+                  fontSize: '11px',
+                  fontWeight: 600,
                   letterSpacing: '0.06em',
                   fontFamily: t.bodyFont,
+                  border: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  color: activeTab === tab.id ? t.btnText : t.textFaint,
+                  background: activeTab === tab.id ? t.btnPrimary : 'transparent',
+                  textTransform: 'uppercase',
+                  opacity: activeTab === tab.id ? 1 : 0.8,
                 }}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-        </div>
+        </nav>
 
-        {/* ── CONTENT ────────────────────────────────────── */}
-        <main id="content" className="px-5 py-10 max-w-5xl mx-auto pb-24 space-y-8">
+        {/* ══════════════════════════════════════════════════
+            TAB CONTENT
+        ══════════════════════════════════════════════════ */}
+        <main style={{ maxWidth: '820px', margin: '0 auto', padding: '48px 20px 80px' }}>
 
-          {/* STORY / ABOUT */}
-          {activeTab === 'info' && (
-            <FadeIn>
-              <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-6 items-start">
-                <div
-                  className="rounded-[28px] p-6 md:p-8 relative overflow-hidden"
-                  style={{
-                    background: t.card,
-                    border: `1px solid ${t.cardBorder}`,
-                  }}
-                >
-                  <FloralAccent color={t.accent} side="left" />
-                  <SectionHeading
-                    title="Our Story"
-                    subtitle="A glimpse into our special day and the love we are celebrating."
-                    t={t}
-                  />
-                  <div className="relative">
-                    <p
-                      style={{
-                        color: t.textMid,
-                        lineHeight: 1.9,
-                        fontSize: '0.98rem',
-                      }}
-                    >
-                      We are so grateful to share this beautiful season of our lives with you.
-                      This website is our little corner to keep our loved ones informed,
-                      connected, and part of the joy as we prepare to say "I do."
-                    </p>
+          {/* ── OUR STORY ─────────────────────────────────── */}
+          {activeTab === 'story' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
-                    <p
-                      className="mt-5"
-                      style={{
-                        color: t.textMid,
-                        lineHeight: 1.9,
-                        fontSize: '0.98rem',
-                      }}
-                    >
-                      Here you'll find our wedding details, schedule, registry, photo moments,
-                      and a space to leave your wishes. Thank you for being part of our love story.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
+              {/* Date / Venue cards */}
+              <FadeIn>
+                <div style={{ display: 'grid', gridTemplateColumns: location ? '1fr 1fr' : '1fr', gap: '16px' }}>
                   {prettyDate && (
-                    <div
-                      className="rounded-[28px] p-5"
-                      style={{
-                        background: t.accentLight,
-                        border: `1px solid ${t.accentBorder}`,
-                      }}
-                    >
-                      <p
-                        className="text-[11px] uppercase tracking-[0.22em] mb-2"
-                        style={{ color: t.textFaint }}
-                      >
-                        Wedding Date
-                      </p>
-                      <p
-                        style={{
-                          color: t.text,
-                          fontFamily: t.font,
-                          fontSize: '1.25rem',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {prettyDate.full}
-                      </p>
+                    <div style={{ background: t.accentLight, border: `1px solid ${t.accentBorder}`, borderRadius: '24px', padding: '28px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', color: t.textFaint, marginBottom: '12px' }}>Wedding Date</p>
+                      <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.3rem', lineHeight: 1.4, fontStyle: 'italic' }}>{prettyDate.weekday}</p>
+                      <p style={{ fontFamily: t.font, color: t.accent, fontSize: '2rem', fontWeight: 700, lineHeight: 1.1 }}>{prettyDate.day}</p>
+                      <p style={{ color: t.textMid, fontSize: '0.9rem', marginTop: '4px' }}>{prettyDate.month} {prettyDate.year}</p>
                     </div>
                   )}
-
                   {location && (
-                    <div
-                      className="rounded-[28px] p-5"
-                      style={{
-                        background: t.accentLight,
-                        border: `1px solid ${t.accentBorder}`,
-                      }}
-                    >
-                      <p
-                        className="text-[11px] uppercase tracking-[0.22em] mb-2"
-                        style={{ color: t.textFaint }}
-                      >
-                        Venue
-                      </p>
-                      <p
-                        style={{
-                          color: t.text,
-                          fontFamily: t.font,
-                          fontSize: '1.25rem',
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        {location}
-                      </p>
+                    <div style={{ background: t.accentLight, border: `1px solid ${t.accentBorder}`, borderRadius: '24px', padding: '28px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', color: t.textFaint, marginBottom: '12px' }}>Venue</p>
+                      <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📍</div>
+                      <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.2rem', fontStyle: 'italic', lineHeight: 1.4 }}>{location}</p>
                     </div>
                   )}
-
-                  <div
-                    className="rounded-[28px] p-5 text-center"
-                    style={{
-                      background: t.card,
-                      border: `1px solid ${t.cardBorder}`,
-                    }}
-                  >
-                    <p className="text-3xl mb-3">💌</p>
-                    <p
-                      style={{
-                        fontFamily: t.font,
-                        color: t.text,
-                        fontSize: '1.15rem',
-                        fontStyle: 'italic',
-                      }}
-                    >
-                      Leave the couple a message
-                    </p>
-                    <p className="text-sm mt-2 mb-4" style={{ color: t.textMid }}>
-                      Share your blessings, prayers, and beautiful wishes.
-                    </p>
-                    <button
-                      onClick={() => setActiveTab('wishes')}
-                      className="px-5 py-3 rounded-full text-sm font-semibold"
-                      style={{ background: t.btnPrimary, color: t.btnText }}
-                    >
-                      Write a Wish
-                    </button>
-                  </div>
                 </div>
-              </div>
-            </FadeIn>
+              </FadeIn>
+
+              {/* Story sections */}
+              {hasStoryContent ? (
+                <>
+                  {howWeMet && (
+                    <FadeIn delay={80}>
+                      <StoryBlock icon="💫" label="How We Met" text={howWeMet} t={t} />
+                    </FadeIn>
+                  )}
+                  {proposalStory && (
+                    <FadeIn delay={120}>
+                      <StoryBlock icon="💍" label="The Proposal" text={proposalStory} t={t} />
+                    </FadeIn>
+                  )}
+                  {coupleMessage && (
+                    <FadeIn delay={160}>
+                      <StoryBlock icon="✉️" label="A Note to Our Guests" text={coupleMessage} t={t} quote />
+                    </FadeIn>
+                  )}
+                </>
+              ) : (
+                <FadeIn delay={80}>
+                  <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: '28px', padding: '40px 32px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '2.5rem', marginBottom: '16px' }}>📖</p>
+                    <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.2rem', fontStyle: 'italic', marginBottom: '12px' }}>Our Story is Coming Soon</p>
+                    <p style={{ color: t.textFaint, fontSize: '0.9rem', lineHeight: 1.8 }}>
+                      The couple is still writing their love story here. Check back soon.
+                    </p>
+                  </div>
+                </FadeIn>
+              )}
+
+              {/* Write a wish CTA */}
+              <FadeIn delay={200}>
+                <div style={{
+                  background: t.card, border: `1px solid ${t.accentBorder}`, borderRadius: '28px',
+                  padding: '36px', textAlign: 'center',
+                  backgroundImage: `radial-gradient(ellipse at 50% 0%, ${t.accentLight} 0%, transparent 70%)`,
+                }}>
+                  <Ornament color={t.accent} size="sm" />
+                  <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.3rem', fontStyle: 'italic', margin: '12px 0 8px' }}>
+                    Leave a message for {name1} & {name2}
+                  </p>
+                  <p style={{ color: t.textFaint, fontSize: '0.88rem', marginBottom: '24px', lineHeight: 1.7 }}>
+                    Share your blessings, prayers, and heartfelt wishes with the happy couple.
+                  </p>
+                  <button onClick={() => setActiveTab('wishes')} className="btn-primary" style={{
+                    padding: '14px 36px', borderRadius: '50px', fontSize: '0.88rem',
+                    fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: t.bodyFont,
+                  }}>
+                    Write a Wish ✦
+                  </button>
+                </div>
+              </FadeIn>
+            </div>
           )}
 
-          {/* SCHEDULE */}
+          {/* ── SCHEDULE ──────────────────────────────────── */}
           {activeTab === 'schedule' && (
             <FadeIn>
-              <SectionHeading
-                title="Wedding Day Schedule"
-                subtitle={prettyDate ? prettyDate.full : 'The day we celebrate forever'}
-                t={t}
-              />
+              <SectionHeading title="Wedding Day" subtitle={prettyDate?.full ?? 'A day to remember forever'} t={t} />
 
               {schedule.length === 0 ? (
-                <div
-                  className="rounded-[28px] p-10 text-center"
-                  style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-                >
-                  <p className="text-4xl mb-3">📋</p>
-                  <p style={{ color: t.textFaint, fontStyle: 'italic' }}>
-                    Schedule coming soon…
-                  </p>
-                </div>
+                <EmptyState icon="📋" message="Schedule coming soon…" sub="The couple is still finalising the day's programme." t={t} />
               ) : (
-                <div className="relative max-w-3xl mx-auto">
-                  <div
-                    className="absolute left-[18px] md:left-1/2 md:-translate-x-1/2 top-0 bottom-0 w-px"
-                    style={{ background: t.accentBorder }}
-                  />
-                  <div className="space-y-6">
+                <div style={{ position: 'relative', maxWidth: '520px', margin: '0 auto' }}>
+                  {/* Timeline line */}
+                  <div style={{
+                    position: 'absolute', left: '28px', top: '40px', bottom: '40px', width: '1px',
+                    background: `linear-gradient(to bottom, transparent, ${t.accentBorder} 10%, ${t.accentBorder} 90%, transparent)`,
+                  }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingLeft: '64px' }}>
                     {schedule.map((ev, i) => (
-                      <div
-                        key={ev.id}
-                        className={`grid md:grid-cols-2 gap-4 items-start ${
-                          i % 2 === 0 ? '' : 'md:[&>div:first-child]:order-2'
-                        }`}
-                      >
-                        <div className={i % 2 === 0 ? 'md:text-right md:pr-10' : 'md:pl-10'}>
-                          <div
-                            className="rounded-[24px] p-5 inline-block w-full md:w-auto"
-                            style={{
-                              background: t.card,
-                              border: `1px solid ${t.cardBorder}`,
-                            }}
-                          >
-                            <p className="text-xs mb-1" style={{ color: t.accent }}>
-                              {fmt12h(ev.time)}
-                            </p>
-                            <p
-                              style={{
-                                color: t.text,
-                                fontFamily: t.font,
-                                fontSize: '1.05rem',
-                              }}
-                            >
-                              {ev.title}
-                            </p>
-                            {ev.location && (
-                              <p className="text-xs mt-2" style={{ color: t.textFaint }}>
-                                📍 {ev.location}
-                              </p>
-                            )}
+                      <FadeIn key={ev.id} delay={i * 60}>
+                        <div style={{ position: 'relative' }}>
+                          {/* Dot */}
+                          <div style={{
+                            position: 'absolute', left: '-44px', top: '20px',
+                            width: '12px', height: '12px', borderRadius: '50%',
+                            background: t.accent, boxShadow: `0 0 0 4px ${t.accentLight}`,
+                          }} />
+                          <div style={{
+                            background: t.card, border: `1px solid ${t.cardBorder}`,
+                            borderRadius: '20px', padding: '20px 24px',
+                          }}>
+                            <p style={{ color: t.accent, fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 600 }}>{fmt12h(ev.time)}</p>
+                            <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.1rem', fontStyle: 'italic' }}>{ev.title}</p>
+                            {ev.location && <p style={{ color: t.textFaint, fontSize: '0.82rem', marginTop: '6px' }}>📍 {ev.location}</p>}
                           </div>
                         </div>
-
-                        <div className="hidden md:block" />
-                      </div>
+                      </FadeIn>
                     ))}
                   </div>
                 </div>
@@ -1209,211 +822,174 @@ export default function WeddingWebsite({
             </FadeIn>
           )}
 
-          {/* WISHES */}
+          {/* ── WISHES ────────────────────────────────────── */}
           {activeTab === 'wishes' && (
-            <FadeIn>
-              <div className="grid lg:grid-cols-[0.95fr_1.05fr] gap-6">
-                <div
-                  className="rounded-[28px] p-6"
-                  style={{
-                    background: t.accentLight,
-                    border: `1px solid ${t.accentBorder}`,
-                  }}
-                >
-                  <SectionHeading
-                    title="Send Your Wishes"
-                    subtitle="Leave a beautiful message for the happy couple."
-                    t={t}
-                  />
-                  <WishForm
-                    coupleId={coupleId}
-                    t={t}
-                    onAdded={(w) => setWishes((prev) => [w, ...prev])}
-                  />
+            <div>
+              <FadeIn>
+                <SectionHeading title="Wishes & Blessings" subtitle="Leave your heartfelt message for the couple" t={t} />
+                <div style={{ background: t.accentLight, border: `1px solid ${t.accentBorder}`, borderRadius: '28px', padding: '32px', marginBottom: '32px' }}>
+                  <WishForm coupleId={coupleId} t={t} onAdded={w => setWishes(p => [w, ...p])} />
                 </div>
+              </FadeIn>
 
-                <div className="space-y-4">
-                  <SectionHeading
-                    title="Messages of Love"
-                    subtitle={`${wishes.length} ${wishes.length === 1 ? 'wish' : 'wishes'} received`}
-                    t={t}
-                  />
-
-                  {wishes.length === 0 ? (
-                    <div
-                      className="rounded-[28px] p-10 text-center"
-                      style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-                    >
-                      <p className="text-4xl mb-3">💌</p>
-                      <p style={{ color: t.textFaint, fontStyle: 'italic' }}>
-                        Be the first to send your wishes.
-                      </p>
-                    </div>
-                  ) : (
-                    wishes.map((w) => (
-                      <div
-                        key={w.id}
-                        className="rounded-[24px] p-5"
-                        style={{
-                          background: t.card,
-                          border: `1px solid ${t.cardBorder}`,
-                        }}
-                      >
-                        <div className="flex items-center gap-3 mb-3">
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold"
-                            style={{ background: t.accentLight, color: t.accent }}
-                          >
-                            {w.guest_name.charAt(0).toUpperCase()}
+              {wishes.length > 0 && (
+                <>
+                  <FadeIn delay={100}>
+                    <p style={{ fontSize: '10px', letterSpacing: '0.35em', textTransform: 'uppercase', color: t.textFaint, textAlign: 'center', marginBottom: '24px' }}>
+                      {wishes.length} {wishes.length === 1 ? 'message' : 'messages'} of love
+                    </p>
+                  </FadeIn>
+                  <div style={{ display: 'grid', gap: '16px', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
+                    {wishes.map((w, i) => (
+                      <FadeIn key={w.id} delay={i * 50}>
+                        <div className="wish-card" style={{
+                          background: t.card, border: `1px solid ${t.cardBorder}`,
+                          borderRadius: '22px', padding: '22px',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+                            <div style={{
+                              width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                              background: t.accentLight, border: `1px solid ${t.accentBorder}`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontFamily: t.font, color: t.accent, fontSize: '1rem', fontWeight: 700,
+                            }}>
+                              {w.guest_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p style={{ color: t.text, fontSize: '0.9rem', fontWeight: 600 }}>{w.guest_name}</p>
+                              <p style={{ color: t.textFaint, fontSize: '0.75rem', marginTop: '2px' }}>{timeAgo(w.created_at)}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold" style={{ color: t.text }}>
-                              {w.guest_name}
-                            </p>
-                            <p className="text-xs" style={{ color: t.textFaint }}>
-                              {timeAgo(w.created_at)}
-                            </p>
-                          </div>
+                          <p style={{ color: t.textMid, fontStyle: 'italic', fontFamily: t.bodyFont, lineHeight: 1.75, fontSize: '0.92rem' }}>
+                            "{w.message}"
+                          </p>
                         </div>
-                        <p
-                          className="text-sm leading-relaxed"
-                          style={{
-                            color: t.textMid,
-                            fontStyle: 'italic',
-                            fontFamily: t.bodyFont,
-                          }}
-                        >
-                          "{w.message}"
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </FadeIn>
+                      </FadeIn>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {wishes.length === 0 && (
+                <FadeIn delay={100}>
+                  <EmptyState icon="💌" message="Be the first to leave a wish" sub="Your message will mean the world to the couple." t={t} />
+                </FadeIn>
+              )}
+            </div>
           )}
 
-          {/* GIFTS */}
+          {/* ── GIFTS ─────────────────────────────────────── */}
           {activeTab === 'gifts' && giftEnabled && (
             <FadeIn>
               <SectionHeading
                 title="Gift Registry"
-                subtitle={
-                  giftMessage ||
-                  'Your love and support mean the world — should you wish to bless us, you may do so here.'
-                }
+                subtitle={giftMessage || 'Your love and presence are the greatest gift. Should you wish to bless us further, we are grateful.'}
                 t={t}
               />
-
               {giftItems.length === 0 ? (
-                <div
-                  className="rounded-[28px] p-10 text-center"
-                  style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-                >
-                  <p className="text-4xl mb-3">🎁</p>
-                  <p style={{ color: t.textFaint, fontStyle: 'italic' }}>
-                    No gift items added yet.
-                  </p>
-                </div>
+                <EmptyState icon="🎁" message="Registry coming soon" sub="The couple is still adding their gift registry." t={t} />
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                  {giftItems.map((item) => (
-                    <GiftCard key={item.id} item={item} t={t} />
-                  ))}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '20px' }}>
+                  {giftItems.map(item => <GiftCard key={item.id} item={item} t={t} />)}
                 </div>
               )}
             </FadeIn>
           )}
 
-          {/* MOMENTS */}
-          {activeTab === 'moments' && (
+          {/* ── GALLERY ───────────────────────────────────── */}
+          {activeTab === 'gallery' && (
             <FadeIn>
-              <SectionHeading
-                title="Moments"
-                subtitle="A collection of shared memories from this beautiful celebration."
-                t={t}
-              />
-
+              <SectionHeading title="Gallery" subtitle="Memories captured and shared" t={t} />
               {moments.length === 0 ? (
-                <div
-                  className="rounded-[28px] p-10 text-center"
-                  style={{ background: t.card, border: `1px solid ${t.cardBorder}` }}
-                >
-                  <p className="text-4xl mb-3">📸</p>
-                  <p style={{ color: t.textFaint, fontStyle: 'italic' }}>
-                    No moments shared yet.
-                  </p>
-                  <p className="text-xs mt-2" style={{ color: t.textFaint }}>
-                    Guests can upload beautiful memories from the day.
-                  </p>
-                </div>
+                <EmptyState icon="📷" message="Gallery coming soon" sub="Guests can share beautiful memories from the celebration here." t={t} />
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {moments.map((m) => (
-                    <div
-                      key={m.id}
-                      className="rounded-[22px] overflow-hidden"
-                      style={{
-                        background: t.card,
-                        border: `1px solid ${t.cardBorder}`,
-                        aspectRatio: '1',
-                      }}
-                    >
-                      {m.media_url ? (
-                        <img
-                          src={m.media_url}
-                          alt={m.caption ?? 'Wedding moment'}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-3xl">
-                          📸
-                        </div>
-                      )}
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                  {moments.map((m, i) => (
+                    <FadeIn key={m.id} delay={i * 40}>
+                      <div style={{ aspectRatio: '1', borderRadius: '18px', overflow: 'hidden', background: t.card, border: `1px solid ${t.cardBorder}` }}>
+                        {m.media_url ? (
+                          <img src={m.media_url} alt={m.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>📸</div>
+                        )}
+                      </div>
+                    </FadeIn>
                   ))}
                 </div>
               )}
             </FadeIn>
           )}
+
         </main>
 
-        {/* ── FOOTER ─────────────────────────────────────── */}
-        <footer
-          className="text-center py-10 px-6"
-          style={{ borderTop: `1px solid ${t.accentBorder}` }}
-        >
-          <p
-            className="text-[10px] tracking-[0.45em] uppercase"
-            style={{ color: t.textFaint }}
-          >
-            Created with uMshado
+        {/* ══════════════════════════════════════════════════
+            FOOTER
+        ══════════════════════════════════════════════════ */}
+        <footer style={{ borderTop: `1px solid ${t.accentBorder}`, textAlign: 'center', padding: '48px 24px' }}>
+          <Ornament color={t.accent} size="sm" />
+          <p style={{ fontFamily: t.font, color: t.textFaint, fontStyle: 'italic', fontSize: '1rem', margin: '16px 0 8px' }}>
+            {coupleDisplay}
           </p>
-          <p
-            className="mt-3 max-w-md mx-auto text-sm"
-            style={{ color: t.textMid, lineHeight: 1.8 }}
-          >
-            Beautiful wedding websites for modern couples — share your story, schedule,
-            gallery and registry all in one place.
-          </p>
-          <a
-            href="/"
-            className="text-sm mt-4 inline-block"
-            style={{ color: t.accent, textDecoration: 'underline' }}
-          >
-            Create your own wedding website →
-          </a>
+          {prettyDate && (
+            <p style={{ color: t.textFaint, fontSize: '0.82rem', letterSpacing: '0.08em' }}>{prettyDate.short}</p>
+          )}
+          <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: `1px solid ${t.cardBorder}` }}>
+            <p style={{ fontSize: '9px', letterSpacing: '0.4em', textTransform: 'uppercase', color: t.textFaint, marginBottom: '10px' }}>Created with</p>
+            <a href="/" style={{ color: t.accent, fontSize: '0.85rem', fontFamily: t.font, fontStyle: 'italic', textDecoration: 'none' }}>
+              uMshado Wedding Platform
+            </a>
+            <p style={{ color: t.textFaint, fontSize: '0.8rem', marginTop: '6px', opacity: 0.6 }}>
+              Beautiful wedding websites for modern couples
+            </p>
+          </div>
         </footer>
-      </div>
 
-      {showShare && (
-        <ShareSheet
-          url={shareUrl}
-          coupleName={coupleDisplay}
-          t={t}
-          onClose={() => setShowShare(false)}
-        />
-      )}
+      </div>
     </>
+  );
+}
+
+// ─── Story block ──────────────────────────────────────────────────────────────
+
+function StoryBlock({ icon, label, text, t, quote = false }: { icon: string; label: string; text: string; t: any; quote?: boolean }) {
+  return (
+    <div style={{
+      background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: '28px',
+      padding: '36px 32px', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Subtle accent glow top-left */}
+      <div style={{ position: 'absolute', top: 0, left: 0, width: '200px', height: '200px', background: `radial-gradient(circle, ${t.accentLight} 0%, transparent 70%)`, pointerEvents: 'none' }} />
+      <div style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <span style={{ fontSize: '1.3rem' }}>{icon}</span>
+          <p style={{ fontSize: '10px', letterSpacing: '0.4em', textTransform: 'uppercase', color: t.accent, fontWeight: 600 }}>{label}</p>
+        </div>
+        {quote ? (
+          <blockquote style={{
+            fontFamily: t.font, fontStyle: 'italic', color: t.textMid,
+            fontSize: 'clamp(1rem, 3vw, 1.15rem)', lineHeight: 1.9,
+            paddingLeft: '20px', borderLeft: `2px solid ${t.accentBorder}`,
+          }}>
+            {text}
+          </blockquote>
+        ) : (
+          <p style={{ color: t.textMid, lineHeight: 1.9, fontSize: '0.97rem', fontFamily: t.bodyFont }}>
+            {text}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Empty state ──────────────────────────────────────────────────────────────
+
+function EmptyState({ icon, message, sub, t }: { icon: string; message: string; sub: string; t: any }) {
+  return (
+    <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: '28px', padding: '60px 32px', textAlign: 'center' }}>
+      <p style={{ fontSize: '3rem', marginBottom: '16px' }}>{icon}</p>
+      <p style={{ fontFamily: t.font, color: t.text, fontSize: '1.1rem', fontStyle: 'italic', marginBottom: '8px' }}>{message}</p>
+      <p style={{ color: t.textFaint, fontSize: '0.88rem', lineHeight: 1.7 }}>{sub}</p>
+    </div>
   );
 }

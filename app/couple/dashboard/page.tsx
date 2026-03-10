@@ -12,7 +12,19 @@ interface DbTask { id: string; couple_id: string; title: string; due_date: strin
 interface DbBudgetItem { id: string; couple_id: string; title: string; amount: number; amount_paid: number; category: string | null; status: 'planned' | 'partial' | 'paid'; created_at: string; }
 interface RecentQuote { id: string; quote_ref: string; vendor_id: string; package_name: string; status: string; created_at: string; vendor_name: string; }
 interface DbGuest { id: string; couple_id: string; full_name: string; rsvp_status: 'pending' | 'accepted' | 'declined'; }
-interface CoupleProfile { partner_name: string | null; wedding_date: string | null; location: string | null; avatar_url: string | null; wedding_theme: string | null; gift_enabled: boolean | null; gift_message: string | null; gift_items: any[]; }
+interface CoupleProfile {
+  partner_name: string | null;
+  wedding_date: string | null;
+  location: string | null;
+  avatar_url: string | null;
+  wedding_theme: string | null;
+  gift_enabled: boolean | null;
+  gift_message: string | null;
+  gift_items: any[];
+  how_we_met: string | null;
+  proposal_story: string | null;
+  couple_message: string | null;
+}
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 const daysUntil = (d: string) => { const t = new Date(); t.setHours(0,0,0,0); return Math.max(0, Math.ceil((new Date(d+'T00:00:00').getTime() - t.getTime()) / 86400000)); };
@@ -189,7 +201,7 @@ export default function CoupleDashboard() {
       const authName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || null;
       const [profileRes, coupleRes, tasksRes, budgetRes, guestsRes] = await Promise.all([
         supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
-        supabase.from('couples').select('partner_name,wedding_date,location,avatar_url,wedding_theme,gift_enabled,gift_message,gift_items').eq('id', user.id).maybeSingle(),
+        supabase.from('couples').select('partner_name,wedding_date,location,avatar_url,wedding_theme,gift_enabled,gift_message,gift_items,how_we_met,proposal_story,couple_message').eq('id', user.id).maybeSingle(),
         supabase.from('couple_tasks').select('*').eq('couple_id', user.id).order('due_date', { ascending:true, nullsFirst:false }),
         supabase.from('couple_budget_items').select('*').eq('couple_id', user.id).order('created_at'),
         supabase.from('couple_guests').select('id,couple_id,full_name,rsvp_status').eq('couple_id', user.id),
@@ -560,9 +572,12 @@ export default function CoupleDashboard() {
               giftMessage={coupleProfile.gift_message ?? null}
               giftItems={coupleProfile.gift_items ?? []}
               weddingWebsiteUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/w/${userId}`}
+              howWeMet={coupleProfile.how_we_met ?? null}
+              proposalStory={coupleProfile.proposal_story ?? null}
+              coupleMessage={coupleProfile.couple_message ?? null}
               onSaved={async () => {
                 // Refetch couple profile after saving
-                const { data } = await supabase.from('couples').select('partner_name, wedding_date, location, avatar_url, wedding_theme, gift_enabled, gift_message, gift_items').eq('id', userId).maybeSingle();
+                const { data } = await supabase.from('couples').select('partner_name, wedding_date, location, avatar_url, wedding_theme, gift_enabled, gift_message, gift_items, how_we_met, proposal_story, couple_message').eq('id', userId).maybeSingle();
                 if (data) setCoupleProfile(data);
               }}
             />
