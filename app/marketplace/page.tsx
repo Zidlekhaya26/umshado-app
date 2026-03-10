@@ -161,9 +161,9 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
             : '0 2px 12px rgba(0,0,0,0.05)';
         }}
       >
-        {/* Coloured top band */}
+        {/* Coloured top band — category pill only, no right badges (Verified moves below) */}
         <div style={{
-          height: 88,
+          height: 72,
           background: `linear-gradient(135deg, ${catCfg.color}22, ${catCfg.color}10)`,
           borderBottom: `1px solid ${catCfg.color}20`,
           position: 'relative',
@@ -182,65 +182,61 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
             <span>{vendor.category.split(' ')[0]}</span>
           </div>
 
-          {/* Badges top-right */}
-          <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-            {isFeatured && (
-              <div style={{
-                padding: '3px 9px', borderRadius: 20,
-                background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
-                color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8,
-              }}>★ FEATURED</div>
-            )}
-            {vendor.verified && (
-              <div style={{
-                width: 26, height: 26, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(4px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                border: '1.5px solid rgba(16,185,129,0.4)',
-              }}>
-                <VerifiedBadge verified />
-              </div>
-            )}
-          </div>
+          {/* Featured badge top-right only */}
+          {isFeatured && (
+            <div style={{
+              padding: '3px 9px', borderRadius: 20,
+              background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
+              color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8,
+            }}>★ FEATURED</div>
+          )}
         </div>
 
-        {/* Avatar + name row */}
-        <div style={{ padding: '0 18px', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, marginTop: -28 }}>
-            {/* Logo */}
+        {/* Avatar + name row — avatar floats up, name sits cleanly BELOW the band line */}
+        <div style={{ padding: '0 16px', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: -22 }}>
+            {/* Logo avatar */}
             {vendor.logoUrl ? (
               <button type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
                 style={{
-                  width: 56, height: 56, borderRadius: 14, overflow: 'hidden',
-                  border: '3px solid #fff', background: '#fff',
+                  width: 50, height: 50, borderRadius: 12, overflow: 'hidden',
+                  border: '2.5px solid #fff', background: '#fff',
                   flexShrink: 0, cursor: 'zoom-in', padding: 0,
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
                 }}
               >
                 <img src={vendor.logoUrl} alt={vendor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             ) : (
               <div style={{
-                width: 56, height: 56, borderRadius: 14, flexShrink: 0,
+                width: 50, height: 50, borderRadius: 12, flexShrink: 0,
                 background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontWeight: 800, fontSize: 18, fontFamily: 'Georgia,serif',
-                border: '3px solid #fff', boxShadow: '0 2px 12px rgba(0,0,0,0.12)',
+                color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif',
+                border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
               }}>
-                {vendor.name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase()}
+                {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
               </div>
             )}
 
-            {/* Name */}
-            <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
-              <h3 style={{
-                margin: 0, fontSize: 15, fontWeight: 700, color: '#111827',
-                fontFamily: 'Georgia, serif',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>{vendor.name}</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
+            {/* Name + location + verified — all sit below the band line */}
+            <div style={{ flex: 1, minWidth: 0, paddingTop: 22 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
+                <h3 style={{
+                  margin: 0, fontSize: 17, fontWeight: 700, color: '#111827',
+                  fontFamily: 'Georgia, serif',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>{vendor.name}</h3>
+                {vendor.verified && (
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 20, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#059669' }}>Verified</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
                 </svg>
                 <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{vendor.location}</span>
@@ -309,7 +305,7 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 4,
                 padding: '8px 14px', borderRadius: 10,
-                background: 'linear-gradient(135deg,#1a1a2e,#16213e)',
+                background: 'linear-gradient(135deg,#6b1a2e,#8b2040)',
                 color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.2,
               }}>
                 View
@@ -460,36 +456,27 @@ export default function Marketplace() {
 
         {/* ── Premium Header ── */}
         <div style={{
-          background: 'linear-gradient(160deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+          background: 'linear-gradient(160deg, #6b1a2e 0%, #8b2040 55%, #a8305a 100%)',
           padding: '0 0 0', position: 'relative', overflow: 'hidden',
         }}>
           {/* Decorative orbs */}
-          <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: 100, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,180,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: 100, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,150,150,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
           {/* Header top row */}
           <div style={{ padding: '20px 20px 16px', position: 'relative' }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 8,
-                    background: 'linear-gradient(135deg, #b8973e, #e8c84a)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <span style={{ fontSize: 16 }}>💍</span>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', lineHeight: 1 }}>uMshado</div>
-                    <h1 style={{
-                      margin: 0, fontSize: 22, fontWeight: 800, color: '#fff',
-                      fontFamily: 'Georgia, serif', lineHeight: 1,
-                      letterSpacing: -0.5,
-                    }}>Wedding Marketplace</h1>
-                  </div>
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.8, textTransform: 'uppercase', lineHeight: 1, marginBottom: 4 }}>uMshado</div>
+                  <h1 style={{
+                    margin: 0, fontSize: 24, fontWeight: 800, color: '#fff',
+                    fontFamily: 'Georgia, serif', lineHeight: 1,
+                    letterSpacing: -0.5,
+                  }}>Wedding Marketplace</h1>
                 </div>
-                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)', marginLeft: 40 }}>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
                   {loading ? '…' : `${allVendors.length} trusted vendors`}
                 </p>
               </div>
@@ -584,7 +571,7 @@ export default function Marketplace() {
                 flexShrink: 0, padding: '8px 18px', borderRadius: 24,
                 fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
                 background: categoryFilter === '' ? '#fff' : 'rgba(255,255,255,0.1)',
-                color: categoryFilter === '' ? '#0f0c29' : 'rgba(255,255,255,0.7)',
+                color: categoryFilter === '' ? '#3d0a17' : 'rgba(255,255,255,0.7)',
                 boxShadow: categoryFilter === '' ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
               }}
             >All</button>
@@ -601,7 +588,7 @@ export default function Marketplace() {
                     padding: '8px 16px', borderRadius: 24,
                     fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
                     background: active ? '#fff' : `rgba(255,255,255,0.1)`,
-                    color: active ? '#0f0c29' : 'rgba(255,255,255,0.7)',
+                    color: active ? '#3d0a17' : 'rgba(255,255,255,0.7)',
                     boxShadow: active ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
                     whiteSpace: 'nowrap',
                   }}
@@ -651,7 +638,7 @@ export default function Marketplace() {
               <div style={{ fontSize: 52, marginBottom: 14, opacity: 0.25 }}>🔍</div>
               <p style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: '0 0 6px', fontFamily: 'Georgia,serif' }}>No vendors found</p>
               <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 20px' }}>Try adjusting your search or filters</p>
-              <button onClick={clearAll} style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#0f0c29,#302b63)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(15,12,41,0.3)' }}>Clear filters</button>
+              <button onClick={clearAll} style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(107,26,46,0.3)' }}>Clear filters</button>
             </div>
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
@@ -704,9 +691,9 @@ export default function Marketplace() {
                         <button key={s} onClick={() => toggleService(s)}
                           style={{
                             padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
-                            background: active ? 'linear-gradient(135deg,#0f0c29,#302b63)' : '#f8f7f4',
+                            background: active ? 'linear-gradient(135deg,#6b1a2e,#8b2040)' : '#f8f7f4',
                             color: active ? '#fff' : '#374151',
-                            boxShadow: active ? '0 2px 8px rgba(15,12,41,0.2)' : '0 1px 3px rgba(0,0,0,0.06)',
+                            boxShadow: active ? '0 2px 8px rgba(107,26,46,0.2)' : '0 1px 3px rgba(0,0,0,0.06)',
                             transition: 'all 0.15s',
                           }}>
                           {s}
@@ -721,7 +708,7 @@ export default function Marketplace() {
             </div>
             <div style={{ padding: '12px 20px 24px', display: 'flex', gap: 10, borderTop: '1px solid #f1f0ee' }}>
               <button onClick={() => setServiceFilter([])} style={{ flex: 1, height: 46, borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Clear</button>
-              <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 46, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#0f0c29,#302b63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(15,12,41,0.3)' }}>
+              <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 46, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(107,26,46,0.3)' }}>
                 Apply{serviceFilter.length > 0 ? ` (${serviceFilter.length})` : ''}
               </button>
             </div>
