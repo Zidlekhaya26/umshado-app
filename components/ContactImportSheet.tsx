@@ -174,11 +174,11 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg flex flex-col" style={{ maxHeight: 'calc(100vh - env(safe-area-inset-top) - 20px)' }}>
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 shrink-0">
-          <h3 className="text-lg font-black text-gray-900">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0">
+          <h3 className="text-base sm:text-lg font-black text-gray-900">
             {step === 'choose' ? '📇 Import Contacts' : '✓ Select Guests'}
           </h3>
           <button
@@ -190,7 +190,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+        <div className="flex-1 overflow-y-auto px-5 py-3 min-h-0">
           {step === 'choose' && (
             <div className="space-y-4">
               
@@ -322,10 +322,10 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
           )}
 
           {step === 'preview' && (
-            <div className="space-y-4">
+            <div className="space-y-3 h-full flex flex-col">
               
               {/* Stats & controls */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between shrink-0">
                 <p className="text-sm font-semibold text-gray-700">
                   {selected.size} of {contacts.length} selected
                 </p>
@@ -338,7 +338,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               </div>
 
               {/* Contact list */}
-              <div className="space-y-2 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 400px)', minHeight: '200px' }}>
+              <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
                 {contacts.map((contact, i) => (
                   <label
                     key={i}
@@ -365,7 +365,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               </div>
 
               {/* Info note */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-2 text-xs text-blue-700 shrink-0">
                 <strong>ℹ️ Note:</strong> Duplicates will be filtered automatically by phone number and name.
               </div>
 
@@ -374,7 +374,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
         </div>
 
         {/* Footer actions */}
-        <div className="shrink-0 px-5 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+        <div className="shrink-0 px-5 py-3 pb-safe border-t border-gray-200 bg-gray-50">
           {step === 'choose' ? (
             <button
               onClick={onClose}
@@ -383,17 +383,17 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               Cancel
             </button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={goBack}
-                className="px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:border-gray-300 transition-all"
+                className="px-3 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:border-gray-300 transition-all"
               >
                 ← Back
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={selected.size === 0}
-                className="flex-1 px-6 py-3 bg-violet-600 text-white rounded-xl text-base font-bold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-300"
+                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-bold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-300"
               >
                 Add {selected.size} {selected.size === 1 ? 'Guest' : 'Guests'}
               </button>
