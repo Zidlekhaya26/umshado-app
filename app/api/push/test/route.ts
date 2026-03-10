@@ -16,9 +16,7 @@ export async function GET(req: NextRequest) {
   const diag: Record<string, any> = {
     timestamp: new Date().toISOString(),
     env: {
-      NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        ? `SET (${process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY.slice(0, 20)}...)`
-        : 'MISSING ❌',
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || 'MISSING ❌',
       VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY
         ? `SET (${process.env.VAPID_PRIVATE_KEY.slice(0, 8)}...)`
         : 'MISSING ❌',
