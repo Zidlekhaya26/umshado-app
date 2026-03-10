@@ -20,27 +20,43 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
 }
 
+/** base64url — required by web-push for p256dh and auth keys */
+function toBase64Url(key: ArrayBuffer): string {
+  return btoa(String.fromCharCode(...new Uint8Array(key)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/** Read VAPID public key — tries meta tag first (always works), then process.env fallback */
+function getVapidPublicKey(): string | null {
+  if (typeof document !== 'undefined') {
+    const meta = document.querySelector('meta[name="vapid-public-key"]');
+    if (meta) return meta.getAttribute('content');
+  }
+  // process.env fallback (only works if built with the var set)
+  return process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || null;
+}
+
 export function usePushNotifications(): UsePushNotifications {
   const [permission, setPermission] = useState<PushPermission>('default');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Detect support and current state on mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
       setPermission('unsupported');
       return;
     }
-
     setPermission(Notification.permission as PushPermission);
 
-    // Check if already subscribed
-    navigator.serviceWorker.ready.then((reg) => {
+    // Register SW on every page load (idempotent) so push works even if prompt was dismissed
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).then((reg) => {
       reg.pushManager.getSubscription().then((sub) => {
         setIsSubscribed(!!sub);
       });
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn('[push] SW registration failed:', err);
+    });
   }, []);
 
   const getAuthToken = async (): Promise<string | null> => {
@@ -50,22 +66,18 @@ export function usePushNotifications(): UsePushNotifications {
 
   const subscribe = useCallback(async (): Promise<boolean> => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
-
     setIsLoading(true);
     try {
-      // 1. Request permission
       const perm = await Notification.requestPermission();
       setPermission(perm as PushPermission);
       if (perm !== 'granted') return false;
 
-      // 2. Register service worker
       const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       await navigator.serviceWorker.ready;
 
-      // 3. Subscribe to push
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const vapidPublicKey = getVapidPublicKey();
       if (!vapidPublicKey) {
-        console.error('[push] NEXT_PUBLIC_VAPID_PUBLIC_KEY not set');
+        console.error('[push] VAPID public key not available');
         return false;
       }
 
@@ -74,21 +86,12 @@ export function usePushNotifications(): UsePushNotifications {
         applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
       });
 
-      // 4. Save to server
       const token = await getAuthToken();
       if (!token) return false;
 
-      // Keys must be base64url (not standard base64) for web-push compatibility
-      const toBase64Url = (key: ArrayBuffer): string =>
-        btoa(String.fromCharCode(...new Uint8Array(key)))
-          .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           endpoint: subscription.endpoint,
           keys: {
@@ -102,6 +105,8 @@ export function usePushNotifications(): UsePushNotifications {
         setIsSubscribed(true);
         return true;
       }
+      const errJson = await res.json().catch(() => ({}));
+      console.error('[push] subscribe save failed:', res.status, errJson);
       return false;
     } catch (err) {
       console.error('[push] subscribe error:', err);
@@ -117,22 +122,16 @@ export function usePushNotifications(): UsePushNotifications {
       const reg = await navigator.serviceWorker.ready;
       const subscription = await reg.pushManager.getSubscription();
       if (!subscription) return;
-
       const endpoint = subscription.endpoint;
       await subscription.unsubscribe();
-
       const token = await getAuthToken();
       if (token) {
         await fetch('/api/push/subscribe', {
           method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ endpoint }),
         });
       }
-
       setIsSubscribed(false);
     } catch (err) {
       console.error('[push] unsubscribe error:', err);

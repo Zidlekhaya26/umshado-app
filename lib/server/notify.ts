@@ -2,10 +2,7 @@ import { createServiceClient } from '@/lib/supabaseServer';
 
 /**
  * Server-side notification creator — single source of truth.
- * Uses SUPABASE_SERVICE_ROLE_KEY so it bypasses RLS.
- * Also fires Web Push via /api/push/send (uses web-push package).
- *
- * NEVER import this file from a 'use client' component.
+ * NEVER import this from a 'use client' component.
  */
 
 export interface NotifyPayload {
@@ -19,7 +16,6 @@ export interface NotifyPayload {
 
 export async function notifyUsers(payload: NotifyPayload): Promise<void> {
   const { userIds, type, title, body, link, meta } = payload;
-
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return;
 
@@ -36,38 +32,72 @@ export async function notifyUsers(payload: NotifyPayload): Promise<void> {
       is_read: false,
       meta: meta ?? {},
     }));
-
     const { error } = await supabase.from('notifications').insert(rows);
-    if (error) {
-      console.error('[notify] Failed to insert notifications:', error);
-    }
+    if (error) console.error('[notify] DB insert error:', error);
 
-    // 2. Fire Web Push for each user — via /api/push/send (uses web-push package)
-    // Fire-and-forget: push errors must never break the primary flow
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
-      || process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`
-      || 'http://localhost:3000';
+    // 2. Web Push — inline, no self-referential HTTP call
+    // Import lazily so this file can still be used without web-push installed
+    try {
+      const webpush = (await import('web-push')).default;
 
-    await Promise.allSettled(
-      ids.map((userId) =>
-        fetch(`${baseUrl}/api/push/send`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, title, body, link: link ?? null, tag: type }),
-        }).catch((err) => {
-          console.error('[notify] push/send fetch error for user', userId, err);
+      const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+      const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@umshado.co.za';
+
+      if (!vapidPublic || !vapidPrivate) {
+        console.warn('[notify] VAPID keys not configured — skipping push');
+        return;
+      }
+
+      webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+
+      // Fetch subscriptions for all target users
+      const { data: subs } = await supabase
+        .from('push_subscriptions')
+        .select('id, endpoint, p256dh, auth')
+        .in('user_id', ids);
+
+      if (!subs || subs.length === 0) return;
+
+      const pushPayload = JSON.stringify({
+        title,
+        body,
+        icon: '/logo-icon.png',
+        badge: '/logo-icon.png',
+        tag: type,
+        data: { link: link ?? '/', type },
+      });
+
+      const results = await Promise.allSettled(
+        subs.map(async (sub: any) => {
+          try {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              pushPayload
+            );
+            return { ok: true };
+          } catch (err: any) {
+            // 410/404 = subscription gone, clean it up
+            if (err.statusCode === 410 || err.statusCode === 404) {
+              await supabase.from('push_subscriptions').delete().eq('id', sub.id);
+            }
+            console.error('[notify] push failed:', err.statusCode, err.message);
+            return { ok: false };
+          }
         })
-      )
-    );
+      );
+
+      const sent = results.filter((r) => r.status === 'fulfilled' && (r.value as any).ok).length;
+      console.log(`[notify] push sent=${sent}/${subs.length}`);
+    } catch (pushErr) {
+      // web-push not installed or any other push error — never break the main flow
+      console.error('[notify] push error:', pushErr);
+    }
   } catch (err) {
     console.error('[notify] Unexpected error:', err);
   }
 }
 
-/**
- * Anti-spam: returns true if we should SKIP sending the notification
- * (one was already sent within the cooldown window for this thread).
- */
 export async function shouldThrottleMessageNotification(
   receiverUserId: string,
   threadId: string,
@@ -76,19 +106,13 @@ export async function shouldThrottleMessageNotification(
   try {
     const supabase = createServiceClient();
     const since = new Date(Date.now() - cooldownSeconds * 1000).toISOString();
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('notifications')
       .select('id')
       .eq('user_id', receiverUserId)
       .eq('type', 'message_received')
       .gte('created_at', since)
       .limit(1);
-
-    if (error) {
-      console.error('[notify] throttle check error:', error);
-      return false;
-    }
 
     if (data && data.length > 0) {
       const { data: exactMatch } = await supabase
@@ -101,10 +125,9 @@ export async function shouldThrottleMessageNotification(
         .limit(1);
       return (exactMatch?.length ?? 0) > 0;
     }
-
     return false;
   } catch (err) {
-    console.error('[notify] throttle check unexpected error:', err);
+    console.error('[notify] throttle check error:', err);
     return false;
   }
 }

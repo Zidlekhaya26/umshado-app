@@ -53,6 +53,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest?v=1" />
         <link rel="icon" href="/logo-icon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        {/* VAPID key injected server-side so it's always available to the client */}
+        <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         {/* ✅ No centering, no max-width here */}
@@ -61,7 +63,7 @@ export default function RootLayout({
             <ToastProvider>
             <div className="w-full">
               <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
-                <div className="block flex items-center gap-3">
+                <div className="flex items-center gap-3">
                   <CurrencySelector />
                   <FullscreenPrompt />
                 </div>
