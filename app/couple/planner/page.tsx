@@ -85,6 +85,7 @@ function CouplePlannerContent() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showGuestModal, setShowGuestModal] = useState(false);
+  const [showContactImport, setShowContactImport] = useState(false);
   const vcardInputRef = useRef<HTMLInputElement | null>(null);
   const [importInProgress, setImportInProgress] = useState(false);
   const [showImportConfirm, setShowImportConfirm] = useState(false);
@@ -385,6 +386,59 @@ function CouplePlannerContent() {
     setNewGuestName(''); setNewGuestPhone(''); setNewGuestPlusOne(false); setNewGuestSide('both'); setShowGuestModal(false);
   };
 
+  // ── Contact import (via ContactImportSheet) ────────────
+  const handleContactImport = async (contacts: ImportedContact[]) => {
+    if (!userId || contacts.length === 0) return;
+    setShowContactImport(false);
+    setImportInProgress(true);
+
+    try {
+      const normalizePhone = (p?: string | null) => {
+        if (!p) return null;
+        const digits = p.replace(/\D/g, '');
+        if (!digits) return null;
+        return digits.length > 9 ? digits.slice(-9) : digits;
+      };
+
+      const existingPhones = new Set(guests.map(g => normalizePhone(g.phone)));
+      const existingNames = new Set(guests.map(g => g.full_name.toLowerCase().trim()));
+
+      const rows = contacts
+        .filter(c => {
+          const normPhone = normalizePhone(c.phone);
+          if (normPhone && existingPhones.has(normPhone)) return false;
+          const normName = c.full_name.toLowerCase().trim();
+          if (existingNames.has(normName)) return false;
+          return true;
+        })
+        .map(c => ({
+          couple_id: userId,
+          full_name: c.full_name,
+          phone: c.phone || null,
+          plus_one: false,
+          rsvp_status: 'pending' as const,
+          invited_via: 'import' as const,
+          side: 'both' as const,
+        }));
+
+      if (rows.length === 0) {
+        toastCtx.show('All contacts are already in your guest list.', 'default');
+        setImportInProgress(false);
+        return;
+      }
+
+      const { data, error } = await supabase.from('couple_guests').insert(rows).select();
+      if (!error && data) {
+        setGuests(prev => [...prev, ...data.map(d => ({ ...d, side: d.side ?? 'both' }))]);
+        toastCtx.show(`Imported ${data.length} guest${data.length === 1 ? '' : 's'}.`, 'success');
+      } else {
+        toastCtx.show('Failed to import contacts.', 'error');
+      }
+    } finally {
+      setImportInProgress(false);
+    }
+  };
+
   // Import contacts (Contacts Picker API if available, fallback to vCard file)
   const parseVCard = (text: string) => {
     const entries: { full_name: string; phone: string | null }[] = [];
@@ -666,17 +720,20 @@ function CouplePlannerContent() {
               ) : (
                 <>
                   {/* Summary Card */}
-                  <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-5 text-white shadow-lg">
-                    <p className="text-sm font-medium opacity-90 mb-2 text-white">Total Budget</p>
-                    <p className="text-3xl font-bold text-white">{format(totalBudget)}</p>
-                    <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-white border-opacity-20">
-                      <div><p className="text-xs opacity-90 text-white">Paid</p><p className="text-lg font-bold text-white">{format(totalPaid)}</p></div>
-                      <div><p className="text-xs opacity-90 text-white">Outstanding</p><p className="text-lg font-bold text-white">{format(totalOutstanding)}</p></div>
-                      <div><p className="text-xs opacity-90 text-white">Progress</p><p className="text-lg font-bold text-white">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
+                  <div className="bg-white rounded-xl p-5 shadow-lg border-2 border-gray-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">💰</span>
+                      <p className="text-sm font-semibold text-gray-600">Total Budget</p>
+                    </div>
+                    <p className="text-3xl font-bold text-gray-900">{format(totalBudget)}</p>
+                    <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-200">
+                      <div><p className="text-xs font-medium text-gray-500">Paid</p><p className="text-lg font-bold text-green-600">{format(totalPaid)}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Outstanding</p><p className="text-lg font-bold text-orange-600">{format(totalOutstanding)}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Progress</p><p className="text-lg font-bold text-purple-600">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
                     </div>
                     {/* Progress bar */}
-                    <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
-                      <div className="h-full bg-white rounded-full transition-all duration-500" style={{ width: `${totalBudget > 0 ? Math.min((totalPaid / totalBudget) * 100, 100) : 0}%` }} />
+                    <div className="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500" style={{ width: `${totalBudget > 0 ? Math.min((totalPaid / totalBudget) * 100, 100) : 0}%` }} />
                     </div>
                   </div>
 
@@ -741,13 +798,16 @@ function CouplePlannerContent() {
               ) : (
                 <>
                   {/* Summary Card */}
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl p-5 text-white shadow-lg">
-                    <p className="text-sm font-medium opacity-90 mb-2">Total Guests</p>
-                    <p className="text-3xl font-bold">{totalGuestCount}</p>
-                    <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white border-opacity-20">
-                      <div><p className="text-xs opacity-90">Accepted</p><p className="text-lg font-bold">{acceptedGuests}</p></div>
-                      <div><p className="text-xs opacity-90">Pending</p><p className="text-lg font-bold">{pendingGuests}</p></div>
-                      <div><p className="text-xs opacity-90">Declined</p><p className="text-lg font-bold">{declinedGuests}</p></div>
+                  <div className="bg-white rounded-xl p-5 shadow-lg border-2 border-gray-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-2xl">👥</span>
+                      <p className="text-sm font-semibold text-gray-600">Total Guests</p>
+                    </div>
+                    <p className="text-3xl font-bold text-gray-900">{totalGuestCount}</p>
+                    <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-200">
+                      <div><p className="text-xs font-medium text-gray-500">Accepted</p><p className="text-lg font-bold text-green-600">{acceptedGuests}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Pending</p><p className="text-lg font-bold text-amber-600">{pendingGuests}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Declined</p><p className="text-lg font-bold text-gray-400">{declinedGuests}</p></div>
                     </div>
                   </div>
 
@@ -786,7 +846,7 @@ function CouplePlannerContent() {
                         </button>
                       )}
                       <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
-                      <button onClick={importContacts} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
+                      <button onClick={() => setShowContactImport(true)} disabled={importInProgress} className={`px-3 py-2 ${importInProgress ? 'bg-gray-100 text-gray-400 border border-gray-100' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'} rounded-full text-sm font-semibold transition-colors`}>{importInProgress ? 'Importing…' : 'Import Guests'}</button>
                     </div>
                   </div>
 
@@ -975,6 +1035,14 @@ function CouplePlannerContent() {
         onConfirm={performImport}
         onClose={() => { setShowImportConfirm(false); setPendingImportRows(null); }}
       />
+
+      {/* Contact Import Sheet */}
+      {showContactImport && (
+        <ContactImportSheet
+          onImport={handleContactImport}
+          onClose={() => setShowContactImport(false)}
+        />
+      )}
 
       <input ref={vcardInputRef} type="file" accept=".vcf,text/vcard" onChange={e => handleVCardFile(e.target.files?.[0])} className="hidden" />
       <BottomNav />
