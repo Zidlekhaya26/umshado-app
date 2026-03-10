@@ -188,10 +188,10 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 3,
                 padding: '3px 8px', borderRadius: 20,
-                background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)',
+                background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)',
               }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#059669' }}>Verified</span>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#2563eb' }}>Verified</span>
               </div>
             )}
             {isFeatured && (
@@ -232,8 +232,8 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
               </div>
             )}
 
-            {/* Name + location — sits below the band line */}
-            <div style={{ flex: 1, minWidth: 0, paddingTop: 10 }}>
+            {/* Name + location — name overlaps above the band line */}
+            <div style={{ flex: 1, minWidth: 0, marginTop: -8 }}>
               <h3 style={{
                 margin: 0, fontSize: 17, fontWeight: 700, color: '#111827',
                 fontFamily: 'Georgia, serif',
