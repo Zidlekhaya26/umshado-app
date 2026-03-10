@@ -563,31 +563,35 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Add Table Modal ──────────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="text-lg font-black text-gray-900 mb-4">Add Table</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Table Name</label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  placeholder="e.g., Head Table, Family, VIP"
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 text-sm"
-                  autoFocus
-                  onKeyDown={e => e.key === 'Enter' && addTable()}
-                />
-              </div>
-              <CapacityPicker value={newCapacity} onChange={setNewCapacity} />
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[75vh]">
+            <div className="shrink-0 px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-black text-gray-900">Add Table</h3>
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Table Name</label>
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={e => setNewName(e.target.value)}
+                    placeholder="e.g., Head Table, Family, VIP"
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 text-sm"
+                    autoFocus
+                    onKeyDown={e => e.key === 'Enter' && addTable()}
+                  />
+                </div>
+                <CapacityPicker value={newCapacity} onChange={setNewCapacity} />
+              </div>
+            </div>
+            <div className="shrink-0 flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
               <button onClick={() => { setShowAddModal(false); setNewName(''); setNewCapacity(8); }}
-                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
                 Cancel
               </button>
               <button onClick={addTable} disabled={!newName.trim()}
-                className="flex-1 px-4 py-2.5 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 disabled:opacity-40">
+                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40">
                 Add Table
               </button>
             </div>
@@ -597,9 +601,9 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Edit Table Modal ─────────────────────────────────── */}
       {editingTable && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
+            <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-black text-gray-900">Edit Table</h3>
               <button
                 onClick={() => deleteTable(editingTable.id)}
@@ -608,30 +612,32 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                 Delete Table
               </button>
             </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Table Name</label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 text-sm"
-                />
+            <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Table Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500 focus:border-transparent text-gray-900 text-sm"
+                  />
+                </div>
+                <CapacityPicker value={editCapacity} onChange={setEditCapacity} />
+                {editCapacity < editingTable.seats.length && (
+                  <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+                    ⚠️ Reducing capacity will remove {editingTable.seats.length - editCapacity} guest(s) from this table.
+                  </p>
+                )}
               </div>
-              <CapacityPicker value={editCapacity} onChange={setEditCapacity} />
-              {editCapacity < editingTable.seats.length && (
-                <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                  ⚠️ Reducing capacity will remove {editingTable.seats.length - editCapacity} guest(s) from this table.
-                </p>
-              )}
             </div>
-            <div className="flex gap-3 mt-6">
+            <div className="shrink-0 flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
               <button onClick={() => setEditingTable(null)}
-                className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200 transition-all">
+                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
                 Cancel
               </button>
               <button onClick={saveEdit} disabled={!editName.trim()}
-                className="flex-1 px-4 py-2.5 bg-violet-600 text-white rounded-xl font-bold hover:bg-violet-700 transition-all shadow-lg shadow-violet-200 disabled:opacity-40">
+                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40">
                 Save Changes
               </button>
             </div>
