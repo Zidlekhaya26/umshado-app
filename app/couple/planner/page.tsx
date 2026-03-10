@@ -76,7 +76,7 @@ function CouplePlannerContent() {
   const router = useRouter();
   const urlTab = searchParams.get('tab') || 'tasks';
 
-  const [activeTab, setActiveTab] = useState<'tasks' | 'budget' | 'guests'>(urlTab as 'tasks' | 'budget' | 'guests');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'budget' | 'guests' | 'seating'>(urlTab as 'tasks' | 'budget' | 'guests' | 'seating');
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -261,9 +261,9 @@ function CouplePlannerContent() {
     return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
-  useEffect(() => { if (urlTab !== activeTab) setActiveTab(urlTab as 'tasks' | 'budget' | 'guests'); }, [urlTab]);
+  useEffect(() => { if (urlTab !== activeTab) setActiveTab(urlTab as 'tasks' | 'budget' | 'guests' | 'seating'); }, [urlTab]);
 
-  const handleTabChange = (tab: 'tasks' | 'budget' | 'guests') => { setActiveTab(tab); router.push(`/couple/planner?tab=${tab}`); };
+  const handleTabChange = (tab: 'tasks' | 'budget' | 'guests' | 'seating') => { setActiveTab(tab); router.push(`/couple/planner?tab=${tab}`); };
 
   // ── Task actions ───────────────────────────────────────
   const toggleTask = async (task: DbTask) => {
@@ -618,9 +618,9 @@ function CouplePlannerContent() {
 
         <div className="bg-white border-b border-gray-200 px-4 py-3">
           <div className="flex gap-2">
-            {(['tasks', 'budget', 'guests'] as const).map(tab => (
+            {(['tasks', 'budget', 'guests', 'seating'] as const).map(tab => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize ${activeTab === tab ? 'bg-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                {tab}
+                {tab === 'seating' ? '🪑 Seats' : tab}
               </button>
             ))}
           </div>
@@ -735,7 +735,6 @@ function CouplePlannerContent() {
           {/* ════════════ GUESTS ════════════ */}
           {activeTab === 'guests' && (
             <div className="p-4 space-y-4">
-              <SeatingPlanner onApply={applySeatingPayload} />
               {guests.length === 0 ? (
                 <EmptyState icon="👥" title="No guests yet" description="Start building your guest list for the big day." actionLabel="+ Add Guest" onAction={() => setShowGuestModal(true)} />
               ) : (
@@ -824,6 +823,13 @@ function CouplePlannerContent() {
                   </div>
                 </>
               )}
+            </div>
+          )}
+
+          {/* ════════════ SEATING ════════════ */}
+          {activeTab === 'seating' && userId && (
+            <div className="p-4">
+              <SeatingPlanner guests={guests} userId={userId} />
             </div>
           )}
         </div>
