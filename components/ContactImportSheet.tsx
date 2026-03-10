@@ -177,8 +177,8 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
       <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0">
-          <h3 className="text-base sm:text-lg font-black text-gray-900">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
+          <h3 className="text-lg font-black text-gray-900">
             {step === 'choose' ? '📇 Import Contacts' : '✓ Select Guests'}
           </h3>
           <button
@@ -190,7 +190,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 min-h-0">
+        <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
           {step === 'choose' && (
             <div className="space-y-4">
               
@@ -374,7 +374,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
         </div>
 
         {/* Footer actions */}
-        <div className="shrink-0 px-5 py-3 pb-safe border-t border-gray-200 bg-gray-50">
+        <div className="shrink-0 px-5 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           {step === 'choose' ? (
             <button
               onClick={onClose}
@@ -383,17 +383,17 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               Cancel
             </button>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={goBack}
-                className="px-3 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:border-gray-300 transition-all"
+                className="px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:border-gray-300 transition-all whitespace-nowrap"
               >
                 ← Back
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={selected.size === 0}
-                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-bold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-violet-300"
+                className="flex-1 px-5 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
               >
                 Add {selected.size} {selected.size === 1 ? 'Guest' : 'Guests'}
               </button>
