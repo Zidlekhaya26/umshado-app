@@ -17,7 +17,7 @@ async function getAuthUser(req: NextRequest) {
 }
 
 // GET /api/vendor/[vendorId]/review?coupleId=xxx
-export async function GET(req: NextRequest, { params }: { params: { vendorId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = await params;
   const url = new URL(req.url);
   const coupleId = url.searchParams.get('coupleId');
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: { vendorId: st
 }
 
 // POST — create or update a review
-export async function POST(req: NextRequest, { params }: { params: { vendorId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = await params;
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest, { params }: { params: { vendorId: s
 }
 
 // DELETE — remove own review
-export async function DELETE(req: NextRequest, { params }: { params: { vendorId: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = await params;
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
