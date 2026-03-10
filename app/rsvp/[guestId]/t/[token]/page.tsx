@@ -2,14 +2,12 @@ import { createServiceClient } from '@/lib/supabaseServer';
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import RSVPClient from '../../RSVPClient';
-import InviteCard from '@/components/InviteCard';
 
-type Props = { params: { guestId: string; token: string }, searchParams?: { view?: string } };
+type Props = { params: { guestId: string; token: string } };
 
-export default async function RSVPPathTokenPage({ params, searchParams }: Props) {
-  // `params` and `searchParams` may be Promises in the App Router — await them
+export default async function RSVPPathTokenPage({ params }: Props) {
+  // `params` may be a Promise in the App Router — await it
   const p = await params as { guestId: string; token: string };
-  const sp = searchParams ? await searchParams : undefined;
   const { guestId } = p;
   // Defensive: token may sometimes arrive with appended query fragments due to
   // fronting/proxy behavior (e.g. "<token>?view=card"). Decode then strip
@@ -27,7 +25,7 @@ export default async function RSVPPathTokenPage({ params, searchParams }: Props)
     const h = await headers();
     const host = h.get('x-forwarded-host') || h.get('host') || 'unknown-host';
     const proto = h.get('x-forwarded-proto') || 'https';
-    const fullUrl = `${proto}://${host}/rsvp/${guestId}/t/${token}${sp?.view ? `?view=${sp.view}` : ''}`;
+    const fullUrl = `${proto}://${host}/rsvp/${guestId}/t/${token}`;
     // instrumentation retained as comments for future debugging
     // headers and reconstructed URL available in server logs if needed
   } catch (e) {
@@ -66,80 +64,51 @@ export default async function RSVPPathTokenPage({ params, searchParams }: Props)
     }
   }
 
-  // Try to fetch couple profile fields if available
+  // Fetch couple data
   let coupleName: string | null = null;
-  let avatar_url: string | null = null;
-  let wedding_date: string | null = null;
-  let wedding_venue: string | null = null;
+  let partnerName: string | null = null;
+  let avatarUrl: string | null = null;
+  let weddingDate: string | null = null;
+  let weddingVenue: string | null = null;
+
+  // Primary: couples table
   try {
-    const { data: profile } = await supabase.from('profiles').select('partner_name, full_name, avatar_url, wedding_date, wedding_venue').eq('id', guest.couple_id).maybeSingle();
+    const { data: couple } = await supabase
+      .from('couples')
+      .select('partner_name, avatar_url, wedding_date, location')
+      .eq('id', guest.couple_id).maybeSingle();
+    if (couple) {
+      partnerName  = couple.partner_name ?? null;
+      avatarUrl    = couple.avatar_url   ?? null;
+      weddingDate  = couple.wedding_date ?? null;
+      weddingVenue = couple.location     ?? null;
+    }
+  } catch (_) {}
+
+  // Fallback: profiles table for user's own name
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name, avatar_url, wedding_date, wedding_venue')
+      .eq('id', guest.couple_id).maybeSingle();
     if (profile) {
-      coupleName = (profile as any).partner_name ?? profile.full_name ?? null;
-      avatar_url = (profile as any).avatar_url ?? null;
-      wedding_date = (profile as any).wedding_date ?? null;
-      wedding_venue = (profile as any).wedding_venue ?? null;
+      coupleName   = (profile as any).full_name     ?? null;
+      if (!avatarUrl)    avatarUrl    = (profile as any).avatar_url    ?? null;
+      if (!weddingDate)  weddingDate  = (profile as any).wedding_date  ?? null;
+      if (!weddingVenue) weddingVenue = (profile as any).wedding_venue ?? null;
     }
+  } catch (_) {}
 
-    // If couple display name or avatar missing on profiles row, try the public `couples` table
-    if (!coupleName || !avatar_url) {
-      try {
-        const { data: coupleRow } = await supabase
-          .from('couples')
-          .select('partner_name, avatar_url, wedding_date, location')
-          .eq('id', guest.couple_id)
-          .maybeSingle();
-
-        if (coupleRow) {
-          coupleName = coupleName ?? (coupleRow as any).partner_name ?? null;
-          avatar_url = avatar_url ?? (coupleRow as any).avatar_url ?? null;
-          wedding_date = wedding_date ?? (coupleRow as any).wedding_date ?? null;
-          wedding_venue = wedding_venue ?? (coupleRow as any).location ?? null;
-        }
-      } catch (err) {
-        // ignore
-      }
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  // Render either the designed invite card (view=card) or the plain RSVP form
-  const view = sp?.view ?? null;
-  if (view === 'card') {
-    // Format wedding date to human-friendly date-only string
-    let dateStr: string | null = null;
-    try {
-      if (wedding_date) {
-        const d = new Date(wedding_date);
-        if (!isNaN(d.getTime())) dateStr = d.toLocaleString(undefined, { dateStyle: 'long' });
-      }
-    } catch (e) { /* ignore */ }
-
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-        <InviteCard
-          guestName={guest.full_name}
-          coupleName={coupleName}
-          date={dateStr}
-          venue={wedding_venue}
-          avatarUrl={avatar_url}
-          guestId={guestId}
-          token={token}
-        />
-      </div>
-    );
-  }
-
-  // Default: Render a small client-side form for RSVP
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="bg-white rounded-xl shadow-lg p-6 max-w-md w-full text-center">
-        <h1 className="text-xl font-bold text-gray-900 mb-2">You're invited</h1>
-        <p className="text-sm text-gray-600 mb-4">{coupleName ? `${coupleName} invited you to their wedding.` : `You've been invited.`}</p>
-        <p className="text-sm text-gray-700 font-semibold mb-4">{guest.full_name}</p>
-
-        <RSVPClient guestId={guestId} token={token} />
-      </div>
-    </div>
+    <RSVPClient
+      guestId={guestId}
+      token={token}
+      guestName={guest.full_name}
+      coupleName={coupleName}
+      partnerName={partnerName}
+      avatarUrl={avatarUrl}
+      weddingDate={weddingDate}
+      weddingVenue={weddingVenue}
+    />
   );
 }
