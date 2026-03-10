@@ -9,7 +9,6 @@ import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
 import { normalizeInternationalPhone } from '@/lib/whatsapp';
-import WhatsAppIcon from '@/components/WhatsAppIcon';
 import { useToast } from '@/components/ui/ToastProvider';
 import SeatingPlanner from '@/components/SeatingPlanner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
@@ -870,9 +869,14 @@ function CouplePlannerContent() {
                             <button onClick={() => startEditGuest(guest)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            <button onClick={() => inviteViaWhatsapp(guest)} className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${guest.phone ? 'text-gray-400 hover:text-green-600' : 'text-gray-400 bg-gray-100 hover:bg-gray-200'}`} aria-label="Invite via WhatsApp" title="Invite via WhatsApp">
-                              <WhatsAppIcon className="w-4 h-4 text-green-600" />
-                              <span className="hidden sm:inline">Invite</span>
+                            <button 
+                              onClick={() => inviteViaWhatsapp(guest)} 
+                              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${guest.phone ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                              disabled={!guest.phone}
+                              aria-label="Invite via WhatsApp" 
+                              title={guest.phone ? "Send WhatsApp invitation" : "No phone number"}
+                            >
+                              Invite
                             </button>
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
