@@ -108,45 +108,4 @@ export async function shouldThrottleMessageNotification(
     return false;
   }
 }
- */
-export async function shouldThrottleMessageNotification(
-  receiverUserId: string,
-  threadId: string,
-  cooldownSeconds = 60,
-): Promise<boolean> {
-  try {
-    const supabase = createServiceClient();
-    const since = new Date(Date.now() - cooldownSeconds * 1000).toISOString();
-
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('id')
-      .eq('user_id', receiverUserId)
-      .eq('type', 'message_received')
-      .gte('created_at', since)
-      .limit(1);
-
-    if (error) {
-      console.error('[notify] throttle check error:', error);
-      return false;
-    }
-
-    if (data && data.length > 0) {
-      const { data: exactMatch } = await supabase
-        .from('notifications')
-        .select('id')
-        .eq('user_id', receiverUserId)
-        .eq('type', 'message_received')
-        .gte('created_at', since)
-        .contains('meta', { threadId })
-        .limit(1);
-      return (exactMatch?.length ?? 0) > 0;
-    }
-
-    return false;
-  } catch (err) {
-    console.error('[notify] throttle check unexpected error:', err);
-    return false;
-  }
-}
 
