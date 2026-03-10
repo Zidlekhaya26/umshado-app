@@ -190,20 +190,50 @@ function CouplePlannerContent() {
   }, [loaded]);
 
   const applySeatingPayload = (payload: any) => {
+    console.log('[Planner] Applying seating payload:', payload);
     try {
       const map: Record<string, { tableId: string; seatIndex: number }> = {};
-      if (Array.isArray(payload?.tables)) {
-        payload.tables.forEach((t: any) => {
-          if (!Array.isArray(t.seats)) return;
-          t.seats.forEach((guestId: string, idx: number) => {
-            if (guestId) map[String(guestId)] = { tableId: String(t.id ?? t.name ?? ''), seatIndex: idx };
-          });
-        });
+      
+      if (!payload || typeof payload !== 'object') {
+        console.warn('[Planner] Invalid payload - not an object:', payload);
+        toastCtx.show('Invalid seating data', 'error');
+        return;
       }
+
+      if (!Array.isArray(payload.tables)) {
+        console.warn('[Planner] Payload missing tables array');
+        toastCtx.show('Seating data has no tables', 'error');
+        return;
+      }
+
+      let assignedCount = 0;
+      payload.tables.forEach((t: any, tableIndex: number) => {
+        if (!t || typeof t !== 'object') {
+          console.warn(`[Planner] Invalid table at index ${tableIndex}:`, t);
+          return;
+        }
+
+        if (!Array.isArray(t.seats)) {
+          console.warn(`[Planner] Table ${t.id || t.name || tableIndex} has no seats array`);
+          return;
+        }
+
+        const tableId = String(t.id || t.name || `table-${tableIndex + 1}`);
+        
+        t.seats.forEach((guestId: any, idx: number) => {
+          if (guestId && typeof guestId === 'string' && guestId.trim() !== '') {
+            map[guestId.trim()] = { tableId, seatIndex: idx };
+            assignedCount++;
+          }
+        });
+      });
+
+      console.log(`[Planner] Mapped ${assignedCount} guest assignments across ${payload.tables.length} tables`);
       setSeatingAssignments(map);
-      toastCtx.show('Seating applied in planner (client-side).', 'default');
-    } catch (e) {
-      console.error('Failed to apply seating payload', e);
+      toastCtx.show(`Seating applied: ${assignedCount} guests at ${payload.tables.length} tables`, 'default');
+    } catch (e: any) {
+      console.error('[Planner] Failed to apply seating payload:', e);
+      toastCtx.show(`Failed to apply seating: ${e.message}`, 'error');
     }
   };
 
@@ -575,7 +605,7 @@ function CouplePlannerContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
+      <div className="w-full max-w-none md:max-w-7xl md:mx-auto min-h-svh flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
             <UmshadoIcon size={28} />
