@@ -174,11 +174,11 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg flex flex-col h-[85vh] sm:h-auto sm:max-h-[85vh]">
+      <div className="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg flex flex-col h-[75vh] sm:h-auto sm:max-h-[80vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 shrink-0">
-          <h3 className="text-lg font-black text-gray-900">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 shrink-0">
+          <h3 className="text-base font-black text-gray-900">
             {step === 'choose' ? '📇 Import Contacts' : '✓ Select Guests'}
           </h3>
           <button
@@ -190,7 +190,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 min-h-0">
+        <div className="flex-1 overflow-y-auto px-5 py-3 min-h-0">
           {step === 'choose' && (
             <div className="space-y-4">
               
@@ -338,11 +338,11 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               </div>
 
               {/* Contact list */}
-              <div className="space-y-2 overflow-y-auto flex-1 min-h-0">
+              <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pb-2">
                 {contacts.map((contact, i) => (
                   <label
                     key={i}
-                    className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                    className={`flex items-start gap-3 p-2.5 rounded-lg border-2 cursor-pointer transition-all ${
                       selected.has(i)
                         ? 'bg-violet-50 border-violet-300'
                         : 'bg-white border-gray-200 hover:border-gray-300'
@@ -352,12 +352,12 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
                       type="checkbox"
                       checked={selected.has(i)}
                       onChange={() => toggleContact(i)}
-                      className="mt-1 w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                      className="mt-0.5 w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{contact.full_name}</p>
+                      <p className="font-semibold text-sm text-gray-900 truncate">{contact.full_name}</p>
                       {contact.phone && (
-                        <p className="text-xs text-gray-500">{contact.phone}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{contact.phone}</p>
                       )}
                     </div>
                   </label>
@@ -365,16 +365,16 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               </div>
 
               {/* Info note */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-2 text-xs text-blue-700 shrink-0">
-                <strong>ℹ️ Note:</strong> Duplicates will be filtered automatically by phone number and name.
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-[10px] text-blue-700 shrink-0">
+                <strong>ℹ️ Duplicates filtered automatically</strong>
               </div>
 
             </div>
           )}
         </div>
 
-        {/* Footer actions */}
-        <div className="shrink-0 px-5 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+        {/* Footer actions - ALWAYS VISIBLE */}
+        <div className="shrink-0 px-4 py-3 border-t-2 border-gray-300 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
           {step === 'choose' ? (
             <button
               onClick={onClose}
@@ -383,19 +383,19 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
               Cancel
             </button>
           ) : (
-            <div className="flex gap-3">
+            <div className="flex gap-2">
               <button
                 onClick={goBack}
-                className="px-4 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:border-gray-300 transition-all whitespace-nowrap"
+                className="px-3 py-3.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-all whitespace-nowrap"
               >
                 ← Back
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={selected.size === 0}
-                className="flex-1 px-5 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+                className="flex-1 px-4 py-3.5 bg-violet-600 text-white rounded-xl text-lg font-extrabold hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg active:scale-95"
               >
-                Add {selected.size} {selected.size === 1 ? 'Guest' : 'Guests'}
+                Add {selected.size} {selected.size === 1 ? 'Guest' : 'Guests'} ✓
               </button>
             </div>
           )}
