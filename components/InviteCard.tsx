@@ -349,7 +349,16 @@ export default function InviteCard({
       {/* RSVP */}
       <div style={{ width: '100%', background: 'rgba(255,252,248,0.95)', borderRadius: 16, padding: '16px 24px 18px', boxShadow: '0 2px 20px rgba(100,70,30,0.10)', border: '1px solid rgba(201,168,96,0.25)' }}>
         <p style={{ textAlign: 'center', fontSize: 9, letterSpacing: 4, textTransform: 'uppercase', color: '#8a6e4a', margin: '0 0 12px' }}>Kindly respond</p>
-        <RSVPClient guestId={guestId} token={token} />
+        <RSVPClient 
+          guestId={guestId} 
+          token={token}
+          guestName={guestName}
+          coupleName={coupleName}
+          partnerName={null}
+          avatarUrl={avatarUrl ?? null}
+          weddingDate={null}
+          weddingVenue={venue}
+        />
       </div>
 
       {/* Download */}
