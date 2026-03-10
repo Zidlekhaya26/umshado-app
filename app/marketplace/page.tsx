@@ -182,14 +182,26 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
             <span>{vendor.category.split(' ')[0]}</span>
           </div>
 
-          {/* Featured badge top-right only */}
-          {isFeatured && (
-            <div style={{
-              padding: '3px 9px', borderRadius: 20,
-              background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
-              color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8,
-            }}>★ FEATURED</div>
-          )}
+          {/* Right side badges - Featured and/or Verified */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {vendor.verified && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 3,
+                padding: '3px 8px', borderRadius: 20,
+                background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.35)',
+              }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#059669' }}>Verified</span>
+              </div>
+            )}
+            {isFeatured && (
+              <div style={{
+                padding: '3px 9px', borderRadius: 20,
+                background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
+                color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8,
+              }}>★ FEATURED</div>
+            )}
+          </div>
         </div>
 
         {/* Avatar + name row — avatar floats up, name sits cleanly BELOW the band line */}
@@ -220,21 +232,13 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
               </div>
             )}
 
-            {/* Name + location + verified — all sit below the band line */}
-            <div style={{ flex: 1, minWidth: 0, paddingTop: 22 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'nowrap' }}>
-                <h3 style={{
-                  margin: 0, fontSize: 17, fontWeight: 700, color: '#111827',
-                  fontFamily: 'Georgia, serif',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}>{vendor.name}</h3>
-                {vendor.verified && (
-                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 20, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)' }}>
-                    <svg width="9" height="9" viewBox="0 0 24 24" fill="#10b981"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#059669' }}>Verified</span>
-                  </div>
-                )}
-              </div>
+            {/* Name + location — sits below the band line */}
+            <div style={{ flex: 1, minWidth: 0, paddingTop: 10 }}>
+              <h3 style={{
+                margin: 0, fontSize: 17, fontWeight: 700, color: '#111827',
+                fontFamily: 'Georgia, serif',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{vendor.name}</h3>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
