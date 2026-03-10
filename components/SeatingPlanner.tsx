@@ -79,7 +79,27 @@ export default function SeatingPlanner({ onApply }: { onApply?: (p: SeatingPaylo
     }
   };
 
-  if (!payload) return null;
+  // Show placeholder when no seating loaded
+  if (!payload) {
+    return (
+      <div className="mb-4 bg-blue-50 rounded-xl border-2 border-blue-200 p-3">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-blue-900">💺 Seating Planner</p>
+            <p className="text-xs text-blue-700">No seating arrangement loaded yet</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => window.location.href = '/admin/seatings'}
+              className="px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 transition-colors"
+            >
+              Load Seating
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tableCount = Array.isArray(payload.tables) ? payload.tables.length : 0;
   let assigned = 0;
