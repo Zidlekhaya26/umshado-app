@@ -75,22 +75,24 @@ import { notifyUsers } from '@/lib/server/notify';
 // ... create message in DB ...
 
 // Then send notification + push
-await notifyUsers(
-  [recipientId],
-  'New Message',
-  `${senderName}: ${messageText}`,
-  `/messages/${conversationId}`
-);
+await notifyUsers({
+  userIds: [recipientId],
+  type: 'message',
+  title: 'New Message',
+  body: `${senderName}: ${messageText}`,
+  link: `/messages/${conversationId}`,
+});
 ```
 
 ### Example: Quote notifications (app/api/quotes/create/route.ts)
 ```typescript
-await notifyUsers(
-  [vendorUserId],
-  'New Quote Request',
-  `${coupleName} requested a quote`,
-  `/vendor/quotes/${quoteId}`
-);
+await notifyUsers({
+  userIds: [vendorUserId],
+  type: 'quote_request',
+  title: 'New Quote Request',
+  body: `${coupleName} requested a quote`,
+  link: `/vendor/quotes/${quoteId}`,
+});
 ```
 
 The `notifyUsers()` function:
@@ -110,7 +112,7 @@ After calling `/api/notifications/create`:
    ```json
    {
      "success": true,
-     "notification": { "id": "...", "title": "...", ... },
+     "userIds": ["a7d1c0e5-2a7f-4cbb-aff4-4f1140b45072"],
      "pushSent": true
    }
    ```

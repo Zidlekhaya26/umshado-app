@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { notifyUsers } from '@/lib/server/notify';
 
 /**
@@ -10,7 +9,7 @@ import { notifyUsers } from '@/lib/server/notify';
  * 
  * Body:
  * {
- *   userId: string (uuid)
+ *   userId: string (uuid) or userIds: string[] (array of uuids)
  *   type: 'message' | 'quote' | 'rsvp' | 'system' | etc
  *   title: string
  *   body: string
@@ -20,52 +19,33 @@ import { notifyUsers } from '@/lib/server/notify';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { userId, type, title, body, link, meta } = await req.json();
+    const { userId, userIds, type, title, body, link, meta } = await req.json();
 
-    if (!userId || !type || !title || !body) {
+    // Accept either userId (string) or userIds (array)
+    const ids = userIds || (userId ? [userId] : []);
+
+    if (!ids.length || !type || !title || !body) {
       return NextResponse.json(
-        { error: 'Missing required fields: userId, type, title, body' },
+        { error: 'Missing required fields: userId/userIds, type, title, body' },
         { status: 400 }
       );
     }
 
-    // Create notification in database
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    // notifyUsers handles both DB insert AND push notification
+    await notifyUsers({
+      userIds: ids,
+      type,
+      title,
+      body,
+      link: link || '/',
+      meta: meta || {},
+    });
 
-    const { data: notification, error: dbError } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        type,
-        title,
-        body,
-        link: link || '/',
-        meta: meta || {},
-        read: false,
-      })
-      .select()
-      .single();
-
-    if (dbError) {
-      console.error('[notifications/create] DB error:', dbError);
-      return NextResponse.json({ error: 'Failed to create notification' }, { status: 500 });
-    }
-
-    // Send push notification
-    try {
-      await notifyUsers([userId], title, body, link || '/', notification.id);
-      console.log(`[notifications/create] ✅ Notification ${notification.id} created + push sent to ${userId}`);
-    } catch (pushError: any) {
-      // Don't fail the request if push fails — notification was still created
-      console.error('[notifications/create] Push failed (notification was still saved):', pushError.message);
-    }
+    console.log(`[notifications/create] ✅ Notification created + push sent to ${ids.length} user(s)`);
 
     return NextResponse.json({
       success: true,
-      notification,
+      userIds: ids,
       pushSent: true,
     });
   } catch (err: any) {
