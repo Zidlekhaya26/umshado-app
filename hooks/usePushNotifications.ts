@@ -161,7 +161,7 @@ export function usePushNotifications(): UsePushNotifications {
       // Create fresh subscription with current VAPID key
       const subscription = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidKey) as BufferSource,
       });
 
       console.log('[push] New subscription created:', subscription.endpoint.slice(0, 60));
