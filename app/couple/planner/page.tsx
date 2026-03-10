@@ -14,6 +14,7 @@ import { useToast } from '@/components/ui/ToastProvider';
 import SeatingPlanner from '@/components/SeatingPlanner';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import { pickContacts } from '@/lib/contactsBridge';
+import ContactImportSheet, { ImportedContact } from '@/components/ContactImportSheet';
 
 // ─── DB row types ────────────────────────────────────────
 
