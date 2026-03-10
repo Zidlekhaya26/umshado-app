@@ -5,6 +5,7 @@ import PortfolioGallery from './PortfolioGallery';
 import { trackVendorEvent } from '@/lib/analytics';
 import { formatWhatsappLink } from '@/lib/whatsapp';
 import RateVendorSheet from '@/components/RateVendorSheet';
+import { supabase } from '@/lib/supabaseClient';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,7 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
   const [copied, setCopied] = useState(false);
   const [activeSection, setActiveSection] = useState<'about' | 'portfolio' | 'packages'>('about');
   const [showRating, setShowRating] = useState(false);
+  const [isCouple, setIsCouple] = useState(false);
   const hasTracked = useRef(false);
 
   const portfolio = vendor.portfolio_urls || [];
@@ -99,6 +101,20 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
   const social = vendor.social_links || {};
   const videoId = (social.youtube || social.video) ? ytId((social.youtube || social.video).trim()) : null;
   const hasSocial = ['instagram', 'tiktok', 'facebook', 'website'].some(k => social[k]);
+
+  // Check if user is a couple
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_couple')
+        .eq('id', user.id)
+        .maybeSingle();
+      setIsCouple(profile?.has_couple === true);
+    })();
+  }, []);
 
   // Analytics: track profile view on mount
   useEffect(() => {
@@ -307,12 +323,14 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
                       </svg>
                       WhatsApp
                     </a>
-                    <button onClick={() => setShowRating(true)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border-2 font-semibold text-sm active:scale-95 transition" style={{ borderColor: '#eadfd6', color: '#6b1f3a', background: '#ffffff' }}>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      Rate Vendor
-                    </button>
+                    {isCouple && (
+                      <button onClick={() => setShowRating(true)} className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl border-2 font-semibold text-sm active:scale-95 transition" style={{ borderColor: '#eadfd6', color: '#6b1f3a', background: '#ffffff' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        Rate Vendor
+                      </button>
+                    )}
                   </div>
                 </section>
               )}

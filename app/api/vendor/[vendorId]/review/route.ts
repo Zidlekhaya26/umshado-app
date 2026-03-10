@@ -16,6 +16,16 @@ async function getAuthUser(req: NextRequest) {
   return user?.id ? user : null;
 }
 
+async function isCoupleUser(userId: string): Promise<boolean> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('profiles')
+    .select('has_couple')
+    .eq('id', userId)
+    .maybeSingle();
+  return data?.has_couple === true;
+}
+
 // GET /api/vendor/[vendorId]/review?coupleId=xxx
 export async function GET(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   const { vendorId } = await params;
@@ -44,6 +54,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ven
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // Only couples can leave reviews
+  const isCouple = await isCoupleUser(user.id);
+  if (!isCouple) {
+    return NextResponse.json({ error: 'Only couples can leave vendor reviews' }, { status: 403 });
+  }
+
   const body = await req.json().catch(() => null);
   if (!body?.rating || body.rating < 1 || body.rating > 5) {
     return NextResponse.json({ error: 'Rating must be 1–5' }, { status: 400 });
@@ -71,6 +87,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ v
   const { vendorId } = await params;
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Only couples can delete reviews
+  const isCouple = await isCoupleUser(user.id);
+  if (!isCouple) {
+    return NextResponse.json({ error: 'Only couples can manage vendor reviews' }, { status: 403 });
+  }
 
   const supabase = createServiceClient();
   const { error } = await supabase
