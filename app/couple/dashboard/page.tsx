@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
+import WeddingWebsiteSettings from '@/components/WeddingWebsiteSettings';
 import { supabase } from '@/lib/supabaseClient';
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -11,7 +12,7 @@ interface DbTask { id: string; couple_id: string; title: string; due_date: strin
 interface DbBudgetItem { id: string; couple_id: string; title: string; amount: number; amount_paid: number; category: string | null; status: 'planned' | 'partial' | 'paid'; created_at: string; }
 interface RecentQuote { id: string; quote_ref: string; vendor_id: string; package_name: string; status: string; created_at: string; vendor_name: string; }
 interface DbGuest { id: string; couple_id: string; full_name: string; rsvp_status: 'pending' | 'accepted' | 'declined'; }
-interface CoupleProfile { partner_name: string | null; wedding_date: string | null; location: string | null; avatar_url: string | null; }
+interface CoupleProfile { partner_name: string | null; wedding_date: string | null; location: string | null; avatar_url: string | null; wedding_theme: string | null; gift_enabled: boolean | null; gift_message: string | null; gift_items: any[]; }
 
 /* ─── Helpers ─────────────────────────────────────────────── */
 const daysUntil = (d: string) => { const t = new Date(); t.setHours(0,0,0,0); return Math.max(0, Math.ceil((new Date(d+'T00:00:00').getTime() - t.getTime()) / 86400000)); };
@@ -188,7 +189,7 @@ export default function CoupleDashboard() {
       const authName = (user.user_metadata as any)?.full_name || (user.user_metadata as any)?.name || null;
       const [profileRes, coupleRes, tasksRes, budgetRes, guestsRes] = await Promise.all([
         supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
-        supabase.from('couples').select('partner_name,wedding_date,location,avatar_url').eq('id', user.id).maybeSingle(),
+        supabase.from('couples').select('partner_name,wedding_date,location,avatar_url,wedding_theme,gift_enabled,gift_message,gift_items').eq('id', user.id).maybeSingle(),
         supabase.from('couple_tasks').select('*').eq('couple_id', user.id).order('due_date', { ascending:true, nullsFirst:false }),
         supabase.from('couple_budget_items').select('*').eq('couple_id', user.id).order('created_at'),
         supabase.from('couple_guests').select('id,couple_id,full_name,rsvp_status').eq('couple_id', user.id),
@@ -550,47 +551,21 @@ export default function CoupleDashboard() {
             <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Open →</Link>
           </div>
 
-          {/* ── 7. Wedding website share ────────────────────── */}
-          {userId && (
-            <div className="dc" style={{ background:'linear-gradient(135deg,#18100a,#2d1a0a)', borderRadius:20, padding:'20px 22px', overflow:'hidden', position:'relative', border:'1px solid rgba(184,151,62,0.2)' }}>
-              <div style={{ position:'absolute', top:-20, right:-10, width:100, height:100, borderRadius:'50%', background:'rgba(184,151,62,0.08)', pointerEvents:'none' }}/>
-              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14, position:'relative' }}>
-                <div style={{ width:44, height:44, borderRadius:14, background:'rgba(184,151,62,0.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>✨</div>
-                <div style={{ flex:1 }}>
-                  <p style={{ margin:'0 0 3px', fontSize:15, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Your Wedding Website</p>
-                  <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.5)' }}>Beautiful public page your guests can visit</p>
-                </div>
-              </div>
-              <div style={{ background:'rgba(255,255,255,0.06)', borderRadius:12, padding:'10px 14px', marginBottom:12, border:'1px solid rgba(255,255,255,0.08)' }}>
-                <p style={{ margin:'0 0 3px', fontSize:10, color:'rgba(255,255,255,0.4)', letterSpacing:1, textTransform:'uppercase' }}>Your URL</p>
-                <p style={{ margin:0, fontSize:13, color:'#fff', fontFamily:'monospace', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                  {typeof window !== 'undefined' ? window.location.origin : ''}/w/{userId.slice(0,8)}...
-                </p>
-              </div>
-              <div style={{ display:'flex', gap:8 }}>
-                <Link href={`/w/${userId}`} target="_blank" style={{ flex:1, padding:'11px 16px', borderRadius:12, background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', textAlign:'center', display:'flex', alignItems:'center', justifyContent:'center', gap:6 }}>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                  Preview
-                </Link>
-                <button onClick={async () => {
-                  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/w/${userId}`;
-                  if (navigator.share) {
-                    try {
-                      await navigator.share({ title: 'Our Wedding', url });
-                      return;
-                    } catch {}
-                  }
-                  try {
-                    await navigator.clipboard.writeText(url);
-                    alert('Link copied! Share it with your guests 💌');
-                  } catch {}
-                }}
-                  style={{ flex:1, padding:'11px 16px', borderRadius:12, background:'linear-gradient(135deg,#b8973e,#8a6010)', border:'none', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:6, boxShadow:'0 4px 14px rgba(184,151,62,0.35)' }}>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-                  Share Link
-                </button>
-              </div>
-            </div>
+          {/* ── 7. Wedding website customization ──────────── */}
+          {userId && coupleProfile && (
+            <WeddingWebsiteSettings
+              coupleId={userId}
+              currentTheme={coupleProfile.wedding_theme ?? 'champagne'}
+              giftEnabled={coupleProfile.gift_enabled ?? false}
+              giftMessage={coupleProfile.gift_message ?? null}
+              giftItems={coupleProfile.gift_items ?? []}
+              weddingWebsiteUrl={`${typeof window !== 'undefined' ? window.location.origin : ''}/w/${userId}`}
+              onSaved={async () => {
+                // Refetch couple profile after saving
+                const { data } = await supabase.from('couples').select('partner_name, wedding_date, location, avatar_url, wedding_theme, gift_enabled, gift_message, gift_items').eq('id', userId).maybeSingle();
+                if (data) setCoupleProfile(data);
+              }}
+            />
           )}
 
           {/* ── 8. Contextual planning tip ─────────────────── */}
