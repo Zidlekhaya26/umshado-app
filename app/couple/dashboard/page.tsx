@@ -371,7 +371,7 @@ export default function CoupleDashboard() {
 
             {/* Couple photo */}
             <button onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}
-              style={{ width:80, height:80, borderRadius:'50%', overflow:'hidden', border:'3px solid rgba(184,151,62,0.5)', flexShrink:0, cursor:'pointer', background:'rgba(255,255,255,0.08)', position:'relative' }}>
+              style={{ width:120, height:120, borderRadius:'50%', overflow:'hidden', border:'4px solid rgba(184,151,62,0.5)', flexShrink:0, cursor:'pointer', background:'rgba(255,255,255,0.08)', position:'relative' }}>
               {uploadingAvatar
                 ? <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <div style={{ width:22, height:22, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.2)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }}/>
@@ -379,12 +379,12 @@ export default function CoupleDashboard() {
                 : coupleProfile?.avatar_url
                   ? <img src={coupleProfile.avatar_url} alt="Profile" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
                   : <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3 }}>
-                      <span style={{ fontSize:28 }}>💍</span>
-                      <span style={{ fontSize:7.5, color:'rgba(255,255,255,0.4)', letterSpacing:0.8 }}>ADD PHOTO</span>
+                      <span style={{ fontSize:42 }}>💍</span>
+                      <span style={{ fontSize:9, color:'rgba(255,255,255,0.4)', letterSpacing:0.8 }}>ADD PHOTO</span>
                     </div>
               }
-              <div style={{ position:'absolute', bottom:2, right:2, width:22, height:22, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,#8a6010)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
-                <svg width="10" height="10" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
+              <div style={{ position:'absolute', bottom:3, right:3, width:30, height:30, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,#8a6010)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
+                <svg width="13" height="13" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
