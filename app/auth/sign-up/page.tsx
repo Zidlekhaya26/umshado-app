@@ -7,392 +7,445 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostAuthRedirect, setAuthCookies } from '@/lib/authRouting';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
-import { UmshadoLogo, UmshadoIcon } from '@/components/ui/UmshadoLogo';
 
-interface InviteData {
-  email: string;
-  name: string;
-  role: 'couple' | 'vendor';
+/* ─── Tokens (match sign-in) ────────────────────────────── */
+const CR  = '#9A2143';
+const CR2 = '#731832';
+const CRX = '#4d0f21';
+const GD  = '#BD983F';
+const GRN = '#1e7a4e';
+const DK  = '#1a0d12';
+const BG  = '#faf8f5';
+const MUT = '#7a5060';
+const BOR = '#e8d5d0';
+
+interface InviteData { email: string; name: string; role: 'couple' | 'vendor'; }
+
+/* ─── Floating diamond ───────────────────────────────────── */
+function Diamond({ size = 8, style }: { size?: number; style?: React.CSSProperties }) {
+  return (
+    <div style={{
+      width: size, height: size, background: 'rgba(189,152,63,0.52)',
+      transform: 'rotate(45deg)', position: 'absolute', pointerEvents: 'none', ...style,
+    }} />
+  );
 }
 
+/* ─── Field component ────────────────────────────────────── */
+function Field({
+  label, id, type = 'text', value, onChange, placeholder, error, suffix, readOnly, hint,
+}: {
+  label?: string; id: string; type?: string; value: string;
+  onChange: (v: string) => void; placeholder?: string; error?: string;
+  suffix?: React.ReactNode; readOnly?: boolean; hint?: string;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <div>
+      {label && <label htmlFor={id} style={{ display: 'block', fontSize: 10.5, fontWeight: 800, letterSpacing: 1.1, textTransform: 'uppercase', color: MUT, marginBottom: 7 }}>{label}</label>}
+      <div style={{ position: 'relative' }}>
+        <input
+          id={id} type={type} value={value} readOnly={readOnly}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          placeholder={placeholder}
+          style={{
+            width: '100%', padding: suffix ? '13px 46px 13px 16px' : '13px 16px',
+            borderRadius: 12, outline: 'none', boxSizing: 'border-box',
+            border: `1.5px solid ${error ? '#c0392b' : focused ? CR : BOR}`,
+            background: readOnly ? '#f5f0ee' : '#fff', fontSize: 14, color: DK,
+            fontFamily: 'inherit', cursor: readOnly ? 'default' : 'text',
+            boxShadow: focused && !readOnly ? `0 0 0 3px rgba(154,33,67,0.09)` : 'none',
+            transition: 'border-color .14s, box-shadow .14s',
+          }}
+        />
+        {suffix && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)' }}>{suffix}</div>}
+      </div>
+      {hint && !error && <p style={{ margin: '5px 0 0', fontSize: 11.5, color: MUT }}>{hint}</p>}
+      {error && <p style={{ margin: '5px 0 0', fontSize: 12, color: '#c0392b' }}>{error}</p>}
+    </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+    </svg>
+  );
+}
+
+/* ─── Shared loading / error shells ────────────────────────── */
+function AuthShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{
+      minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: `linear-gradient(160deg, ${CRX} 0%, ${CR} 52%, #c03050 100%)`,
+      padding: 20,
+    }}>
+      <div style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', maxWidth: 400, width: '100%', boxShadow: '0 20px 60px rgba(77,15,33,0.35)', textAlign: 'center' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <div style={{ width: 40, height: 40, border: `3px solid rgba(154,33,67,0.12)`, borderTopColor: CR, borderRadius: '50%', animation: 'suSpin .8s linear infinite', margin: '0 auto 16px' }} />
+  );
+}
+
+/* ══════════════════════════════════════════════════════════ */
 function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const inviteToken  = useMemo(() => searchParams?.get('invite') || null, [searchParams]);
+  const intendedRole = useMemo(() => (searchParams?.get('role') === 'vendor' ? 'vendor' : 'couple') as 'couple' | 'vendor', [searchParams]);
 
-  const inviteToken = useMemo(() => searchParams?.get('invite') || null, [searchParams]);
-
-  const intendedRole = useMemo(() => {
-    const r = searchParams?.get('role');
-    return r === 'vendor' ? 'vendor' : 'couple';
-  }, [searchParams]);
-
-  const [role, setRole] = useState<'couple' | 'vendor'>(intendedRole);
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [role, setRole]               = useState<'couple' | 'vendor'>(intendedRole);
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [showPw, setShowPw]           = useState(false);
+  const [showCPw, setShowCPw]         = useState(false);
+  const [errors, setErrors]           = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading]     = useState(false);
 
-  // Invite validation state
   const [inviteStatus, setInviteStatus] = useState<'loading' | 'valid' | 'invalid' | 'none'>('none');
-  const [inviteData, setInviteData] = useState<InviteData | null>(null);
-  const [inviteError, setInviteError] = useState('');
+  const [inviteData, setInviteData]     = useState<InviteData | null>(null);
+  const [inviteError, setInviteError]   = useState('');
 
-  // Validate invite token on mount
   useEffect(() => {
-    if (!BETA_INVITE_ONLY) {
-      setInviteStatus('none');
-      return;
-    }
-
-    if (!inviteToken) {
-      // Beta mode, no invite token → redirect to request-access
-      router.replace('/request-access');
-      return;
-    }
-
-    // Validate the invite token
+    if (!BETA_INVITE_ONLY) { setInviteStatus('none'); return; }
+    if (!inviteToken) { router.replace('/request-access'); return; }
     setInviteStatus('loading');
     fetch(`/api/invite/validate?token=${encodeURIComponent(inviteToken)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.valid) {
-          setInviteStatus('valid');
-          setInviteData(data.invite);
-          setEmail(data.invite.email || '');
-        } else {
-          setInviteStatus('invalid');
-          setInviteError(data.error || 'Invalid invite');
-        }
+      .then(r => r.json())
+      .then(d => {
+        if (d.valid) { setInviteStatus('valid'); setInviteData(d.invite); setEmail(d.invite.email || ''); }
+        else { setInviteStatus('invalid'); setInviteError(d.error || 'Invalid invite'); }
       })
-      .catch(() => {
-        setInviteStatus('invalid');
-        setInviteError('Could not validate invite. Please try again.');
-      });
+      .catch(() => { setInviteStatus('invalid'); setInviteError('Could not validate invite. Please try again.'); });
   }, [inviteToken, router]);
 
-  // Get the effective role — invite role takes priority in beta mode
-  const effectiveRole = useMemo(() => {
-    if (inviteData?.role) return inviteData.role;
-    return role || intendedRole;
-  }, [inviteData, role, intendedRole]);
+  const effectiveRole = useMemo(() => inviteData?.role || role || intendedRole, [inviteData, role, intendedRole]);
 
-  // Keep local role in sync when intended role or invite changes
   useEffect(() => {
-    if (inviteData?.role) {
-      setRole(inviteData.role);
-    } else {
-      setRole(intendedRole);
-    }
+    if (inviteData?.role) setRole(inviteData.role);
+    else setRole(intendedRole);
   }, [inviteData, intendedRole]);
 
-  // Show loading while validating invite
-  if (BETA_INVITE_ONLY && inviteStatus === 'loading') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <div className="animate-umshado-pulse mx-auto mb-4"><UmshadoIcon size={48} /></div>
-          <p className="text-gray-600 font-medium">Validating your invite…</p>
-        </div>
+  // ── Beta gating screens ──────────────────────────────────
+  if (BETA_INVITE_ONLY && inviteStatus === 'loading') return (
+    <AuthShell>
+      <style>{'@keyframes suSpin{to{transform:rotate(360deg)}}'}</style>
+      <Spinner />
+      <p style={{ margin: 0, fontSize: 14, color: MUT, fontWeight: 600 }}>Validating your invite…</p>
+    </AuthShell>
+  );
+
+  if (BETA_INVITE_ONLY && !inviteToken) return (
+    <AuthShell>
+      <style>{'@keyframes suSpin{to{transform:rotate(360deg)}}'}</style>
+      <Spinner />
+      <p style={{ margin: 0, fontSize: 14, color: MUT, fontWeight: 600 }}>Redirecting…</p>
+    </AuthShell>
+  );
+
+  if (BETA_INVITE_ONLY && inviteStatus === 'invalid') return (
+    <AuthShell>
+      <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(192,57,57,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 18px' }}>
+        <svg width="24" height="24" fill="none" stroke="#c0392b" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </div>
-    );
-  }
-
-  // Show loading while redirecting (no invite token in beta mode)
-  if (BETA_INVITE_ONLY && !inviteToken) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <div className="animate-umshado-pulse mx-auto mb-4"><UmshadoIcon size={48} /></div>
-          <p className="text-gray-600 font-medium">Redirecting…</p>
-        </div>
+      <h2 style={{ margin: '0 0 8px', fontSize: 19, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif' }}>Invite Not Valid</h2>
+      <p style={{ margin: '0 0 24px', fontSize: 13.5, color: MUT }}>{inviteError}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <Link href="/request-access" style={{ display: 'block', padding: '12px', borderRadius: 12, background: `linear-gradient(135deg,${CR},${CR2})`, color: '#fff', fontWeight: 800, fontSize: 14, textDecoration: 'none', textAlign: 'center' }}>Request Access</Link>
+        <Link href="/auth/sign-in" style={{ display: 'block', padding: '12px', borderRadius: 12, border: `1.5px solid ${BOR}`, color: DK, fontWeight: 700, fontSize: 14, textDecoration: 'none', textAlign: 'center' }}>Already have an account?</Link>
       </div>
-    );
-  }
+    </AuthShell>
+  );
 
-  // Show error for invalid/expired/redeemed invites
-  if (BETA_INVITE_ONLY && inviteStatus === 'invalid') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-5">
-            <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-900 mb-2">Invite Not Valid</h1>
-          <p className="text-sm text-gray-600 mb-6">{inviteError}</p>
-
-          <div className="space-y-3">
-            <Link
-              href="/request-access"
-              className="block w-full px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors active:scale-95 text-center"
-            >
-              Request Access
-            </Link>
-            <Link
-              href="/auth/sign-in"
-              className="block w-full px-6 py-3 bg-white text-purple-600 border-2 border-purple-200 rounded-xl font-semibold hover:bg-purple-50 transition-colors active:scale-95 text-center"
-            >
-              Already have an account? Sign In
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  // ── Main form logic ──────────────────────────────────────
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!email) e.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
+    if (!password) e.password = 'Password is required';
+    else if (password.length < 6) e.password = 'At least 6 characters';
+    if (!confirmPassword) e.confirmPassword = 'Please confirm your password';
+    else if (password !== confirmPassword) e.confirmPassword = 'Passwords do not match';
+    setErrors(e);
+    return !Object.keys(e).length;
   };
 
   const redeemInvite = async () => {
     if (!inviteToken) return;
     try {
       await fetch('/api/invite/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: inviteToken }),
       });
-    } catch (err) {
-      console.warn('Could not redeem invite token:', err);
-    }
+    } catch { /* non-fatal */ }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validate()) return;
     setIsLoading(true);
-
     try {
-      const redirectOrigin =
-        typeof window !== 'undefined'
-          ? window.location.origin
-          : 'https://www.umshado-app.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.umshado-app.vercel.app';
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${redirectOrigin}/auth/callback?role=${effectiveRole}`,
-        }
+        email, password,
+        options: { emailRedirectTo: `${origin}/auth/callback?role=${effectiveRole}` },
       });
-
-      if (error) {
-        setErrors({ password: error.message });
-        setIsLoading(false);
-        return;
-      }
-
+      if (error) { setErrors({ password: error.message }); setIsLoading(false); return; }
       if (data.user) {
         setAuthCookies((data as any).session);
-
-        // Redeem the invite token
         await redeemInvite();
-
-        // Check if email confirmation is required
         if (data.user.identities && data.user.identities.length === 0) {
           alert('Please check your email to confirm your account before signing in.');
-          router.push('/auth/sign-in');
-          return;
+          router.push('/auth/sign-in'); return;
         }
-
-        // Route based on intended role
-        const redirect = await getPostAuthRedirect(effectiveRole);
-        router.push(redirect);
+        router.push(await getPostAuthRedirect(effectiveRole));
       }
-    } catch (error: any) {
-      console.error('Sign up error:', error);
-      setErrors({ password: 'An error occurred during sign up' });
-    } finally {
-      setIsLoading(false);
-    }
+    } catch { setErrors({ password: 'An error occurred during sign up' }); }
+    finally { setIsLoading(false); }
   };
 
   const handleGoogleSignUp = async () => {
     try {
-      // Redeem invite before OAuth redirect (since user will leave the page)
       await redeemInvite();
-
-      const redirectOrigin =
-        typeof window !== 'undefined'
-          ? window.location.origin
-          : 'https://www.umshado-app.vercel.app';
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.umshado-app.vercel.app';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${redirectOrigin}/auth/callback?role=${effectiveRole}`
-        }
+        options: { redirectTo: `${origin}/auth/callback?role=${effectiveRole}` },
       });
-      if (error) {
-        alert('Google sign up error: ' + error.message);
-      }
-    } catch (error: any) {
-      console.error('Google sign up error:', error);
-      alert('Failed to sign up with Google');
-    }
+      if (error) alert('Google sign up error: ' + error.message);
+    } catch { alert('Failed to sign up with Google'); }
   };
 
+  const EyeIcon = ({ open }: { open: boolean }) => open
+    ? <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+    : <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>;
+
+  const isVendor = effectiveRole === 'vendor';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center p-4">
-      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 bg-white rounded-2xl shadow-2xl p-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-4">
-            <UmshadoLogo iconSize={48} />
-          </Link>
+    <div style={{ minHeight: '100svh', display: 'flex', background: BG, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes suUp   { from{opacity:0;transform:translateY(15px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes suFltA { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(-11px)} }
+        @keyframes suFltB { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(10px)} }
+        @keyframes suGlow { 0%,100%{opacity:.14} 50%{opacity:.28} }
+        @keyframes suSpin { to{transform:rotate(360deg)} }
+        .su1{animation:suUp .45s ease .04s both}.su2{animation:suUp .45s ease .09s both}
+        .su3{animation:suUp .45s ease .14s both}.su4{animation:suUp .45s ease .19s both}
+        .su5{animation:suUp .45s ease .24s both}.su6{animation:suUp .45s ease .29s both}
+        .su7{animation:suUp .45s ease .34s both}.su8{animation:suUp .45s ease .39s both}
+        .su-hero{display:none}
+        @media(min-width:860px){.su-hero{display:flex!important}.su-mhero{display:none!important}}
+        .su-gbtn:hover{border-color:${CR}!important;background:#fff7f5!important}
+        input,.su-sbtn{font-family:inherit!important}
+        .su-sbtn{background:none;border:none;cursor:pointer;color:${MUT};padding:4px;display:flex;align-items:center;transition:color .12s}
+        .su-sbtn:hover{color:${CR}}
+        .su-submit:hover:not(:disabled){box-shadow:0 6px 24px rgba(154,33,67,0.38)!important;transform:translateY(-1px)}
+        .su-submit{transition:box-shadow .14s,transform .14s,opacity .14s}
+        .role-btn{transition:all .15s;cursor:pointer;border:none;font-family:inherit}
+      `}</style>
 
-          {/* Invite Welcome Banner */}
+      {/* ══ LEFT hero (desktop only) ════════════════════════ */}
+      <div className="su-hero" style={{
+        width: '45%', flexShrink: 0, position: 'relative', overflow: 'hidden',
+        background: `linear-gradient(160deg, ${CRX} 0%, ${CR} 52%, #c03050 100%)`,
+        flexDirection: 'column',
+      }}>
+        {[580, 440, 315, 205].map((s, i) => (
+          <div key={s} style={{ position: 'absolute', width: s, height: s, borderRadius: '50%', border: `1.5px solid rgba(189,152,63,${0.04 + i * 0.04})`, top: '50%', left: '50%', transform: 'translate(-50%,-50%)', pointerEvents: 'none' }} />
+        ))}
+        <div style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%,-50%)', width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(189,152,63,0.22) 0%, transparent 65%)', animation: 'suGlow 5s ease infinite', pointerEvents: 'none' }} />
+        <Diamond size={10} style={{ top: '16%', left: '22%', animation: 'suFltA 6s ease-in-out infinite' }} />
+        <Diamond size={6}  style={{ top: '67%', right: '19%', animation: 'suFltB 8s ease-in-out .4s infinite', opacity: .7 }} />
+        <Diamond size={7}  style={{ top: '42%', left: '11%', animation: 'suFltA 9.5s ease-in-out 1s infinite', opacity: .5 }} />
+        <Diamond size={5}  style={{ bottom: '22%', left: '36%', animation: 'suFltB 7.5s ease-in-out .8s infinite', opacity: .55 }} />
+        <Diamond size={4}  style={{ top: '30%', right: '14%', animation: 'suFltA 11s ease-in-out 2s infinite', opacity: .4 }} />
+
+        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 48px', textAlign: 'center' }}>
+          <img src="/logo-icon.png" alt="uMshado" style={{ width: 70, height: 70, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .93, marginBottom: 28 }} />
+          <h1 style={{ margin: '0 0 14px', fontSize: 34, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', lineHeight: 1.18, letterSpacing: -.5 }}>
+            {isVendor ? 'Grow your wedding business' : 'Start planning your perfect wedding'}
+          </h1>
+          <p style={{ margin: '0 0 40px', fontSize: 14.5, color: 'rgba(255,255,255,0.52)', lineHeight: 1.7, maxWidth: 268 }}>
+            {isVendor
+              ? 'Join thousands of South African wedding vendors on uMshado's premium platform'
+              : 'South Africa's premium wedding platform — find extraordinary vendors and plan with ease'
+            }
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 285 }}>
+            {(isVendor
+              ? [['🏪','Join 800+ verified vendors'],['📸','Reach engaged couples'],['💼','Grow your bookings']]
+              : [['💍','2 400+ couples planning'],['🏪','800+ verified vendors'],['⭐','Across South Africa']]
+            ).map(([icon, text]) => (
+              <div key={text} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 18px', borderRadius: 28, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <span style={{ fontSize: 15 }}>{icon}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: .2 }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ height: 3, background: `linear-gradient(90deg,transparent,${GD},transparent)` }} />
+      </div>
+
+      {/* ══ RIGHT — form ════════════════════════════════════ */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+
+        {/* Mobile hero */}
+        <div className="su-mhero" style={{
+          background: `linear-gradient(160deg, ${CRX} 0%, ${CR} 52%, #c03050 100%)`,
+          padding: '38px 28px 44px', position: 'relative', overflow: 'hidden', flexShrink: 0,
+        }}>
+          <div style={{ position: 'absolute', top: -70, right: -70, width: 240, height: 240, borderRadius: '50%', border: '1.5px solid rgba(189,152,63,0.1)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -35, right: -35, width: 150, height: 150, borderRadius: '50%', border: '1.5px solid rgba(189,152,63,0.16)', pointerEvents: 'none' }} />
+          <Diamond size={7} style={{ top: '22%', left: '16%', animation: 'suFltA 7s ease-in-out infinite' }} />
+          <Diamond size={5} style={{ bottom: '24%', right: '20%', animation: 'suFltB 9s ease-in-out infinite' }} />
+          <div style={{ position: 'relative', textAlign: 'center' }}>
+            <img src="/logo-icon.png" alt="uMshado" style={{ width: 54, height: 54, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .92, display: 'block', margin: '0 auto 14px' }} />
+            <h1 style={{ margin: '0 0 6px', fontSize: 23, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', letterSpacing: -.3 }}>
+              {isVendor ? 'Create your vendor account' : 'Create your couple account'}
+            </h1>
+            <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
+              {isVendor ? 'Join uMshado and showcase your services' : 'Join uMshado and start planning your wedding'}
+            </p>
+          </div>
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GD},transparent)` }} />
+        </div>
+
+        {/* Form */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 36px', maxWidth: 440, width: '100%', margin: '0 auto', boxSizing: 'border-box' }}>
+
+          {/* Desktop heading */}
+          <div className="su1" style={{ marginBottom: 24 }}>
+            <p style={{ margin: '0 0 4px', fontSize: 10.5, fontWeight: 800, color: MUT, letterSpacing: 1.3, textTransform: 'uppercase' }}>Create account</p>
+            <h2 style={{ margin: 0, fontSize: 27, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif', letterSpacing: -.4 }}>
+              {isVendor ? 'Join as a vendor' : 'Start planning today'}
+            </h2>
+          </div>
+
+          {/* Invite banner */}
           {BETA_INVITE_ONLY && inviteData && (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 mb-4">
-              <div className="flex items-center gap-2 justify-center">
-                <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-sm font-semibold text-green-800">
-                  Welcome{inviteData.name ? `, ${inviteData.name}` : ''}! Your invite is valid.
-                </p>
-              </div>
+            <div className="su1" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, background: 'rgba(30,122,78,0.08)', border: `1.5px solid rgba(30,122,78,0.2)`, marginBottom: 20 }}>
+              <svg width="16" height="16" fill="none" stroke={GRN} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: GRN }}>
+                Welcome{inviteData.name ? `, ${inviteData.name}` : ''}! Your invite is valid.
+              </p>
             </div>
           )}
 
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">{
-            effectiveRole === 'vendor' ? 'Create your Vendor account' : 'Create your Couple account'
-          }</h1>
-          <p className="text-sm text-gray-600">
-            {effectiveRole === 'vendor'
-              ? 'Join uMshado and showcase your wedding services'
-              : 'Join uMshado and start planning your perfect wedding'}
-          </p>
-
-          {/* Role selector: show only when invite does not lock the role */}
+          {/* Role selector (only if invite doesn't lock it) */}
           {!inviteData?.role && (
-            <div className="mt-6 mb-4">
-              <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
-                <button
-                  type="button"
-                  aria-pressed={role === 'couple'}
-                  onClick={() => setRole('couple')}
-                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'couple' ? 'bg-white shadow font-semibold text-gray-900' : 'text-gray-700'}`}
-                >
-                  Couple
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={role === 'vendor'}
-                  onClick={() => setRole('vendor')}
-                  className={`flex-1 py-2 rounded-lg text-sm ${role === 'vendor' ? 'bg-white shadow font-semibold text-gray-900' : 'text-gray-700'}`}
-                >
-                  Vendor
-                </button>
+            <div className="su2" style={{ marginBottom: 22 }}>
+              <p style={{ margin: '0 0 8px', fontSize: 10.5, fontWeight: 800, color: MUT, letterSpacing: 1.1, textTransform: 'uppercase' }}>I am a…</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {(['couple', 'vendor'] as const).map(r => (
+                  <button key={r} type="button" className="role-btn" onClick={() => setRole(r)} style={{
+                    flex: 1, padding: '11px', borderRadius: 12, fontSize: 13.5, fontWeight: 700,
+                    border: `1.5px solid ${role === r ? CR : BOR}`,
+                    background: role === r ? `rgba(154,33,67,0.06)` : '#fff',
+                    color: role === r ? CR : MUT,
+                    boxShadow: role === r ? `0 0 0 3px rgba(154,33,67,0.08)` : 'none',
+                  }}>
+                    {r === 'couple' ? '💍 Couple' : '🏪 Vendor'}
+                  </button>
+                ))}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Sign Up Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors({ ...errors, email: '' }); }}
-              placeholder="your@email.com"
-              readOnly={BETA_INVITE_ONLY && !!inviteData?.email}
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${errors.email ? 'border-red-500' : 'border-gray-300'} ${BETA_INVITE_ONLY && inviteData?.email ? 'bg-gray-50 text-gray-600 cursor-not-allowed' : ''}`}
-            />
-            {BETA_INVITE_ONLY && inviteData?.email && (
-              <p className="text-xs text-gray-500 mt-1">This email is tied to your invite</p>
-            )}
-            {errors.email && <p className="text-xs text-red-600 mt-1.5">{errors.email}</p>}
+          {/* Google */}
+          <div className="su3" style={{ marginBottom: 18 }}>
+            <button onClick={handleGoogleSignUp} className="su-gbtn" style={{
+              width: '100%', padding: '12px 16px', borderRadius: 13,
+              border: `1.5px solid ${BOR}`, background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              fontSize: 14, fontWeight: 700, color: DK, cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(26,13,18,0.05)', transition: 'border-color .14s,background .14s',
+              fontFamily: 'inherit',
+            }}>
+              <GoogleIcon />
+              Continue with Google
+            </button>
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors({ ...errors, password: '' }); }}
-              placeholder="At least 6 characters"
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-            />
-            {errors.password && <p className="text-xs text-red-600 mt-1.5">{errors.password}</p>}
+          {/* Divider */}
+          <div className="su3" style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+            <div style={{ flex: 1, height: 1, background: BOR }} />
+            <span style={{ fontSize: 10.5, fontWeight: 800, color: MUT, letterSpacing: .9 }}>OR</span>
+            <div style={{ flex: 1, height: 1, background: BOR }} />
           </div>
 
-          <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' }); }}
-              placeholder="Re-enter your password"
-              className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-            />
-            {errors.confirmPassword && <p className="text-xs text-red-600 mt-1.5">{errors.confirmPassword}</p>}
-          </div>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="su4">
+              <Field
+                label="Email address" id="email" type="email" value={email}
+                readOnly={BETA_INVITE_ONLY && !!inviteData?.email}
+                onChange={v => { setEmail(v); if (errors.email) setErrors(e => ({ ...e, email: '' })); }}
+                placeholder="you@example.com" error={errors.email}
+                hint={BETA_INVITE_ONLY && inviteData?.email ? 'This email is tied to your invite' : undefined}
+              />
+            </div>
 
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full px-6 py-3.5 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed mt-6"
-          >
-            {isLoading ? 'Creating account...' : 'Create Account'}
-          </button>
-        </form>
+            <div className="su5">
+              <Field
+                label="Password" id="password" type={showPw ? 'text' : 'password'} value={password}
+                onChange={v => { setPassword(v); if (errors.password) setErrors(e => ({ ...e, password: '' })); }}
+                placeholder="At least 6 characters" error={errors.password}
+                suffix={
+                  <button type="button" className="su-sbtn" onClick={() => setShowPw(p => !p)}>
+                    <EyeIcon open={showPw} />
+                  </button>
+                }
+              />
+            </div>
 
-        {/* Divider */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-gray-300" />
-          <span className="text-sm text-gray-500 font-medium">or</span>
-          <div className="flex-1 h-px bg-gray-300" />
-        </div>
+            <div className="su6">
+              <Field
+                label="Confirm password" id="confirmPassword" type={showCPw ? 'text' : 'password'} value={confirmPassword}
+                onChange={v => { setConfirmPassword(v); if (errors.confirmPassword) setErrors(e => ({ ...e, confirmPassword: '' })); }}
+                placeholder="Re-enter your password" error={errors.confirmPassword}
+                suffix={
+                  <button type="button" className="su-sbtn" onClick={() => setShowCPw(p => !p)}>
+                    <EyeIcon open={showCPw} />
+                  </button>
+                }
+              />
+            </div>
 
-        {/* Google Sign Up */}
-        <button
-          onClick={handleGoogleSignUp}
-          className="w-full px-6 py-3.5 bg-white text-gray-700 border-2 border-gray-300 rounded-xl font-semibold hover:bg-gray-50 transition-colors active:scale-95 flex items-center justify-center gap-3"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 24 24">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-          </svg>
-          Continue with Google
-        </button>
+            <div className="su7">
+              <button type="submit" disabled={isLoading} className="su-submit" style={{
+                width: '100%', padding: '14px', borderRadius: 13, border: 'none', marginTop: 2,
+                background: `linear-gradient(135deg,${CR} 0%,${CR2} 100%)`,
+                color: '#fff', fontSize: 15, fontWeight: 800,
+                cursor: isLoading ? 'default' : 'pointer',
+                boxShadow: '0 4px 18px rgba(154,33,67,0.28)',
+                opacity: isLoading ? .65 : 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                fontFamily: 'inherit',
+              }}>
+                {isLoading && <div style={{ width: 16, height: 16, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'suSpin .8s linear infinite' }} />}
+                {isLoading ? 'Creating account…' : 'Create account'}
+              </button>
+            </div>
+          </form>
 
-        {/* Sign In Link */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="su8" style={{ textAlign: 'center', margin: '20px 0 0', fontSize: 13.5, color: MUT }}>
             Already have an account?{' '}
-            <Link href="/auth/sign-in" className="text-purple-600 font-bold hover:text-purple-700 hover:underline">
-              Sign in
-            </Link>
+            <Link href="/auth/sign-in" style={{ color: CR, fontWeight: 800, textDecoration: 'none' }}>Sign in</Link>
           </p>
         </div>
-
-        {/* Role switch removed — replaced by the inline role selector above the form */}
       </div>
     </div>
   );
@@ -400,7 +453,12 @@ function SignUpContent() {
 
 export default function SignUpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 flex items-center justify-center"><div className="animate-umshado-pulse"><UmshadoIcon size={48} /></div></div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf8f5' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.12)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'suSpin .8s linear infinite' }} />
+        <style>{'@keyframes suSpin{to{transform:rotate(360deg)}}'}</style>
+      </div>
+    }>
       <SignUpContent />
     </Suspense>
   );
