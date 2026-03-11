@@ -655,7 +655,7 @@ export default function ChatThread() {
 
       if (!data?.quote) {
         alert('Quote updated, but server returned no data.');
-        setShowFinalQuoteModal(false);
+        setShowBottomSheet(false);
         setFinalPrice('');
         setFinalMessage('');
         return;
@@ -664,7 +664,7 @@ export default function ChatThread() {
       // Update UI state from server
       setQuote(data.quote as Quote);
       alert('Final quote sent successfully ✅');
-      setShowFinalQuoteModal(false);
+      setShowBottomSheet(false);
       setFinalPrice('');
       setFinalMessage('');
     } catch (e) { console.error('handleSendFinalQuote error', e); alert('Network/server error sending quote.'); } finally { setIsUpdatingQuote(false); }
@@ -852,7 +852,7 @@ export default function ChatThread() {
             );
           }
 
-          const msg = item.msg;
+          const msg = item.msg as Message;
           const isMine = msg.sender_id === currentUserId;
           const bubbleBg = isMine ? C.myBubble : C.theirBubble;
           const bubbleText = isMine ? C.myText : C.theirText;
