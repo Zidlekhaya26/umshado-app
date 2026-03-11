@@ -211,8 +211,8 @@ export default function VendorInsights() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(135deg,#b8973e 0%,#8a6010 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(184,151,62,0.08)', pointerEvents: 'none' }} />
+        <div style={{ background: 'linear-gradient(135deg,#9A2143 0%,#b8315a 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
               <p style={{ margin: '0 0 4px', fontSize: 11, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase' }}>Performance</p>
@@ -226,7 +226,7 @@ export default function VendorInsights() {
           <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
             {METRICS.map(m => (
               <button key={m.key} onClick={() => setActiveMetric(m.key)}
-                style={{ flex: 1, background: activeMetric === m.key ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: activeMetric === m.key ? '1.5px solid rgba(184,151,62,0.5)' : '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                style={{ flex: 1, background: activeMetric === m.key ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: activeMetric === m.key ? '1.5px solid rgba(189,152,63,0.6)' : '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 16, marginBottom: 3 }}>{m.icon}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif', lineHeight: 1 }}>{(totals as any)[m.key]}</div>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', marginTop: 2, letterSpacing: 0.5 }}>{m.label.split(' ')[0].toUpperCase()}</div>

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
@@ -9,11 +9,9 @@ import ImageLightbox from '@/components/ui/ImageLightbox';
 import VerifiedBadge from '@/components/ui/VerifiedBadge';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
-import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
-
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface MarketplaceVendor {
@@ -24,6 +22,7 @@ interface MarketplaceVendor {
   plan?: string | null; plan_until?: string | null;
   logo_url?: string | null; is_published?: boolean;
   min_from_price: number | null; services: string[]; package_count: number;
+  rating?: number | null; review_count?: number | null;
 }
 interface VendorActivityScore {
   vendor_id: string; profile_views: number; quotes: number;
@@ -34,23 +33,29 @@ interface Vendor {
   fromPrice: number; services: string[]; score: number;
   logoUrl?: string | null; verified?: boolean;
   preferredCurrency?: string | null; isDemo?: boolean;
+  rating: number; reviewCount: number;
 }
-type SortOption = 'recommended' | 'price_low' | 'price_high' | 'newest';
+type SortOption = 'recommended' | 'price_low' | 'price_high' | 'top_rated';
 
-/* ─── Category icon map ──────────────────────────────────── */
-const CAT_ICONS: Record<string, string> = {
-  'Catering & Food': '🍽️', 'Décor & Styling': '💐',
-  'Photography & Video': '📸', 'Music, DJ & Sound': '🎵',
-  'Makeup & Hair': '💄', 'Attire & Fashion': '👗',
-  'Wedding Venues': '🏛️', 'Transport': '🚗',
-  'Honeymoon & Travel': '✈️', 'Support Services': '🛡️',
-  'Furniture & Equipment Hire': '🪑',
-  'Special Effects & Experiences': '✨',
-  'Planning & Coordination': '📋',
+/* ─── Category config ──────────────────────────────────── */
+const CAT_CONFIG: Record<string, { icon: string; color: string }> = {
+  'Catering & Food':               { icon: '🍽️', color: '#e8523a' },
+  'Décor & Styling':               { icon: '💐', color: '#c45ec4' },
+  'Photography & Video':           { icon: '📸', color: '#3a7bec' },
+  'Music, DJ & Sound':             { icon: '🎵', color: '#f59e0b' },
+  'Makeup & Hair':                 { icon: '💄', color: '#ec4899' },
+  'Attire & Fashion':              { icon: '👗', color: '#8b5cf6' },
+  'Wedding Venues':                { icon: '🏛️', color: '#10b981' },
+  'Transport':                     { icon: '🚗', color: '#3b82f6' },
+  'Honeymoon & Travel':            { icon: '✈️', color: '#06b6d4' },
+  'Support Services':              { icon: '🛡️', color: '#6366f1' },
+  'Furniture & Equipment Hire':    { icon: '🪑', color: '#84cc16' },
+  'Special Effects & Experiences': { icon: '✨', color: '#f97316' },
+  'Planning & Coordination':       { icon: '📋', color: '#14b8a6' },
 };
 
 /* ─── Score helper ──────────────────────────────────────── */
-function calculateScore(v: MarketplaceVendor, prefs: { category?: string }, activity?: VendorActivityScore): number {
+function calculateScore(v: MarketplaceVendor, activity?: VendorActivityScore): number {
   let score = 0;
   if (v.featured && v.featured_until && new Date(v.featured_until) > new Date()) score += 100;
   const plan = v.plan ?? 'free';
@@ -62,7 +67,7 @@ function calculateScore(v: MarketplaceVendor, prefs: { category?: string }, acti
   if (v.description && v.description.length > 80) score += 10;
   if (v.min_from_price && v.min_from_price > 0) score += 5;
   if ((v.services || []).length > 2) score += 5;
-  if (prefs.category && v.category === prefs.category) score += 20;
+  if (v.rating && v.rating > 0) score += Math.min(v.rating * 6, 30);
   if (activity) {
     score += Math.min(activity.profile_views * 0.1, 10);
     score += Math.min(activity.quotes * 2, 20);
@@ -72,26 +77,45 @@ function calculateScore(v: MarketplaceVendor, prefs: { category?: string }, acti
   return score;
 }
 
+/* ─── Star rating display ───────────────────────────────── */
+function StarRating({ rating, count, size = 12 }: { rating: number; count: number; size?: number }) {
+  if (!rating || rating === 0) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+      <div style={{ display: 'flex', gap: 1 }}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={i <= Math.round(rating) ? '#f59e0b' : '#e5e7eb'}>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+        ))}
+      </div>
+      <span style={{ fontSize: size - 1, color: '#6b7280', fontWeight: 500 }}>
+        {rating.toFixed(1)} {count > 0 && `(${count})`}
+      </span>
+    </div>
+  );
+}
+
 /* ─── Skeleton card ─────────────────────────────────────── */
 function SkeletonCard() {
   return (
-    <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-      <div style={{ background: 'linear-gradient(135deg,#faf7f2,#f0ebe0)', padding: '24px 20px 16px', display: 'flex', gap: 14, alignItems: 'center' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#e8e0d4' }} />
-        <div style={{ flex: 1 }}>
-          <div style={{ height: 16, width: '60%', background: '#e8e0d4', borderRadius: 8, marginBottom: 8 }} />
-          <div style={{ height: 12, width: '40%', background: '#ede6db', borderRadius: 8 }} />
+    <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', border: '1px solid #f1f0ee' }}>
+      <div style={{ height: 96, background: 'linear-gradient(135deg, #f8f6f2, #f0ebe0)' }} />
+      <div style={{ padding: '16px 18px' }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
+          <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#ede8df', marginTop: -36, border: '3px solid #fff', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 14, width: '60%', background: '#ede8df', borderRadius: 6, marginBottom: 6 }} />
+            <div style={{ height: 11, width: '40%', background: '#f2ede6', borderRadius: 6 }} />
+          </div>
         </div>
-      </div>
-      <div style={{ padding: '12px 20px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ height: 12, width: '50%', background: '#f0ebe0', borderRadius: 8 }} />
-        <div style={{ display: 'flex', gap: 6 }}>
-          {[70, 80, 60].map((w, i) => <div key={i} style={{ height: 24, width: w, background: '#f5f0e8', borderRadius: 20 }} />)}
+        <div style={{ display: 'flex', gap: 5, marginBottom: 12 }}>
+          {[70, 90, 60].map((w, i) => <div key={i} style={{ height: 22, width: w, background: '#f5f0e8', borderRadius: 20 }} />)}
         </div>
-        <div style={{ height: 1, background: '#f0ebe0', margin: '2px 0' }} />
+        <div style={{ height: 1, background: '#f0ebe0', marginBottom: 12 }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ height: 18, width: 80, background: '#ede6db', borderRadius: 8 }} />
-          <div style={{ height: 32, width: 60, background: '#e8e0d4', borderRadius: 10 }} />
+          <div style={{ height: 16, width: 70, background: '#ede8df', borderRadius: 6 }} />
+          <div style={{ height: 34, width: 80, background: '#e8e0d4', borderRadius: 10 }} />
         </div>
       </div>
     </div>
@@ -106,104 +130,192 @@ function VendorCard({ vendor, isVendor, format, onLogoClick }: {
 }) {
   const router = useRouter();
   const isFeatured = vendor.score > 240;
-  const isRecommended = vendor.score > 120;
+  const catCfg = CAT_CONFIG[vendor.category] ?? { icon: '🏢', color: '#9ca3af' };
 
   return (
-    <Link href={'/v/' + vendor.id} style={{ textDecoration: 'none' }}>
+    <Link href={'/v/' + vendor.id} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div
         style={{
-          background: '#fff', borderRadius: 20, overflow: 'hidden',
-          boxShadow: isFeatured ? '0 8px 32px rgba(184,151,62,0.18), 0 2px 8px rgba(0,0,0,0.06)' : '0 2px 12px rgba(0,0,0,0.07)',
-          border: isFeatured ? '1.5px solid rgba(184,151,62,0.5)' : '1.5px solid rgba(0,0,0,0.06)',
-          transition: 'box-shadow 0.2s, transform 0.15s',
-          position: 'relative', display: 'flex', flexDirection: 'column', height: '100%',
+          background: '#fff',
+          borderRadius: 20,
+          overflow: 'hidden',
+          border: isFeatured ? '1.5px solid rgba(184,151,62,0.45)' : '1px solid #f1f0ee',
+          boxShadow: isFeatured
+            ? '0 8px 30px rgba(184,151,62,0.14), 0 2px 8px rgba(0,0,0,0.06)'
+            : '0 2px 12px rgba(0,0,0,0.05)',
+          transition: 'transform 0.18s, box-shadow 0.18s',
+          position: 'relative',
+          display: 'flex', flexDirection: 'column', height: '100%',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={e => {
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured
+            ? '0 16px 40px rgba(184,151,62,0.2), 0 4px 12px rgba(0,0,0,0.08)'
+            : '0 8px 24px rgba(0,0,0,0.10)';
+        }}
+        onMouseLeave={e => {
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured
+            ? '0 8px 30px rgba(184,151,62,0.14), 0 2px 8px rgba(0,0,0,0.06)'
+            : '0 2px 12px rgba(0,0,0,0.05)';
         }}
       >
-        {/* Featured ribbon */}
-        {isFeatured && (
+        {/* Coloured top band — category pill only, no right badges (Verified moves below) */}
+        <div style={{
+          height: 72,
+          background: `linear-gradient(135deg, ${catCfg.color}22, ${catCfg.color}10)`,
+          borderBottom: `1px solid ${catCfg.color}20`,
+          position: 'relative',
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+          padding: '12px 14px 0',
+        }}>
+          {/* Category pill */}
           <div style={{
-            position: 'absolute', top: 14, right: 0, zIndex: 2,
-            background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
-            color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 1,
-            padding: '4px 12px 4px 10px', borderRadius: '4px 0 0 4px',
-            boxShadow: '0 2px 8px rgba(184,151,62,0.4)', fontFamily: 'Georgia,serif',
-          }}>FEATURED</div>
-        )}
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '4px 10px', borderRadius: 20,
+            background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)',
+            fontSize: 11, fontWeight: 600, color: '#374151',
+            border: `1px solid ${catCfg.color}30`,
+          }}>
+            <span style={{ fontSize: 13 }}>{catCfg.icon}</span>
+            <span>{vendor.category.split(' ')[0]}</span>
+          </div>
 
-        {/* Logo bar */}
-        <div style={{ background: 'linear-gradient(135deg,#faf7f2 0%,#f0ebe0 100%)', padding: '22px 20px 14px', display: 'flex', alignItems: 'center', gap: 14 }}>
-          {vendor.logoUrl ? (
-            <button type="button"
-              onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
-              style={{ width: 56, height: 56, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(184,151,62,0.3)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-in', padding: 0, flexShrink: 0 }}
-            >
-              <img src={vendor.logoUrl} alt={vendor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </button>
-          ) : (
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#b8973e,#d4aa5a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
-              {vendor.name.split(' ').map(s => s[0]).slice(0, 2).join('').toUpperCase()}
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#18100a', fontFamily: 'Georgia,serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.name}</h3>
-              {vendor.verified && <VerifiedBadge verified />}
-              {vendor.isDemo && <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 20, background: '#f1f1f1', color: '#888', border: '1px solid #ddd', fontWeight: 600 }}>TEST</span>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 3 }}>
-              <span style={{ fontSize: 13 }}>{CAT_ICONS[vendor.category] ?? '🏢'}</span>
-              <span style={{ fontSize: 12, color: '#8a6e4a', fontWeight: 500 }}>{vendor.category}</span>
+          {/* Right side badges - Featured and/or Verified */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {vendor.verified && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 3,
+                padding: '3px 8px', borderRadius: 20,
+                background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)',
+              }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#2563eb' }}>Verified</span>
+              </div>
+            )}
+            {isFeatured && (
+              <div style={{
+                padding: '3px 9px', borderRadius: 20,
+                background: 'linear-gradient(135deg,#b8973e,#e8c84a)',
+                color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8,
+              }}>★ FEATURED</div>
+            )}
+          </div>
+        </div>
+
+        {/* Avatar + name row — avatar floats up, name sits cleanly BELOW the band line */}
+        <div style={{ padding: '0 16px', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: -22 }}>
+            {/* Logo avatar */}
+            {vendor.logoUrl ? (
+              <button type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
+                style={{
+                  width: 50, height: 50, borderRadius: 12, overflow: 'hidden',
+                  border: '2.5px solid #fff', background: '#fff',
+                  flexShrink: 0, cursor: 'zoom-in', padding: 0,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+                }}
+              >
+                <img src={vendor.logoUrl} alt={vendor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </button>
+            ) : (
+              <div style={{
+                width: 50, height: 50, borderRadius: 12, flexShrink: 0,
+                background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif',
+                border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+              }}>
+                {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
+              </div>
+            )}
+
+            {/* Name + location — name overlaps above the band line */}
+            <div style={{ flex: 1, minWidth: 0, marginTop: -8 }}>
+              <h3 style={{
+                margin: 0, fontSize: 17, fontWeight: 700, color: '#111827',
+                fontFamily: 'Georgia, serif',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>{vendor.name}</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+                </svg>
+                <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{vendor.location}</span>
+              </div>
             </div>
           </div>
-          {isRecommended && !isFeatured && (
-            <div style={{ flexShrink: 0, fontSize: 9, fontWeight: 700, letterSpacing: 0.5, padding: '3px 8px', borderRadius: 20, background: 'rgba(184,151,62,0.12)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.3)' }}>✦ TOP</div>
-          )}
         </div>
 
         {/* Body */}
-        <div style={{ padding: '12px 20px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#b8973e" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-            </svg>
-            <span style={{ fontSize: 12, color: '#7a6050' }}>{vendor.location}</span>
-          </div>
+        <div style={{ padding: '10px 18px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* Star rating */}
+          {vendor.rating > 0 && (
+            <StarRating rating={vendor.rating} count={vendor.reviewCount} />
+          )}
 
+          {/* Services */}
           {vendor.services.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
               {vendor.services.slice(0, 3).map((s, i) => (
-                <span key={i} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: 'rgba(184,151,62,0.08)', color: '#7a5c30', border: '1px solid rgba(184,151,62,0.2)', fontWeight: 500 }}>{s}</span>
+                <span key={i} style={{
+                  fontSize: 10, padding: '3px 8px', borderRadius: 20,
+                  background: `${catCfg.color}0f`, color: '#4b5563',
+                  border: `1px solid ${catCfg.color}20`, fontWeight: 500,
+                }}>{s}</span>
               ))}
               {vendor.services.length > 3 && (
-                <span style={{ fontSize: 11, padding: '3px 9px', borderRadius: 20, background: '#f5f5f5', color: '#888', border: '1px solid #eee' }}>+{vendor.services.length - 3}</span>
+                <span style={{
+                  fontSize: 10, padding: '3px 8px', borderRadius: 20,
+                  background: '#f9fafb', color: '#9ca3af', border: '1px solid #f1f0ee',
+                }}>+{vendor.services.length - 3} more</span>
               )}
             </div>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(0,0,0,0.06)', marginTop: 'auto' }}>
+          {/* Price + CTA */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            paddingTop: 10, borderTop: '1px solid #f1f0ee', marginTop: 'auto',
+          }}>
             <div>
               {vendor.fromPrice > 0 ? (
                 <>
-                  <div style={{ fontSize: 10, color: '#9a7c58', marginBottom: 1, fontWeight: 500 }}>From</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: '#b8973e', fontFamily: 'Georgia,serif' }}>{format(vendor.fromPrice)}</div>
+                  <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500, marginBottom: 1 }}>From</div>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.5 }}>{format(vendor.fromPrice)}</div>
                 </>
               ) : (
-                <div style={{ fontSize: 12, color: '#9a7c58', fontStyle: 'italic' }}>Contact for pricing</div>
+                <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Contact for pricing</div>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
               {!isVendor && (
                 <button type="button"
                   onClick={e => { e.preventDefault(); e.stopPropagation(); router.push('/messages/new?vendorId=' + vendor.id); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 12px', borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.4)', background: 'rgba(184,151,62,0.06)', color: '#8a6010', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+                  style={{
+                    width: 34, height: 34, borderRadius: 10,
+                    border: '1.5px solid #e5e7eb', background: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', color: '#6b7280',
+                  }}
                 >
-                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                  Chat
+                  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
                 </button>
               )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '7px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontSize: 12, fontWeight: 700 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '8px 14px', borderRadius: 10,
+                background: 'linear-gradient(135deg,#6b1a2e,#8b2040)',
+                color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.2,
+              }}>
                 View
-                <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </div>
             </div>
           </div>
@@ -236,8 +348,11 @@ export default function Marketplace() {
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
   const categories = Array.from(LOCKED_CATEGORIES);
+  const [searchFocused, setSearchFocused] = useState(false);
 
-  const handleLogoClick = useCallback((src: string, alt: string) => { setLogoSrc(src); setLogoAlt(alt); setLogoOpen(true); }, []);
+  const handleLogoClick = useCallback((src: string, alt: string) => {
+    setLogoSrc(src); setLogoAlt(alt); setLogoOpen(true);
+  }, []);
 
   useEffect(() => { loadData(); }, [user]);
   useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, allVendors]);
@@ -279,7 +394,7 @@ export default function Marketplace() {
       setCatalogServices(catalog);
       const { data, error } = await supabase.from('marketplace_vendors').select('*');
       if (error) { console.error(error); return; }
-      let actData = [];
+      let actData: VendorActivityScore[] = [];
       try {
         const result = await supabase.rpc('get_vendor_activity_7d');
         if (result.data) actData = result.data;
@@ -288,13 +403,20 @@ export default function Marketplace() {
       }
       const actMap = new Map<string, VendorActivityScore>();
       (actData || []).forEach((r: VendorActivityScore) => actMap.set(r.vendor_id, r));
+
       const mapped: Vendor[] = (data || []).map((v: MarketplaceVendor) => ({
-        id: v.vendor_id, name: v.business_name || 'Unnamed Vendor', category: v.category || 'Other',
+        id: v.vendor_id,
+        name: v.business_name || 'Unnamed Vendor',
+        category: v.category || 'Other',
         location: [v.city, v.country].filter(Boolean).join(', ') || 'Location not set',
-        fromPrice: v.min_from_price || 0, services: v.services || [],
-        score: calculateScore(v, {}, actMap.get(v.vendor_id)),
-        logoUrl: v.logo_url, verified: v.verified,
+        fromPrice: v.min_from_price || 0,
+        services: v.services || [],
+        score: calculateScore(v, actMap.get(v.vendor_id)),
+        logoUrl: v.logo_url,
+        verified: v.verified,
         isDemo: !!(v.plan === 'demo' || /\b(test|demo|sample|seed)\b/i.test(v.business_name || '')),
+        rating: v.rating || 0,
+        reviewCount: v.review_count || 0,
       }));
       setAllServices(Array.from(new Set(mapped.flatMap(v => v.services))).sort());
       setAllVendors(mapped);
@@ -304,85 +426,191 @@ export default function Marketplace() {
   const applyFiltersAndSort = () => {
     let f = [...allVendors];
     const q = searchQuery.toLowerCase().trim();
-    if (q) f = f.filter(v => v.name.toLowerCase().includes(q) || v.category.toLowerCase().includes(q) || v.location.toLowerCase().includes(q) || v.services.some(s => s.toLowerCase().includes(q)));
+    if (q) f = f.filter(v =>
+      v.name.toLowerCase().includes(q) ||
+      v.category.toLowerCase().includes(q) ||
+      v.location.toLowerCase().includes(q) ||
+      v.services.some(s => s.toLowerCase().includes(q))
+    );
     if (categoryFilter) f = f.filter(v => v.category === categoryFilter);
     if (serviceFilter.length) f = f.filter(v => serviceFilter.every(s => v.services.includes(s)));
     switch (sortBy) {
       case 'recommended': f.sort((a, b) => b.score - a.score); break;
-      case 'price_low': f.sort((a, b) => { if (!a.fromPrice) return 1; if (!b.fromPrice) return -1; return a.fromPrice - b.fromPrice; }); break;
-      case 'price_high': f.sort((a, b) => b.fromPrice - a.fromPrice); break;
-      case 'newest': f.sort((a, b) => b.name.localeCompare(a.name)); break;
+      case 'price_low':   f.sort((a, b) => { if (!a.fromPrice) return 1; if (!b.fromPrice) return -1; return a.fromPrice - b.fromPrice; }); break;
+      case 'price_high':  f.sort((a, b) => b.fromPrice - a.fromPrice); break;
+      case 'top_rated':   f.sort((a, b) => b.rating - a.rating); break;
     }
     setVendors(f);
   };
 
+  const featuredCount = vendors.filter(v => v.score > 240).length;
+
   return (
-    <div style={{ minHeight: '100svh', background: '#faf7f2' }}>
+    <div style={{ minHeight: '100svh', background: '#f8f7f4' }}>
       <style>{`
-        input[placeholder*="Search vendors"]::placeholder {
-          color: rgba(255, 255, 255, 0.6) !important;
-        }
+        .mp-search::placeholder { color: rgba(255,255,255,0.5) !important; }
+        .mp-search:focus { background: rgba(255,255,255,0.15) !important; }
+        .cat-pill { transition: all 0.15s; }
+        .cat-pill:hover { opacity: 0.9; transform: scale(1.02); }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .vendor-grid > * { animation: fadeUp 0.3s ease both; }
       `}</style>
+
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100svh', paddingBottom: 90 }}>
 
-        {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#5a4633 0%,#7a5d46 60%,#9a7a5a 100%)', padding: '20px 20px 0', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'rgba(184,151,62,0.08)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 20, right: 50, width: 80, height: 80, borderRadius: '50%', background: 'rgba(184,151,62,0.05)', pointerEvents: 'none' }} />
+        {/* ── Premium Header ── */}
+        <div style={{
+          background: 'linear-gradient(160deg, #6b1a2e 0%, #8b2040 55%, #a8305a 100%)',
+          padding: '0 0 0', position: 'relative', overflow: 'hidden',
+        }}>
+          {/* Decorative orbs */}
+          <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,180,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: 0, right: 100, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,150,150,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, position: 'relative' }}>
-            <UmshadoIcon size={26} />
-            <div>
-              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>Marketplace</h1>
-              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>Find trusted wedding vendors</p>
+          {/* Header top row */}
+          <div style={{ padding: '20px 20px 16px', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div>
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.8, textTransform: 'uppercase', lineHeight: 1, marginBottom: 4 }}>uMshado</div>
+                  <h1 style={{
+                    margin: 0, fontSize: 24, fontWeight: 800, color: '#fff',
+                    fontFamily: 'Georgia, serif', lineHeight: 1,
+                    letterSpacing: -0.5,
+                  }}>Wedding Marketplace</h1>
+                </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                  {loading ? '…' : `${allVendors.length} trusted vendors`}
+                </p>
+              </div>
+
+              {/* Quick stats */}
+              {!loading && featuredCount > 0 && (
+                <div style={{
+                  padding: '6px 12px', borderRadius: 20,
+                  background: 'rgba(184,151,62,0.15)', border: '1px solid rgba(184,151,62,0.3)',
+                  fontSize: 11, color: '#e8c84a', fontWeight: 600,
+                }}>
+                  ★ {featuredCount} Featured
+                </div>
+              )}
+            </div>
+
+            {/* Search bar */}
+            <div style={{ position: 'relative', marginBottom: 12 }}>
+              <svg style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', zIndex: 1 }}
+                width="16" height="16" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="m21 21-4.35-4.35" />
+              </svg>
+              <input
+                className="mp-search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                placeholder="Search vendors, categories, services…"
+                style={{
+                  width: '100%', height: 48, paddingLeft: 46, paddingRight: 16,
+                  borderRadius: 14, boxSizing: 'border-box',
+                  border: searchFocused ? '1.5px solid rgba(184,151,62,0.6)' : '1.5px solid rgba(255,255,255,0.1)',
+                  background: searchFocused ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)',
+                  color: '#fff', fontSize: 14, outline: 'none',
+                  transition: 'border-color 0.2s, background 0.2s',
+                  backdropFilter: 'blur(8px)',
+                }}
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery('')}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
+              )}
+            </div>
+
+            {/* Sort + Filter row */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)}
+                style={{
+                  flex: 1, height: 40, borderRadius: 10,
+                  border: '1.5px solid rgba(255,255,255,0.1)',
+                  background: 'rgba(255,255,255,0.08)',
+                  color: '#fff', fontSize: 12, padding: '0 12px', outline: 'none', cursor: 'pointer',
+                  backdropFilter: 'blur(8px)',
+                }}>
+                <option value="recommended" style={{ color: '#18100a', background: '#fff' }}>⭐ Recommended</option>
+                <option value="top_rated"   style={{ color: '#18100a', background: '#fff' }}>⭐ Top Rated</option>
+                <option value="price_low"   style={{ color: '#18100a', background: '#fff' }}>↑ Price: Low → High</option>
+                <option value="price_high"  style={{ color: '#18100a', background: '#fff' }}>↓ Price: High → Low</option>
+              </select>
+              <button onClick={() => setFilterOpen(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 40,
+                  borderRadius: 10, cursor: 'pointer',
+                  border: activeCount() > 0 ? '1.5px solid rgba(184,151,62,0.6)' : '1.5px solid rgba(255,255,255,0.1)',
+                  background: activeCount() > 0 ? 'rgba(184,151,62,0.18)' : 'rgba(255,255,255,0.08)',
+                  color: activeCount() > 0 ? '#e8c84a' : 'rgba(255,255,255,0.7)',
+                  fontSize: 12, fontWeight: 600, backdropFilter: 'blur(8px)',
+                }}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" d="M3 6h18M7 12h10M11 18h2" />
+                </svg>
+                Filters
+                {activeCount() > 0 && (
+                  <span style={{ background: '#b8973e', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 20 }}>
+                    {activeCount()}
+                  </span>
+                )}
+              </button>
             </div>
           </div>
 
-          {/* Search */}
-          <div style={{ position: 'relative', marginBottom: 12 }}>
-            <svg style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="15" height="15" fill="none" stroke="rgba(184,151,62,0.7)" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8" /><path strokeLinecap="round" d="m21 21-4.35-4.35" />
-            </svg>
-            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search vendors, categories, services…"
-              style={{ width: '100%', height: 44, paddingLeft: 42, paddingRight: 16, borderRadius: 14, border: '1.5px solid rgba(184,151,62,0.2)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 14, outline: 'none', boxSizing: 'border-box' }}
-            />
-          </div>
-
-          {/* Sort + Filter */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-            <select value={sortBy} onChange={e => setSortBy(e.target.value as SortOption)}
-              style={{ flex: 1, height: 38, borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.2)', background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 13, padding: '0 12px', outline: 'none', cursor: 'pointer' }}>
-              <option value="recommended" style={{ color: '#18100a', background: '#fff' }}>⭐ Recommended</option>
-              <option value="price_low" style={{ color: '#18100a', background: '#fff' }}>↑ Price: Low to High</option>
-              <option value="price_high" style={{ color: '#18100a', background: '#fff' }}>↓ Price: High to Low</option>
-              <option value="newest" style={{ color: '#18100a', background: '#fff' }}>✦ Newest</option>
-            </select>
-            <button onClick={() => setFilterOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 16px', height: 38, borderRadius: 10, border: '1.5px solid rgba(184,151,62,0.35)', background: activeCount() > 0 ? 'rgba(184,151,62,0.18)' : 'rgba(255,255,255,0.06)', color: activeCount() > 0 ? '#e8c84a' : 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" d="M3 6h18M7 12h10M11 18h2" /></svg>
-              Filters
-              {activeCount() > 0 && <span style={{ background: '#b8973e', color: '#fff', fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 20 }}>{activeCount()}</span>}
-            </button>
-          </div>
-
-          {/* Category pills */}
-          <div style={{ margin: '0 -20px', paddingBottom: 16, overflowX: 'auto', display: 'flex', gap: 8, padding: '0 16px 16px', scrollbarWidth: 'none' }}>
-            {['', ...categories].map(cat => (
-              <button key={cat || '__all'} onClick={() => setCategoryFilter(cat)}
-                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: categoryFilter === cat ? 'linear-gradient(135deg,#b8973e,#8a6010)' : 'rgba(255,255,255,0.1)', color: categoryFilter === cat ? '#fff' : 'rgba(255,255,255,0.75)', boxShadow: categoryFilter === cat ? '0 2px 8px rgba(184,151,62,0.4)' : 'none', transition: 'all 0.15s', whiteSpace: 'nowrap' }}>
-                {cat ? <><span>{CAT_ICONS[cat] ?? '🏢'}</span><span>{cat.split(' ')[0]}</span></> : 'All'}
-              </button>
-            ))}
+          {/* Category pills — scrollable strip */}
+          <div style={{
+            display: 'flex', gap: 8, overflowX: 'auto',
+            padding: '0 16px 20px', scrollbarWidth: 'none',
+          }}>
+            <button
+              className="cat-pill"
+              onClick={() => setCategoryFilter('')}
+              style={{
+                flexShrink: 0, padding: '8px 18px', borderRadius: 24,
+                fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
+                background: categoryFilter === '' ? '#fff' : 'rgba(255,255,255,0.1)',
+                color: categoryFilter === '' ? '#3d0a17' : 'rgba(255,255,255,0.7)',
+                boxShadow: categoryFilter === '' ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
+              }}
+            >All</button>
+            {categories.map(cat => {
+              const cfg = CAT_CONFIG[cat] ?? { icon: '🏢', color: '#9ca3af' };
+              const active = categoryFilter === cat;
+              return (
+                <button
+                  key={cat}
+                  className="cat-pill"
+                  onClick={() => setCategoryFilter(cat)}
+                  style={{
+                    flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '8px 16px', borderRadius: 24,
+                    fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none',
+                    background: active ? '#fff' : `rgba(255,255,255,0.1)`,
+                    color: active ? '#3d0a17' : 'rgba(255,255,255,0.7)',
+                    boxShadow: active ? '0 4px 14px rgba(0,0,0,0.2)' : 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <span style={{ fontSize: 14 }}>{cfg.icon}</span>
+                  <span>{cat.split('&')[0].trim()}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* ── Active service chips ── */}
         {serviceFilter.length > 0 && (
-          <div style={{ display: 'flex', gap: 6, padding: '10px 16px', overflowX: 'auto', scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', gap: 6, padding: '10px 16px', overflowX: 'auto', scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid #f1f0ee' }}>
             {serviceFilter.map(s => (
               <button key={s} onClick={() => toggleService(s)}
-                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(184,151,62,0.12)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.3)', cursor: 'pointer' }}>
+                style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(184,151,62,0.1)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.25)', cursor: 'pointer' }}>
                 {s} <span style={{ fontSize: 10, opacity: 0.6 }}>✕</span>
               </button>
             ))}
@@ -391,35 +619,43 @@ export default function Marketplace() {
           </div>
         )}
 
-        {/* ── Count bar ── */}
-        <div style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          {!loading && <span style={{ fontSize: 12, color: '#9a7c58', fontWeight: 500 }}>{vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found</span>}
-          {activeCount() > 0 && <button onClick={clearAll} style={{ fontSize: 12, color: '#b8973e', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear all filters</button>}
+        {/* ── Count / clear bar ── */}
+        <div style={{ padding: '10px 20px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {!loading && (
+            <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
+              {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found
+            </span>
+          )}
+          {activeCount() > 0 && (
+            <button onClick={clearAll} style={{ fontSize: 12, color: '#b8973e', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear all</button>
+          )}
         </div>
 
         {/* ── Grid ── */}
         <div style={{ padding: '4px 16px 20px', flex: 1 }}>
           {loading ? (
-            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
               {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : vendors.length === 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.3 }}>🔍</div>
-              <p style={{ fontSize: 16, fontWeight: 700, color: '#18100a', margin: '0 0 6px', fontFamily: 'Georgia,serif' }}>No vendors found</p>
-              <p style={{ fontSize: 13, color: '#9a7c58', margin: '0 0 20px' }}>Try adjusting your search or filters</p>
-              <button onClick={clearAll} style={{ padding: '10px 24px', borderRadius: 12, background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>Clear filters</button>
+              <div style={{ fontSize: 52, marginBottom: 14, opacity: 0.25 }}>🔍</div>
+              <p style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: '0 0 6px', fontFamily: 'Georgia,serif' }}>No vendors found</p>
+              <p style={{ fontSize: 13, color: '#9ca3af', margin: '0 0 20px' }}>Try adjusting your search or filters</p>
+              <button onClick={clearAll} style={{ padding: '11px 28px', borderRadius: 12, background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(107,26,46,0.3)' }}>Clear filters</button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))' }}>
-              {vendors.slice(0, displayedCount).map(v => (
-                <VendorCard key={v.id} vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} />
+            <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
+              {vendors.slice(0, displayedCount).map((v, idx) => (
+                <div key={v.id} style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
+                  <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} />
+                </div>
               ))}
             </div>
           )}
           <div ref={loadMoreRef} style={{ height: 40 }} />
           {isFetchingMore && (
-            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', marginTop: 14 }}>
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))', marginTop: 14 }}>
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
           )}
@@ -429,30 +665,41 @@ export default function Marketplace() {
       {/* ── Filter sheet ── */}
       {filterOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 50 }}>
-          <button style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', border: 'none', cursor: 'pointer' }} onClick={() => setFilterOpen(false)} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#fff', borderRadius: '24px 24px 0 0', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', boxShadow: '0 -8px 40px rgba(0,0,0,0.2)' }}>
+          <button style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', border: 'none', cursor: 'pointer' }} onClick={() => setFilterOpen(false)} />
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            background: '#fff', borderRadius: '24px 24px 0 0',
+            maxHeight: '82vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
+          }}>
             <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
-              <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e0d8cc' }} />
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: '#e5e7eb' }} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 14px', borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px 14px', borderBottom: '1px solid #f1f0ee' }}>
               <div>
-                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#18100a', fontFamily: 'Georgia,serif' }}>Filter vendors</p>
-                <p style={{ margin: 0, fontSize: 12, color: '#9a7c58' }}>Refine by service type</p>
+                <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: '#111827', fontFamily: 'Georgia,serif' }}>Filter vendors</p>
+                <p style={{ margin: 0, fontSize: 12, color: '#9ca3af', marginTop: 2 }}>Refine by service type</p>
               </div>
-              <button onClick={() => setFilterOpen(false)} style={{ padding: '6px 14px', borderRadius: 10, border: '1.5px solid #e0d8cc', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#7a5c30' }}>Done</button>
+              <button onClick={() => setFilterOpen(false)} style={{ padding: '7px 16px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Done</button>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px' }}>
               {displayedServices.length > 0 ? (
                 <>
-                  <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#18100a' }}>
-                    Services{categoryFilter ? ' · ' + categoryFilter : ''}
+                  <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    Services{categoryFilter ? ` · ${categoryFilter}` : ''}
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {displayedServices.map(s => {
                       const active = serviceFilter.includes(s);
                       return (
                         <button key={s} onClick={() => toggleService(s)}
-                          style={{ padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: active ? 'linear-gradient(135deg,#b8973e,#8a6010)' : '#faf7f2', color: active ? '#fff' : '#7a5c30', boxShadow: active ? '0 2px 8px rgba(184,151,62,0.3)' : '0 1px 3px rgba(0,0,0,0.07)', transition: 'all 0.15s' }}>
+                          style={{
+                            padding: '7px 14px', borderRadius: 20, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none',
+                            background: active ? 'linear-gradient(135deg,#6b1a2e,#8b2040)' : '#f8f7f4',
+                            color: active ? '#fff' : '#374151',
+                            boxShadow: active ? '0 2px 8px rgba(107,26,46,0.2)' : '0 1px 3px rgba(0,0,0,0.06)',
+                            transition: 'all 0.15s',
+                          }}>
                           {s}
                         </button>
                       );
@@ -460,13 +707,13 @@ export default function Marketplace() {
                   </div>
                 </>
               ) : (
-                <p style={{ color: '#9a7c58', fontSize: 13 }}>Select a category above to see available services.</p>
+                <p style={{ color: '#9ca3af', fontSize: 13 }}>Select a category above to filter services.</p>
               )}
             </div>
-            <div style={{ padding: '12px 20px 24px', display: 'flex', gap: 10, borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-              <button onClick={() => setServiceFilter([])} style={{ flex: 1, height: 44, borderRadius: 12, border: '1.5px solid #e0d8cc', background: '#fff', fontSize: 13, fontWeight: 600, color: '#7a5c30', cursor: 'pointer' }}>Clear</button>
-              <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 44, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(184,151,62,0.35)' }}>
-                Apply{serviceFilter.length > 0 ? ' (' + serviceFilter.length + ')' : ''}
+            <div style={{ padding: '12px 20px 24px', display: 'flex', gap: 10, borderTop: '1px solid #f1f0ee' }}>
+              <button onClick={() => setServiceFilter([])} style={{ flex: 1, height: 46, borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Clear</button>
+              <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 46, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(107,26,46,0.3)' }}>
+                Apply{serviceFilter.length > 0 ? ` (${serviceFilter.length})` : ''}
               </button>
             </div>
           </div>
