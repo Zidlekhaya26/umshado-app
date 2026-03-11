@@ -522,7 +522,7 @@ export default function CoupleDashboard() {
                 <p style={{ margin:'0 0 4px', fontSize:32 }}>💬</p>
                 <p style={{ margin:'0 0 4px', fontSize:14, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>No quotes yet</p>
                 <p style={{ margin:'0 0 14px', fontSize:12, color:LITE }}>Browse vendors and request your first quote</p>
-                <Link href="/marketplace" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'9px 20px', borderRadius:20, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none' }}>Browse Vendors</Link>
+                <Link href="/marketplace" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'9px 20px', borderRadius:20, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Browse Vendors</Link>
               </div>
             ) : (
               <div style={{ background:'#fff', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.05)', border:'1.5px solid rgba(0,0,0,0.05)' }}>
@@ -549,7 +549,7 @@ export default function CoupleDashboard() {
               <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Find perfect vendors</p>
               <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Photography · Catering · Décor · More</p>
             </div>
-            <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 12px rgba(184,151,62,0.4)' }}>Browse →</Link>
+            <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Browse →</Link>
           </div>
 
           {/* ── 6. Live page CTA ───────────────────────────── */}
@@ -560,7 +560,7 @@ export default function CoupleDashboard() {
               <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Your live wedding page</p>
               <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.45)' }}>RSVP · wishes · live updates for guests</p>
             </div>
-            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.12)', border:'1px solid rgba(255,255,255,0.15)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Open →</Link>
+            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Open →</Link>
           </div>
 
           {/* ── 7. Wedding website customization ──────────── */}
