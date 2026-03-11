@@ -228,7 +228,7 @@ CREATE TRIGGER trg_vendor_rating
 DROP VIEW IF EXISTS public.marketplace_vendors;
 CREATE VIEW public.marketplace_vendors AS
 SELECT
-  v.id,
+  v.id AS vendor_id,
   v.business_name,
   v.logo_url,
   v.verified,
