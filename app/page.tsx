@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
 
