@@ -5,72 +5,176 @@ import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
-import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
-import { useCurrency } from '@/app/providers/CurrencyProvider';
 import PushNotificationsToggle from '@/components/PushNotificationsToggle';
+import { useCurrency } from '@/app/providers/CurrencyProvider';
 
+/* ─── Design tokens ──────────────────────────────────────── */
+const C = {
+  crimson:     '#9A2143',
+  crimsonDark: '#731832',
+  crimsonDim:  'rgba(154,33,67,0.10)',
+  crimsonGlow: 'rgba(154,33,67,0.22)',
+  gold:        '#BD983F',
+  goldDim:     'rgba(189,152,63,0.12)',
+  dark:        '#1a0d12',
+  bg:          '#faf8f5',
+  card:        '#ffffff',
+  border:      '#f0ebe4',
+  muted:       '#7a5060',
+  text:        '#2d1a22',
+  success:     '#1e7c4a',
+  successDim:  'rgba(30,124,74,0.1)',
+  error:       '#c0322a',
+  errorDim:    'rgba(192,50,42,0.08)',
+  blue:        '#1d6fa8',
+  blueDim:     'rgba(29,111,168,0.1)',
+};
+
+const grad = {
+  header:  `linear-gradient(160deg, #4d0f21 0%, ${C.crimson} 55%, #b8315a 100%)`,
+  gold:    `linear-gradient(135deg, ${C.gold}, #9a7a2a)`,
+  primary: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`,
+};
+
+/* ─── Toggle component ───────────────────────────────────── */
+function Toggle({ on, onChange, disabled }: { on: boolean; onChange: () => void; disabled?: boolean }) {
+  return (
+    <button onClick={onChange} disabled={disabled}
+      style={{
+        width: 46, height: 26, borderRadius: 13, border: 'none', cursor: disabled ? 'default' : 'pointer',
+        background: on ? C.crimson : '#d1d5db',
+        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+        opacity: disabled ? 0.5 : 1,
+      }}>
+      <span style={{
+        position: 'absolute', top: 3, left: on ? 23 : 3,
+        width: 20, height: 20, borderRadius: '50%', background: '#fff',
+        transition: 'left 0.2s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+        display: 'block',
+      }} />
+    </button>
+  );
+}
+
+/* ─── Section wrapper ────────────────────────────────────── */
+function Section({ title, children, icon }: { title: string; children: React.ReactNode; icon?: string }) {
+  return (
+    <div style={{ background: C.card, borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${C.border}`, boxShadow: '0 2px 12px rgba(26,13,18,0.04)' }}>
+      <div style={{ padding: '14px 18px 12px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {icon && <span style={{ fontSize: 15 }}>{icon}</span>}
+        <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase', fontFamily: "'DM Sans', system-ui, sans-serif" }}>{title}</p>
+      </div>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+/* ─── Row ────────────────────────────────────────────────── */
+function Row({ icon, label, sub, right, onClick, danger, last }: {
+  icon: React.ReactNode; label: string; sub?: string;
+  right?: React.ReactNode; onClick?: () => void; danger?: boolean; last?: boolean;
+}) {
+  return (
+    <div onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14, padding: '13px 18px',
+        borderBottom: last ? 'none' : `1px solid ${C.border}`,
+        cursor: onClick ? 'pointer' : 'default',
+        background: 'transparent', transition: 'background 0.12s',
+      }}
+      onMouseEnter={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.background = danger ? C.errorDim : C.crimsonDim; }}
+      onMouseLeave={e => { if (onClick) (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+    >
+      <div style={{ width: 38, height: 38, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: danger ? C.errorDim : C.crimsonDim }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: danger ? C.error : C.text }}>{label}</p>
+        {sub && <p style={{ margin: '2px 0 0', fontSize: 11, color: C.muted }}>{sub}</p>}
+      </div>
+      {right}
+      {onClick && !right && (
+        <svg width="14" height="14" fill="none" stroke={danger ? C.error : C.muted} strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+/* ─── Input ──────────────────────────────────────────────── */
+function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 800, color: C.muted, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 7, fontFamily: "'DM Sans', system-ui" }}>
+        {label}{required && <span style={{ color: C.crimson, marginLeft: 3 }}>*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '11px 14px', borderRadius: 12, border: `1.5px solid ${C.border}`,
+  fontSize: 14, color: C.text, fontFamily: "'DM Sans', system-ui", background: '#fdfaf8',
+  outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s',
+};
+
+/* ════════════════════════════════════════════════════════════
+   Main
+═══════════════════════════════════════════════════════════ */
 function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const target = useMemo(() => searchParams?.get('target'), [searchParams]);
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
-  const [language, setLanguage] = useState('English');
-  const [loadingRole, setLoadingRole] = useState(true);
-  const [savingRole, setSavingRole] = useState<'couple' | 'vendor' | null>(null);
-  const [profile, setProfile] = useState<{
+  const [darkModeEnabled, setDarkModeEnabled]           = useState(false);
+  const [language, setLanguage]                         = useState('English');
+  const [loadingRole, setLoadingRole]                   = useState(true);
+  const [savingRole, setSavingRole]                     = useState<'couple' | 'vendor' | null>(null);
+  const [profile, setProfile]                           = useState<{
     has_couple?: boolean | null;
     has_vendor?: boolean | null;
     active_role?: 'couple' | 'vendor' | null;
   } | null>(null);
 
-  // Real user data from Supabase auth
-  const [authEmail, setAuthEmail] = useState<string | null>(null);
+  const [authEmail, setAuthEmail]   = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
 
-  // ── Edit Profile state ─────────────────────────────────
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [editYourName, setEditYourName] = useState('');
-  const [editWeddingDate, setEditWeddingDate] = useState('');
-  const [editLocation, setEditLocation] = useState('');
-  const [editCountry, setEditCountry] = useState('');
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileSaving, setProfileSaving] = useState(false);
-  const [profileSaveMsg, setProfileSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showEditProfile, setShowEditProfile]     = useState(false);
+  const [editYourName, setEditYourName]           = useState('');
+  const [editWeddingDate, setEditWeddingDate]     = useState('');
+  const [editLocation, setEditLocation]           = useState('');
+  const [editCountry, setEditCountry]             = useState('');
+  const [profileSaving, setProfileSaving]         = useState(false);
+  const [profileSaveMsg, setProfileSaveMsg]       = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Avatar
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl]           = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Notification pref (persisted to user_preferences)
-  const [notifLoading, setNotifLoading] = useState(true);
-
-  // ── Couple profile from DB ─────────────────────────────
+  const [notifLoading, setNotifLoading]         = useState(true);
   const [coupleWeddingDate, setCoupleWeddingDate] = useState<string | null>(null);
   const [couplePartnerName, setCouplePartnerName] = useState<string | null>(null);
+  const [daysUntil, setDaysUntil]               = useState<number | null>(null);
 
-  // Currency from client-side provider (localStorage)
   const { currency, setCurrency } = useCurrency();
 
+  /* ── Load data ── */
   useEffect(() => {
     (async () => {
       setLoadingRole(true);
       try {
         const { data: userData } = await supabase.auth.getUser();
         const user = (userData as any)?.user || null;
-        if (!user?.id) {
-          setProfile(null);
-          return;
-        }
+        if (!user?.id) { setProfile(null); return; }
         setAuthEmail(user.email ?? null);
         setAuthUserId(user.id);
 
-        const { data } = await supabase
-          .from('profiles')
+        const { data } = await supabase.from('profiles')
           .select('has_couple,has_vendor,active_role,full_name')
-          .eq('id', user.id)
-          .maybeSingle();
+          .eq('id', user.id).maybeSingle();
 
         let hasCouple = data?.has_couple ?? null;
         let hasVendor = data?.has_vendor ?? null;
@@ -78,176 +182,106 @@ function SettingsContent() {
         if (hasCouple === null || hasVendor === null) {
           const [coupleRes, vendorRes] = await Promise.all([
             supabase.from('couples').select('id').eq('id', user.id).maybeSingle(),
-            supabase.from('vendors').select('id').eq('id', user.id).maybeSingle()
+            supabase.from('vendors').select('id').eq('id', user.id).maybeSingle(),
           ]);
           hasCouple = hasCouple ?? !!coupleRes.data;
           hasVendor = hasVendor ?? !!vendorRes.data;
-
-          await supabase
-            .from('profiles')
-            .update({ has_couple: hasCouple, has_vendor: hasVendor })
-            .eq('id', user.id);
+          await supabase.from('profiles').update({ has_couple: hasCouple, has_vendor: hasVendor }).eq('id', user.id);
         }
 
-        setProfile({
-          has_couple: hasCouple,
-          has_vendor: hasVendor,
-          active_role: data?.active_role ?? null
-        });
+        setProfile({ has_couple: hasCouple, has_vendor: hasVendor, active_role: data?.active_role ?? null });
+        if (data?.full_name) setEditYourName(data.full_name);
 
-        // Pre-fill "Your Name" from profiles.full_name
-        if (data?.full_name) {
-          setEditYourName(data.full_name);
-        }
-
-        // Load notification preference
-        const { data: prefData } = await supabase
-          .from('user_preferences')
-          .select('in_app_notifications')
-          .eq('user_id', user.id)
-          .maybeSingle();
-        if (prefData !== null && prefData !== undefined) {
-          setNotificationsEnabled(prefData.in_app_notifications ?? true);
-        }
+        const { data: prefData } = await supabase.from('user_preferences')
+          .select('in_app_notifications').eq('user_id', user.id).maybeSingle();
+        if (prefData) setNotificationsEnabled(prefData.in_app_notifications ?? true);
         setNotifLoading(false);
 
-        // Load couple profile for display + edit
         if (hasCouple) {
-          const { data: coupleData } = await supabase
-            .from('couples')
-            .select('partner_name, wedding_date, location, country, avatar_url')
-            .eq('id', user.id)
-            .maybeSingle();
-          if (coupleData) {
-            // Use the couple-level "Your Names" if present, otherwise fall back to profiles.full_name
-            const canonicalName = coupleData.partner_name ?? data?.full_name ?? null;
-            setCouplePartnerName(canonicalName ?? null);
-            if (canonicalName) setEditYourName(canonicalName);
-            setCoupleWeddingDate(coupleData.wedding_date ?? null);
-            setEditWeddingDate(coupleData.wedding_date ?? '');
-            setEditLocation(coupleData.location ?? '');
-            setEditCountry(coupleData.country ?? '');
-            setAvatarUrl(coupleData.avatar_url ?? null);
+          const { data: cd } = await supabase.from('couples')
+            .select('partner_name,wedding_date,location,country,avatar_url')
+            .eq('id', user.id).maybeSingle();
+          if (cd) {
+            const name = cd.partner_name ?? data?.full_name ?? null;
+            setCouplePartnerName(name);
+            if (name) setEditYourName(name);
+            setCoupleWeddingDate(cd.wedding_date ?? null);
+            setEditWeddingDate(cd.wedding_date ?? '');
+            setEditLocation(cd.location ?? '');
+            setEditCountry(cd.country ?? '');
+            setAvatarUrl(cd.avatar_url ?? null);
+            if (cd.wedding_date) {
+              const diff = Math.ceil((new Date(cd.wedding_date + 'T00:00:00').getTime() - Date.now()) / 86400000);
+              setDaysUntil(diff > 0 ? diff : null);
+            }
           }
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
         console.error(err);
-      } finally {
-        setLoadingRole(false);
-      }
+      } finally { setLoadingRole(false); }
     })();
   }, []);
 
+  /* ── Role switch ── */
   const handleSwitch = async (role: 'couple' | 'vendor') => {
     if (!profile) return;
     setSavingRole(role);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = (userData as any)?.user || null;
-      if (!user?.id) {
-        router.push('/auth/sign-in');
-        return;
-      }
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ active_role: role })
-        .eq('id', user.id);
-
-      if (error) {
-        console.error('Failed to switch role:', error);
-        alert('Unable to switch role. Please try again.');
-        return;
-      }
-
-      router.push(role === 'couple' ? '/couple/dashboard' : '/vendor/dashboard');
-    } catch (err) {
-      console.error(err);
-      alert('Unable to switch role. Please try again.');
-    } finally {
-      setSavingRole(null);
-    }
+    const { data: ud } = await supabase.auth.getUser();
+    const uid = (ud as any)?.user?.id;
+    if (!uid) { router.push('/auth/sign-in'); return; }
+    await supabase.from('profiles').update({ active_role: role }).eq('id', uid);
+    router.push(role === 'couple' ? '/couple/dashboard' : '/vendor/dashboard');
+    setSavingRole(null);
   };
 
-  // ── Avatar upload handler ──────────────────────────────
+  /* ── Avatar upload ── */
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !authUserId) return;
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be under 5MB');
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) return;
     setUploadingAvatar(true);
     try {
-      const ext = file.name.split('.').pop() || 'jpg';
+      const ext  = file.name.split('.').pop() || 'jpg';
       const path = `${authUserId}/avatar.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from('couple-avatars')
-        .upload(path, file, { upsert: true });
-      if (uploadErr) throw uploadErr;
-      const { data: urlData } = supabase.storage
-        .from('couple-avatars')
-        .getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      await supabase.from('couples').upsert({ id: authUserId, avatar_url: publicUrl });
-      setAvatarUrl(publicUrl);
-    } catch (err) {
-      console.error('Avatar upload failed:', err);
-    } finally {
-      setUploadingAvatar(false);
-    }
+      await supabase.storage.from('couple-avatars').upload(path, file, { upsert: true });
+      const { data: u } = supabase.storage.from('couple-avatars').getPublicUrl(path);
+      await supabase.from('couples').upsert({ id: authUserId, avatar_url: u.publicUrl });
+      setAvatarUrl(u.publicUrl);
+    } catch (err) { console.error(err); }
+    finally { setUploadingAvatar(false); }
   };
 
-  // ── Edit Profile handlers ──────────────────────────────
-  const openEditProfile = () => {
-    setProfileSaveMsg(null);
-    setShowEditProfile(true);
-  };
-
+  /* ── Save profile ── */
   const saveProfile = async () => {
     if (!authUserId) return;
-
-    // Validate wedding date is not in the past
     if (editWeddingDate) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selected = new Date(editWeddingDate + 'T00:00:00');
-      if (selected < today) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (new Date(editWeddingDate + 'T00:00:00') < today) {
         setProfileSaveMsg({ type: 'error', text: 'Wedding date cannot be in the past.' });
         return;
       }
     }
-
-    setProfileSaving(true);
-    setProfileSaveMsg(null);
-
-    // Save your canonical couple name to profiles and couples
-    const { error: nameError } = await supabase
-      .from('profiles')
-      .update({ full_name: editYourName.trim() || null })
-      .eq('id', authUserId);
-    if (nameError) console.error('Failed to save name:', nameError);
-
-    const payload: Record<string, unknown> = {
+    setProfileSaving(true); setProfileSaveMsg(null);
+    await supabase.from('profiles').update({ full_name: editYourName.trim() || null }).eq('id', authUserId);
+    const { error } = await supabase.from('couples').upsert({
       id: authUserId,
       partner_name: editYourName.trim() || null,
       wedding_date: editWeddingDate || null,
-      location: editLocation.trim() || null,
-      country: editCountry.trim() || null,
-    };
-
-    const { error } = await supabase.from('couples').upsert(payload);
+      location:     editLocation.trim() || null,
+      country:      editCountry.trim() || null,
+    });
     if (error) {
-      console.error('Failed to save profile:', error);
       setProfileSaveMsg({ type: 'error', text: 'Failed to save. Please try again.' });
     } else {
       setCouplePartnerName(editYourName.trim() || null);
       setCoupleWeddingDate(editWeddingDate || null);
-      setProfileSaveMsg({ type: 'success', text: 'Profile updated successfully!' });
-      // Auto-close after a moment
-      setTimeout(() => { setShowEditProfile(false); setProfileSaveMsg(null); }, 1500);
+      if (editWeddingDate) {
+        const diff = Math.ceil((new Date(editWeddingDate + 'T00:00:00').getTime() - Date.now()) / 86400000);
+        setDaysUntil(diff > 0 ? diff : null);
+      }
+      setProfileSaveMsg({ type: 'success', text: 'Profile saved!' });
+      setTimeout(() => { setShowEditProfile(false); setProfileSaveMsg(null); }, 1200);
     }
     setProfileSaving(false);
   };
@@ -258,515 +292,380 @@ function SettingsContent() {
     router.push('/auth/sign-in');
   };
 
-  // ── Today's date for min validation ────────────────────
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const supportItems = [
-    {
-      id: 1,
-      label: 'Help / FAQ',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      action: () => router.push('/help')
-    },
-    {
-      id: 2,
-      label: 'Contact Support',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-      action: () => router.push('/support/contact')
-    },
-    {
-      id: 3,
-      label: 'Report a Problem',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-      ),
-      action: () => router.push('/support/report')
-    }
-  ];
-
-  const legalItems = [
-    {
-      id: 1,
-      label: 'Terms of Service',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-      action: () => router.push('/legal/terms')
-    },
-    {
-      id: 2,
-      label: 'Privacy Policy',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-      ),
-      action: () => router.push('/legal/privacy')
-    }
-  ];
-
+  /* ─────────────────────────────────────────────────────────
+     Render
+  ──────────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <div className="flex items-center gap-3">
-            <UmshadoIcon size={28} />
+    <div style={{ minHeight: '100svh', background: C.bg, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes spin    { to { transform: rotate(360deg); } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+        @keyframes sheetUp { from { opacity:0; transform:translateY(100%); } to { opacity:1; transform:translateY(0); } }
+        input:focus, select:focus, textarea:focus { border-color: ${C.crimson} !important; box-shadow: 0 0 0 3px ${C.crimsonGlow}; }
+        .settings-input:focus { border-color: ${C.crimson} !important; }
+      `}</style>
+
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
+
+      <div style={{ maxWidth: 560, margin: '0 auto', paddingBottom: 100 }}>
+
+        {/* ── Hero header ── */}
+        <div style={{ background: grad.header, padding: '0 0 0', position: 'relative', overflow: 'hidden' }}>
+          {/* Decorative orbs */}
+          <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(189,152,63,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -20, left: -30, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+          {/* Top bar */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px 0', position: 'relative' }}>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Settings</h1>
-              <p className="text-sm text-gray-600 mt-0.5">Manage your account and preferences</p>
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', letterSpacing: -0.3 }}>Settings</h1>
+              <p style={{ margin: '3px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>Account & preferences</p>
             </div>
+            {/* Gold ring decoration */}
+            <div style={{ width: 36, height: 36, borderRadius: '50%', border: `2px solid rgba(189,152,63,0.5)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" fill="none" stroke="rgba(189,152,63,0.8)" strokeWidth={1.8} viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4" /><path strokeLinecap="round" d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Profile card */}
+          <div style={{ padding: '20px 20px 24px', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+
+              {/* Avatar */}
+              <button onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}
+                style={{ position: 'relative', width: 76, height: 76, borderRadius: '50%', border: '3px solid rgba(189,152,63,0.6)', overflow: 'hidden', flexShrink: 0, cursor: 'pointer', background: 'rgba(255,255,255,0.12)', padding: 0 }}>
+                {uploadingAvatar ? (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: 22, height: 22, border: '2.5px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  </div>
+                ) : avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 26, fontWeight: 800, color: 'rgba(255,255,255,0.9)', fontFamily: 'Georgia, serif' }}>
+                      {(editYourName || authEmail || '?')[0].toUpperCase()}
+                    </span>
+                  </div>
+                )}
+                {/* Camera badge */}
+                <div style={{ position: 'absolute', bottom: 2, right: 2, width: 20, height: 20, borderRadius: '50%', background: C.gold, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid rgba(77,15,33,0.9)' }}>
+                  <svg width="9" height="9" fill="#fff" viewBox="0 0 24 24"><path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/><path d="M9.26 3l-1.5 2H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.76l-1.5-2H9.26z"/></svg>
+                </div>
+              </button>
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {editYourName || 'Set your name'}
+                </p>
+                {authEmail && <p style={{ margin: '3px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{authEmail}</p>}
+
+                {/* Days until wedding pill */}
+                {daysUntil && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 8, background: 'rgba(189,152,63,0.18)', border: '1px solid rgba(189,152,63,0.35)', borderRadius: 20, padding: '4px 10px' }}>
+                    <span style={{ fontSize: 10 }}>💍</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: C.gold }}>{daysUntil} days to go</span>
+                  </div>
+                )}
+                {coupleWeddingDate && !daysUntil && (
+                  <p style={{ margin: '6px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                    📅 {new Date(coupleWeddingDate + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Edit profile button */}
+            <button onClick={() => { setProfileSaveMsg(null); setShowEditProfile(true); }}
+              style={{ marginTop: 16, width: '100%', padding: '11px', borderRadius: 14, border: '1.5px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.10)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, letterSpacing: 0.2 }}>
+              <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Profile
+            </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Hidden file input */}
-          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        {/* ── Content ── */}
+        <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-          {/* Profile Card */}
-          <div className="bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl p-5 text-white shadow-lg">
-            <div className="flex items-center gap-4">
-              {/* Avatar upload circle */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="relative w-28 h-28 rounded-full overflow-hidden flex-shrink-0 border-3 border-white border-opacity-40 hover:border-opacity-70 transition-all shadow-lg"
-                disabled={uploadingAvatar}
-              >
-                {uploadingAvatar ? (
-                  <div className="w-full h-full bg-white bg-opacity-20 flex items-center justify-center">
-                    <div className="w-8 h-8 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-white bg-opacity-20 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-white opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                )}
-                <div className="absolute bottom-1 right-1 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-              </button>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold truncate">{editYourName || 'Set your names'}</h2>
-                {authEmail && <p className="text-sm opacity-80 mt-0.5 truncate">{authEmail}</p>}
-                {coupleWeddingDate && (
-                  <p className="text-xs opacity-70 mt-1">📅 {new Date(coupleWeddingDate + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                )}
+          {/* ── Switch Account ── */}
+          <Section title="Switch Account" icon="🔄">
+            {target && (
+              <div style={{ padding: '10px 18px', borderBottom: `1px solid ${C.border}`, background: C.goldDim }}>
+                <p style={{ margin: 0, fontSize: 11, color: C.gold, fontWeight: 600 }}>You tried to open {target === 'vendor' ? 'Vendor' : 'Couple'} pages</p>
               </div>
-            </div>
-            <button
-              onClick={openEditProfile}
-              className="w-full mt-4 px-4 py-2.5 bg-white bg-opacity-20 text-white rounded-xl font-semibold text-sm hover:bg-opacity-30 transition-colors"
-            >
-              ✏️ Edit Profile
-            </button>
-          </div>
-
-          {/* Switch Account */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-bold text-gray-900">Switch Account</h3>
-              {target && (
-                <p className="text-xs text-gray-500 mt-1">
-                  You tried to open {target === 'vendor' ? 'Vendor' : 'Couple'} pages.
-                </p>
-              )}
-              {profile?.active_role && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Current active role: {profile.active_role === 'vendor' ? 'Vendor' : 'Couple'}
-                </p>
-              )}
-            </div>
-            <div className="p-4 space-y-3">
-              {loadingRole ? (
-                <div className="text-sm text-gray-500">Loading roles…</div>
-              ) : (
-                <>
-                  <button
-                    disabled={!profile?.has_couple || savingRole !== null}
-                    onClick={() => handleSwitch('couple')}
-                    className={`w-full text-left rounded-xl border p-4 transition-colors ${
-                      profile?.has_couple
-                        ? 'border-purple-200 bg-white hover:border-purple-400'
-                        : 'border-gray-200 bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold">Couple mode</h4>
-                        <p className="text-xs text-gray-500 mt-1">Plan your wedding and manage your tasks.</p>
-                      </div>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${profile?.has_couple ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-500'}`}>
-                        {profile?.has_couple ? 'Available' : 'Not set up'}
-                      </span>
-                    </div>
-                  </button>
-                  <button
-                    disabled={!profile?.has_vendor || savingRole !== null}
-                    onClick={() => handleSwitch('vendor')}
-                    className={`w-full text-left rounded-xl border p-4 transition-colors ${
-                      profile?.has_vendor
-                        ? 'border-purple-200 bg-white hover:border-purple-400'
-                        : 'border-gray-200 bg-gray-50 text-gray-400'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="text-sm font-semibold">Vendor mode</h4>
-                        <p className="text-xs text-gray-500 mt-1">Manage your business and services.</p>
-                      </div>
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${profile?.has_vendor ? 'bg-purple-100 text-purple-700' : 'bg-gray-200 text-gray-500'}`}>
-                        {profile?.has_vendor ? 'Available' : 'Not set up'}
-                      </span>
-                    </div>
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* App Preferences */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-bold text-gray-900">App Preferences</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {/* Notifications Toggle */}
-              <div className="px-4 py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">In-App Notifications</p>
-                      <p className="text-xs text-gray-500">Quote updates, messages, bookings</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const next = !notificationsEnabled;
-                      setNotificationsEnabled(next);
-                      if (authUserId) {
-                        await supabase.from('user_preferences').upsert({
-                          user_id: authUserId,
-                          in_app_notifications: next,
-                          updated_at: new Date().toISOString(),
-                        });
-                      }
-                    }}
-                    disabled={notifLoading}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                      notificationsEnabled ? 'bg-purple-600' : 'bg-gray-300'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-                <p className="text-[11px] text-gray-400 mt-2 ml-13 leading-relaxed">
-                  Currently in-app only. Triggers: quote status changes, new messages, vendor publish approvals.
-                </p>
+            )}
+            {loadingRole ? (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <div style={{ width: 24, height: 24, border: `2px solid ${C.crimsonDim}`, borderTopColor: C.crimson, borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
               </div>
+            ) : (
+              <div style={{ padding: '14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Active role badge */}
+                {profile?.active_role && (
+                  <p style={{ margin: '0 0 4px', fontSize: 11, color: C.muted }}>
+                    Currently active: <strong style={{ color: C.crimson }}>{profile.active_role === 'vendor' ? 'Vendor' : 'Couple'}</strong>
+                  </p>
+                )}
 
-              {/* Push Notifications Toggle */}
+                {(['couple', 'vendor'] as const).map(role => {
+                  const available = role === 'couple' ? profile?.has_couple : profile?.has_vendor;
+                  const isActive  = profile?.active_role === role;
+                  const saving    = savingRole === role;
+                  return (
+                    <button key={role} disabled={!available || saving}
+                      onClick={() => available && handleSwitch(role)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
+                        borderRadius: 14, border: `1.5px solid ${isActive ? C.crimson : available ? C.border : '#f0ede8'}`,
+                        background: isActive ? C.crimsonDim : available ? '#fff' : '#faf7f5',
+                        cursor: available ? 'pointer' : 'not-allowed', opacity: available ? 1 : 0.5,
+                        transition: 'all 0.15s',
+                      }}>
+                      <div style={{ width: 38, height: 38, borderRadius: 11, background: isActive ? C.crimsonDim : C.goldDim, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
+                        {role === 'couple' ? '💍' : '🏢'}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: isActive ? C.crimson : C.text }}>
+                          {role === 'couple' ? 'Couple mode' : 'Vendor mode'}
+                        </p>
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: C.muted }}>
+                          {role === 'couple' ? 'Plan your wedding & manage tasks' : 'Manage your business & services'}
+                        </p>
+                      </div>
+                      <div>
+                        {saving ? (
+                          <div style={{ width: 20, height: 20, border: `2px solid ${C.crimsonDim}`, borderTopColor: C.crimson, borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        ) : isActive ? (
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.crimson, background: C.crimsonDim, border: `1px solid ${C.crimsonGlow}`, borderRadius: 20, padding: '3px 10px' }}>Active</span>
+                        ) : available ? (
+                          <svg width="14" height="14" fill="none" stroke={C.muted} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        ) : (
+                          <span style={{ fontSize: 10, color: '#b0a0a8' }}>Not set up</span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </Section>
+
+          {/* ── Notifications ── */}
+          <Section title="Notifications" icon="🔔">
+            <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>}
+              label="In-App Notifications"
+              sub="Quote updates, messages, bookings"
+              right={
+                <Toggle on={notificationsEnabled} disabled={notifLoading} onChange={async () => {
+                  const next = !notificationsEnabled;
+                  setNotificationsEnabled(next);
+                  if (authUserId) {
+                    await supabase.from('user_preferences').upsert({ user_id: authUserId, in_app_notifications: next, updated_at: new Date().toISOString() });
+                  }
+                }} />
+              }
+            />
+            <div style={{ padding: '0 18px 4px', borderBottom: `1px solid ${C.border}` }}>
               <PushNotificationsToggle />
+            </div>
+            <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>}
+              label="Dark Mode"
+              sub="Easier on the eyes at night"
+              last
+              right={<Toggle on={darkModeEnabled} onChange={() => setDarkModeEnabled(!darkModeEnabled)} />}
+            />
+          </Section>
 
-              {/* Dark Mode Toggle */}
-              <div className="px-4 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">Dark Mode</p>
-                    <p className="text-xs text-gray-500">Easier on the eyes at night</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setDarkModeEnabled(!darkModeEnabled)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
-                    darkModeEnabled ? 'bg-purple-600' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                      darkModeEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Language Dropdown */}
-              <div className="px-4 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">Language</p>
-                    <p className="text-xs text-gray-500">Choose your preferred language</p>
-                  </div>
-                </div>
-                <select
-                  value={language}
-                  onChange={(e) => setLanguage(e.target.value)}
-                  className="px-3 py-1.5 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
+          {/* ── Preferences ── */}
+          <Section title="Preferences" icon="⚙️">
+            <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" /></svg>}
+              label="Language"
+              sub="App interface language"
+              right={
+                <select value={language} onChange={e => setLanguage(e.target.value)}
+                  style={{ padding: '6px 10px', borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.text, background: '#fdfaf8', outline: 'none', fontFamily: "'DM Sans', system-ui", cursor: 'pointer' }}>
                   <option value="English">English</option>
                   <option value="Zulu">Zulu</option>
                   <option value="Xhosa">Xhosa</option>
                   <option value="Afrikaans">Afrikaans</option>
                   <option value="Sotho">Sotho</option>
                 </select>
-              </div>
-
-              {/* Currency Selector */}
-              <div className="px-4 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-yellow-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3 1.343 3 3-1.343 3-3 3" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">Currency</p>
-                    <p className="text-xs text-gray-500">Select how prices are displayed in the app</p>
-                  </div>
-                </div>
-                <select
-                  value={currency}
-                  onChange={async (e) => {
-                    const next = e.target.value;
-                    setCurrency(next as any);
-                    try {
-                      if (authUserId) {
-                        await supabase.from('user_preferences').upsert({
-                          user_id: authUserId,
-                          currency: next,
-                          updated_at: new Date().toISOString(),
-                        });
-                      }
-                    } catch (err) {
-                      console.warn('Failed to save currency preference:', err);
-                    }
-                  }}
-                  className="px-3 py-1.5 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                >
+              }
+            />
+            <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3 1.343 3 3-1.343 3-3 3m0-12v1m0 16v1m7.071-14.071l-.707.707M6.343 17.657l-.707.707M20 12h-1M5 12H4M17.657 6.343l-.707.707M6.343 6.343l-.707.707" /></svg>}
+              label="Currency"
+              sub="How prices display across the app"
+              last
+              right={
+                <select value={currency} onChange={async e => {
+                  const next = e.target.value;
+                  setCurrency(next as any);
+                  if (authUserId) {
+                    await supabase.from('user_preferences').upsert({ user_id: authUserId, currency: next, updated_at: new Date().toISOString() });
+                  }
+                }}
+                  style={{ padding: '6px 10px', borderRadius: 10, border: `1.5px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.text, background: '#fdfaf8', outline: 'none', fontFamily: "'DM Sans', system-ui", cursor: 'pointer' }}>
                   <option value="ZAR">R (ZAR)</option>
                   <option value="USD">$ (USD)</option>
                   <option value="BWP">P (BWP)</option>
                 </select>
-              </div>
-            </div>
-          </div>
+              }
+            />
+          </Section>
 
-          {/* Support */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-bold text-gray-900">Support</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {supportItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={item.action}
-                  className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-gray-600">
-                      {item.icon}
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">{item.label}</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* ── Support ── */}
+          <Section title="Support" icon="💬">
+            {[
+              { label: 'Help / FAQ', sub: 'Guides and common questions', href: '/help', icon: <svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+              { label: 'Contact Support', sub: 'Email our support team', href: '/support/contact', icon: <svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> },
+              { label: 'Report a Problem', sub: 'Something not working?', href: '/support/report', icon: <svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg> },
+            ].map((item, i, arr) => (
+              <Row key={item.label} icon={item.icon} label={item.label} sub={item.sub} onClick={() => router.push(item.href)} last={i === arr.length - 1} />
+            ))}
+          </Section>
 
-          {/* Legal */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-bold text-gray-900">Legal</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {legalItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={item.action}
-                  className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-gray-600">
-                      {item.icon}
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">{item.label}</span>
-                  </div>
-                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* ── Legal ── */}
+          <Section title="Legal" icon="📜">
+            {[
+              { label: 'Terms of Service', href: '/legal/terms', icon: <svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
+              { label: 'Privacy Policy', href: '/legal/privacy', icon: <svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> },
+            ].map((item, i, arr) => (
+              <Row key={item.label} icon={item.icon} label={item.label} onClick={() => router.push(item.href)} last={i === arr.length - 1} />
+            ))}
+          </Section>
 
-          {/* Account */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-bold text-gray-900">Account</h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              <button
-                onClick={handleSignOut}
-                className="w-full px-4 py-3.5 flex items-center justify-between hover:bg-red-50 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  <span className="text-sm font-semibold text-red-600">Sign Out</span>
-                </div>
-              </button>
-            </div>
-          </div>
+          {/* ── Account ── */}
+          <Section title="Account" icon="👤">
+            <Row
+              last
+              icon={<svg width="17" height="17" fill="none" stroke={C.error} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>}
+              label="Sign Out"
+              danger
+              onClick={handleSignOut}
+            />
+          </Section>
 
-          {/* App Info */}
-          <div className="text-center py-4 space-y-1">
-            <p className="text-xs text-gray-500">uMshado App</p>
-            <p className="text-xs text-gray-400">Version 1.0.0</p>
-            <p className="text-xs text-gray-400">Made with ❤️ in South Africa</p>
+          {/* Footer */}
+          <div style={{ textAlign: 'center', padding: '12px 0 4px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.gold }} />
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: C.crimson, fontFamily: 'Georgia, serif', letterSpacing: 0.4 }}>uMshado</p>
+              <div style={{ width: 5, height: 5, borderRadius: '50%', background: C.gold }} />
+            </div>
+            <p style={{ margin: 0, fontSize: 10, color: C.muted }}>Version 1.0.0 · Made with ❤️ in South Africa</p>
           </div>
         </div>
       </div>
 
-      {/* ════════════ EDIT PROFILE MODAL ════════════ */}
+      {/* ════════════ EDIT PROFILE SHEET ════════════ */}
       {showEditProfile && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Profile</h3>
+        <>
+          <div onClick={() => { setShowEditProfile(false); setProfileSaveMsg(null); }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,13,18,0.55)', zIndex: 40, animation: 'fadeIn 0.2s ease' }} />
 
-            {profileSaveMsg && (
-              <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-semibold ${profileSaveMsg.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                {profileSaveMsg.text}
-              </div>
-            )}
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            background: C.card, borderRadius: '24px 24px 0 0', zIndex: 50,
+            animation: 'sheetUp 0.3s cubic-bezier(.32,.72,0,1)',
+            padding: '0 0 env(safe-area-inset-bottom)',
+            maxWidth: 560, margin: '0 auto',
+            maxHeight: '92svh', overflowY: 'auto',
+          }}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, background: C.crimsonDim, borderRadius: 2, margin: '14px auto 0' }} />
 
-            <div className="space-y-4">
-              {/* Your Name */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Your Name</label>
-                <input
-                  type="text"
-                  value={editYourName}
-                  onChange={e => setEditYourName(e.target.value)}
-                  placeholder="e.g., Mthabisi"
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900"
-                />
-              </div>
-
-              {/* Partner's name removed — UI uses single 'Your Names' value */}
-
-              {/* Wedding Date */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Wedding Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={editWeddingDate}
-                  onChange={e => { setEditWeddingDate(e.target.value); setProfileSaveMsg(null); }}
-                  min={todayStr}
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900"
-                />
-                <p className="text-xs text-gray-500 mt-1">Must be today or a future date</p>
+            <div style={{ padding: '20px 20px 28px' }}>
+              {/* Sheet header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.dark, fontFamily: 'Georgia, serif' }}>Edit Profile</h2>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted }}>Your wedding profile details</p>
+                </div>
+                <button onClick={() => { setShowEditProfile(false); setProfileSaveMsg(null); }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: '#faf8f5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="12" height="12" fill="none" stroke={C.muted} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
               </div>
 
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Wedding Location</label>
-                <input
-                  type="text"
-                  value={editLocation}
-                  onChange={e => setEditLocation(e.target.value)}
-                  placeholder="e.g., Johannesburg, Sandton"
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900"
-                />
+              {profileSaveMsg && (
+                <div style={{ marginBottom: 18, padding: '11px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: profileSaveMsg.type === 'success' ? C.successDim : C.errorDim, color: profileSaveMsg.type === 'success' ? C.success : C.error, border: `1.5px solid ${profileSaveMsg.type === 'success' ? 'rgba(30,124,74,0.25)' : 'rgba(192,50,42,0.2)'}` }}>
+                  {profileSaveMsg.type === 'success' ? '✓ ' : '⚠ '}{profileSaveMsg.text}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+                <Field label="Your Name">
+                  <input value={editYourName} onChange={e => setEditYourName(e.target.value)}
+                    placeholder="e.g., Mthabisi & Zanele"
+                    className="settings-input"
+                    style={inputStyle} />
+                </Field>
+
+                <Field label="Wedding Date" required>
+                  <input type="date" value={editWeddingDate}
+                    onChange={e => { setEditWeddingDate(e.target.value); setProfileSaveMsg(null); }}
+                    min={todayStr}
+                    className="settings-input"
+                    style={{ ...inputStyle, colorScheme: 'light' }} />
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: C.muted }}>Must be today or a future date</p>
+                </Field>
+
+                <Field label="Wedding Location">
+                  <input value={editLocation} onChange={e => setEditLocation(e.target.value)}
+                    placeholder="e.g., Johannesburg, Sandton"
+                    className="settings-input"
+                    style={inputStyle} />
+                </Field>
+
+                <Field label="Country">
+                  <input value={editCountry} onChange={e => setEditCountry(e.target.value)}
+                    placeholder="e.g., South Africa"
+                    className="settings-input"
+                    style={inputStyle} />
+                </Field>
               </div>
 
-              {/* Country */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Country</label>
-                <input
-                  type="text"
-                  value={editCountry}
-                  onChange={e => setEditCountry(e.target.value)}
-                  placeholder="e.g., South Africa"
-                  className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm text-gray-900"
-                />
+              <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+                <button onClick={() => { setShowEditProfile(false); setProfileSaveMsg(null); }}
+                  style={{ flex: 1, padding: '13px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#f4ede8', color: C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button onClick={saveProfile} disabled={profileSaving}
+                  style={{ flex: 2, padding: '13px', borderRadius: 14, border: 'none', background: profileSaving ? '#e5ddd8' : grad.primary, color: profileSaving ? C.muted : '#fff', fontSize: 13, fontWeight: 800, cursor: profileSaving ? 'default' : 'pointer', boxShadow: profileSaving ? 'none' : `0 4px 16px ${C.crimsonGlow}`, transition: 'all 0.15s' }}>
+                  {profileSaving ? 'Saving…' : 'Save Changes'}
+                </button>
               </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => { setShowEditProfile(false); setProfileSaveMsg(null); }}
-                className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveProfile}
-                disabled={profileSaving}
-                className={`flex-1 px-4 py-2.5 rounded-xl font-semibold transition-colors shadow-lg shadow-purple-200 ${profileSaving ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-purple-600 text-white hover:bg-purple-700'}`}
-              >
-                {profileSaving ? 'Saving...' : 'Save Changes'}
-              </button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
-      {/* Bottom Navigation */}
       <BottomNav />
     </div>
   );
 }
 
+
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={
+      <div style={{ minHeight: '100svh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      </div>
+    }>
       <SettingsContent />
     </Suspense>
   );

@@ -319,7 +319,8 @@ export default function VendorDashboard() {
               </button>
               {showMenu && (
                 <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 30, minWidth: 160, overflow: 'hidden' }}>
-                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>📤 Share Profile</button>
+                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>💳 Billing & Plans</Link>
+                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>📤 Share Profile</button>
                   {vendor?.is_published && (
                     <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: '1px solid #f0ebe0' }}>👁️ View Public Profile</Link>
                   )}
@@ -384,6 +385,20 @@ export default function VendorDashboard() {
 
           {/* ── Verification Request Card ── */}
           <VerificationRequestCard vendorVerified={vendor?.verified ?? false} />
+
+          {/* ── Upgrade Banner (if on free plan) ── */}
+          {(!vendor?.plan || vendor.plan === 'free') && (
+            <div style={{ background: 'linear-gradient(135deg,#9A2143,#731832)', borderRadius: 18, padding: '16px 18px', color: '#fff' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, fontFamily: 'Georgia,serif' }}>Unlock Premium Features</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>Get featured, verified & more visibility</p>
+                </div>
+                <div style={{ fontSize: 24 }}>✨</div>
+              </div>
+              <Link href="/vendor/billing" style={{ display: 'inline-block', marginTop: 8, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>View Plans →</Link>
+            </div>
+          )}
 
           {/* ── Performance stats with sparklines ── */}
           <div>
@@ -456,7 +471,38 @@ export default function VendorDashboard() {
                 <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: DARK }}>No activity yet</p>
                 <p style={{ margin: 0, fontSize: 11, color: '#9a7c58' }}>When couples view, save or contact you, it'll show here.</p>
               </div>
-            )}
+            )}  
+          </div>
+
+          {/* ── Your Account Section ── */}
+          <div>
+            <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Your Account</h2>
+            <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.06)', border: '1.5px solid rgba(0,0,0,0.05)' }}>
+              <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(154,33,67,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>💳</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>Billing & Plans</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a6050' }}>Manage your subscription</p>
+                </div>
+                <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+              <Link href="/vendor/billing#featured" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(184,151,62,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>⭐</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>Feature Your Listing</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a6050' }}>Boost visibility & stand out</p>
+                </div>
+                <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+              <Link href="/vendor/billing#verification" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(26,106,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>✓</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>Get Verified</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a6050' }}>Build trust with the blue badge</p>
+                </div>
+                <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
           </div>
 
         </div>

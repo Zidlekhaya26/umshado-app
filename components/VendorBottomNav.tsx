@@ -52,11 +52,11 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Marketplace',
-      href: '/marketplace',
+      name: 'Bookings',
+      href: '/vendor/bookings',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       ),
     },
@@ -78,11 +78,20 @@ export default function VendorBottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-purple-600 text-white text-[10px] font-bold px-1 leading-none">
+            <span className="absolute -top-1.5 -right-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-white text-[10px] font-bold px-1 leading-none" style={{ background: '#9A2143' }}>
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
         </div>
+      ),
+    },
+    {
+      name: 'Billing',
+      href: '/vendor/billing',
+      icon: (active: boolean) => (
+        <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+        </svg>
       ),
     },
     {
@@ -97,10 +106,13 @@ export default function VendorBottomNav() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/marketplace') return pathname.startsWith('/marketplace');
     if (href === '/messages') return pathname.startsWith('/messages');
+    if (href === '/vendor/billing') return pathname === '/vendor/billing';
+    if (href === '/vendor/bookings') {
+      return pathname === '/vendor/bookings' || pathname === '/vendor/availability';
+    }
     if (href === '/vendor/media') {
-      // Active for any vendor sub-page that isn't dashboard
+      // Active for any vendor sub-page that isn't dashboard/billing
       return pathname === '/vendor/media' || pathname === '/vendor/services' || pathname === '/vendor/packages' || pathname === '/vendor/review';
     }
     return pathname === href || pathname.startsWith(href + '/');
@@ -118,9 +130,10 @@ export default function VendorBottomNav() {
                 href={item.href}
                 className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors min-w-[56px] ${
                   active
-                    ? 'text-purple-600'
+                    ? ''
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
+                style={active ? { color: '#9A2143' } : {}}
               >
                 {item.icon(active)}
                 <span className={`text-[10px] mt-1 font-medium ${active ? 'font-semibold' : ''}`}>

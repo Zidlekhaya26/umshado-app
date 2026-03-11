@@ -6,6 +6,7 @@ import { trackVendorEvent } from '@/lib/analytics';
 import { formatWhatsappLink } from '@/lib/whatsapp';
 import RateVendorSheet from '@/components/RateVendorSheet';
 import { supabase } from '@/lib/supabaseClient';
+import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -90,7 +91,7 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 export default function VendorPublicClient({ vendorId, vendor, services, packages, catIcon }: Props) {
   const [isSaved, setIsSaved] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState<'about' | 'portfolio' | 'packages'>('about');
+  const [activeSection, setActiveSection] = useState<'about' | 'portfolio' | 'packages' | 'availability'>('about');
   const [showRating, setShowRating] = useState(false);
   const [isCouple, setIsCouple] = useState(false);
   const hasTracked = useRef(false);
@@ -239,7 +240,7 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
         {/* Sticky Tab Bar */}
         <div className="sticky top-0 z-10 bg-white border-b" style={{ borderColor: 'var(--border,#eadfd6)' }}>
           <div className="max-w-2xl mx-auto flex">
-            {(['about', 'portfolio', 'packages'] as const).map(tab => (
+            {(['about', 'portfolio', 'packages', 'availability'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveSection(tab)}
@@ -422,6 +423,13 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
                 </div>
               )}
             </>
+          )}
+
+          {/* Availability Tab */}
+          {activeSection === 'availability' && (
+            <section className="rounded-2xl overflow-hidden" style={{ background: '#fff', border: '1.5px solid var(--border,#eadfd6)' }}>
+              <AvailabilityCalendar vendorId={vendorId} />
+            </section>
           )}
         </div>
       </div>
