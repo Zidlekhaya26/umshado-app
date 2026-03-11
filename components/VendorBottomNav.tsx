@@ -52,6 +52,15 @@ export default function VendorBottomNav() {
       ),
     },
     {
+      name: 'Bookings',
+      href: '/vendor/bookings',
+      icon: (active: boolean) => (
+        <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
       name: 'Chats',
       href: '/messages',
       icon: (active: boolean) => (
@@ -99,6 +108,9 @@ export default function VendorBottomNav() {
   const isActive = (href: string) => {
     if (href === '/messages') return pathname.startsWith('/messages');
     if (href === '/vendor/billing') return pathname === '/vendor/billing';
+    if (href === '/vendor/bookings') {
+      return pathname === '/vendor/bookings' || pathname === '/vendor/availability';
+    }
     if (href === '/vendor/media') {
       // Active for any vendor sub-page that isn't dashboard/billing
       return pathname === '/vendor/media' || pathname === '/vendor/services' || pathname === '/vendor/packages' || pathname === '/vendor/review';
