@@ -259,7 +259,7 @@ export default function AdminBetaRequestsPage() {
     return (
       <PageShell maxWidth="max-w-2xl">
         <div className="flex items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </PageShell>
     );
@@ -275,13 +275,13 @@ export default function AdminBetaRequestsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-[var(--foreground)] mb-2">Not Authorized</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">Not Authorized</h2>
             <p className="text-sm text-gray-600 mb-6">
               Your account does not have admin access. This page is restricted to allowlisted emails.
             </p>
             <button
               onClick={() => router.push('/')}
-              className="px-6 py-2.5 rounded-full bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold text-sm hover:brightness-110 transition-colors"
+              className="px-6 py-2.5 rounded-full bg-primary text-primary-foreground font-semibold text-sm hover:brightness-110 transition-colors"
             >
               Go Home
             </button>
@@ -295,7 +295,7 @@ export default function AdminBetaRequestsPage() {
     <PageShell maxWidth="max-w-3xl">
       {/* Toast */}
       {toast && (
-        <div className="fixed top-4 right-4 z-50 bg-[var(--foreground)] text-white px-5 py-3 rounded-2xl shadow-lg text-sm font-medium animate-fade-in">
+        <div className="fixed top-4 right-4 z-50 bg-foreground text-white px-5 py-3 rounded-2xl shadow-lg text-sm font-medium animate-fade-in">
           {toast}
         </div>
       )}
@@ -342,7 +342,7 @@ export default function AdminBetaRequestsPage() {
             <p className="text-sm text-red-700">{error}</p>
             <button
               onClick={fetchRequests}
-              className="mt-3 text-sm font-semibold text-[var(--primary)] hover:underline"
+              className="mt-3 text-sm font-semibold text-primary hover:underline"
             >
               Retry
             </button>
@@ -379,7 +379,7 @@ export default function AdminBetaRequestsPage() {
       {/* Loading */}
       {loading && !schemaError && (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
@@ -446,7 +446,7 @@ function RequestCard({
         {/* Top row: name + status */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="min-w-0">
-            <h3 className="font-bold text-[var(--foreground)] truncate">{req.name || '(no name)'}</h3>
+            <h3 className="font-bold text-foreground truncate">{req.name || '(no name)'}</h3>
             <p className="text-sm text-gray-600 truncate">{req.email}</p>
           </div>
 
@@ -536,7 +536,7 @@ function RequestCard({
           {req.invite_token && req.status === 'approved' && (
             <button
               onClick={() => onCopyLink(req.invite_token!)}
-              className="px-4 py-2 text-xs font-semibold rounded-full bg-[var(--secondary)] text-[var(--primary)] hover:brightness-105 transition-colors active:scale-95"
+              className="px-4 py-2 text-xs font-semibold rounded-full bg-secondary text-primary hover:brightness-105 transition-colors active:scale-95"
             >
               📋 Copy Invite Link
             </button>
@@ -546,7 +546,7 @@ function RequestCard({
           {req.invite_token && req.status === 'approved' && (
             <button
               onClick={() => onCopyMessage(req)}
-              className="px-4 py-2 text-xs font-semibold rounded-full border border-[var(--border)] text-gray-700 bg-white hover:bg-gray-50 transition-colors active:scale-95"
+              className="px-4 py-2 text-xs font-semibold rounded-full border border-border text-gray-700 bg-white hover:bg-gray-50 transition-colors active:scale-95"
             >
               ✉️ Copy Invite Message
             </button>

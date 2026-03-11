@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
 import WeddingWebsiteSettings from '@/components/WeddingWebsiteSettings';
+import AmiChat from '@/components/AmiChat';
 import { supabase } from '@/lib/supabaseClient';
 
 /* ─── Types ──────────────────────────────────────────────── */
@@ -189,6 +190,7 @@ export default function CoupleDashboard() {
   const [showDateModal, setShowDateModal] = useState(false);
   const [editDate, setEditDate]           = useState('');
   const [savingDate, setSavingDate]       = useState(false);
+  const [showAmi, setShowAmi]             = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { format } = useCurrency();
 
@@ -588,6 +590,44 @@ export default function CoupleDashboard() {
             <PlanningTip daysLeft={daysLeft}/>
           </div>
 
+          {/* ── 9. Ami AI planner CTA ──────────────────────── */}
+          <button
+            className="dc"
+            onClick={() => setShowAmi(true)}
+            style={{
+              width: '100%', textAlign: 'left', cursor: 'pointer',
+              background: 'linear-gradient(135deg, #2a1a08, #4a2e10)',
+              borderRadius: 20, padding: '18px 20px',
+              border: 'none',
+              display: 'flex', alignItems: 'center', gap: 16,
+              overflow: 'hidden', position: 'relative',
+              boxShadow: '0 4px 20px rgba(184,151,62,0.18)',
+            }}
+          >
+            <div style={{ position: 'absolute', top: -30, right: -30, width: 130, height: 130, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
+            <div style={{
+              width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+              background: 'linear-gradient(135deg, rgba(184,151,62,0.25), rgba(184,151,62,0.08))',
+              border: '1.5px solid rgba(184,151,62,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 24,
+            }}>✨</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+                <p style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff', fontFamily: 'var(--font-display,Georgia,serif)' }}>Ask Ami</p>
+                <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(184,151,62,0.25)', color: G, letterSpacing: 0.8, textTransform: 'uppercase' }}>AI</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.5)', lineHeight: 1.45 }}>
+                Your personal wedding planner — timelines, budgets, vendor advice & more
+              </p>
+            </div>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="14" height="14" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </button>
+
         </div>
       </div>
 
@@ -618,6 +658,35 @@ export default function CoupleDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ════ AMI CHAT ══════════════════════════════════════ */}
+      <AmiChat
+        open={showAmi}
+        onClose={() => setShowAmi(false)}
+        daysLeft={daysLeft}
+        partnerName={coupleProfile?.partner_name ?? userName}
+      />
+
+      {/* Floating Ami button (always accessible) */}
+      {!showAmi && (
+        <button
+          onClick={() => setShowAmi(true)}
+          style={{
+            position: 'fixed', bottom: 90, right: 18, zIndex: 40,
+            width: 52, height: 52, borderRadius: '50%', border: 'none',
+            background: `linear-gradient(135deg, ${G}, ${G2})`,
+            color: '#fff', fontSize: 22, cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(184,151,62,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'transform 0.15s, box-shadow 0.15s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
+          title="Ask Ami — your AI wedding planner"
+        >
+          ✨
+        </button>
       )}
 
       <BottomNav/>
