@@ -309,10 +309,10 @@ export default function CoupleDashboard() {
         <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleAvatarUpload}/>
 
         {/* ════ HEADER ════════════════════════════════════════ */}
-        <div style={{ background:'linear-gradient(135deg,#b8973e 0%,#8a6010 100%)', padding:'22px 20px 0', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:'linear-gradient(135deg,#9A2143 0%,#b8315a 100%)', padding:'22px 20px 0', position:'relative', overflow:'hidden' }}>
           {/* Orbs */}
-          <div style={{ position:'absolute', top:-50, right:-50, width:180, height:180, borderRadius:'50%', background:'rgba(184,151,62,0.08)', pointerEvents:'none' }}/>
-          <div style={{ position:'absolute', bottom:30, left:-20, width:90, height:90, borderRadius:'50%', background:'rgba(184,151,62,0.05)', pointerEvents:'none' }}/>
+          <div style={{ position:'absolute', top:-50, right:-50, width:180, height:180, borderRadius:'50%', background:'rgba(154,33,67,0.12)', pointerEvents:'none' }}/>
+          <div style={{ position:'absolute', bottom:30, left:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.08)', pointerEvents:'none' }}/>
 
           {/* Name + settings */}
           <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20 }}>

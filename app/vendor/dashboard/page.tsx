@@ -88,7 +88,7 @@ function QuoteCard({ quote, status, format, onChat }: {
         {quote.couple_avatar ? (
           <img src={quote.couple_avatar} alt={quote.couple_name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
         ) : (
-          <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#b8973e,#8a6010)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+          <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#9A2143,#731832)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
             {(quote.couple_name || 'C').split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}
           </div>
         )}
@@ -290,8 +290,8 @@ export default function VendorDashboard() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#18100a 0%,#2e1d0e 60%,#3d2810 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(184,151,62,0.07)', pointerEvents: 'none' }} />
+        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)', pointerEvents: 'none' }} />
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             {/* Logo */}
@@ -301,7 +301,7 @@ export default function VendorDashboard() {
                 <img src={vendor.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             ) : (
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#b8973e,#8a6010)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
+              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'linear-gradient(135deg,#9A2143,#731832)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
                 {(vendor?.business_name || 'V')[0].toUpperCase()}
               </div>
             )}
