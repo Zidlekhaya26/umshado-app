@@ -1,68 +1,90 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+/* ─── Types ──────────────────────────────────────────────────────────── */
+interface MessageAttachment { id: string; file_path: string; file_name: string; mime_type: string | null; file_size: number | null; signed_url?: string; }
+interface Message { id: string; sender_id: string; message_text: string; created_at: string; attachments?: MessageAttachment[]; _optimistic?: boolean; }
+interface Conversation { id: string; couple_id: string; vendor_id: string; }
+interface Quote { id: string; quote_ref: string; status: 'requested'|'negotiating'|'accepted'|'declined'|'expired'; vendor_final_price: number|null; vendor_message: string|null; couple_id: string; vendor_id: string; created_at: string; add_ons?: any[]; package_name?: string|null; base_from_price?: number|null; guest_count?: number|null; hours?: number|null; }
 
-interface MessageAttachment {
-  id: string;
-  file_path: string;
-  file_name: string;
-  mime_type: string | null;
-  file_size: number | null;
-  signed_url?: string;
+/* ─── Helpers ────────────────────────────────────────────────────────── */
+const C = {
+  crimson: '#9A2143', crimsonDark: '#731832', crimsonDim: 'rgba(154,33,67,0.1)',
+  gold: '#BD983F', goldDim: 'rgba(189,152,63,0.1)',
+  dark: '#1a0d12', bg: '#faf8f5', card: '#fff',
+  border: '#f0ebe4', muted: '#7a5060', text: '#2d1a22',
+  myBubble: '#9A2143', myText: '#fff',
+  theirBubble: '#fff', theirText: '#2d1a22', theirBorder: '#eedbd3',
+};
+
+/* Avatar */
+function Avatar({ name, url, size = 44, showOnline = false }: { name: string; url: string|null; size?: number; showOnline?: boolean; }) {
+  const initials = name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${C.crimsonDim}` }}>
+        {url ? <img src={url} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ color: '#fff', fontWeight: 800, fontSize: size * 0.33, fontFamily: 'Georgia, serif' }}>{initials}</span>}
+      </div>
+      {showOnline && <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#22c55e', border: '2px solid #fff' }} />}
+    </div>
+  );
 }
 
-interface Message {
-  id: string;
-  sender_id: string;
-  message_text: string;
-  created_at: string;
-  attachments?: MessageAttachment[];
-  // local-only flag to avoid re-appending from realtime
-  _optimistic?: boolean;
+/* Typing Dots */
+function TypingDots() {
+  return (
+    <div style={{ display: 'flex', gap: 4, padding: '8px 10px' }}>
+      {[0, 1, 2].map(i => (
+        <div key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: C.muted, animation: `typingBounce 1.2s ease-in-out ${i * 0.15}s infinite` }} />
+      ))}
+    </div>
+  );
 }
 
-interface Conversation {
-  id: string;
-  couple_id: string;
-  vendor_id: string;
-}
+const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+const formatDate = (ts: string) => {
+  const d = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' });
+};
 
-interface Quote {
-  id: string;
-  quote_ref: string;
-  status: 'requested' | 'negotiating' | 'accepted' | 'declined' | 'expired';
-  vendor_final_price: number | null;
-  vendor_message: string | null;
-  couple_id: string;
-  vendor_id: string;
-  created_at: string;
-  add_ons?: any[];
-  package_name?: string | null;
-  base_from_price?: number | null;
-  guest_count?: number | null;
-  hours?: number | null;
-}
+const insertDateSeparators = (msgs: Message[]) => {
+  const result: any[] = [];
+  let lastDate = '';
+  msgs.forEach((msg, idx) => {
+    const d = formatDate(msg.created_at);
+    if (d !== lastDate) { result.push({ type: 'date-separator', date: d, key: `sep-${idx}` }); lastDate = d; }
+    result.push({ type: 'message', msg, key: msg.id });
+  });
+  return result;
+};
 
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
+const getQuoteStatusColor = (status: string) => {
+  switch (status) {
+    case 'requested': return '#3b82f6';
+    case 'negotiating': return C.gold;
+    case 'accepted': return '#22c55e';
+    case 'declined': return '#ef4444';
+    case 'expired': return '#9ca3af';
+    default: return C.muted;
+  }
+};
 
+/* ─── Main ───────────────────────────────────────────────────────────── */
 export default function ChatThread() {
   const router = useRouter();
   const params = useParams();
   const conversationId = params.threadId as string | undefined;
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -71,35 +93,23 @@ export default function ChatThread() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [pendingAttachments, setPendingAttachments] = useState<File[]>([]);
-  // Pagination / performance: track oldest loaded message and paging
   const [oldestTimestamp, setOldestTimestamp] = useState<string | null>(null);
   const [hasMoreOlder, setHasMoreOlder] = useState(false);
   const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const PAGE_SIZE = 50;
-
-  // Other party identity for the header
   const [otherPartyName, setOtherPartyName] = useState('');
   const [otherPartyLogo, setOtherPartyLogo] = useState<string | null>(null);
   const [otherPartyLocation, setOtherPartyLocation] = useState<string | null>(null);
-  const [logoOpen, setLogoOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
-
-  // Typing indicator and presence
   const [otherUserTyping, setOtherUserTyping] = useState(false);
   const [otherUserOnline, setOtherUserOnline] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Smart scroll
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
-  const userScrolledUpRef = useRef(false); // Ref to avoid stale closures in realtime subscription
+  const userScrolledUpRef = useRef(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
-
-  // Quote management
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isUpdatingQuote, setIsUpdatingQuote] = useState(false);
-  const [showFinalQuoteModal, setShowFinalQuoteModal] = useState(false);
+  const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [finalPrice, setFinalPrice] = useState('');
   const [finalMessage, setFinalMessage] = useState('');
   const { format } = useCurrency();
@@ -761,284 +771,263 @@ export default function ChatThread() {
   const formatFileSize = (b: number | null) => { if (!b) return ''; if (b < 1024) return `${b} B`; if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`; return `${(b / (1024 * 1024)).toFixed(1)} MB`; };
   const formatTimestamp = (ts: string) => new Date(ts).toLocaleString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  const userIsVendor = conversation && currentUserId && conversation.vendor_id === currentUserId;
-  const userIsCouple = conversation && currentUserId && conversation.couple_id === currentUserId;
+  const userIsVendor = conversation && currentUserId && (async () => {
+    try {
+      const { data: myVendor } = await supabase.from('vendors').select('id').eq('user_id', currentUserId).maybeSingle();
+      return myVendor?.id === conversation.vendor_id;
+    } catch { return false; }
+  })();
+
+  const items = insertDateSeparators(messages);
 
   /* ── Render ─────────────────────────────────────────────────── */
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
-        {/* Header – shows who you're chatting with */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/messages')} className="text-gray-600 hover:text-gray-900 p-1">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            </button>
+    <div style={{ minHeight: '100svh', height: '100svh', display: 'flex', flexDirection: 'column', background: C.bg, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      <style>{`
+        @keyframes typingBounce { 0%, 60%,100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+        @keyframes bubbleIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+      `}</style>
 
-            {/* Avatar */}
-            <div className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center relative">
-              {otherPartyLogo ? (
-                <button type="button" onClick={() => { setLogoSrc(otherPartyLogo ?? null); setLogoAlt(otherPartyName || 'Logo'); setLogoOpen(true); }} className="w-full h-full flex items-center justify-center" aria-label="View logo">
-                  <img src={otherPartyLogo} alt="" className="w-full h-full object-contain p-2" />
-                </button>
-              ) : (
-                <span className="text-white font-bold text-base">
-                  {otherPartyName.charAt(0).toUpperCase() || '?'}
-                </span>
-              )}
-              {/* Online indicator */}
-              {otherUserOnline && (
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-              )}
-            </div>
-            <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
+      {/* ── Header ── */}
+      <div style={{ background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(154,33,67,0.1)' }}>
+        <button onClick={() => router.push('/messages')} style={{ padding: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 10, border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        </button>
 
-            <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold text-gray-900 truncate">{otherPartyName || 'Loading…'}</h1>
-              <p className="text-xs text-gray-500">
-                {otherUserTyping ? 'typing...' : otherUserOnline ? 'online' : otherPartyLocation ? otherPartyLocation : ''}
-              </p>
+        <Avatar name={otherPartyName} url={otherPartyLogo} size={40} showOnline={otherUserOnline} />
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h1 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{otherPartyName || 'Loading…'}</h1>
+          {otherUserTyping ? (
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.7)', animation: 'slideDown 0.2s ease' }}>typing…</p>
+          ) : otherUserOnline ? (
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>online</p>
+          ) : otherPartyLocation ? (
+            <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{otherPartyLocation}</p>
+          ) : null}
+        </div>
+      </div>
+
+      {/* ── Messages ── */}
+      <div ref={messagesContainerRef} onScroll={handleScroll} style={{ flex: 1, overflowY: 'auto', padding: '16px 14px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {messages.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '48px 20px', color: C.muted }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: C.crimsonDim, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+              <svg width="24" height="24" fill="none" stroke={C.crimson} strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
             </div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>No messages yet. Say hello! 👋</p>
           </div>
-        </div>
-
-        {/* Messages */}
-        <div 
-          ref={messagesContainerRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-gray-50 relative"
-        >
-          {messages.length === 0 && (
-            <div className="text-center py-12 text-sm text-gray-500">
-              <p>No messages yet. Say hello! 👋</p>
-            </div>
-          )}
-
-          {hasMoreOlder && (
-            <div className="text-center w-full">
-              <button onClick={async () => {
-                if (isLoadingOlder || !oldestTimestamp || !conversationId) return;
-                setIsLoadingOlder(true);
-                try {
-                  const { data: raw } = await supabase
-                    .from('messages')
-                    .select('*')
-                    .eq('conversation_id', conversationId)
-                    .lt('created_at', oldestTimestamp)
-                    .order('created_at', { ascending: false })
-                    .limit(PAGE_SIZE);
-
-                  const page = raw || [];
-                  const withAttachments = await Promise.all(
-                    page.reverse().map(async (msg) => {
-                      const { data: atts } = await supabase
-                        .from('message_attachments')
-                        .select('*')
-                        .eq('message_id', msg.id);
-                      const signed = await Promise.all(
-                        (atts || []).map(async (att) => {
-                          try { const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600); return { ...att, signed_url: s?.signedUrl }; } catch { return att; }
-                        })
-                      );
-                      return { ...msg, attachments: signed } as Message;
-                    })
-                  );
-
-                  // prepend older messages
-                  setMessages(prev => [...withAttachments, ...prev]);
-                  const newOldest = page.length > 0 ? page[page.length - 1].created_at : oldestTimestamp;
-                  setOldestTimestamp(newOldest);
-                  setHasMoreOlder(page.length === PAGE_SIZE);
-                } catch (e) {
-                  console.error('Failed to load older messages', e);
-                } finally {
-                  setIsLoadingOlder(false);
-                }
-              }} className="text-sm px-3 py-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-50">{isLoadingOlder ? 'Loading…' : 'Load older messages'}</button>
-            </div>
-          )}
-
-          {messages.map((msg) => {
-            const isMine = msg.sender_id === currentUserId;
-            return (
-              <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm ${isMine ? 'bg-purple-600 text-white' : 'bg-white text-gray-900 border border-gray-200'}`}>
-                  {/* Show sender display name for incoming messages when vendor is viewing */}
-                  {!isMine && userIsVendor && otherPartyName && (
-                    <div className="text-xs font-semibold text-gray-700 mb-1">{otherPartyName}</div>
-                  )}
-                  <div className="whitespace-pre-wrap">{msg.message_text}</div>
-
-                  {/* Attachments */}
-                  {msg.attachments && msg.attachments.length > 0 && (
-                    <div className="mt-2 space-y-1.5">
-                      {msg.attachments.map((att) => (
-                        <button key={att.id} onClick={() => handleDownloadAttachment(att)} className={`w-full rounded-lg border px-3 py-2 text-left text-xs ${isMine ? 'border-white/20 bg-white/10' : 'border-gray-200 bg-gray-50'}`}>
-                          <div className="font-semibold">{att.file_name}</div>
-                          <div className="opacity-80">{att.mime_type || 'File'} · {formatFileSize(att.file_size)}</div>
-                          {isImage(att.mime_type) && att.signed_url && (
-                            <img src={att.signed_url} alt={att.file_name} className="mt-2 max-h-48 w-auto rounded-lg" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className={`mt-1 text-[10px] ${isMine ? 'opacity-70' : 'text-gray-400'}`}>{formatTimestamp(msg.created_at)}</div>
-                </div>
-              </div>
-            );
-          })}
-          <div ref={messagesEndRef} />
-          
-          {/* New messages badge */}
-          {userScrolledUp && newMessagesCount > 0 && (
-            <div className="sticky bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex justify-center">
-              <button
-                onClick={() => {
-                  messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                  setUserScrolledUp(false);
-                  userScrolledUpRef.current = false;
-                  setNewMessagesCount(0);
-                }}
-                className="bg-purple-600 text-white px-4 py-2 rounded-full shadow-lg text-sm font-semibold hover:bg-purple-700 transition-colors"
-              >
-                {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''} ↓
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Upload Error */}
-        {uploadError && (
-          <div className="px-4 py-2 bg-red-50 border-t border-red-200 text-xs text-red-700">{uploadError}</div>
         )}
 
-        {/* Quote Card */}
-        {quote && (
-          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-center justify-between">
+        {hasMoreOlder && (
+          <div style={{ textAlign: 'center', margin: '8px 0' }}>
+            <button onClick={async () => {
+              if (isLoadingOlder || !oldestTimestamp || !conversationId) return;
+              setIsLoadingOlder(true);
+              try {
+                const { data: raw } = await supabase.from('messages').select('*').eq('conversation_id', conversationId).lt('created_at', oldestTimestamp).order('created_at', { ascending: false }).limit(PAGE_SIZE);
+                const page = raw || [];
+                const withAttachments = await Promise.all(page.reverse().map(async (msg) => {
+                  const { data: atts } = await supabase.from('message_attachments').select('*').eq('message_id', msg.id);
+                  const signed = await Promise.all((atts || []).map(async (att) => {
+                    try { const { data: s } = await supabase.storage.from('umshado-files').createSignedUrl(att.file_path, 3600); return { ...att, signed_url: s?.signedUrl }; } catch { return att; }
+                  }));
+                  return { ...msg, attachments: signed } as Message;
+                }));
+                setMessages(prev => [...withAttachments, ...prev]);
+                const newOldest = page.length > 0 ? page[page.length - 1].created_at : oldestTimestamp;
+                setOldestTimestamp(newOldest); setHasMoreOlder(page.length === PAGE_SIZE);
+              } catch (e) { console.error('Failed to load older messages', e); } finally { setIsLoadingOlder(false); }
+            }} style={{ padding: '8px 16px', borderRadius: 12, background: C.card, border: `1.5px solid ${C.border}`, color: C.text, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+              {isLoadingOlder ? 'Loading…' : 'Load older messages'}
+            </button>
+          </div>
+        )}
+
+        {items.map((item, idx) => {
+          if (item.type === 'date-separator') {
+            return (
+              <div key={item.key} style={{ textAlign: 'center', margin: '12px 0 8px', fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.5, textTransform: 'uppercase' }}>{item.date}</div>
+            );
+          }
+
+          const msg = item.msg;
+          const isMine = msg.sender_id === currentUserId;
+          const bubbleBg = isMine ? C.myBubble : C.theirBubble;
+          const bubbleText = isMine ? C.myText : C.theirText;
+          const bubbleBorder = isMine ? 'none' : `1px solid ${C.theirBorder}`;
+          const bubbleShadow = isMine ? '0 3px 12px rgba(154,33,67,0.15)' : '0 2px 8px rgba(0,0,0,0.06)';
+          const borderRadius = isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px';
+
+          return (
+            <div key={item.key} style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', animation: `bubbleIn 0.25s ease ${Math.min(idx * 0.02, 0.3)}s both` }}>
+              <div style={{ maxWidth: '75%', background: bubbleBg, border: bubbleBorder, color: bubbleText, borderRadius, padding: '10px 14px', boxShadow: bubbleShadow, fontSize: 14, lineHeight: 1.45 }}>
+                <div style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word'}}>
+                  {msg.message_text}
+                </div>
+                {msg.attachments && msg.attachments.length > 0 && (
+                  <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {msg.attachments.map((att) => (
+                      <button key={att.id} onClick={() => handleDownloadAttachment(att)} style={{ width: '100%', borderRadius: 10, border: isMine ? '1px solid rgba(255,255,255,0.2)' : `1px solid ${C.border}`, background: isMine ? 'rgba(255,255,255,0.1)' : C.bg, padding: '8px 10px', textAlign: 'left', fontSize: 11, cursor: 'pointer', color: bubbleText }}>
+                        <div style={{ fontWeight: 700 }}>{att.file_name}</div>
+                        <div style={{ opacity: 0.75, marginTop: 2 }}>{att.mime_type || 'File'} · {formatFileSize(att.file_size)}</div>
+                        {isImage(att.mime_type) && att.signed_url && (
+                          <img src={att.signed_url} alt={att.file_name} style={{ marginTop: 6, maxHeight: 180, width: 'auto', borderRadius: 8 }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div style={{ marginTop: 4, fontSize: 9, opacity: 0.6, textAlign: isMine ? 'right' : 'left' }}>
+                  {formatTime(msg.created_at)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {otherUserTyping && (
+          <div style={{ display: 'flex', justifyContent: 'flex-start', animation: 'bubbleIn 0.2s ease' }}>
+            <div style={{ background: C.theirBubble, border: `1px solid ${C.theirBorder}`, borderRadius: '18px 18px 18px 4px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <TypingDots />
+            </div>
+          </div>
+        )}
+
+        <div ref={messagesEndRef} />
+
+        {userScrolledUp && newMessagesCount > 0 && (
+          <div style={{ position: 'sticky', bottom: 12, display: 'flex', justifyContent: 'center', pointerEvents: 'none', animation: 'slideDown 0.2s ease' }}>
+            <button onClick={() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); setUserScrolledUp(false); userScrolledUpRef.current = false; setNewMessagesCount(0); }} style={{ padding: '8px 16px', borderRadius: 20, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(154,33,67,0.3)', pointerEvents: 'all' }}>
+              {newMessagesCount} new message{newMessagesCount > 1 ? 's' : ''} ↓
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ── Upload Error ── */}
+      {uploadError && (
+        <div style={{ padding: '10px 16px', background: '#fef2f2', borderTop: '2px solid #ef4444', fontSize: 11, color: '#dc2626', fontWeight: 600 }}>{uploadError}</div>
+      )}
+
+      {/* ── Quote Card ── */}
+      {quote && (
+        <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, background: C.bg }}>
+          <div style={{ background: C.card, borderRadius: 16, border: `1.5px solid ${C.border}`, overflow: 'hidden', boxShadow: '0 2px 10px rgba(26,13,18,0.04)' }}>
+            <div style={{ height: 4, background: getQuoteStatusColor(quote.status) }} />
+            <div style={{ padding: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
                 <div>
-                  <div className="text-xs font-semibold text-gray-500">Quote #{quote.quote_ref}</div>
-                  <div className="text-sm font-bold text-gray-900">Status: {quote.status === 'negotiating' ? 'Sent' : quote.status}</div>
+                  <p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase' }}>Quote #{quote.quote_ref}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, fontWeight: 600, color: C.text }}>
+                    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: getQuoteStatusColor(quote.status) + '20', color: getQuoteStatusColor(quote.status), fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }}>
+                      {quote.status === 'negotiating' ? 'Sent' : quote.status}
+                    </span>
+                  </p>
                 </div>
                 {quote.vendor_final_price && (
-                  <div className="text-lg font-bold text-purple-700">{format(quote.vendor_final_price)}</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.crimson, fontFamily: 'Georgia, serif' }}>{format(quote.vendor_final_price)}</div>
                 )}
               </div>
               {quote.vendor_message && (
-                <div className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{quote.vendor_message}</div>
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: C.muted, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{quote.vendor_message}</p>
               )}
-              {/* Add-ons */}
               {Array.isArray((quote as any)?.add_ons) && (quote as any).add_ons.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-xs font-semibold text-gray-600 mb-1">Add-ons</p>
-                  <div className="flex flex-wrap gap-1.5">
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ margin: '0 0 6px', fontSize: 10, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.5 }}>Add-ons</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {(quote as any).add_ons.map((a: any, idx: number) => (
-                      <span
-                        key={`${a?.name ?? 'addon'}-${idx}`}
-                        className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200"
-                      >
+                      <span key={`${a?.name ?? 'addon'}-${idx}`} style={{ padding: '4px 10px', borderRadius: 10, background: C.crimsonDim, color: C.crimson, fontSize: 10, fontWeight: 600 }}>
                         {a?.name ?? 'Add-on'}{typeof a?.price === 'number' ? ` • ${format(a.price)}` : ''}
                       </span>
                     ))}
                   </div>
                 </div>
               )}
-              {Array.isArray((quote as any)?.add_ons) && (quote as any).add_ons.length === 0 && (
-                <p className="text-xs text-gray-400 mt-2">No add-ons selected</p>
-              )}
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {userIsVendor && (
-                  <button onClick={() => setShowFinalQuoteModal(true)} disabled={isUpdatingQuote} className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-50">
+                  <button onClick={() => setShowBottomSheet(true)} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(154,33,67,0.2)', opacity: isUpdatingQuote ? 0.5 : 1 }}>
                     {quote.vendor_final_price ? 'Update Final Quote' : 'Send Final Quote'}
                   </button>
                 )}
-                {userIsCouple && quote.status === 'negotiating' && (
+                {conversation && currentUserId && conversation.couple_id === currentUserId && quote.status === 'negotiating' && (
                   <>
-                    <button onClick={() => handleCoupleDecision('accepted')} disabled={isUpdatingQuote} className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:opacity-50">Accept</button>
-                    <button onClick={() => handleCoupleDecision('declined')} disabled={isUpdatingQuote} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50">Decline</button>
+                    <button onClick={() => handleCoupleDecision('accepted')} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#22c55e', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Accept</button>
+                    <button onClick={() => handleCoupleDecision('declined')} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Decline</button>
                   </>
                 )}
               </div>
             </div>
           </div>
-        )}
-
-        {/* Input Bar */}
-        {pendingAttachments.length > 0 && (
-          <div className="px-4 pt-3 pb-2 bg-white border-t border-gray-200">
-            <div className="space-y-2">
-              {pendingAttachments.map((file, idx) => (
-                <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                    <div className="text-sm text-gray-700 truncate">{file.name}</div>
-                  </div>
-                  <button onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))} className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors" aria-label="Remove attachment">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="border-t border-gray-200 bg-white px-4 py-3 flex items-end gap-2">
-          <input type="file" multiple ref={fileInputRef} className="hidden" onChange={handleFileSelect} />
-          <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="p-2.5 rounded-xl border-2 border-gray-300 text-gray-600 hover:bg-gray-50 flex-shrink-0">
-            {isUploading ? (
-              <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-            )}
-          </button>
-          <textarea
-            value={newMessage}
-            onChange={(e) => {
-              setNewMessage(e.target.value);
-              broadcastTyping();
-            }}
-            onKeyDown={handleKeyPress}
-            className="flex-1 resize-none rounded-xl border-2 border-gray-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-            rows={1}
-            placeholder="Type a message…"
-          />
-          <button onClick={handleSend} disabled={isSending || (pendingAttachments.length === 0 && !newMessage.trim())} className={`p-2.5 rounded-xl flex-shrink-0 transition-all ${ (pendingAttachments.length > 0 || newMessage.trim()) ? 'bg-purple-600 text-white hover:bg-purple-700' : 'bg-gray-200 text-gray-400'}`}>
-            {isSending ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-            )}
-          </button>
         </div>
+      )}
+
+      {/* ── Pending Attachments ── */}
+      {pendingAttachments.length > 0 && (
+        <div style={{ padding: '12px 14px', borderTop: `1px solid ${C.border}`, background: C.card }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {pendingAttachments.map((file, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: C.bg, border: `1px solid ${C.border}`, borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                  <svg width="16" height="16" fill="none" stroke={C.muted} strokeWidth={2} viewBox="0 0 24 24" style={{ flexShrink: 0 }}><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                  <span style={{ fontSize: 12, color: C.text, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                </div>
+                <button onClick={() => setPendingAttachments(prev => prev.filter((_, i) => i !== idx))} style={{ marginLeft: 8, padding: 4, background: '#fef2f2', border: 'none', borderRadius: 8, color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Input Bar ── */}
+      <div style={{ borderTop: `1px solid ${C.border}`, background: C.card, padding: '12px 14px', display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+        <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileSelect} />
+        <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} style={{ padding: 10, borderRadius: '50%', background: C.bg, border: `1.5px solid ${C.border}`, color: C.muted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isUploading ? 0.5 : 1 }}>
+          {isUploading ? (
+            <div style={{ width: 18, height: 18, border: `2px solid ${C.muted}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+          ) : (
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+          )}
+        </button>
+        <textarea value={newMessage} onChange={(e) => { setNewMessage(e.target.value); broadcastTyping(); }} onKeyDown={handleKeyPress} style={{ flex: 1, resize: 'none', borderRadius: 22, border: `1.5px solid ${C.border}`, background: C.bg, padding: '10px 16px', fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }} rows={1} placeholder="Type a message…" onFocus={(e) => e.target.style.borderColor = C.crimson} onBlur={(e) => e.target.style.borderColor = C.border} />
+        <button onClick={handleSend} disabled={isSending || (pendingAttachments.length === 0 && !newMessage.trim())} style={{ padding: 10, borderRadius: '50%', background: (pendingAttachments.length > 0 || newMessage.trim()) ? `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})` : C.border, color: (pendingAttachments.length > 0 || newMessage.trim()) ? '#fff' : C.muted, border: 'none', cursor: (pendingAttachments.length > 0 || newMessage.trim()) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: (pendingAttachments.length > 0 || newMessage.trim()) ? '0 3px 12px rgba(154,33,67,0.25)' : 'none', opacity: isSending ? 0.5 : 1 }}>
+          {isSending ? (
+            <div style={{ width: 18, height: 18, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
+          ) : (
+            <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+          )}
+        </button>
       </div>
 
-      {/* Final Quote Modal */}
-      {showFinalQuoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 rounded-2xl bg-white p-5 shadow-xl">
-            <h2 className="text-lg font-bold text-gray-900">Send Final Quote</h2>
-            <p className="mt-1 text-xs text-gray-600">Set your final price and optional message.</p>
-            <div className="mt-4 space-y-3">
+      {/* ── Bottom Sheet: Final Quote ── */}
+      {showBottomSheet && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 100 }} onClick={() => setShowBottomSheet(false)} />
+          <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 101, background: C.card, borderRadius: '24px 24px 0 0', padding: '20px 20px 24px', boxShadow: '0 -4px 24px rgba(0,0,0,0.15)', animation: 'slideDown 0.2s ease', maxWidth: 560, margin: '0 auto' }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: C.border, margin: '0 auto 16px' }} />
+            <h2 style={{ margin: '0 0 4px', fontSize: 18, fontWeight: 800, color: C.dark, fontFamily: 'Georgia, serif' }}>Send Final Quote</h2>
+            <p style={{ margin: '0 0 16px', fontSize: 11, color: C.muted }}>Set your final price and optional message.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-700">Final Price (R)</label>
-                <input type="number" min={1} value={finalPrice} onChange={(e) => setFinalPrice(e.target.value)} className="w-full rounded-lg border-2 border-gray-300 px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500" placeholder="e.g. 25000" />
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: C.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Final Price (R)</label>
+                <input type="number" min={1} value={finalPrice} onChange={(e) => setFinalPrice(e.target.value)} style={{ width: '100%', borderRadius: 12, border: `1.5px solid ${C.border}`, background: C.bg, padding: '12px 14px', fontSize: 14, fontWeight: 600, outline: 'none', boxSizing: 'border-box' }} placeholder="e.g. 25000" onFocus={(e) => e.target.style.borderColor = C.crimson} onBlur={(e) => e.target.style.borderColor = C.border} />
               </div>
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-700">Message (optional)</label>
-                <textarea rows={3} value={finalMessage} onChange={(e) => setFinalMessage(e.target.value)} className="w-full resize-none rounded-lg border-2 border-gray-300 px-3 py-2 focus:border-purple-500 focus:ring-2 focus:ring-purple-500" placeholder="Add notes about what's included…" />
+                <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: C.text, textTransform: 'uppercase', letterSpacing: 0.5 }}>Message (optional)</label>
+                <textarea rows={3} value={finalMessage} onChange={(e) => setFinalMessage(e.target.value)} style={{ width: '100%', resize: 'none', borderRadius: 12, border: `1.5px solid ${C.border}`, background: C.bg, padding: '12px 14px', fontSize: 13, lineHeight: 1.5, fontFamily: "'DM Sans', sans-serif", outline: 'none', boxSizing: 'border-box' }} placeholder="Add notes about what's included…" onFocus={(e) => e.target.style.borderColor = C.crimson} onBlur={(e) => e.target.style.borderColor = C.border} />
               </div>
             </div>
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => setShowFinalQuoteModal(false)} disabled={isUpdatingQuote} className="flex-1 rounded-lg border-2 border-gray-300 px-3 py-2 font-semibold text-gray-700">Cancel</button>
-              <button onClick={handleSendFinalQuote} disabled={isUpdatingQuote} className="flex-1 rounded-lg bg-purple-600 px-3 py-2 font-semibold text-white hover:bg-purple-700 disabled:opacity-50">
+            <div style={{ marginTop: 16, display: 'flex', gap: 10 }}>
+              <button onClick={() => setShowBottomSheet(false)} disabled={isUpdatingQuote} style={{ flex: 1, padding: '12px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 14, fontWeight: 700, cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Cancel</button>
+              <button onClick={handleSendFinalQuote} disabled={isUpdatingQuote} style={{ flex: 1, padding: '12px', borderRadius: 14, border: 'none', background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(154,33,67,0.25)', opacity: isUpdatingQuote ? 0.5 : 1 }}>
                 {isUpdatingQuote ? 'Sending…' : 'Send'}
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
