@@ -178,11 +178,17 @@ function SwitchRoleContent() {
     setSwitching(targetRole);
     setError(null);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { router.push('/auth/sign-in'); return; }
+
       // Use server-side API route so the update runs with service-role
       // and is never blocked by RLS policies on the profiles table.
       const res = await fetch('/api/role/switch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ role: targetRole }),
       });
       if (!res.ok) {
