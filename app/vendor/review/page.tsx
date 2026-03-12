@@ -172,7 +172,7 @@ export default function VendorReview(){
           <span style={{fontSize:20,flexShrink:0}}>{vendor?.is_published?'✅':isComplete?'🚀':'📋'}</span>
           <div>
             <p style={{margin:'0 0 2px',fontSize:14,fontWeight:800,color:vendor?.is_published?'#1e7a4e':isComplete?'#1e7a4e':GD2}}>
-              {vendor?.is_published?'Profile is live! ':'':''}{isComplete&&!vendor?.is_published?'Ready to publish!':''}{!isComplete?'Complete these sections:':''}
+              {vendor?.is_published?'Profile is live!':isComplete?'Ready to publish!':'Complete these sections:'}
             </p>
             <p style={{margin:0,fontSize:12.5,color:MUT,lineHeight:1.5}}>
               {vendor?.is_published?'Couples can find you on the uMshado marketplace.':isComplete?'Your profile looks great. Hit publish to go live.':'Complete all sections below to publish your profile.'}
