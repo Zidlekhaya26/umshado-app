@@ -69,11 +69,11 @@ export async function upsertCouple(userId: string, data: {
       return { success: false, error: upsertErr.message };
     }
 
-    // Ensure profile role is 'couple'
+    // Ensure profile flags reflect couple status. Use upsert so it works even
+    // if the profile row doesn't exist yet (update silently no-ops on missing rows).
     const { error: profileErr } = await supabase
       .from('profiles')
-      .update({ role: 'couple', has_couple: true, active_role: 'couple' })
-      .eq('id', userId);
+      .upsert({ id: userId, has_couple: true, active_role: 'couple' }, { onConflict: 'id' });
 
     if (profileErr) console.warn('upsertCouple - profile role update warning:', profileErr.message);
 

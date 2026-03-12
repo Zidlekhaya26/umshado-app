@@ -50,14 +50,19 @@ export async function getPostAuthRedirect(
         .maybeSingle();
 
       if (vendorRow && vendorRow.id) {
-        activeRole = 'vendor';
-        // Ensure profile flags reflect vendor status so middleware and other
-        // logic don't mis-route this user in future.
-        try {
-          await supabase.from('profiles').update({ has_vendor: true, active_role: 'vendor' }).eq('id', user.id);
-        } catch (e) {
-          // non-fatal
+        // Backfill has_vendor flag for legacy accounts — but do NOT force active_role.
+        // The user may have manually switched to couple view via /switch-role; we must
+        // respect that choice. Only write the flag if it isn't already set.
+        if (!profile.has_vendor) {
+          try {
+            await supabase.from('profiles').update({ has_vendor: true }).eq('id', user.id);
+            profile.has_vendor = true;
+          } catch (e) {
+            // non-fatal
+          }
         }
+        // Do not set activeRole here — let the fallback logic below read
+        // profile.active_role (the user's last explicit choice).
       }
     } catch (err) {
       // ignore and continue to legacy checks below
