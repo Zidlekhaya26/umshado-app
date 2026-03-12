@@ -290,8 +290,11 @@ export default function VendorDashboard() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)', pointerEvents: 'none' }} />
+        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '20px 20px 24px', position: 'relative' }}>
+          {/* Decorative circles clipped separately so the dropdown menu isn't cut off */}
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)' }} />
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             {/* Logo */}
@@ -318,7 +321,7 @@ export default function VendorDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={2}><circle cx="12" cy="5" r="1.5" fill="rgba(255,255,255,0.7)" /><circle cx="12" cy="12" r="1.5" fill="rgba(255,255,255,0.7)" /><circle cx="12" cy="19" r="1.5" fill="rgba(255,255,255,0.7)" /></svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 30, minWidth: 160, overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 180, overflow: 'hidden' }}>
                   <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>💳 Billing & Plans</Link>
                   <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>📤 Share Profile</button>
                   {vendor?.is_published && (
