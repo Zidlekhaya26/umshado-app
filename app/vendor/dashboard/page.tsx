@@ -340,15 +340,15 @@ export default function VendorDashboard() {
               </button>
               {showMenu && (
                 <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 180, overflow: 'hidden' }}>
-                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>💳 Billing & Plans</Link>
-                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>📤 Share Profile</button>
+                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>Billing & Plans</Link>
+                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Share Profile</button>
                   {vendor?.is_published && (
-                    <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: '1px solid #f0ebe0' }}>👁️ View Public Profile</Link>
+                    <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: '1px solid #f0ebe0' }}>View Public Profile</Link>
                   )}
                   <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }}
-                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>🚪 Log out</button>
+                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Log out</button>
                   <button onClick={handleDeleteAccount}
-                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>🗑️ Delete Account</button>
+                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Delete Account</button>
                 </div>
               )}
             </div>
