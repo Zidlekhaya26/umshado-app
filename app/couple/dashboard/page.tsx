@@ -293,7 +293,7 @@ export default function CoupleDashboard() {
     { icon:'🏪', label:'Vendors',  href:'/marketplace' },
     { icon:'💬', label:'Messages', href:'/messages' },
     { icon:'📅', label:'Bookings', href:'/couple/bookings' },
-    { icon:'👥', label:'Guests',   href:'/couple/planner?tab=guests' },
+    { icon:'🎵', label:'Playlist', href:'/couple/playlist' },
   ];
 
   return (
@@ -565,6 +565,17 @@ export default function CoupleDashboard() {
               <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>Upcoming vendors · countdowns · reviews</p>
             </div>
             <Link href="/couple/bookings" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
+          </div>
+
+          {/* ── DJ Playlist CTA ─────────────────────────────── */}
+          <div className="dc" style={{ background:'linear-gradient(160deg,#0f1a2e 0%,#1a2a4d 55%,#2a3d6b 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:-30, right:-30, width:110, height:110, borderRadius:'50%', background:'rgba(189,152,63,0.12)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.18)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🎵</div>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>DJ Playlist</p>
+              <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.65)' }}>Build your setlist · guest requests · share with DJ</p>
+            </div>
+            <Link href="/couple/playlist" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.14)', border:'1.5px solid rgba(255,255,255,0.22)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Open →</Link>
           </div>
 
           {/* ── 6. Live page CTA ───────────────────────────── */}
