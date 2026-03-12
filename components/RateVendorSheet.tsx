@@ -18,6 +18,7 @@ interface Review {
   created_at: string;
   couple_id: string;
   profiles: { full_name: string | null } | null;
+  couples: { partner_name: string | null } | null;
 }
 
 function StarButton({ value, selected, hovered, onHover, onClick }: {
@@ -43,6 +44,10 @@ function StarButton({ value, selected, hovered, onHover, onClick }: {
 
 const RATING_LABELS = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 
+function reviewerName(r: Review): string {
+  return r.profiles?.full_name || r.couples?.partner_name || 'uMshado Couple';
+}
+
 export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose, onSaved }: Props) {
   const [myReview, setMyReview] = useState<Review | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -53,6 +58,7 @@ export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose,
   const [saved, setSaved] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'rate' | 'reviews'>('rate');
 
@@ -64,6 +70,15 @@ export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose,
       const { data: { session } } = await supabase.auth.getSession();
       const uid = session?.user?.id ?? null;
       setUserId(uid);
+
+      // Fetch current user's display name so anonymous reviews are blocked
+      if (uid) {
+        const [{ data: prof }, { data: couple }] = await Promise.all([
+          supabase.from('profiles').select('full_name').eq('id', uid).maybeSingle(),
+          supabase.from('couples').select('partner_name').eq('id', uid).maybeSingle(),
+        ]);
+        setUserName(prof?.full_name || couple?.partner_name || null);
+      }
 
       const res = await fetch(`/api/vendor/${vendorId}/review${uid ? `?coupleId=${uid}` : ''}`, {
         headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
@@ -209,6 +224,17 @@ export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose,
                   <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Sign in to leave a review</p>
                   <p style={{ fontSize: 12, color: '#9ca3af' }}>Only couples can rate vendors</p>
                 </div>
+              ) : !userName ? (
+                <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>👤</div>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 6 }}>Add your name first</p>
+                  <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 }}>
+                    Reviews must show your name so vendors can identify feedback.<br/>Add your name in your profile to continue.
+                  </p>
+                  <a href="/couple/profile" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, background: '#9A2143', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+                    Update profile →
+                  </a>
+                </div>
               ) : (
                 <div>
                   {/* Star selector */}
@@ -299,10 +325,10 @@ export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: '#fff', fontSize: 11, fontWeight: 700,
                       }}>
-                        {(r.profiles?.full_name ?? 'A').charAt(0).toUpperCase()}
+                        {reviewerName(r).charAt(0).toUpperCase()}
                       </div>
                       <span style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                        {r.profiles?.full_name ?? 'Anonymous'}
+                        {reviewerName(r)}
                         {r.couple_id === userId && <span style={{ fontSize: 10, color: '#f59e0b', marginLeft: 6 }}>(You)</span>}
                       </span>
                     </div>
