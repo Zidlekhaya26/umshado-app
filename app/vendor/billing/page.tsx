@@ -168,7 +168,7 @@ export default function VendorBilling() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)]">
+      <div className="w-full max-w-none md:max-w-[900px] md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)]">
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <h1 className="text-xl font-bold text-gray-900">Billing & Plans</h1>
           <p className="text-sm text-gray-500 mt-1">Upgrade to unlock more features and visibility</p>
