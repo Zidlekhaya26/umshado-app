@@ -36,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ vend
   // Fetch all reviews for vendor
   const { data: reviews, error } = await supabase
     .from('vendor_reviews')
-    .select('id, rating, review_text, created_at, couple_id, profiles:couple_id(full_name)')
+    .select('id, rating, review_text, created_at, couple_id, profiles:couple_id(full_name), couples:couple_id(partner_name)')
     .eq('vendor_id', vendorId)
     .order('created_at', { ascending: false });
 

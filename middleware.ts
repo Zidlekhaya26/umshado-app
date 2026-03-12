@@ -149,9 +149,9 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(dashboardUrl);
     }
 
-    const settingsUrl = new URL('/settings', req.url);
-    settingsUrl.searchParams.set('target', targetRole);
-    return NextResponse.redirect(settingsUrl);
+    const switchUrl = new URL('/switch-role', req.url);
+    switchUrl.searchParams.set('target', targetRole);
+    return NextResponse.redirect(switchUrl);
   }
 
   return NextResponse.next();

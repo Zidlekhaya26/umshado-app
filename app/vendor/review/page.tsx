@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import ImageLightbox from '@/components/ui/ImageLightbox';
@@ -8,617 +8,294 @@ import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { formatWhatsappLink } from '@/lib/whatsapp';
+import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
+import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+const CR='#9A2143',CR2='#731832',CRX='#4d0f21',GD='#BD983F',GD2='#8a6010',DK='#1a0d12',BG='#faf8f5',MUT='#7a5060',BOR='#e8d5d0';
 
-interface VendorRow {
-  id: string;
-  business_name: string | null;
-  category: string | null;
-  location: string | null;
-  description: string | null;
-  logo_url: string | null;
-  cover_url: string | null;
-  portfolio_urls: string[] | null;
-  social_links: Record<string, string> | null;
-  contact: { whatsapp?: string; phone?: string; preferredContact?: string } | null;
-  is_published: boolean;
+interface VendorRow{id:string;business_name:string|null;category:string|null;location:string|null;description:string|null;logo_url:string|null;cover_url:string|null;portfolio_urls:string[]|null;social_links:Record<string,string>|null;contact:{whatsapp?:string;phone?:string;preferredContact?:string}|null;is_published:boolean;}
+interface PkgRow{id:string;name:string;base_price:number;pricing_mode:string;base_guests:number|null;base_hours:number|null;included_services:string[]|null;is_popular:boolean;}
+
+const PL:Record<string,string>={guest:'Guest-based',time:'Time-based','per-person':'Per person',package:'Fixed package',event:'Flat event rate',quantity:'Quantity-based'};
+function pricingLabel(mode:string,guests:number|null,hours:number|null){
+  if(mode==='guest'&&guests!=null)return`${guests}+ guests`;
+  if(mode==='time'&&hours!=null)return`${hours} hours`;
+  return PL[mode]||mode;
+}
+function extractYouTubeId(url:string):string|null{
+  const ps=[/(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,/(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,/(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,/(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/];
+  for(const p of ps){const m=url.match(p);if(m)return m[1];}return null;
 }
 
-interface PkgRow {
-  id: string;
-  name: string;
-  base_price: number;
-  pricing_mode: string;
-  base_guests: number | null;
-  base_hours: number | null;
-  included_services: string[] | null;
-  is_popular: boolean;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
-const PRICING_LABELS: Record<string, string> = {
-  guest: 'Guest-based',
-  time: 'Time-based',
-  'per-person': 'Per person',
-  package: 'Fixed package',
-  event: 'Flat event rate',
-  quantity: 'Quantity-based',
-};
-
-function pricingLabel(mode: string, baseGuests: number | null, baseHours: number | null): string {
-  if (mode === 'guest' && baseGuests != null) return `${baseGuests}+ guests`;
-  if (mode === 'time' && baseHours != null) return `${baseHours} hours`;
-  return PRICING_LABELS[mode] || mode;
-}
-
-function extractYouTubeId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
-    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
-    /(?:youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return m[1];
-  }
-  return null;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Checklist item                                                     */
-/* ------------------------------------------------------------------ */
-
-function CheckItem({ ok, label, href }: { ok: boolean; label: string; href: string }) {
-  
-
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        {ok ? (
-          <svg className="w-4.5 h-4.5 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        ) : (
-          <svg className="w-4.5 h-4.5 text-gray-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clipRule="evenodd" />
-          </svg>
-        )}
-        <span className={`text-sm ${ok ? 'text-gray-700' : 'text-gray-500'}`}>{label}</span>
+function CheckRow({ok,label,href}:{ok:boolean;label:string;href:string}){
+  return(
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 14px',borderRadius:12,background:ok?'rgba(30,122,78,0.05)':'rgba(154,33,67,0.04)',border:`1.5px solid ${ok?'rgba(30,122,78,0.15)':'rgba(154,33,67,0.1)'}`}}>
+      <div style={{display:'flex',alignItems:'center',gap:10}}>
+        {ok
+          ?<svg width="16" height="16" fill="none" stroke="#1e7a4e" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          :<svg width="16" height="16" fill="none" stroke={CR} strokeWidth={2} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01"/></svg>
+        }
+        <span style={{fontSize:13.5,fontWeight:700,color:ok?'#1e7a4e':DK}}>{label}</span>
       </div>
-      {!ok && (
-        <Link href={href} className="text-xs font-semibold text-purple-600 hover:text-purple-700">
-          Add →
+      {!ok&&<Link href={href} style={{fontSize:12,fontWeight:800,color:CR,textDecoration:'none',padding:'4px 10px',background:'rgba(154,33,67,0.08)',borderRadius:8}}>Add →</Link>}
+    </div>
+  );
+}
+
+function SectionCard({title,editHref,actionQuery,children}:{title:string;editHref:string;actionQuery:string;children:React.ReactNode}){
+  return(
+    <div style={{background:'#fff',borderRadius:18,border:`1.5px solid ${BOR}`,overflow:'hidden',boxShadow:'0 2px 10px rgba(26,13,18,0.05)'}}>
+      <div style={{padding:'14px 16px',borderBottom:`1px solid ${BOR}`,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <h3 style={{margin:0,fontSize:13,fontWeight:800,color:DK,letterSpacing:.2}}>{title}</h3>
+        <Link href={editHref+actionQuery} style={{fontSize:12,fontWeight:800,color:CR,textDecoration:'none',padding:'5px 12px',background:'rgba(154,33,67,0.06)',border:`1px solid rgba(154,33,67,0.15)`,borderRadius:20}}>
+          Edit
         </Link>
-      )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Section header with Edit link                                      */
-/* ------------------------------------------------------------------ */
-
-function SectionHeader({ title, href }: { title: string; href: string }) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <h2 className="text-base font-bold text-gray-900">{title}</h2>
-      <Link href={href} className="text-sm font-semibold text-purple-600 hover:text-purple-700 flex items-center gap-1">
-        Edit
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
-
-export default function VendorReview() {
-  const router = useRouter();
-  const [isPublishing, setIsPublishing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [vendorId, setVendorId] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-
-  const [vendor, setVendor] = useState<VendorRow | null>(null);
-  const [services, setServices] = useState<string[]>([]);
-  const [packages, setPackages] = useState<PkgRow[]>([]);
-  const { format } = useCurrency();
-  // Lightbox state for previewing images (logo / portfolio)
-  const [logoOpen, setLogoOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
-
-  /* ── Load all data from Supabase ────────────────────────────── */
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = (userData as any)?.user;
-        if (!user) { setLoading(false); return; }
-        setUserEmail(user.email || null);
-
-        // Fetch vendor row (try user_id first, fallback to id)
-        const cols = 'id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, social_links, contact, is_published, onboarding_completed';
-        let v: VendorRow | null = null;
-
-        const { data: v1 } = await supabase
-          .from('vendors')
-          .select(cols)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (v1) { v = v1 as unknown as VendorRow; } else {
-          const { data: v2 } = await supabase
-            .from('vendors')
-            .select(cols)
-            .eq('id', user.id)
-            .maybeSingle();
-          if (v2) v = v2 as unknown as VendorRow;
-        }
-
-        if (!v) { setLoading(false); return; }
-        setVendorId(v.id);
-        setVendor(v);
-
-        try {
-          const status = await getVendorSetupStatus(supabase, v.id);
-          (window as any).__vendorNeedsOnboarding = status.needsOnboarding;
-        } catch (e) {
-          console.warn('Unable to determine onboarding status on review page:', e);
-        }
-
-        // Fetch services (join to services catalog for name)
-        const { data: vsData } = await supabase
-          .from('vendor_services')
-          .select('service_id, custom_name, services:service_id(name)')
-          .eq('vendor_id', v.id);
-
-        if (vsData) {
-          setServices(
-            vsData
-              .map((vs: any) => vs.custom_name || vs.services?.name || null)
-              .filter(Boolean),
-          );
-        }
-
-        // Fetch packages
-        const { data: pkgData } = await supabase
-          .from('vendor_packages')
-          .select('id, name, base_price, pricing_mode, base_guests, base_hours, included_services, is_popular')
-          .eq('vendor_id', v.id)
-          .order('base_price', { ascending: true });
-
-        if (pkgData) setPackages(pkgData as PkgRow[]);
-      } catch (err) {
-        console.error('Error loading review data:', err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, []);
-
-  /* ── Derived state ──────────────────────────────────────────── */
-
-  const socialLinks = vendor?.social_links || {};
-  const contact = vendor?.contact || {};
-  const portfolioUrls = vendor?.portfolio_urls || [];
-  const videoUrl = socialLinks.youtube || '';
-  const ytId = videoUrl ? extractYouTubeId(videoUrl) : null;
-
-  // Social entries (excluding the youtube key which is shown separately)
-  const socialEntries = useMemo(() => {
-    const labels: Record<string, string> = { instagram: 'Instagram', facebook: 'Facebook', tiktok: 'TikTok', website: 'Website' };
-    return Object.entries(socialLinks)
-      .filter(([k, v]) => k !== 'youtube' && v)
-      .map(([k, v]) => ({ key: k, label: labels[k] || k, url: v }));
-  }, [socialLinks]);
-
-  const hasContact = !!(contact.whatsapp || contact.phone || userEmail);
-  const hasMedia = !!(vendor?.logo_url || vendor?.cover_url || portfolioUrls.length > 0);
-
-  /* ── Publish readiness checklist ────────────────────────────── */
-
-  const checks = {
-    businessName: !!vendor?.business_name,
-    services: services.length > 0,
-    packages: packages.length >= 1,
-    media: hasMedia,
-    contact: hasContact,
-  };
-  const isComplete = Object.values(checks).every(Boolean);
-
-  const [forcedEdit, setForcedEdit] = useState(false);
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      setForcedEdit(sp.get('mode') === 'edit');
-    }
-  }, []);
-  const modeParamOnboarding = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'onboarding';
-  const needsOnboarding = typeof window !== 'undefined' ? Boolean((window as any).__vendorNeedsOnboarding) : false;
-  const isOnboarding = modeParamOnboarding || needsOnboarding;
-
-  const editMode = Boolean((!isOnboarding && forcedEdit) || vendor?.is_published || (vendor as any)?.onboarding_completed);
-  const actionQuery = isOnboarding ? '?mode=onboarding' : '?mode=edit';
-
-  /* ── Publish handler ────────────────────────────────────────── */
-
-  const handlePublish = async () => {
-    if (!vendorId) return;
-    setIsPublishing(true);
-    try {
-      // Directly update Supabase to set published + onboarding_completed
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        alert('Please sign in to publish.');
-        return;
-      }
-
-      const { error } = await supabase.from('vendors').update({ is_published: true, onboarding_completed: true }).eq('id', vendorId);
-      if (error) {
-        console.error('Publish error:', error);
-        alert('Failed to publish. Please try again.');
-        return;
-      }
-
-      alert('Congratulations! Your vendor profile has been published successfully!');
-      router.push('/vendor/dashboard');
-    } catch (err) {
-      console.error('Publish error:', err);
-      alert('Failed to publish. Please try again.');
-    } finally {
-      setIsPublishing(false);
-    }
-  };
-
-  /* ── Loading ────────────────────────────────────────────────── */
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
       </div>
-    );
-  }
+      <div style={{padding:'14px 16px'}}>{children}</div>
+    </div>
+  );
+}
 
-  /* ── Render ─────────────────────────────────────────────────── */
+export default function VendorReview(){
+  const router=useRouter();
+  const {format}=useCurrency();
+  const [loading,setLoading]=useState(true);
+  const [isPublishing,setIsPublishing]=useState(false);
+  const [vendorId,setVendorId]=useState<string|null>(null);
+  const [userEmail,setUserEmail]=useState<string|null>(null);
+  const [vendor,setVendor]=useState<VendorRow|null>(null);
+  const [services,setServices]=useState<string[]>([]);
+  const [packages,setPackages]=useState<PkgRow[]>([]);
+  const [forcedEdit,setForcedEdit]=useState(false);
+  const [logoOpen,setLogoOpen]=useState(false);
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <h1 className="text-xl font-bold text-gray-900">Review &amp; Publish</h1>
-          <p className="text-sm text-gray-600 mt-1.5">Check everything looks good before going live</p>
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const {data:ud}=await supabase.auth.getUser();
+        const user=(ud as any)?.user;
+        if(!user){setLoading(false);return;}
+        setUserEmail(user.email||null);
+        const cols='id,business_name,category,location,description,logo_url,cover_url,portfolio_urls,social_links,contact,is_published,onboarding_completed';
+        let v:VendorRow|null=null;
+        const {data:v1}=await supabase.from('vendors').select(cols).eq('user_id',user.id).order('created_at',{ascending:false}).limit(1).maybeSingle();
+        if(v1)v=v1 as unknown as VendorRow;
+        else{const {data:v2}=await supabase.from('vendors').select(cols).eq('id',user.id).maybeSingle();if(v2)v=v2 as unknown as VendorRow;}
+        if(!v){setLoading(false);return;}
+        setVendorId(v.id);setVendor(v);
+        try{const s=await getVendorSetupStatus(supabase,v.id);(window as any).__rvNeedsOnboarding=s.needsOnboarding;}catch{/*ok*/}
+        const {data:vsData}=await supabase.from('vendor_services').select('service_id,custom_name,services:service_id(name)').eq('vendor_id',v.id);
+        if(vsData)setServices(vsData.map((vs:any)=>vs.custom_name||vs.services?.name||null).filter(Boolean));
+        const {data:pkgData}=await supabase.from('vendor_packages').select('id,name,base_price,pricing_mode,base_guests,base_hours,included_services,is_popular').eq('vendor_id',v.id).order('base_price',{ascending:true});
+        if(pkgData)setPackages(pkgData as PkgRow[]);
+      }catch(err){console.error('Error loading review:',err);}finally{setLoading(false);}
+    })();
+  },[]);
+
+  useEffect(()=>{if(typeof window!=='undefined')setForcedEdit(new URLSearchParams(window.location.search).get('mode')==='edit');},[]);
+
+  const socialLinks=vendor?.social_links||{};
+  const contact=vendor?.contact||{};
+  const portfolioUrls=vendor?.portfolio_urls||[];
+  const videoUrl=socialLinks.youtube||'';
+  const ytId=videoUrl?extractYouTubeId(videoUrl):null;
+
+  const socialEntries=useMemo(()=>{
+    const labels:Record<string,string>={instagram:'Instagram',facebook:'Facebook',tiktok:'TikTok',website:'Website'};
+    return Object.entries(socialLinks).filter(([k,v])=>k!=='youtube'&&v).map(([k,v])=>({key:k,label:labels[k]||k,url:v}));
+  },[socialLinks]);
+
+  const hasContact=!!(contact.whatsapp||contact.phone||userEmail);
+  const hasMedia=!!(vendor?.logo_url||vendor?.cover_url||portfolioUrls.length>0);
+  const checks={businessName:!!vendor?.business_name,services:services.length>0,packages:packages.length>=1,media:hasMedia,contact:hasContact};
+  const isComplete=Object.values(checks).every(Boolean);
+
+  const modeOnboarding=typeof window!=='undefined'&&new URLSearchParams(window.location.search).get('mode')==='onboarding';
+  const needsOnboarding=typeof window!=='undefined'?Boolean((window as any).__rvNeedsOnboarding):false;
+  const isOnboarding=modeOnboarding||needsOnboarding;
+  const editMode=Boolean((!isOnboarding&&forcedEdit)||vendor?.is_published||(vendor as any)?.onboarding_completed);
+  const actionQuery=isOnboarding?'?mode=onboarding':'?mode=edit';
+
+  const handlePublish=async()=>{
+    if(!vendorId)return;
+    setIsPublishing(true);
+    try{
+      const {data:{session}}=await supabase.auth.getSession();
+      if(!session){alert('Please sign in to publish.');return;}
+      const {error}=await supabase.from('vendors').update({is_published:true,onboarding_completed:true}).eq('id',vendorId);
+      if(error){console.error('Publish error:',error);alert('Failed to publish. Please try again.');return;}
+      alert('Congratulations! Your vendor profile has been published!');
+      router.push('/vendor/dashboard');
+    }catch(err){console.error('Publish error:',err);alert('Failed to publish. Please try again.');}finally{setIsPublishing(false);}
+  };
+
+  if(loading)return(
+    <div style={{minHeight:'100svh',display:'flex',alignItems:'center',justifyContent:'center',background:BG}}>
+      <div style={{width:38,height:38,border:`3px solid rgba(154,33,67,0.1)`,borderTopColor:CR,borderRadius:'50%',animation:'rvspin .8s linear infinite'}}/>
+      <style>{'@keyframes rvspin{to{transform:rotate(360deg)}}'}</style>
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:'100svh',background:BG,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+      <style>{`
+        @keyframes rvspin{to{transform:rotate(360deg)}}
+        @keyframes rvU{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .rvU1{animation:rvU .38s ease .05s both}.rvU2{animation:rvU .38s ease .10s both}
+        .rvU3{animation:rvU .38s ease .15s both}.rvU4{animation:rvU .38s ease .20s both}
+        .rvU5{animation:rvU .38s ease .25s both}.rvU6{animation:rvU .38s ease .30s both}
+        button,a{font-family:inherit!important}
+        .rv-pub:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 28px rgba(154,33,67,0.42)!important}
+        .rv-pub{transition:all .15s}
+        .rv-back:hover{background:#f5f0ee!important}
+      `}</style>
+      <ProfileCompletionIndicator/>
+
+      {/* Header */}
+      <div style={{background:`linear-gradient(160deg,${CRX} 0%,${CR} 52%,#c03050 100%)`,position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:-50,right:-50,width:200,height:200,borderRadius:'50%',border:'1.5px solid rgba(189,152,63,0.1)',pointerEvents:'none'}}/>
+        <div style={{position:'absolute',top:-26,right:-26,width:115,height:115,borderRadius:'50%',border:'1.5px solid rgba(189,152,63,0.17)',pointerEvents:'none'}}/>
+        <div style={{position:'relative',padding:'22px 20px 0'}}>
+          <p style={{margin:'0 0 3px',fontSize:10,fontWeight:800,color:'rgba(255,255,255,0.4)',letterSpacing:1.5,textTransform:'uppercase'}}>Step 5 of 5</p>
+          <h1 style={{margin:'0 0 3px',fontSize:22,fontWeight:800,color:'#fff',fontFamily:'Georgia,serif',letterSpacing:-.3}}>Review & publish</h1>
+          <p style={{margin:0,fontSize:13,color:'rgba(255,255,255,0.5)'}}>Check everything looks great before going live</p>
+        </div>
+        <div style={{height:18}}/>
+        <VendorOnboardingProgress step={5}/>
+      </div>
+
+      {/* Body */}
+      <div style={{maxWidth:640,margin:'0 auto',padding:'20px 16px calc(110px + env(safe-area-inset-bottom))',display:'flex',flexDirection:'column',gap:16}}>
+
+        {/* Status banner */}
+        <div className="rvU1" style={{padding:'14px 16px',borderRadius:14,background:vendor?.is_published?'rgba(30,122,78,0.08)':isComplete?'rgba(30,122,78,0.08)':'rgba(189,152,63,0.09)',border:`1.5px solid ${vendor?.is_published?'rgba(30,122,78,0.2)':isComplete?'rgba(30,122,78,0.2)':'rgba(189,152,63,0.25)'}`,display:'flex',alignItems:'flex-start',gap:12}}>
+          <span style={{fontSize:20,flexShrink:0}}>{vendor?.is_published?'✅':isComplete?'🚀':'📋'}</span>
+          <div>
+            <p style={{margin:'0 0 2px',fontSize:14,fontWeight:800,color:vendor?.is_published?'#1e7a4e':isComplete?'#1e7a4e':GD2}}>
+              {vendor?.is_published?'Profile is live!':isComplete?'Ready to publish!':'Complete these sections:'}
+            </p>
+            <p style={{margin:0,fontSize:12.5,color:MUT,lineHeight:1.5}}>
+              {vendor?.is_published?'Couples can find you on the uMshado marketplace.':isComplete?'Your profile looks great. Hit publish to go live.':'Complete all sections below to publish your profile.'}
+            </p>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 px-4 py-5 space-y-4 overflow-y-auto">
-          {/* ── Status banner ────────────────────────────────── */}
-          {vendor?.is_published ? (
-            <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3.5 flex items-start gap-3">
-              <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <div>
-                <p className="text-sm font-semibold text-green-900">Profile is Live!</p>
-                <p className="text-xs text-green-700 mt-0.5">Couples can see your profile on the marketplace</p>
-              </div>
-            </div>
-          ) : (
-            <div className={`rounded-xl px-4 py-3.5 border flex items-start gap-3 ${isComplete ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
-              <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${isComplete ? 'text-green-600' : 'text-amber-600'}`} fill="currentColor" viewBox="0 0 20 20">
-                {isComplete ? (
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                ) : (
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+        {/* Checklist */}
+        <div className="rvU2" style={{display:'flex',flexDirection:'column',gap:8}}>
+          <p style={{margin:'0 0 6px',fontSize:10.5,fontWeight:800,color:MUT,letterSpacing:1,textTransform:'uppercase'}}>Profile checklist</p>
+          <CheckRow ok={checks.businessName} label="Business profile" href={`/vendor/onboarding`}/>
+          <CheckRow ok={checks.services}     label="Services selected" href={`/vendor/services`}/>
+          <CheckRow ok={checks.packages}     label="At least 1 package" href={`/vendor/packages`}/>
+          <CheckRow ok={checks.media}        label="Media & photos" href={`/vendor/media`}/>
+          <CheckRow ok={checks.contact}      label="Contact details" href={`/vendor/media`}/>
+        </div>
+
+        {/* Business info */}
+        {vendor&&(
+          <div className="rvU3">
+            <SectionCard title="Business profile" editHref="/vendor/onboarding" actionQuery="">
+              <div style={{display:'flex',gap:14,alignItems:'flex-start'}}>
+                {vendor.logo_url&&(
+                  <button onClick={()=>setLogoOpen(true)} style={{width:56,height:56,borderRadius:12,overflow:'hidden',border:`1.5px solid ${BOR}`,background:'#fff',padding:0,cursor:'pointer',flexShrink:0,position:'relative'}}>
+                    <Image src={vendor.logo_url} alt="Logo" fill sizes="56px" style={{objectFit:'contain',padding:4}}/>
+                  </button>
                 )}
-              </svg>
-              <div>
-                <p className={`text-sm font-semibold ${isComplete ? 'text-green-900' : 'text-amber-900'}`}>
-                  {isComplete ? 'Ready to publish!' : 'Complete these steps first'}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Publish checklist ────────────────────────────── */}
-          {!vendor?.is_published && (
-            <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-2.5">
-              <h2 className="text-sm font-bold text-gray-900 mb-1">Publish Checklist</h2>
-              <CheckItem ok={checks.businessName} label="Business name" href={`/vendor/onboarding${actionQuery}`} />
-              <CheckItem ok={checks.services} label="At least 1 service selected" href={`/vendor/services${actionQuery}`} />
-              <CheckItem ok={checks.packages} label="At least 1 package created" href={`/vendor/packages${actionQuery}`} />
-              <CheckItem ok={checks.media} label="Logo, cover, or portfolio uploaded" href={`/vendor/media${actionQuery}`} />
-              <CheckItem ok={checks.contact} label="Contact method available" href={`/vendor/media${actionQuery}`} />
-            </div>
-          )}
-
-          {/* ── Section 1: Business Information ──────────────── */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Business Information" href={`/vendor/onboarding${actionQuery}`} />
-            <div className="space-y-2.5">
-              <div>
-                <p className="text-xs font-medium text-gray-500">Business Name</p>
-                <p className="text-sm text-gray-900 font-medium">{vendor?.business_name || <span className="italic text-gray-400">Not provided yet</span>}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Category</p>
-                  <p className="text-sm text-gray-900">{vendor?.category || <span className="italic text-gray-400">Not selected</span>}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Location</p>
-                  <p className="text-sm text-gray-900">{vendor?.location || <span className="italic text-gray-400">Not provided</span>}</p>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{margin:'0 0 2px',fontSize:15,fontWeight:800,color:DK}}>{vendor.business_name||'—'}</p>
+                  <p style={{margin:'0 0 2px',fontSize:12.5,fontWeight:600,color:CR}}>{vendor.category||'No category'}</p>
+                  <p style={{margin:0,fontSize:12,color:MUT}}>{vendor.location||'No location set'}</p>
                 </div>
               </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Description</p>
-                <p className="text-sm text-gray-700 leading-relaxed line-clamp-4">
-                  {vendor?.description || <span className="italic text-gray-400">No description provided</span>}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500">Contact Email</p>
-                <p className="text-sm text-gray-900">{userEmail || <span className="italic text-gray-400">Not available</span>}</p>
-              </div>
-            </div>
+              {vendor.description&&<p style={{margin:'12px 0 0',fontSize:13,color:DK,lineHeight:1.6,borderTop:`1px solid ${BOR}`,paddingTop:12}}>{vendor.description.length>200?vendor.description.slice(0,200)+'…':vendor.description}</p>}
+            </SectionCard>
           </div>
+        )}
 
-          {/* ── Section 2: Services ──────────────────────────── */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Services Offered" href={`/vendor/services${actionQuery}`} />
-            {services.length > 0 ? (
-              <>
-                <div className="flex flex-wrap gap-1.5">
-                  {services.map((s) => (
-                    <span key={s} className="px-2.5 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-md border border-purple-100">{s}</span>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500">{services.length} service{services.length !== 1 && 's'}</p>
-              </>
-            ) : (
-              <p className="text-sm text-gray-400 italic">No services added yet</p>
-            )}
-          </div>
-
-          {/* ── Section 3: Packages & Pricing ────────────────── */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Packages & Pricing" href={`/vendor/packages${actionQuery}`} />
-            {packages.length > 0 ? (
-              <div className="space-y-3">
-                {packages.map((pkg) => (
-                  <div key={pkg.id} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-sm font-bold text-gray-900">{pkg.name}</h3>
-                        {pkg.is_popular && (
-                          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-semibold rounded-full">Popular</span>
-                        )}
+        {/* Packages */}
+        {packages.length>0&&(
+          <div className="rvU4">
+            <SectionCard title={`Packages (${packages.length})`} editHref="/vendor/packages" actionQuery={actionQuery}>
+              <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                {packages.map(pkg=>(
+                  <div key={pkg.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 12px',borderRadius:10,background:'rgba(154,33,67,0.03)',border:`1px solid rgba(154,33,67,0.1)`}}>
+                    <div>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <span style={{fontSize:13.5,fontWeight:700,color:DK}}>{pkg.name}</span>
+                        {pkg.is_popular&&<span style={{fontSize:9.5,fontWeight:800,color:GD2,background:'rgba(189,152,63,0.12)',padding:'2px 7px',borderRadius:20,letterSpacing:.4}}>POPULAR</span>}
                       </div>
-                      <p className="text-base font-bold text-purple-600 whitespace-nowrap">
-                        {format(Number(pkg.base_price))}
-                      </p>
+                      <span style={{fontSize:11.5,color:MUT}}>{pricingLabel(pkg.pricing_mode,pkg.base_guests,pkg.base_hours)}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-600 mb-2">
-                      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="capitalize">{pricingLabel(pkg.pricing_mode, pkg.base_guests, pkg.base_hours)}</span>
-                    </div>
-                    {(pkg.included_services?.length ?? 0) > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {pkg.included_services!.slice(0, 4).map((svc) => (
-                          <span key={svc} className="px-2 py-0.5 bg-white text-gray-600 text-xs rounded border border-gray-200">{svc}</span>
-                        ))}
-                        {pkg.included_services!.length > 4 && (
-                          <span className="px-2 py-0.5 text-gray-500 text-xs">+{pkg.included_services!.length - 4} more</span>
-                        )}
-                      </div>
-                    )}
+                    <span style={{fontSize:16,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>{format(pkg.base_price)}</span>
                   </div>
                 ))}
-                <p className="text-xs text-gray-500 pt-1">{packages.length} package{packages.length !== 1 && 's'} created</p>
               </div>
-            ) : (
-              <p className="text-sm text-gray-400 italic">No packages added yet</p>
-            )}
+            </SectionCard>
           </div>
+        )}
 
-          {/* ── Section 4: Media ─────────────────────────────── */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Media & Portfolio" href={`/vendor/media${actionQuery}`} />
-            <div className="space-y-3">
-              {/* Logo */}
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Business Logo</p>
-                {vendor?.logo_url ? (
-                  <button
-                    type="button"
-                    onClick={() => { setLogoSrc(vendor.logo_url ?? null); setLogoAlt('Business logo'); setLogoOpen(true); }}
-                    className="w-20 h-20 rounded-lg overflow-hidden border-2 border-gray-200 flex items-center justify-center"
-                    aria-label="View business logo"
-                  >
-                    <Image src={vendor.logo_url} alt="Logo" width={80} height={80} className="object-contain p-2 w-full h-full" />
-                  </button>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No logo uploaded</p>
-                )}
+        {/* Services */}
+        {services.length>0&&(
+          <div className="rvU5">
+            <SectionCard title={`Services (${services.length})`} editHref="/vendor/services" actionQuery={actionQuery}>
+              <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+                {services.map(s=><span key={s} style={{padding:'4px 11px',borderRadius:20,background:'rgba(154,33,67,0.06)',border:'1px solid rgba(154,33,67,0.12)',fontSize:12,fontWeight:600,color:CR}}>{s}</span>)}
               </div>
+            </SectionCard>
+          </div>
+        )}
 
-              {/* Cover */}
-              {vendor?.cover_url && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Cover Image</p>
-                  <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-200 relative">
-                    <Image src={vendor.cover_url} alt="Cover" fill sizes="100vw" className="object-cover" />
+        {/* Portfolio preview */}
+        {portfolioUrls.length>0&&(
+          <div className="rvU6">
+            <SectionCard title={`Portfolio (${portfolioUrls.length} photos)`} editHref="/vendor/media" actionQuery={actionQuery}>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+                {portfolioUrls.slice(0,8).map((url,i)=>(
+                  <div key={i} style={{aspectRatio:'1',borderRadius:8,overflow:'hidden',border:`1.5px solid ${BOR}`,position:'relative'}}>
+                    <Image src={url} alt={`Portfolio ${i+1}`} fill sizes="80px" style={{objectFit:'cover'}}/>
                   </div>
-                </div>
-              )}
-
-              {/* Portfolio thumbnails */}
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1.5">Portfolio ({portfolioUrls.length} image{portfolioUrls.length !== 1 && 's'})</p>
-                {portfolioUrls.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {portfolioUrls.slice(0, 8).map((url, i) => (
-                      <div key={i} className="aspect-square rounded-lg overflow-hidden border border-gray-200 relative">
-                        <Image src={url} alt={`Portfolio ${i + 1}`} fill sizes="80px" className="object-cover" />
-                      </div>
-                    ))}
-                    {portfolioUrls.length > 8 && (
-                      <div className="aspect-square rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center">
-                        <span className="text-xs font-semibold text-gray-500">+{portfolioUrls.length - 8}</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No portfolio images</p>
-                )}
+                ))}
               </div>
-
-              {/* Video showreel */}
-              {ytId && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1.5">Video Showreel</p>
-                  <div className="rounded-lg overflow-hidden border-2 border-gray-200">
-                    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                      <iframe
-                        className="absolute inset-0 w-full h-full"
-                        src={`https://www.youtube.com/embed/${ytId}`}
-                        title="Video preview"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+              {portfolioUrls.length>8&&<p style={{margin:'8px 0 0',fontSize:12,color:MUT}}>+{portfolioUrls.length-8} more photos</p>}
+            </SectionCard>
           </div>
+        )}
 
-          {/* ── Section 5: Contact & Social ───────────────────── */}
-          <div className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3">
-            <SectionHeader title="Contact & Social" href={`/vendor/media${actionQuery}`} />
-            <div className="space-y-2.5">
-              {/* Contact details */}
-              {userEmail && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Email</p>
-                  <p className="text-sm text-gray-900">{userEmail}</p>
+        {/* Social / contact */}
+        {(socialEntries.length>0||hasContact)&&(
+          <SectionCard title="Social & contact" editHref="/vendor/media" actionQuery={actionQuery}>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {socialEntries.map(e=>(
+                <div key={e.key} style={{fontSize:13,color:DK,display:'flex',gap:8}}>
+                  <span style={{fontWeight:700,color:MUT,minWidth:64,fontSize:12}}>{e.label}</span>
+                  <span style={{color:DK,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.url}</span>
                 </div>
-              )}
-              {contact.whatsapp && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">WhatsApp</p>
-                  <p className="text-sm text-gray-900">
-                        {(() => {
-                      try {
-                        const href = formatWhatsappLink(contact.whatsapp);
-                        if (href) return (<a href={href} target="_blank" rel="noopener noreferrer" className="text-purple-600">{contact.whatsapp}</a>);
-                      } catch {
-                        // fallback to plain text
-                      }
-                      return contact.whatsapp;
-                    })()}
-                  </p>
-                </div>
-              )}
-              {contact.phone && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Phone</p>
-                  <p className="text-sm text-gray-900">{contact.phone}</p>
-                </div>
-              )}
-              {contact.preferredContact && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Preferred Contact</p>
-                  <p className="text-sm text-gray-900 capitalize">{contact.preferredContact}</p>
-                </div>
-              )}
-
-              {!hasContact && (
-                <p className="text-sm text-gray-400 italic">No contact details added</p>
-              )}
-
-              {/* Social links */}
-              {socialEntries.length > 0 ? (
-                <div className="pt-1 space-y-1.5">
-                  <p className="text-xs font-medium text-gray-500">Social Links</p>
-                  {socialEntries.map(({ key, label, url }) => (
-                    <div key={key} className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-700 w-20">{label}</span>
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-600 hover:underline truncate">
-                        {url}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Social Links</p>
-                  <p className="text-sm text-gray-400 italic">No social links added</p>
-                </div>
-              )}
+              ))}
+              {contact.whatsapp&&<div style={{fontSize:13,color:DK,display:'flex',gap:8}}><span style={{fontWeight:700,color:MUT,minWidth:64,fontSize:12}}>WhatsApp</span>{contact.whatsapp}</div>}
+              {contact.phone&&<div style={{fontSize:13,color:DK,display:'flex',gap:8}}><span style={{fontWeight:700,color:MUT,minWidth:64,fontSize:12}}>Phone</span>{contact.phone}</div>}
             </div>
-          </div>
+          </SectionCard>
+        )}
 
-          {/* ── Info note ────────────────────────────────────── */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3.5 flex items-start gap-3">
-            <svg className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div>
-              <p className="text-sm font-semibold text-blue-900">Ready to go live?</p>
-              <p className="text-xs text-blue-700 mt-0.5">
-                Once published, couples can view your profile and contact you. You can update your profile anytime.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Lightbox */}
+        <ImageLightbox src={vendor?.logo_url} alt={vendor?.business_name||''} isOpen={logoOpen} onClose={()=>setLogoOpen(false)}/>
       </div>
 
-        {/* Image lightbox for logo / portfolio previews */}
-        <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
-
-        {/* ── Sticky bottom bar ────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4 z-40">
-        <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6 flex gap-3">
-          {editMode ? (
-            <>
-              <Link href="/vendor/dashboard" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back to Dashboard</Link>
-              <Link href="/vendor/profile/edit" className="flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200">Edit Profile</Link>
-            </>
-          ) : (
-            <>
-              <Link href="/vendor/media" className="flex-1 px-4 py-3.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold text-base text-center hover:bg-gray-50 active:bg-gray-100 transition-colors">Back</Link>
-              <button
-                onClick={handlePublish}
-                disabled={!isComplete || isPublishing || vendor?.is_published}
-                className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${
-                  isComplete && !isPublishing && !vendor?.is_published
-                    ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
-              >
-                {isPublishing ? 'Publishing…' : vendor?.is_published ? 'Already Published' : 'Publish Profile'}
-              </button>
-            </>
+      {/* Bottom nav */}
+      <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderTop:`1px solid ${BOR}`,padding:'14px 16px calc(14px + env(safe-area-inset-bottom))',zIndex:40,boxShadow:'0 -4px 20px rgba(26,13,18,0.06)'}}>
+        <div style={{maxWidth:640,margin:'0 auto',display:'flex',gap:10}}>
+          <Link href={`/vendor/media${actionQuery}`} className="rv-back" style={{flex:1,padding:'13px',borderRadius:13,border:`1.5px solid ${BOR}`,background:'#fff',color:DK,fontSize:14,fontWeight:700,textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',transition:'background .14s'}}>
+            ← Back
+          </Link>
+          {vendor?.is_published?(
+            <Link href="/vendor/dashboard" style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:`linear-gradient(135deg,#1e7a4e,#155a38)`,color:'#fff',fontSize:14,fontWeight:800,textDecoration:'none',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 18px rgba(30,122,78,0.3)'}}>
+              View dashboard →
+            </Link>
+          ):(
+            <button onClick={handlePublish} disabled={isPublishing||!isComplete} className="rv-pub"
+              style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:isComplete?`linear-gradient(135deg,${CR},${CR2})`:'rgba(154,33,67,0.2)',color:'#fff',fontSize:14,fontWeight:800,cursor:isComplete&&!isPublishing?'pointer':'default',boxShadow:isComplete?'0 4px 22px rgba(154,33,67,0.32)':'none',display:'flex',alignItems:'center',justifyContent:'center',gap:9,fontFamily:'inherit'}}>
+              {isPublishing&&<div style={{width:16,height:16,border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',borderRadius:'50%',animation:'rvspin .8s linear infinite'}}/>}
+              {isPublishing?'Publishing…':'🚀 Publish profile'}
+            </button>
           )}
         </div>
       </div>

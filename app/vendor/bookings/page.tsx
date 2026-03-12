@@ -1,329 +1,442 @@
-'use client'
+'use client';
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
-import Link from 'next/link'
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
+import VendorBottomNav from '@/components/VendorBottomNav';
 
-type Booking = {
-  id: string
-  booking_ref: string
-  package_name: string
-  event_date: string | null
-  event_location: string | null
-  confirmed_price: number
-  status: string
-  confirmed_at: string
-  completed_at: string | null
-  couple: {
-    full_name: string
-    phone: string
-  }
+const CR='#9A2143',CR2='#731832',GD='#BD983F',GD2='#8a6010',DK='#1a0d12',MUT='#7a5060',BOR='#f0ede8',BG='#faf8f5',GR='#1e7c4a',BL='#1d6fa8';
+
+interface Booking {
+  id:string; booking_ref:string; package_name:string; event_date:string|null;
+  event_location:string|null; confirmed_price:number;
+  status:'confirmed'|'completed'|'cancelled'; vendor_notes:string|null;
+  confirmed_at:string; couple_name:string; couple_avatar:string|null;
+  couple_id:string; review_requested:boolean;
 }
+interface BlockedDate { id:string; blocked_date:string; reason:Reason; note:string|null; }
+type Reason='booked'|'unavailable'|'holiday';
+type Tab='upcoming'|'past'|'calendar';
 
-export default function VendorBookingsPage() {
-  const [vendor, setVendor] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [filter, setFilter] = useState<string>('upcoming') // 'upcoming', 'completed', 'all'
-  const [sendingReview, setSendingReview] = useState<string | null>(null)
+const RS:Record<Reason,{label:string;color:string;bg:string;border:string}>={
+  booked:     {label:'Booked',     color:GR, bg:'rgba(30,124,74,0.1)',  border:'rgba(30,124,74,0.25)'},
+  unavailable:{label:'Unavailable',color:CR, bg:'rgba(154,33,67,0.09)',border:'rgba(154,33,67,0.22)'},
+  holiday:    {label:'Personal',   color:GD2,bg:'rgba(189,152,63,0.1)',border:'rgba(189,152,63,0.25)'},
+};
+const SS:Record<string,{label:string;color:string;bg:string;border:string}>={
+  confirmed:{label:'Confirmed',color:GR, bg:'rgba(30,124,74,0.1)',  border:'rgba(30,124,74,0.25)'},
+  completed:{label:'Completed',color:BL, bg:'rgba(29,111,168,0.1)', border:'rgba(29,111,168,0.25)'},
+  cancelled:{label:'Cancelled',color:CR, bg:'rgba(154,33,67,0.08)',border:'rgba(154,33,67,0.2)'},
+};
+const DAYS=['S','M','T','W','T','F','S'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const toKey=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const todayKey=()=>toKey(new Date());
+const fmtP=(c:number)=>`R${(c/100).toLocaleString('en-ZA',{minimumFractionDigits:0})}`;
 
-  const router = useRouter()
+export default function VendorBookingsPage(){
+  const router=useRouter();
+  const [vendorId,setVendorId]=useState<string|null>(null);
+  const [loading,setLoading]=useState(true);
+  const [bookings,setBookings]=useState<Booking[]>([]);
+  const [tab,setTab]=useState<Tab>('upcoming');
+  const [actionSheet,setActionSheet]=useState<Booking|null>(null);
+  const [completing,setCompleting]=useState(false);
+  const [requesting,setRequesting]=useState(false);
+  const [notesSheet,setNotesSheet]=useState<Booking|null>(null);
+  const [noteDraft,setNoteDraft]=useState('');
+  const [savingNote,setSavingNote]=useState(false);
+  const [blocked,setBlocked]=useState<Map<string,BlockedDate>>(new Map());
+  const [viewYear,setViewYear]=useState(()=>new Date().getFullYear());
+  const [viewMonth,setViewMonth]=useState(()=>new Date().getMonth());
+  const [blockSheet,setBlockSheet]=useState<{date:string;reason:Reason;note:string}|null>(null);
+  const [savingBlock,setSavingBlock]=useState(false);
+  const [error,setError]=useState<string|null>(null);
+  const [successMsg,setSuccessMsg]=useState<string|null>(null);
 
-  useEffect(() => {
-    loadData()
-  }, [])
+  const showOk=(m:string)=>{setSuccessMsg(m);setTimeout(()=>setSuccessMsg(null),3000);};
 
-  async function loadData() {
-    setLoading(true)
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) {
-      router.push('/auth/login')
-      return
-    }
+  useEffect(()=>{
+    (async()=>{
+      const {data:{user}}=await supabase.auth.getUser();
+      if(!user){router.push('/auth/sign-in');return;}
+      const {data:v}=await supabase.from('vendors').select('id').eq('user_id',user.id).limit(1).maybeSingle();
+      const vid=v?.id||user.id;
+      setVendorId(vid);
+      await Promise.all([loadBookings(vid),loadBlocked(vid)]);
+      setLoading(false);
+    })();
+  },[router]);
 
-    const { data: v } = await supabase
-      .from('vendors')
-      .select('id, business_name')
-      .eq('user_id', user.id)
-      .single()
+  const loadBookings=async(vid:string)=>{
+    const {data}=await supabase.from('bookings')
+      .select('id,booking_ref,package_name,event_date,event_location,confirmed_price,status,vendor_notes,confirmed_at,couple_id')
+      .eq('vendor_id',vid).order('event_date',{ascending:true,nullsFirst:false});
+    if(!data)return;
+    const {data:rr}=await supabase.from('review_requests').select('booking_id').eq('vendor_id',vid);
+    const reqIds=new Set((rr||[]).map((r:any)=>r.booking_id));
+    const enriched=await Promise.all(data.map(async(b:any)=>{
+      const {data:c}=await supabase.from('couples').select('partner_name,avatar_url').eq('id',b.couple_id).maybeSingle();
+      return{...b,couple_name:c?.partner_name||'Unknown Couple',couple_avatar:c?.avatar_url||null,review_requested:reqIds.has(b.id)};
+    }));
+    setBookings(enriched as Booking[]);
+  };
 
-    if (!v) {
-      router.push('/')
-      return
-    }
+  const loadBlocked=async(vid:string)=>{
+    const {data}=await supabase.from('vendor_availability').select('id,blocked_date,reason,note').eq('vendor_id',vid);
+    const m=new Map<string,BlockedDate>();
+    (data||[]).forEach((r:any)=>m.set(r.blocked_date,r));
+    setBlocked(m);
+  };
 
-    setVendor(v)
+  const handleMarkComplete=async(b:Booking)=>{
+    setCompleting(true);
+    const{error:e}=await supabase.from('bookings').update({status:'completed'}).eq('id',b.id);
+    if(e)setError(e.message); else{await loadBookings(vendorId!);showOk('Booking completed');}
+    setCompleting(false);setActionSheet(null);
+  };
 
-    // Load bookings
-    const { data: bks } = await supabase
-      .from('bookings')
-      .select('*, profiles!bookings_couple_id_fkey(full_name, phone)')
-      .eq('vendor_id', v.id)
-      .order('event_date', { ascending: true, nullsFirst: false })
+  const handleReviewRequest=async(b:Booking)=>{
+    setRequesting(true);
+    try{
+      const{data:{session}}=await supabase.auth.getSession();
+      if(!session)throw new Error('No session');
+      const res=await fetch('/api/vendor/review-request',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({bookingId:b.id,coupleId:b.couple_id})});
+      if(!res.ok)throw new Error('Request failed');
+      await loadBookings(vendorId!);showOk('Review request sent!');
+    }catch(e:any){setError(e.message||'Failed');}
+    setRequesting(false);setActionSheet(null);
+  };
 
-    setBookings(
-      (bks || []).map((b: any) => ({
-        ...b,
-        couple: b.profiles,
-      }))
-    )
-    setLoading(false)
-  }
+  const handleSaveNote=async()=>{
+    if(!notesSheet)return;setSavingNote(true);
+    const{error:e}=await supabase.from('bookings').update({vendor_notes:noteDraft||null}).eq('id',notesSheet.id);
+    if(e)setError(e.message); else{setBookings(bs=>bs.map(b=>b.id===notesSheet.id?{...b,vendor_notes:noteDraft||null}:b));showOk('Note saved');}
+    setSavingNote(false);setNotesSheet(null);
+  };
 
-  async function markComplete(bookingId: string) {
-    await supabase
-      .from('bookings')
-      .update({ status: 'completed', completed_at: new Date().toISOString() })
-      .eq('id', bookingId)
-    await loadData()
-  }
+  const prevMonth=()=>{if(viewMonth===0){setViewYear(y=>y-1);setViewMonth(11);}else setViewMonth(m=>m-1);};
+  const nextMonth=()=>{if(viewMonth===11){setViewYear(y=>y+1);setViewMonth(0);}else setViewMonth(m=>m+1);};
 
-  async function sendReviewRequest(bookingId: string) {
-    setSendingReview(bookingId)
-    const res = await fetch('/api/vendor/review-request', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ booking_id: bookingId }),
-    })
-    const data = await res.json()
+  const calCells=useMemo(()=>{
+    const first=new Date(viewYear,viewMonth,1).getDay();
+    const dim=new Date(viewYear,viewMonth+1,0).getDate();
+    const cells:(number|null)[]=[...Array(first).fill(null),...Array.from({length:dim},(_,i)=>i+1)];
+    while(cells.length%7!==0)cells.push(null);
+    return cells;
+  },[viewYear,viewMonth]);
 
-    if (res.ok && data.whatsapp_url) {
-      window.open(data.whatsapp_url, '_blank')
-    }
+  const cellKey=(day:number)=>`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  const bookedDates=useMemo(()=>{const s=new Set<string>();bookings.filter(b=>b.status==='confirmed').forEach(b=>{if(b.event_date)s.add(b.event_date);});return s;},[bookings]);
 
-    setSendingReview(null)
-  }
+  const onDayPress=(day:number)=>{
+    const key=cellKey(day);if(key<todayKey())return;
+    const ex=blocked.get(key);
+    setBlockSheet({date:key,reason:ex?.reason||'unavailable',note:ex?.note||''});
+  };
 
-  const filteredBookings = bookings.filter((b) => {
-    if (filter === 'upcoming') return b.status === 'confirmed'
-    if (filter === 'completed') return b.status === 'completed'
-    return true
-  })
+  const handleSaveBlock=async()=>{
+    if(!blockSheet||!vendorId)return;setSavingBlock(true);setError(null);
+    try{
+      const ex=blocked.get(blockSheet.date);
+      if(ex){
+        await supabase.from('vendor_availability').update({reason:blockSheet.reason,note:blockSheet.note||null}).eq('id',ex.id);
+        setBlocked(prev=>{const m=new Map(prev);m.set(blockSheet.date,{...ex,reason:blockSheet.reason,note:blockSheet.note||null});return m;});
+      }else{
+        const{data,error:e}=await supabase.from('vendor_availability').insert({vendor_id:vendorId,blocked_date:blockSheet.date,reason:blockSheet.reason,note:blockSheet.note||null}).select().single();
+        if(e)throw e;
+        setBlocked(prev=>{const m=new Map(prev);m.set(blockSheet.date,data);return m;});
+      }
+      showOk('Date blocked');
+    }catch(e:any){setError(e.message||'Failed');}
+    setSavingBlock(false);setBlockSheet(null);
+  };
 
-  if (loading) {
-    return (
-      <div style={{ padding: 20, color: '#333' }}>
-        <p>Loading bookings...</p>
-      </div>
-    )
-  }
+  const handleDeleteBlock=async()=>{
+    if(!blockSheet)return;
+    const ex=blocked.get(blockSheet.date);if(!ex){setBlockSheet(null);return;}
+    setSavingBlock(true);
+    await supabase.from('vendor_availability').delete().eq('id',ex.id);
+    setBlocked(prev=>{const m=new Map(prev);m.delete(blockSheet.date);return m;});
+    setSavingBlock(false);setBlockSheet(null);showOk('Date unblocked');
+  };
 
-  return (
-    <div style={{ padding: 20, maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 24, fontWeight: 600, marginBottom: 10 }}>
-        📋 Your Bookings
-      </h1>
-      <p style={{ color: '#666', marginBottom: 30 }}>
-        Confirmed bookings from couples. Mark them complete and request reviews after the
-        event.
-      </p>
+  const todayStr=new Date().toISOString().slice(0,10);
+  const upcoming=bookings.filter(b=>b.status==='confirmed'&&(!b.event_date||b.event_date>=todayStr));
+  const past=bookings.filter(b=>b.status==='completed'||b.status==='cancelled'||(b.status==='confirmed'&&b.event_date&&b.event_date<todayStr));
+  const filtered=tab==='upcoming'?upcoming:tab==='past'?past:[];
+  const upcomingBlocked=Array.from(blocked.values()).filter(b=>b.blocked_date>=todayKey()).sort((a,b)=>a.blocked_date.localeCompare(b.blocked_date));
 
-      {/* Tabs */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          marginBottom: 20,
-          borderBottom: '1px solid #e0e0e0',
-        }}
-      >
-        {['upcoming', 'completed', 'all'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setFilter(tab)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: '10px 20px',
-              cursor: 'pointer',
-              fontWeight: 600,
-              color: filter === tab ? '#9A2143' : '#999',
-              borderBottom: filter === tab ? '3px solid #9A2143' : 'none',
-              textTransform: 'capitalize',
-            }}
-          >
-            {tab} ({bookings.filter((b) => {
-              if (tab === 'upcoming') return b.status === 'confirmed'
-              if (tab === 'completed') return b.status === 'completed'
-              return true
-            }).length})
-          </button>
-        ))}
-      </div>
+  if(loading)return(
+    <div style={{minHeight:'100svh',background:BG,display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <style>{'@keyframes bkSpin{to{transform:rotate(360deg)}}'}</style>
+      <div style={{width:36,height:36,border:`3px solid rgba(154,33,67,0.12)`,borderTopColor:CR,borderRadius:'50%',animation:'bkSpin .8s linear infinite'}}/>
+    </div>
+  );
 
-      {/* Bookings List */}
-      {filteredBookings.length === 0 ? (
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 10,
-            padding: 40,
-            textAlign: 'center',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-          }}
-        >
-          <p style={{ fontSize: 18, color: '#666' }}>
-            {filter === 'upcoming'
-              ? 'No upcoming bookings yet.'
-              : filter === 'completed'
-              ? 'No completed bookings.'
-              : 'No bookings yet.'}
-          </p>
-          <Link
-            href="/vendor/dashboard"
-            style={{
-              display: 'inline-block',
-              marginTop: 20,
-              padding: '10px 20px',
-              background: 'linear-gradient(135deg, #9A2143, #b8315a)',
-              color: '#fff',
-              textDecoration: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
-            }}
-          >
-            Back to Dashboard
+  return(
+    <div style={{minHeight:'100svh',background:BG,fontFamily:"'DM Sans',system-ui,sans-serif"}}>
+      <style>{`
+        @keyframes bkSpin{to{transform:rotate(360deg)}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        button{font-family:inherit!important}
+      `}</style>
+
+      {/* Header */}
+      <div style={{background:`linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`,padding:'20px 20px 0',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',top:-40,right:-40,width:160,height:160,borderRadius:'50%',background:'radial-gradient(circle,rgba(189,152,63,0.14) 0%,transparent 70%)',pointerEvents:'none'}}/>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18,position:'relative'}}>
+          <Link href="/vendor/dashboard" style={{width:34,height:34,borderRadius:'50%',background:'rgba(255,255,255,0.12)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.15)',textDecoration:'none',flexShrink:0}}>
+            <svg width="14" height="14" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
           </Link>
+          <div style={{flex:1}}>
+            <h1 style={{margin:0,fontSize:20,fontWeight:800,color:'#fff',fontFamily:'Georgia,serif'}}>Bookings & Calendar</h1>
+            <p style={{margin:'2px 0 0',fontSize:11,color:'rgba(255,255,255,0.55)'}}>{upcoming.length} upcoming · {past.filter(b=>b.status==='completed').length} completed</p>
+          </div>
         </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
-          {filteredBookings.map((booking) => (
-            <div
-              key={booking.id}
-              style={{
-                background: '#fff',
-                borderRadius: 10,
-                padding: 20,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: 15,
-                }}
-              >
-                <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 5 }}>
-                    {booking.booking_ref}
-                  </h3>
-                  <p style={{ color: '#666', fontSize: 14 }}>
-                    {booking.couple?.full_name || 'Couple'} • {booking.package_name}
-                  </p>
-                </div>
-                <div
-                  style={{
-                    background:
-                      booking.status === 'completed'
-                        ? '#d4edda'
-                        : booking.status === 'confirmed'
-                        ? '#d1ecf1'
-                        : '#f8d7da',
-                    color:
-                      booking.status === 'completed'
-                        ? '#155724'
-                        : booking.status === 'confirmed'
-                        ? '#0c5460'
-                        : '#721c24',
-                    padding: '6px 12px',
-                    borderRadius: 6,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textTransform: 'capitalize',
-                    height: 'fit-content',
-                  }}
-                >
-                  {booking.status}
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 15, fontSize: 14, color: '#555' }}>
-                <div>
-                  <strong>Event Date:</strong>{' '}
-                  {booking.event_date
-                    ? new Date(booking.event_date + 'T00:00:00').toDateString()
-                    : 'TBD'}
-                </div>
-                <div>
-                  <strong>Location:</strong> {booking.event_location || 'Not specified'}
-                </div>
-                <div>
-                  <strong>Price:</strong> R{(booking.confirmed_price / 100).toFixed(2)}
-                </div>
-                <div>
-                  <strong>Confirmed:</strong>{' '}
-                  {new Date(booking.confirmed_at).toLocaleDateString()}
-                </div>
-                {booking.completed_at && (
-                  <div>
-                    <strong>Completed:</strong>{' '}
-                    {new Date(booking.completed_at).toLocaleDateString()}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ display: 'flex', gap: 10 }}>
-                {booking.status === 'confirmed' && (
-                  <button
-                    onClick={() => markComplete(booking.id)}
-                    style={{
-                      background: '#28a745',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                    }}
-                  >
-                    ✓ Mark Complete
-                  </button>
-                )}
-
-                {booking.status === 'completed' && (
-                  <button
-                    onClick={() => sendReviewRequest(booking.id)}
-                    disabled={sendingReview === booking.id}
-                    style={{
-                      background: 'linear-gradient(135deg, #9A2143, #b8315a)',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '10px 20px',
-                      borderRadius: 8,
-                      cursor: sendingReview === booking.id ? 'not-allowed' : 'pointer',
-                      fontWeight: 600,
-                      opacity: sendingReview === booking.id ? 0.6 : 1,
-                    }}
-                  >
-                    {sendingReview === booking.id
-                      ? 'Opening WhatsApp...'
-                      : '⭐ Request Review via WhatsApp'}
-                  </button>
-                )}
-
-                <a
-                  href={`tel:${booking.couple?.phone}`}
-                  style={{
-                    background: '#f1f1f1',
-                    color: '#333',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: 8,
-                    textDecoration: 'none',
-                    fontWeight: 600,
-                  }}
-                >
-                  📞 Call {booking.couple?.full_name}
-                </a>
-              </div>
-            </div>
+        <div style={{display:'flex',borderBottom:'1px solid rgba(255,255,255,0.12)'}}>
+          {([['upcoming','Upcoming'],['past','Past'],['calendar','📅 Availability']] as const).map(([t,label])=>(
+            <button key={t} onClick={()=>setTab(t)} style={{flex:1,padding:'10px 4px 12px',border:'none',background:'none',cursor:'pointer',fontSize:12,fontWeight:700,letterSpacing:0.3,color:tab===t?'#fff':'rgba(255,255,255,0.45)',borderBottom:tab===t?`2.5px solid ${GD}`:'2.5px solid transparent',transition:'all .15s'}}>{label}</button>
           ))}
         </div>
+      </div>
+
+      <div style={{maxWidth:560,margin:'0 auto',padding:'18px 16px 110px'}}>
+
+        {error&&<div style={{padding:'11px 14px',borderRadius:12,background:'rgba(192,50,42,0.08)',border:'1.5px solid rgba(192,50,42,0.2)',marginBottom:14}}><p style={{margin:0,fontSize:13,color:'#c0322a',fontWeight:600}}>{error}</p></div>}
+        {successMsg&&<div style={{padding:'11px 14px',borderRadius:12,background:'rgba(30,124,74,0.08)',border:'1.5px solid rgba(30,124,74,0.25)',marginBottom:14}}><p style={{margin:0,fontSize:13,color:GR,fontWeight:700}}>✓ {successMsg}</p></div>}
+
+        {/* Bookings tabs */}
+        {(tab==='upcoming'||tab==='past')&&(
+          <>
+            {filtered.length===0?(
+              <div style={{background:'#fff',borderRadius:18,padding:'40px 20px',textAlign:'center',border:`1.5px solid ${BOR}`}}>
+                <div style={{fontSize:36,marginBottom:10,opacity:.3}}>📋</div>
+                <p style={{margin:'0 0 4px',fontSize:14,fontWeight:700,color:DK}}>{tab==='upcoming'?'No upcoming bookings':'No past bookings yet'}</p>
+                <p style={{margin:0,fontSize:12,color:MUT}}>Bookings appear here once confirmed</p>
+              </div>
+            ):(
+              <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                {filtered.map(booking=>{
+                  const st=SS[booking.status];
+                  const eventDate=booking.event_date?new Date(booking.event_date+'T00:00:00'):null;
+                  const daysUntil=eventDate?Math.ceil((eventDate.getTime()-new Date().getTime())/86400000):null;
+                  return(
+                    <div key={booking.id} style={{background:'#fff',borderRadius:18,overflow:'hidden',border:`1.5px solid ${st.border}`,boxShadow:'0 2px 10px rgba(0,0,0,0.04)'}}>
+                      <div style={{height:3,background:st.color}}/>
+                      <div style={{padding:'16px 18px'}}>
+                        <div style={{display:'flex',alignItems:'flex-start',gap:12,marginBottom:14}}>
+                          {booking.couple_avatar?<img src={booking.couple_avatar} alt="" style={{width:44,height:44,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+                            :<div style={{width:44,height:44,borderRadius:'50%',background:`linear-gradient(135deg,${CR},${CR2})`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:17,flexShrink:0}}>{(booking.couple_name||'C')[0].toUpperCase()}</div>}
+                          <div style={{flex:1,minWidth:0}}>
+                            <p style={{margin:0,fontSize:15,fontWeight:800,color:DK}}>{booking.couple_name}</p>
+                            <p style={{margin:'1px 0 0',fontSize:11.5,color:MUT}}>{booking.package_name}</p>
+                          </div>
+                          <span style={{fontSize:10,fontWeight:800,padding:'3px 10px',borderRadius:20,background:st.bg,color:st.color,border:`1px solid ${st.border}`,flexShrink:0}}>{st.label}</span>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+                          <div style={{background:BG,borderRadius:11,padding:'9px 12px'}}>
+                            <p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Event Date</p>
+                            <p style={{margin:'3px 0 0',fontSize:13,fontWeight:700,color:DK}}>{eventDate?eventDate.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}):'TBD'}</p>
+                            {daysUntil!==null&&daysUntil>=0&&<p style={{margin:'1px 0 0',fontSize:10,fontWeight:700,color:daysUntil<=7?CR:GD2}}>{daysUntil===0?'🎊 Today!':`in ${daysUntil} day${daysUntil!==1?'s':''}`}</p>}
+                          </div>
+                          <div style={{background:BG,borderRadius:11,padding:'9px 12px'}}>
+                            <p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Price</p>
+                            <p style={{margin:'3px 0 0',fontSize:14,fontWeight:800,color:CR,fontFamily:'Georgia,serif'}}>{fmtP(booking.confirmed_price)}</p>
+                          </div>
+                          {booking.event_location&&<div style={{background:BG,borderRadius:11,padding:'9px 12px',gridColumn:'1/-1'}}><p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Location</p><p style={{margin:'3px 0 0',fontSize:13,color:DK}}>📍 {booking.event_location}</p></div>}
+                          {booking.vendor_notes&&<div style={{background:'rgba(189,152,63,0.06)',borderRadius:11,padding:'9px 12px',gridColumn:'1/-1',border:`1px solid rgba(189,152,63,0.2)`}}><p style={{margin:0,fontSize:9,fontWeight:700,color:GD2,textTransform:'uppercase',letterSpacing:.5}}>My Note</p><p style={{margin:'3px 0 0',fontSize:12,color:'#6b4f1c'}}>{booking.vendor_notes}</p></div>}
+                        </div>
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                          <span style={{fontSize:10,fontWeight:600,color:'#9ca3af'}}>{booking.booking_ref}</span>
+                          <div style={{display:'flex',gap:8}}>
+                            <button onClick={()=>{setNoteDraft(booking.vendor_notes||'');setNotesSheet(booking);}} style={{fontSize:12,fontWeight:700,color:GD2,background:'rgba(189,152,63,0.08)',border:'none',borderRadius:20,padding:'6px 12px',cursor:'pointer'}}>📝 Note</button>
+                            <button onClick={()=>setActionSheet(booking)} style={{fontSize:12,fontWeight:700,color:CR,background:'rgba(154,33,67,0.07)',border:'none',borderRadius:20,padding:'6px 14px',cursor:'pointer'}}>Actions</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Calendar tab */}
+        {tab==='calendar'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:16}}>
+            <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+              {Object.entries(RS).map(([k,v])=>(
+                <div key={k} style={{display:'flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,background:v.bg,border:`1px solid ${v.border}`}}>
+                  <div style={{width:6,height:6,borderRadius:'50%',background:v.color}}/><span style={{fontSize:11,fontWeight:700,color:v.color}}>{v.label}</span>
+                </div>
+              ))}
+              <div style={{display:'flex',alignItems:'center',gap:5,padding:'4px 10px',borderRadius:20,background:'rgba(30,124,74,0.08)',border:'1px solid rgba(30,124,74,0.25)'}}>
+                <div style={{width:6,height:6,borderRadius:'50%',background:GR}}/><span style={{fontSize:11,fontWeight:700,color:GR}}>Wedding</span>
+              </div>
+            </div>
+
+            <div style={{background:'#fff',borderRadius:18,border:`1.5px solid ${BOR}`,overflow:'hidden'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'14px 18px',borderBottom:`1px solid ${BOR}`}}>
+                <button onClick={prevMonth} style={{width:32,height:32,borderRadius:'50%',border:`1.5px solid ${BOR}`,background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <svg width="12" height="12" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <p style={{margin:0,fontSize:15,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>{MONTHS[viewMonth]} {viewYear}</p>
+                <button onClick={nextMonth} style={{width:32,height:32,borderRadius:'50%',border:`1.5px solid ${BOR}`,background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <svg width="12" height="12" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',padding:'10px 12px 4px'}}>
+                {DAYS.map((d,i)=><div key={i} style={{textAlign:'center',fontSize:10,fontWeight:700,color:'#b0a0a8',letterSpacing:.3}}>{d}</div>)}
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',padding:'0 12px 16px',gap:2}}>
+                {calCells.map((day,i)=>{
+                  if(!day)return<div key={i}/>;
+                  const key=cellKey(day);
+                  const bl=blocked.get(key)||null;
+                  const bk=bookedDates.has(key)&&!bl;
+                  const isPast=key<todayKey();
+                  const isToday=key===todayKey();
+                  const rs=bl?RS[bl.reason]:null;
+                  let bg='transparent',border='1.5px solid transparent',color=isPast?'#c0a8b0':'#374151',fw:number=400;
+                  if(isToday){bg='rgba(154,33,67,0.07)';border=`1.5px solid ${CR}`;color=CR;fw=800;}
+                  if(bk){bg='rgba(30,124,74,0.08)';border=`1.5px solid rgba(30,124,74,0.3)`;color=GR;fw=700;}
+                  if(bl){bg=rs!.bg;border=`1.5px solid ${rs!.color}40`;color=rs!.color;fw=700;}
+                  return(
+                    <div key={i} onClick={!isPast?()=>onDayPress(day):undefined} style={{height:38,borderRadius:9,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:2,background:bg,border,cursor:isPast?'default':'pointer',opacity:isPast?0.45:1,transition:'background .1s'}}>
+                      <span style={{fontSize:12.5,fontWeight:fw,color,lineHeight:1}}>{day}</span>
+                      {(bl||bk)&&<div style={{width:4,height:4,borderRadius:'50%',background:bl?rs!.color:GR}}/>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div style={{padding:'13px 16px',borderRadius:14,background:'rgba(154,33,67,0.04)',border:`1.5px solid rgba(154,33,67,0.12)`,display:'flex',alignItems:'center',gap:10}}>
+              <span style={{fontSize:16}}>💡</span>
+              <p style={{margin:0,fontSize:13,color:MUT,flex:1,lineHeight:1.5}}>Tap any future date to mark it unavailable. Green dates have confirmed bookings.</p>
+            </div>
+
+            {upcomingBlocked.length>0&&(
+              <div>
+                <p style={{margin:'0 0 10px',fontSize:13,fontWeight:800,color:DK}}>Upcoming blocked dates ({upcomingBlocked.length})</p>
+                <div style={{background:'#fff',borderRadius:16,overflow:'hidden',border:`1.5px solid ${BOR}`}}>
+                  {upcomingBlocked.slice(0,12).map((b,i,arr)=>{
+                    const rs=RS[b.reason];const d=new Date(b.blocked_date+'T00:00:00');
+                    return(
+                      <div key={b.id} style={{display:'flex',alignItems:'center',gap:12,padding:'12px 16px',borderBottom:i<arr.length-1?`1px solid ${BOR}`:'none'}}>
+                        <div style={{width:38,height:38,borderRadius:10,background:rs.bg,border:`1.5px solid ${rs.border}`,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                          <span style={{fontSize:13,fontWeight:800,color:rs.color,lineHeight:1}}>{d.getDate()}</span>
+                          <span style={{fontSize:8,color:rs.color,fontWeight:700,letterSpacing:.3}}>{MONTHS[d.getMonth()].slice(0,3).toUpperCase()}</span>
+                        </div>
+                        <div style={{flex:1}}><p style={{margin:0,fontSize:13,fontWeight:700,color:DK}}>{rs.label}</p>{b.note&&<p style={{margin:'2px 0 0',fontSize:11,color:MUT}}>{b.note}</p>}</div>
+                        <button onClick={()=>setBlockSheet({date:b.blocked_date,reason:b.reason,note:b.note||''})} style={{fontSize:11.5,color:CR,fontWeight:700,background:'rgba(154,33,67,0.07)',border:'none',borderRadius:20,padding:'5px 12px',cursor:'pointer'}}>Edit</button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Action sheet */}
+      {actionSheet&&(
+        <>
+          <div onClick={()=>setActionSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+            <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
+            <div style={{padding:'20px 20px 24px'}}>
+              <p style={{margin:'0 0 2px',fontSize:17,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>{actionSheet.couple_name}</p>
+              <p style={{margin:'0 0 20px',fontSize:12,color:MUT}}>{actionSheet.booking_ref} · {actionSheet.package_name}</p>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                {actionSheet.status==='confirmed'&&(
+                  <button onClick={()=>handleMarkComplete(actionSheet)} disabled={completing} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(30,124,74,0.25)`,background:'rgba(30,124,74,0.06)',cursor:'pointer'}}>
+                    <div style={{width:38,height:38,borderRadius:10,background:'rgba(30,124,74,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>✅</div>
+                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GR}}>{completing?'Updating…':'Mark as Completed'}</p><p style={{margin:'2px 0 0',fontSize:11,color:'#5a9c78'}}>Wedding day done</p></div>
+                  </button>
+                )}
+                {(actionSheet.status==='confirmed'||actionSheet.status==='completed')&&!actionSheet.review_requested&&(
+                  <button onClick={()=>handleReviewRequest(actionSheet)} disabled={requesting} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(189,152,63,0.3)`,background:'rgba(189,152,63,0.06)',cursor:'pointer'}}>
+                    <div style={{width:38,height:38,borderRadius:10,background:'rgba(189,152,63,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>⭐</div>
+                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GD2}}>{requesting?'Sending…':'Request a Review'}</p><p style={{margin:'2px 0 0',fontSize:11,color:'#a08040'}}>Send WhatsApp review link</p></div>
+                  </button>
+                )}
+                {actionSheet.review_requested&&(
+                  <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(30,124,74,0.25)`,background:'rgba(30,124,74,0.06)'}}>
+                    <div style={{width:38,height:38,borderRadius:10,background:'rgba(30,124,74,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>✓</div>
+                    <div><p style={{margin:0,fontSize:14,fontWeight:700,color:GR}}>Review request sent</p><p style={{margin:'2px 0 0',fontSize:11,color:'#5a9c78'}}>Waiting for couple</p></div>
+                  </div>
+                )}
+                <button onClick={()=>{setNoteDraft(actionSheet.vendor_notes||'');setNotesSheet(actionSheet);setActionSheet(null);}} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(189,152,63,0.25)`,background:'rgba(189,152,63,0.05)',cursor:'pointer'}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:'rgba(189,152,63,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📝</div>
+                  <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GD2}}>Add / edit note</p><p style={{margin:'2px 0 0',fontSize:11,color:'#a08040'}}>Private — only you see this</p></div>
+                </button>
+                <Link href="/messages" style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(29,111,168,0.25)`,background:'rgba(29,111,168,0.06)',textDecoration:'none'}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:'rgba(29,111,168,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>💬</div>
+                  <div><p style={{margin:0,fontSize:14,fontWeight:700,color:BL}}>Message Couple</p></div>
+                </Link>
+              </div>
+              <button onClick={()=>setActionSheet(null)} style={{width:'100%',marginTop:14,padding:'13px',borderRadius:14,border:'none',background:'#f4ede8',color:MUT,fontSize:13,fontWeight:700,cursor:'pointer'}}>Close</button>
+            </div>
+          </div>
+        </>
       )}
+
+      {/* Notes sheet */}
+      {notesSheet&&(
+        <>
+          <div onClick={()=>setNotesSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+            <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
+            <div style={{padding:'20px 20px 24px'}}>
+              <p style={{margin:'0 0 4px',fontSize:16,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>Private Note</p>
+              <p style={{margin:'0 0 16px',fontSize:12,color:MUT}}>{notesSheet.couple_name} · {notesSheet.booking_ref}</p>
+              <textarea value={noteDraft} onChange={e=>setNoteDraft(e.target.value)} placeholder="e.g. Bride prefers ivory linens. Final payment due 1 week before." rows={4} style={{width:'100%',padding:'12px 14px',borderRadius:12,border:`1.5px solid ${BOR}`,fontSize:13,color:DK,fontFamily:'inherit',resize:'none',outline:'none',boxSizing:'border-box',marginBottom:16}}/>
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={()=>setNotesSheet(null)} style={{flex:1,padding:'13px',borderRadius:13,border:`1.5px solid ${BOR}`,background:'#fff',color:MUT,fontSize:13,fontWeight:700,cursor:'pointer'}}>Cancel</button>
+                <button onClick={handleSaveNote} disabled={savingNote} style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:`linear-gradient(135deg,${GD},${GD2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:savingNote?'default':'pointer',opacity:savingNote?.7:1}}>{savingNote?'Saving…':'Save note'}</button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Block date sheet */}
+      {blockSheet&&(
+        <>
+          <div onClick={()=>setBlockSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .3s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+            <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
+            <div style={{padding:'20px 20px 24px'}}>
+              <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}}>
+                <div>
+                  <p style={{margin:0,fontSize:16,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>{new Date(blockSheet.date+'T00:00:00').toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+                  <p style={{margin:'3px 0 0',fontSize:11,color:MUT}}>{blocked.has(blockSheet.date)?'Edit this blocked date':'Block this date'}</p>
+                </div>
+                {blocked.has(blockSheet.date)&&<button onClick={handleDeleteBlock} disabled={savingBlock} style={{fontSize:12,fontWeight:700,color:'#c0322a',background:'rgba(192,50,42,0.07)',border:'none',borderRadius:20,padding:'6px 14px',cursor:'pointer'}}>Unblock</button>}
+              </div>
+              <p style={{margin:'0 0 10px',fontSize:11,fontWeight:800,color:MUT,textTransform:'uppercase',letterSpacing:.8}}>Reason</p>
+              <div style={{display:'flex',gap:8,marginBottom:18}}>
+                {(Object.entries(RS) as [Reason,any][]).map(([key,val])=>(
+                  <button key={key} onClick={()=>setBlockSheet(s=>s?{...s,reason:key}:s)} style={{flex:1,padding:'10px 4px',borderRadius:12,border:'none',cursor:'pointer',background:blockSheet.reason===key?val.bg:BG,color:blockSheet.reason===key?val.color:MUT,fontWeight:blockSheet.reason===key?800:500,fontSize:12,outline:blockSheet.reason===key?`2px solid ${val.color}`:'2px solid transparent',transition:'all .13s'}}>{val.label}</button>
+                ))}
+              </div>
+              <p style={{margin:'0 0 8px',fontSize:11,fontWeight:800,color:MUT,textTransform:'uppercase',letterSpacing:.8}}>Private note (optional)</p>
+              <textarea value={blockSheet.note} onChange={e=>setBlockSheet(s=>s?{...s,note:e.target.value}:s)} placeholder="e.g. Family event, travelling, another booking" style={{width:'100%',height:72,padding:'10px 14px',borderRadius:12,border:`1.5px solid ${BOR}`,fontSize:13,color:DK,fontFamily:'inherit',resize:'none',outline:'none',boxSizing:'border-box',marginBottom:18}}/>
+              <button onClick={handleSaveBlock} disabled={savingBlock} style={{width:'100%',height:50,borderRadius:14,border:'none',cursor:savingBlock?'default':'pointer',fontSize:14,fontWeight:800,background:`linear-gradient(135deg,${CR},${CR2})`,color:'#fff',boxShadow:'0 4px 16px rgba(154,33,67,0.28)',opacity:savingBlock?.7:1}}>
+                {savingBlock?'Saving…':blocked.has(blockSheet.date)?'Update date':'Block date'}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <VendorBottomNav/>
     </div>
-  )
+  );
 }

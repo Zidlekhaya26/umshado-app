@@ -262,6 +262,24 @@ export default function VendorDashboard() {
     else { try { await navigator.clipboard.writeText(url); alert('Link copied!'); } catch {} }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!confirm('Permanently delete your vendor account and all data? This cannot be undone.')) return;
+    const typed = window.prompt('Type DELETE to confirm:');
+    if (typed !== 'DELETE') { alert('Cancelled — you must type DELETE exactly.'); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/account/delete', {
+      method: 'DELETE',
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    if (res.ok) {
+      await supabase.auth.signOut();
+      router.push('/auth/sign-in');
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error || 'Failed to delete account. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100svh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14 }}>
@@ -290,8 +308,11 @@ export default function VendorDashboard() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)', pointerEvents: 'none' }} />
+        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '20px 20px 24px', position: 'relative' }}>
+          {/* Decorative circles clipped separately so the dropdown menu isn't cut off */}
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+            <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)' }} />
+          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             {/* Logo */}
@@ -318,14 +339,16 @@ export default function VendorDashboard() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={2}><circle cx="12" cy="5" r="1.5" fill="rgba(255,255,255,0.7)" /><circle cx="12" cy="12" r="1.5" fill="rgba(255,255,255,0.7)" /><circle cx="12" cy="19" r="1.5" fill="rgba(255,255,255,0.7)" /></svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 30, minWidth: 160, overflow: 'hidden' }}>
-                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>💳 Billing & Plans</Link>
-                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>📤 Share Profile</button>
+                <div style={{ position: 'absolute', right: 0, top: 42, background: '#fff', borderRadius: 14, boxShadow: '0 8px 24px rgba(0,0,0,0.15)', zIndex: 100, minWidth: 180, overflow: 'hidden' }}>
+                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>Billing & Plans</Link>
+                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Share Profile</button>
                   {vendor?.is_published && (
-                    <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: '1px solid #f0ebe0' }}>👁️ View Public Profile</Link>
+                    <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: '1px solid #f0ebe0' }}>View Public Profile</Link>
                   )}
                   <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }}
-                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>🚪 Log out</button>
+                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Log out</button>
+                  <button onClick={handleDeleteAccount}
+                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>Delete Account</button>
                 </div>
               )}
             </div>
@@ -494,7 +517,7 @@ export default function VendorDashboard() {
                 </div>
                 <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
-              <Link href="/vendor/billing#verification" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none' }}>
+              <Link href="/vendor/billing#verification" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(26,106,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>✓</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>Get Verified</p>
@@ -502,6 +525,13 @@ export default function VendorDashboard() {
                 </div>
                 <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
+              <button onClick={handleDeleteAccount} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(200,50,50,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🗑️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#c83232' }}>Delete Account</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#a05050' }}>Permanently removes your account and all data</p>
+                </div>
+              </button>
             </div>
           </div>
 

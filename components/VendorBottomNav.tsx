@@ -9,6 +9,7 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 export default function VendorBottomNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [hasCouple, setHasCouple]     = useState(false);
   const { user } = useAuthRole();
 
   useEffect(() => {
@@ -16,26 +17,31 @@ export default function VendorBottomNav() {
     let mounted = true;
     (async () => {
       try {
-        const { count } = await supabase
-          .from('notifications')
+        const { count } = await supabase.from('notifications')
           .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false);
-
+          .eq('user_id', user.id).eq('is_read', false);
         if (mounted) setUnreadCount(count || 0);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        console.error('Error loading unread notifications:', err);
-      }
+      } catch { /* non-fatal */ }
     })();
+    return () => { mounted = false; };
+  }, [user]);
 
+  useEffect(() => {
+    if (!user) { setHasCouple(false); return; }
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('profiles')
+          .select('has_couple').eq('id', user.id).maybeSingle();
+        if (mounted) setHasCouple(Boolean(data?.has_couple));
+      } catch { /* non-fatal */ }
+    })();
     return () => { mounted = false; };
   }, [user]);
 
   const navItems = [
     {
-      name: 'Dashboard',
-      href: '/vendor/dashboard',
+      name: 'Dashboard', href: '/vendor/dashboard',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -43,8 +49,7 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Insights',
-      href: '/vendor/insights',
+      name: 'Insights', href: '/vendor/insights',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -52,17 +57,15 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Bookings',
-      href: '/vendor/bookings',
+      name: 'Marketplace', href: '/marketplace',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
       ),
     },
     {
-      name: 'Chats',
-      href: '/messages',
+      name: 'Chats', href: '/messages',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -70,15 +73,14 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Alerts',
-      href: '/notifications',
+      name: 'Alerts', href: '/notifications',
       icon: (active: boolean) => (
         <div className="relative">
           <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           {unreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-white text-[10px] font-bold px-1 leading-none" style={{ background: '#9A2143' }}>
+            <span style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'#BD983F', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}>
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -86,17 +88,7 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Billing',
-      href: '/vendor/billing',
-      icon: (active: boolean) => (
-        <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Profile',
-      href: '/vendor/media',
+      name: 'Profile', href: '/vendor/media',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -106,39 +98,40 @@ export default function VendorBottomNav() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/messages') return pathname.startsWith('/messages');
-    if (href === '/vendor/billing') return pathname === '/vendor/billing';
-    if (href === '/vendor/bookings') {
-      return pathname === '/vendor/bookings' || pathname === '/vendor/availability';
-    }
-    if (href === '/vendor/media') {
-      // Active for any vendor sub-page that isn't dashboard/billing
-      return pathname === '/vendor/media' || pathname === '/vendor/services' || pathname === '/vendor/packages' || pathname === '/vendor/review';
-    }
+    if (href === '/marketplace') return pathname.startsWith('/marketplace');
+    if (href === '/messages')    return pathname.startsWith('/messages');
+    if (href === '/vendor/media') return ['/vendor/media','/vendor/services','/vendor/packages','/vendor/review'].includes(pathname);
     return pathname === href || pathname.startsWith(href + '/');
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
-      <div className="mx-auto w-full max-w-md lg:max-w-6xl lg:px-6">
-        <div className="flex items-center justify-around px-2 py-2">
+    <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #f0ede8', zIndex:50, boxShadow:'0 -2px 16px rgba(26,13,18,0.08)' }}>
+      {hasCouple && (
+        <div style={{ borderBottom: '1px solid rgba(154,33,67,0.1)', padding: '6px 12px' }}>
+          <Link href="/switch-role" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
+            background: 'rgba(154,33,67,0.07)', border: '1.5px solid rgba(154,33,67,0.18)',
+          }}>
+            <svg width="13" height="13" fill="none" stroke="#9A2143" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#9A2143', letterSpacing: .2 }}>Switch to Couple view</span>
+          </Link>
+        </div>
+      )}
+      <div style={{ maxWidth: 520, margin: '0 auto' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-around', padding:'8px 4px', paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex flex-col items-center justify-center px-3 py-2 rounded-lg transition-colors min-w-[56px] ${
-                  active
-                    ? ''
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                style={active ? { color: '#9A2143' } : {}}
-              >
+              <Link key={item.name} href={item.href} style={{
+                display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                padding:'6px 10px', borderRadius:12, minWidth:52, textDecoration:'none',
+                color: active ? '#9A2143' : '#7a5060', transition:'color 0.15s',
+              }}>
                 {item.icon(active)}
-                <span className={`text-[10px] mt-1 font-medium ${active ? 'font-semibold' : ''}`}>
-                  {item.name}
-                </span>
+                <span style={{ fontSize:10, marginTop:3, fontWeight: active ? 700 : 500, letterSpacing:0.2 }}>{item.name}</span>
               </Link>
             );
           })}

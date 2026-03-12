@@ -8,110 +8,96 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setUnreadCount]     = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
+  const [hasVendor, setHasVendor]         = useState(false);
   const { user } = useAuthRole();
 
   // Track unread notifications
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
-
     let mounted = true;
     (async () => {
       try {
         const { count } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('is_read', false);
-
+          .from('notifications').select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id).eq('is_read', false);
         if (mounted) setUnreadCount(count || 0);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        console.error('Error loading unread notifications:', err);
-      }
+      } catch { /* non-fatal */ }
     })();
-
     return () => { mounted = false; };
   }, [user]);
 
   // Track unread messages
   useEffect(() => {
     if (!user) { setUnreadMessages(0); return; }
-
     let mounted = true;
     (async () => {
       try {
-        // Get conversations where user is either couple or vendor
         const { data: convs } = await supabase
-          .from('conversations')
-          .select('id, couple_id, vendor_id, last_message_at, last_read_at');
-
+          .from('conversations').select('id,couple_id,vendor_id,last_message_at,last_read_at');
         if (!convs || !mounted) return;
-
-        // Filter conversations where user is participant and has unread messages
-        let totalUnread = 0;
+        let total = 0;
         for (const conv of convs) {
           const isParticipant = conv.couple_id === user.id || conv.vendor_id === user.id;
           if (!isParticipant) continue;
-
-          const lastMsg = conv.last_message_at ? new Date(conv.last_message_at) : null;
-          const lastRead = conv.last_read_at ? new Date(conv.last_read_at) : null;
-
+          const lastMsg  = conv.last_message_at ? new Date(conv.last_message_at) : null;
+          const lastRead = conv.last_read_at    ? new Date(conv.last_read_at)    : null;
           if (lastMsg && (!lastRead || lastMsg > lastRead)) {
-            // Count unread messages in this conversation
-            const { count } = await supabase
-              .from('messages')
+            const { count } = await supabase.from('messages')
               .select('*', { count: 'exact', head: true })
-              .eq('conversation_id', conv.id)
-              .neq('sender_id', user.id)
+              .eq('conversation_id', conv.id).neq('sender_id', user.id)
               .gt('created_at', lastRead?.toISOString() || '1970-01-01');
-
-            totalUnread += count || 0;
+            total += count || 0;
           }
         }
-
-        if (mounted) setUnreadMessages(totalUnread);
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        console.error('Error loading unread messages:', err);
-      }
+        if (mounted) setUnreadMessages(total);
+      } catch { /* non-fatal */ }
     })();
+    return () => { mounted = false; };
+  }, [user]);
 
+  // Check if this user also has a vendor account
+  useEffect(() => {
+    if (!user) { setHasVendor(false); return; }
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('profiles')
+          .select('has_vendor').eq('id', user.id).maybeSingle();
+        if (mounted) setHasVendor(Boolean(data?.has_vendor));
+      } catch { /* non-fatal */ }
+    })();
     return () => { mounted = false; };
   }, [user]);
 
   const navItems = [
     {
-      name: 'Home',
-      href: '/couple/dashboard',
+      name: 'Home', href: '/couple/dashboard',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-      )
+      ),
     },
     {
-      name: 'Planner',
-      href: '/couple/planner',
+      name: 'Planner', href: '/couple/planner',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
         </svg>
-      )
+      ),
     },
     {
-      name: 'Marketplace',
-      href: '/marketplace',
+      name: 'Marketplace', href: '/marketplace',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-      )
+      ),
     },
     {
-      name: 'Messages',
-      href: '/messages',
+      name: 'Messages', href: '/messages',
       icon: (active: boolean) => (
         <div className="relative">
           <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -123,20 +109,18 @@ export default function BottomNav() {
             </span>
           )}
         </div>
-      )
+      ),
     },
     {
-      name: 'Community',
-      href: '/live',
+      name: 'Community', href: '/live',
       icon: (active: boolean) => (
         <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
-      )
+      ),
     },
     {
-      name: 'Alerts',
-      href: '/notifications',
+      name: 'Alerts', href: '/notifications',
       icon: (active: boolean) => (
         <div className="relative">
           <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -148,41 +132,43 @@ export default function BottomNav() {
             </span>
           )}
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   const isActive = (href: string) => {
-    if (href === '/marketplace') {
-      // Marketplace and all its child routes should be active
-      return pathname.startsWith('/marketplace');
-    }
+    if (href === '/marketplace') return pathname.startsWith('/marketplace');
     return pathname === href || pathname.startsWith(href + '/');
   };
 
   return (
     <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
+      {/* Role switcher chip — only shown to dual-role users */}
+      {hasVendor && (
+        <div style={{ borderBottom: '1px solid rgba(154,33,67,0.1)', padding: '6px 12px' }}>
+          <Link href="/switch-role" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
+            background: 'rgba(154,33,67,0.07)', border: '1.5px solid rgba(154,33,67,0.18)',
+          }}>
+            <svg width="13" height="13" fill="none" stroke="#9A2143" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+            </svg>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#9A2143', letterSpacing: .2 }}>Switch to Vendor view</span>
+          </Link>
+        </div>
+      )}
+
       <div style={{ maxWidth:520, margin:'0 auto' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-around', padding:'8px 4px', paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                style={{
-                  display:'flex',
-                  flexDirection:'column',
-                  alignItems:'center',
-                  justifyContent:'center',
-                  padding:'6px 12px',
-                  borderRadius:12,
-                  minWidth:52,
-                  textDecoration:'none',
-                  color: active ? 'var(--um-gold)' : 'var(--muted)',
-                  transition:'color 0.15s',
-                }}
-              >
+              <Link key={item.name} href={item.href} style={{
+                display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                padding:'6px 12px', borderRadius:12, minWidth:52, textDecoration:'none',
+                color: active ? 'var(--um-gold)' : 'var(--muted)', transition:'color 0.15s',
+              }}>
                 {item.icon(active)}
                 <span style={{ fontSize:10, marginTop:3, fontWeight: active ? 700 : 500, letterSpacing:0.2 }}>
                   {item.name}

@@ -292,6 +292,24 @@ function SettingsContent() {
     router.push('/auth/sign-in');
   };
 
+  const handleDeleteAccount = async () => {
+    if (!confirm('Permanently delete your account and all data? This cannot be undone.')) return;
+    const typed = window.prompt('Type DELETE to confirm:');
+    if (typed !== 'DELETE') { alert('Cancelled — you must type DELETE exactly.'); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/account/delete', {
+      method: 'DELETE',
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    if (res.ok) {
+      await supabase.auth.signOut();
+      router.push('/auth/sign-in');
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error || 'Failed to delete account. Please try again.');
+    }
+  };
+
   const todayStr = new Date().toISOString().split('T')[0];
 
   /* ─────────────────────────────────────────────────────────
@@ -548,11 +566,18 @@ function SettingsContent() {
           {/* ── Account ── */}
           <Section title="Account" icon="👤">
             <Row
-              last
               icon={<svg width="17" height="17" fill="none" stroke={C.error} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>}
               label="Sign Out"
               danger
               onClick={handleSignOut}
+            />
+            <Row
+              last
+              icon={<svg width="17" height="17" fill="none" stroke={C.error} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>}
+              label="Delete Account"
+              sub="Permanently removes your account and all data"
+              danger
+              onClick={handleDeleteAccount}
             />
           </Section>
 
