@@ -277,9 +277,7 @@ export default function VendorReview(){
         )}
 
         {/* Lightbox */}
-        {logoOpen&&vendor?.logo_url&&(
-          <ImageLightbox src={vendor.logo_url} alt={vendor.business_name||''} onClose={()=>setLogoOpen(false)}/>
-        )}
+        <ImageLightbox src={vendor?.logo_url} alt={vendor?.business_name||''} isOpen={logoOpen} onClose={()=>setLogoOpen(false)}/>
       </div>
 
       {/* Bottom nav */}
