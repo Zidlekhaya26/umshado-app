@@ -262,9 +262,17 @@ export async function POST(req: NextRequest) {
     });
 
     if (!claudeRes.ok) {
-      const err = await claudeRes.text();
-      console.error('[ai/wedding-chat] Claude API error:', claudeRes.status, err);
-      return NextResponse.json({ error: 'AI service unavailable. Please try again.' }, { status: 502 });
+      const errText = await claudeRes.text();
+      console.error('[ai/wedding-chat] Claude API error:', claudeRes.status, errText);
+      let errDetail = 'AI service unavailable.';
+      try {
+        const errJson = JSON.parse(errText);
+        if (errJson?.error?.message) errDetail = errJson.error.message;
+      } catch { /* non-JSON body */ }
+      return NextResponse.json(
+        { error: errDetail, claudeStatus: claudeRes.status },
+        { status: 502 }
+      );
     }
 
     const claudeData = await claudeRes.json();

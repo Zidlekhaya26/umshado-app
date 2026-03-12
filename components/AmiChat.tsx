@@ -28,6 +28,42 @@ const STARTERS = [
   '🎵 How do I find the right DJ?',
 ];
 
+/* ── Simple markdown renderer for Ami's messages ─────────────── */
+function renderMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  const nodes: React.ReactNode[] = [];
+  let key = 0;
+
+  const inlineFormat = (str: string): React.ReactNode => {
+    // Bold: **text**
+    const parts = str.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((p, i) => {
+      if (p.startsWith('**') && p.endsWith('**')) {
+        return <strong key={i} style={{ fontWeight: 700 }}>{p.slice(2, -2)}</strong>;
+      }
+      return p;
+    });
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const bulletMatch = line.match(/^(\s*[-•*]\s+)(.*)/);
+    if (bulletMatch) {
+      nodes.push(
+        <div key={key++} style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+          <span style={{ flexShrink: 0, marginTop: 1 }}>•</span>
+          <span>{inlineFormat(bulletMatch[2])}</span>
+        </div>
+      );
+    } else if (line.trim() === '') {
+      if (i > 0 && nodes.length > 0) nodes.push(<div key={key++} style={{ height: 6 }} />);
+    } else {
+      nodes.push(<div key={key++}>{inlineFormat(line)}</div>);
+    }
+  }
+  return nodes;
+}
+
 /* ── Typing dots ─────────────────────────────────────────────── */
 function TypingDots() {
   return (
@@ -91,16 +127,15 @@ function Bubble({ msg }: { msg: ChatMsg }) {
             : '#fff',
           color: isUser ? '#fff' : DARK,
           fontSize: 13.5,
-          lineHeight: 1.55,
+          lineHeight: 1.6,
           boxShadow: isUser
             ? '0 3px 14px rgba(184,151,62,0.3)'
             : '0 2px 8px rgba(24,16,10,0.07)',
           border: isUser ? 'none' : '1.5px solid rgba(184,151,62,0.12)',
-          whiteSpace: 'pre-wrap',
           wordBreak: 'break-word',
         }}
       >
-        {msg.content}
+        {isUser ? msg.content : renderMarkdown(msg.content)}
       </div>
 
       <span style={{ fontSize: 10, color: LITE, opacity: 0.6, marginTop: 3, marginRight: isUser ? 3 : 0, marginLeft: isUser ? 0 : 3 }}>
@@ -213,13 +248,10 @@ export default function AmiChat({ open, onClose, daysLeft, partnerName }: AmiCha
       }
 
       if (!res.ok) {
+        const errMsg = data?.error ?? "Sorry, I couldn't connect just now. Please try again in a moment.";
         setMessages(prev => [
           ...prev,
-          {
-            role: 'assistant',
-            content: "Sorry, I couldn't connect just now. Please try again in a moment.",
-            ts: new Date().toISOString(),
-          },
+          { role: 'assistant', content: errMsg, ts: new Date().toISOString() },
         ]);
         return;
       }
@@ -280,6 +312,9 @@ export default function AmiChat({ open, onClose, daysLeft, partnerName }: AmiCha
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
         .ami-panel { animation: amiSlideUp 0.28s cubic-bezier(0.34,1.56,0.64,1); }
         textarea:focus { outline: none; }
       `}</style>
@@ -290,7 +325,7 @@ export default function AmiChat({ open, onClose, daysLeft, partnerName }: AmiCha
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(24,16,10,0.45)',
-          zIndex: 48,
+          zIndex: 55,
           backdropFilter: 'blur(2px)',
         }}
       />
@@ -301,10 +336,10 @@ export default function AmiChat({ open, onClose, daysLeft, partnerName }: AmiCha
         style={{
           position: 'fixed', bottom: 0, left: 0, right: 0,
           maxWidth: 560, margin: '0 auto',
-          height: '88svh',
+          height: '92svh',
           background: BG,
           borderRadius: '24px 24px 0 0',
-          zIndex: 49,
+          zIndex: 56,
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
           boxShadow: '0 -12px 48px rgba(24,16,10,0.22)',
@@ -416,11 +451,12 @@ export default function AmiChat({ open, onClose, daysLeft, partnerName }: AmiCha
 
         {/* ── Input bar ─────────────────────────────────── */}
         <div style={{
-          padding: `10px 14px calc(10px + env(safe-area-inset-bottom))`,
+          padding: `10px 14px calc(14px + env(safe-area-inset-bottom))`,
           background: '#fff',
-          borderTop: '1px solid rgba(184,151,62,0.12)',
+          borderTop: '1px solid rgba(184,151,62,0.15)',
           flexShrink: 0,
           display: 'flex', alignItems: 'flex-end', gap: 10,
+          boxShadow: '0 -2px 12px rgba(184,151,62,0.06)',
         }}>
           <div style={{
             flex: 1,
