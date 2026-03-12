@@ -262,6 +262,24 @@ export default function VendorDashboard() {
     else { try { await navigator.clipboard.writeText(url); alert('Link copied!'); } catch {} }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!confirm('Permanently delete your vendor account and all data? This cannot be undone.')) return;
+    const typed = window.prompt('Type DELETE to confirm:');
+    if (typed !== 'DELETE') { alert('Cancelled — you must type DELETE exactly.'); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch('/api/account/delete', {
+      method: 'DELETE',
+      headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+    });
+    if (res.ok) {
+      await supabase.auth.signOut();
+      router.push('/auth/sign-in');
+    } else {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error || 'Failed to delete account. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ minHeight: '100svh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 14 }}>
@@ -329,6 +347,8 @@ export default function VendorDashboard() {
                   )}
                   <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }}
                     style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>🚪 Log out</button>
+                  <button onClick={handleDeleteAccount}
+                    style={{ width: '100%', padding: '12px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid #f0ebe0' }}>🗑️ Delete Account</button>
                 </div>
               )}
             </div>
@@ -497,7 +517,7 @@ export default function VendorDashboard() {
                 </div>
                 <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
-              <Link href="/vendor/billing#verification" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none' }}>
+              <Link href="/vendor/billing#verification" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(26,106,168,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>✓</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>Get Verified</p>
@@ -505,6 +525,13 @@ export default function VendorDashboard() {
                 </div>
                 <svg width="14" height="14" fill="none" stroke="#9a7c58" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
+              <button onClick={handleDeleteAccount} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(200,50,50,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🗑️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#c83232' }}>Delete Account</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#a05050' }}>Permanently removes your account and all data</p>
+                </div>
+              </button>
             </div>
           </div>
 
