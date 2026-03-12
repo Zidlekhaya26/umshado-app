@@ -107,16 +107,16 @@ export default function VendorBottomNav() {
   return (
     <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:'1px solid #f0ede8', zIndex:50, boxShadow:'0 -2px 16px rgba(26,13,18,0.08)' }}>
       {hasCouple && (
-        <div style={{ borderBottom: '1px solid rgba(154,33,67,0.08)', padding: '5px 16px' }}>
+        <div style={{ borderBottom: '1px solid rgba(154,33,67,0.1)', padding: '6px 12px' }}>
           <Link href="/switch-role" style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '4px 12px', borderRadius: 20, textDecoration: 'none',
-            background: 'rgba(154,33,67,0.06)', border: '1px solid rgba(154,33,67,0.14)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
+            background: 'rgba(154,33,67,0.07)', border: '1.5px solid rgba(154,33,67,0.18)',
           }}>
-            <svg width="11" height="11" fill="none" stroke="#9A2143" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="#9A2143" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
             </svg>
-            <span style={{ fontSize: 10.5, fontWeight: 800, color: '#9A2143', letterSpacing: .3 }}>Switch to Couple view</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: '#9A2143', letterSpacing: .2 }}>Switch to Couple view</span>
           </Link>
         </div>
       )}

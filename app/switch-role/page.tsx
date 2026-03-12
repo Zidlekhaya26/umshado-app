@@ -178,18 +178,20 @@ function SwitchRoleContent() {
     setSwitching(targetRole);
     setError(null);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/auth/sign-in'); return; }
-
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ active_role: targetRole })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
+      // Use server-side API route so the update runs with service-role
+      // and is never blocked by RLS policies on the profiles table.
+      const res = await fetch('/api/role/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: targetRole }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Server error ${res.status}`);
+      }
 
       // Small delay so user sees the animation
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 500));
 
       const target = searchParams?.get('target');
       if (target) { router.replace(decodeURIComponent(target)); return; }
