@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -17,7 +17,6 @@ const AuthRoleContext = createContext<AuthRoleContextValue | null>(null);
 
 async function fetchRole(userId: string): Promise<Role> {
   try {
-    // Race the DB fetch against a short timeout to avoid hanging the UI
     const p = (async () => {
       const { data, error } = await supabase
         .from("profiles")
@@ -29,7 +28,9 @@ async function fetchRole(userId: string): Promise<Role> {
 
     const res: any = await Promise.race([
       p,
-      new Promise((resolve) => setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3000)),
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3000)
+      ),
     ]);
 
     if (res?.error) {
@@ -46,29 +47,32 @@ async function fetchRole(userId: string): Promise<Role> {
 }
 
 export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<Role>(null);
+  const [user, setUser]     = useState<User | null>(null);
+  const [role, setRole]     = useState<Role>(null);
   const [loading, setLoading] = useState(true);
+  const userRef = useRef<User | null>(null);
 
-  const refreshRole = async () => {
-    if (!user?.id) {
-      setRole(null);
-      return;
-    }
-    const r = await fetchRole(user.id);
+  // Keep ref in sync for use in event handlers
+  useEffect(() => { userRef.current = user; }, [user]);
+
+  const refreshRole = useCallback(async () => {
+    const uid = userRef.current?.id;
+    if (!uid) { setRole(null); return; }
+    const r = await fetchRole(uid);
     setRole(r);
-  };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+
     const init = async () => {
       setLoading(true);
       try {
-        // Race session fetch with timeout so we don't stay stuck in loading.
-        const sessionPromise = supabase.auth.getSession();
         const sessionRes: any = await Promise.race([
-          sessionPromise,
-          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 4000)),
+          supabase.auth.getSession(),
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ data: { session: null } }), 4000)
+          ),
         ]);
 
         const u = sessionRes?.data?.session?.user ?? null;
@@ -94,7 +98,6 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
     init();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Handle auth state changes safely without leaking promises into unmounted component
       const u = session?.user ?? null;
       if (!mounted) return;
       setUser(u);
@@ -113,19 +116,41 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
       })();
     });
 
+    // Re-fetch role when tab becomes visible again (after switch-role redirect)
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && userRef.current?.id) {
+        fetchRole(userRef.current.id).then((r) => {
+          if (mounted) setRole(r);
+        });
+      }
+    };
+
+    const onFocus = () => {
+      if (userRef.current?.id) {
+        fetchRole(userRef.current.id).then((r) => {
+          if (mounted) setRole(r);
+        });
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      window.addEventListener("focus", onFocus);
+    }
+
     return () => {
       mounted = false;
-      try {
-        sub?.subscription?.unsubscribe?.();
-      } catch (e) {
-        // ignore
+      try { sub?.subscription?.unsubscribe?.(); } catch {}
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener("focus", onFocus);
       }
     };
   }, []);
 
   const value = useMemo<AuthRoleContextValue>(
     () => ({ user, role, loading, refreshRole }),
-    [user, role, loading]
+    [user, role, loading, refreshRole]
   );
 
   return <AuthRoleContext.Provider value={value}>{children}</AuthRoleContext.Provider>;
