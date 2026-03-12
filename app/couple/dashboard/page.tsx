@@ -292,6 +292,7 @@ export default function CoupleDashboard() {
     { icon:'📋', label:'Planner',  href:'/couple/planner' },
     { icon:'🏪', label:'Vendors',  href:'/marketplace' },
     { icon:'💬', label:'Messages', href:'/messages' },
+    { icon:'📅', label:'Bookings', href:'/couple/bookings' },
     { icon:'👥', label:'Guests',   href:'/couple/planner?tab=guests' },
   ];
 
@@ -553,6 +554,17 @@ export default function CoupleDashboard() {
               <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.65)' }}>Photography · Catering · Décor · and more</p>
             </div>
             <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.14)', border:'1.5px solid rgba(255,255,255,0.22)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Browse →</Link>
+          </div>
+
+          {/* ── My Bookings CTA ────────────────────────────── */}
+          <div className="dc" style={{ background:'linear-gradient(160deg,#fdf6ee 0%,#f5e6c8 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative', border:'1.5px solid rgba(184,151,62,0.25)' }}>
+            <div style={{ position:'absolute', top:-20, right:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.06)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,rgba(154,33,67,0.1),rgba(184,151,62,0.15))', border:'1.5px solid rgba(184,151,62,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>📅</div>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#1a0d12', fontFamily:'var(--font-display,Georgia,serif)' }}>My Bookings</p>
+              <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>Upcoming vendors · countdowns · reviews</p>
+            </div>
+            <Link href="/couple/bookings" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
           </div>
 
           {/* ── 6. Live page CTA ───────────────────────────── */}
