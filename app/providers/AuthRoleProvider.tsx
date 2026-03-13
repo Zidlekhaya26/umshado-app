@@ -75,7 +75,27 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
           ),
         ]);
 
-        const u = sessionRes?.data?.session?.user ?? null;
+        let session = sessionRes?.data?.session ?? null;
+
+        // If localStorage was cleared (app reopened after close), getSession()
+        // returns null even though a valid refresh token is stored in a cookie.
+        // Attempt a silent token refresh so the user stays logged in.
+        if (!session && typeof document !== "undefined") {
+          const refreshToken = (() => {
+            const m = document.cookie.match(/(?:^|; )sb-refresh-token=([^;]*)/);
+            return m ? decodeURIComponent(m[1]) : null;
+          })();
+          if (refreshToken) {
+            try {
+              const { data: rd } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
+              session = rd?.session ?? null;
+            } catch (e) {
+              console.warn("AuthRoleProvider: cookie refresh failed", e);
+            }
+          }
+        }
+
+        const u = session?.user ?? null;
         if (!mounted) return;
         setUser(u);
 
