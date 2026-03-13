@@ -904,7 +904,7 @@ function CouplePlannerContent() {
 
       {/* Add Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Task</h3>
             <div className="space-y-3">
@@ -921,7 +921,7 @@ function CouplePlannerContent() {
 
       {/* Add Budget Modal */}
       {showBudgetModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add Budget Item</h3>
             <div className="space-y-3">
@@ -939,7 +939,7 @@ function CouplePlannerContent() {
 
       {/* Edit Budget Modal */}
       {editingBudgetItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Budget Item</h3>
             <div className="space-y-3">
@@ -958,7 +958,7 @@ function CouplePlannerContent() {
 
       {/* Record Payment Modal */}
       {showPaymentModal && paymentItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
             <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
@@ -975,7 +975,7 @@ function CouplePlannerContent() {
 
       {/* Add Guest Modal */}
       {showGuestModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Guest</h3>
             <div className="space-y-3">
@@ -1003,7 +1003,7 @@ function CouplePlannerContent() {
 
       {/* Edit Guest Modal */}
       {editingGuest && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Guest</h3>
             <div className="space-y-3">

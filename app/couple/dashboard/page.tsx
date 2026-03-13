@@ -697,7 +697,7 @@ export default function CoupleDashboard() {
         <button
           onClick={() => setShowAmi(true)}
           style={{
-            position: 'fixed', bottom: 90, right: 18, zIndex: 40,
+            position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', right: 18, zIndex: 55,
             width: 52, height: 52, borderRadius: '50%', border: 'none',
             background: `linear-gradient(135deg, ${G}, ${G2})`,
             color: '#fff', fontSize: 22, cursor: 'pointer',
