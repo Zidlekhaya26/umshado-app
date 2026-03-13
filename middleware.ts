@@ -81,10 +81,8 @@ export async function middleware(req: NextRequest) {
         return req.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        // Write updated cookies to both the (cloned) request and response
-        cookiesToSet.forEach(({ name, value, options }) =>
-          req.cookies.set(name, value, options)
-        );
+        // req.cookies.set only accepts (name, value) — options go on the response
+        cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
         response = NextResponse.next({ request: req });
         cookiesToSet.forEach(({ name, value, options }) =>
           response.cookies.set(name, value, options)
