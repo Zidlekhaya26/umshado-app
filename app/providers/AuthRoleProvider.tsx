@@ -51,6 +51,9 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
   const [role, setRole]     = useState<Role>(null);
   const [loading, setLoading] = useState(true);
   const userRef = useRef<User | null>(null);
+  // Prevents onAuthStateChange from racing with init() on startup.
+  // init() is the sole source of truth for the initial auth state.
+  const initDoneRef = useRef(false);
 
   // Keep ref in sync for use in event handlers
   useEffect(() => { userRef.current = user; }, [user]);
@@ -77,14 +80,25 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
 
         let session = sessionRes?.data?.session ?? null;
 
-        // If localStorage was cleared (app reopened after close), getSession()
-        // returns null even though a valid refresh token is stored in a cookie.
-        // Attempt a silent token refresh so the user stays logged in.
+        // Case 1: session exists but access token is expired.
+        // Pages call supabase.auth.getUser() which hits the API with the raw
+        // token — an expired token returns null there. Refresh proactively so
+        // getUser() succeeds by the time any page runs its auth check.
+        if (session && session.expires_at && session.expires_at * 1000 < Date.now()) {
+          try {
+            const { data: rd } = await supabase.auth.refreshSession();
+            if (rd?.session) session = rd.session;
+          } catch (e) {
+            console.warn("AuthRoleProvider: proactive token refresh failed", e);
+          }
+        }
+
+        // Case 2: no session at all (localStorage was cleared by the OS/browser
+        // after the app was closed). Fall back to the refresh-token cookie that
+        // supabaseClient.ts writes on every setItem call.
         if (!session && typeof document !== "undefined") {
-          const refreshToken = (() => {
-            const m = document.cookie.match(/(?:^|; )sb-refresh-token=([^;]*)/);
-            return m ? decodeURIComponent(m[1]) : null;
-          })();
+          const m = document.cookie.match(/(?:^|; )sb-refresh-token=([^;]*)/);
+          const refreshToken = m ? decodeURIComponent(m[1]) : null;
           if (refreshToken) {
             try {
               const { data: rd } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
@@ -108,18 +122,26 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.warn("AuthRoleProvider: init error", e);
-        setUser(null);
-        setRole(null);
+        if (mounted) { setUser(null); setRole(null); }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          initDoneRef.current = true;
+          setLoading(false);
+        }
       }
     };
 
     init();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      const u = session?.user ?? null;
+      // Ignore events that fire before init() finishes. The INITIAL_SESSION event
+      // fires with null when localStorage is empty, which would prematurely set
+      // loading=false and trigger page-level sign-in redirects before our cookie
+      // refresh has had a chance to restore the session.
+      if (!initDoneRef.current) return;
       if (!mounted) return;
+
+      const u = session?.user ?? null;
       setUser(u);
 
       (async () => {
