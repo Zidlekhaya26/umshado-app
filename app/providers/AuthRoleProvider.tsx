@@ -47,15 +47,12 @@ async function fetchRole(userId: string): Promise<Role> {
 }
 
 export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser]     = useState<User | null>(null);
-  const [role, setRole]     = useState<Role>(null);
+  const [user, setUser]       = useState<User | null>(null);
+  const [role, setRole]       = useState<Role>(null);
   const [loading, setLoading] = useState(true);
-  const userRef = useRef<User | null>(null);
-  // Prevents onAuthStateChange from racing with init() on startup.
-  // init() is the sole source of truth for the initial auth state.
-  const initDoneRef = useRef(false);
+  const userRef      = useRef<User | null>(null);
+  const initDoneRef  = useRef(false);
 
-  // Keep ref in sync for use in event handlers
   useEffect(() => { userRef.current = user; }, [user]);
 
   const refreshRole = useCallback(async () => {
@@ -71,50 +68,48 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       setLoading(true);
       try {
-        const sessionRes: any = await Promise.race([
-          supabase.auth.getSession(),
+        // ── Step 1: getUser() ─────────────────────────────────────────────────
+        // Unlike getSession(), getUser() awaits the SDK's internal
+        // initializePromise which includes any pending autoRefreshToken call.
+        // This means:
+        //   • expired access token  → SDK refreshes first, then getUser() succeeds
+        //   • valid access token    → getUser() succeeds immediately
+        //   • no session at all     → getUser() returns { user: null }
+        // No manual refreshSession() needed, so there's no double-refresh race.
+        const getUserResult: any = await Promise.race([
+          supabase.auth.getUser(),
           new Promise((resolve) =>
-            setTimeout(() => resolve({ data: { session: null } }), 4000)
+            setTimeout(() => resolve({ data: { user: null } }), 10000)
           ),
         ]);
 
-        let session = sessionRes?.data?.session ?? null;
+        let resolvedUser: User | null = getUserResult?.data?.user ?? null;
 
-        // Case 1: session exists but access token is expired.
-        // Pages call supabase.auth.getUser() which hits the API with the raw
-        // token — an expired token returns null there. Refresh proactively so
-        // getUser() succeeds by the time any page runs its auth check.
-        if (session && session.expires_at && session.expires_at * 1000 < Date.now()) {
-          try {
-            const { data: rd } = await supabase.auth.refreshSession();
-            if (rd?.session) session = rd.session;
-          } catch (e) {
-            console.warn("AuthRoleProvider: proactive token refresh failed", e);
-          }
-        }
-
-        // Case 2: no session at all (localStorage was cleared by the OS/browser
-        // after the app was closed). Fall back to the refresh-token cookie that
-        // supabaseClient.ts writes on every setItem call.
-        if (!session && typeof document !== "undefined") {
+        // ── Step 2: cookie fallback ───────────────────────────────────────────
+        // getUser() returns null when the SDK had NO session to start with
+        // (localStorage was cleared by the OS/browser after the app was closed).
+        // In that case the refresh token cookie written by supabaseClient.ts
+        // can restore the session without a full re-login.
+        if (!resolvedUser && typeof document !== "undefined") {
           const m = document.cookie.match(/(?:^|; )sb-refresh-token=([^;]*)/);
           const refreshToken = m ? decodeURIComponent(m[1]) : null;
           if (refreshToken) {
             try {
-              const { data: rd } = await supabase.auth.refreshSession({ refresh_token: refreshToken });
-              session = rd?.session ?? null;
+              const { data: rd } = await supabase.auth.refreshSession({
+                refresh_token: refreshToken,
+              });
+              resolvedUser = rd?.session?.user ?? null;
             } catch (e) {
               console.warn("AuthRoleProvider: cookie refresh failed", e);
             }
           }
         }
 
-        const u = session?.user ?? null;
         if (!mounted) return;
-        setUser(u);
+        setUser(resolvedUser);
 
-        if (u?.id) {
-          const r = await fetchRole(u.id);
+        if (resolvedUser?.id) {
+          const r = await fetchRole(resolvedUser.id);
           if (!mounted) return;
           setRole(r);
         } else {
@@ -133,11 +128,10 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
 
     init();
 
+    // onAuthStateChange handles ongoing auth changes AFTER init() completes.
+    // We skip all events fired during init() to prevent the INITIAL_SESSION(null)
+    // race that would set loading=false before the cookie fallback runs.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Ignore events that fire before init() finishes. The INITIAL_SESSION event
-      // fires with null when localStorage is empty, which would prematurely set
-      // loading=false and trigger page-level sign-in redirects before our cookie
-      // refresh has had a chance to restore the session.
       if (!initDoneRef.current) return;
       if (!mounted) return;
 
@@ -158,7 +152,6 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
       })();
     });
 
-    // Re-fetch role when tab becomes visible again (after switch-role redirect)
     const onVisibilityChange = () => {
       if (document.visibilityState === "visible" && userRef.current?.id) {
         fetchRole(userRef.current.id).then((r) => {
