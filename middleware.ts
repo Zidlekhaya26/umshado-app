@@ -112,18 +112,17 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // If no token, redirect to sign-in preserving intended path
+  // If no token cookie, let the client-side handle auth (it reads from localStorage
+  // and will redirect to sign-in if there's genuinely no session).
   if (!accessToken) {
-    const signInUrl = new URL('/auth/sign-in', req.url);
-    signInUrl.searchParams.set('redirect', req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+    return NextResponse.next();
   }
 
   const user = await fetchUserFromToken(accessToken);
   if (!user || !user.id) {
-    const signInUrl = new URL('/auth/sign-in', req.url);
-    signInUrl.searchParams.set('redirect', req.nextUrl.pathname + req.nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+    // Token is expired or invalid — the Supabase client will auto-refresh it from
+    // localStorage on the client side. Don't redirect here or the refresh never happens.
+    return NextResponse.next();
   }
 
   const profile = await fetchProfileState(user.id, accessToken);
