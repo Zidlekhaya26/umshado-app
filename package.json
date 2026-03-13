@@ -16,6 +16,7 @@
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
+    "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.93.3",
     "@vercel/og": "^0.10.0",
     "dom-to-image-more": "^2.16.0",
