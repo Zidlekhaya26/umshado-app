@@ -1,6 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
 
 // Crimson Design System v4
@@ -12,6 +15,16 @@ const BG = '#faf8f5';    // Warm ivory background
 const DK = '#1a0d12';    // Dark text
 
 export default function Home() {
+  const { user, role, loading } = useAuthRole();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    if (user && role === 'couple') { router.replace('/couple/dashboard'); return; }
+    if (user && role === 'vendor') { router.replace('/vendor/dashboard'); return; }
+    // user logged in but no role yet (onboarding incomplete) — let them stay
+  }, [user, role, loading, router]);
+
   return (
     <div style={{ 
       minHeight: '100svh', 
