@@ -21,11 +21,11 @@ interface VendorEvent {
 }
 
 /* ─── Design tokens ──────────────────────────────────────── */
-const GOLD    = '#b8973e';
-const GOLD_LT = 'rgba(184,151,62,0.15)';
-const DARK    = '#18100a';
-const MID     = '#5c3d28';
-const BG      = '#faf7f2';
+const GOLD    = '#BD983F';
+const GOLD_LT = 'rgba(189,152,63,0.15)';
+const DARK    = '#1a0d12';
+const MID     = '#7a5060';
+const BG      = '#faf8f5';
 
 /* ─── Metric config ──────────────────────────────────────── */
 const METRICS = [
@@ -230,7 +230,7 @@ export default function VendorInsights() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(135deg,#9A2143 0%,#b8315a 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>

@@ -238,19 +238,19 @@ export default function VendorBookingsPage(){
                         </div>
                         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
                           <div style={{background:BG,borderRadius:11,padding:'9px 12px'}}>
-                            <p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Event Date</p>
+                            <p style={{margin:0,fontSize:9,fontWeight:700,color:MUT,textTransform:'uppercase',letterSpacing:.5}}>Event Date</p>
                             <p style={{margin:'3px 0 0',fontSize:13,fontWeight:700,color:DK}}>{eventDate?eventDate.toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}):'TBD'}</p>
                             {daysUntil!==null&&daysUntil>=0&&<p style={{margin:'1px 0 0',fontSize:10,fontWeight:700,color:daysUntil<=7?CR:GD2}}>{daysUntil===0?'🎊 Today!':`in ${daysUntil} day${daysUntil!==1?'s':''}`}</p>}
                           </div>
                           <div style={{background:BG,borderRadius:11,padding:'9px 12px'}}>
-                            <p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Price</p>
+                            <p style={{margin:0,fontSize:9,fontWeight:700,color:MUT,textTransform:'uppercase',letterSpacing:.5}}>Price</p>
                             <p style={{margin:'3px 0 0',fontSize:14,fontWeight:800,color:CR,fontFamily:'Georgia,serif'}}>{fmtP(booking.confirmed_price)}</p>
                           </div>
-                          {booking.event_location&&<div style={{background:BG,borderRadius:11,padding:'9px 12px',gridColumn:'1/-1'}}><p style={{margin:0,fontSize:9,fontWeight:700,color:'#9ca3af',textTransform:'uppercase',letterSpacing:.5}}>Location</p><p style={{margin:'3px 0 0',fontSize:13,color:DK}}>📍 {booking.event_location}</p></div>}
+                          {booking.event_location&&<div style={{background:BG,borderRadius:11,padding:'9px 12px',gridColumn:'1/-1'}}><p style={{margin:0,fontSize:9,fontWeight:700,color:MUT,textTransform:'uppercase',letterSpacing:.5}}>Location</p><p style={{margin:'3px 0 0',fontSize:13,color:DK}}>📍 {booking.event_location}</p></div>}
                           {booking.vendor_notes&&<div style={{background:'rgba(189,152,63,0.06)',borderRadius:11,padding:'9px 12px',gridColumn:'1/-1',border:`1px solid rgba(189,152,63,0.2)`}}><p style={{margin:0,fontSize:9,fontWeight:700,color:GD2,textTransform:'uppercase',letterSpacing:.5}}>My Note</p><p style={{margin:'3px 0 0',fontSize:12,color:'#6b4f1c'}}>{booking.vendor_notes}</p></div>}
                         </div>
                         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-                          <span style={{fontSize:10,fontWeight:600,color:'#9ca3af'}}>{booking.booking_ref}</span>
+                          <span style={{fontSize:10,fontWeight:600,color:MUT}}>{booking.booking_ref}</span>
                           <div style={{display:'flex',gap:8}}>
                             <button onClick={()=>{setNoteDraft(booking.vendor_notes||'');setNotesSheet(booking);}} style={{fontSize:12,fontWeight:700,color:GD2,background:'rgba(189,152,63,0.08)',border:'none',borderRadius:20,padding:'6px 12px',cursor:'pointer'}}>📝 Note</button>
                             <button onClick={()=>setActionSheet(booking)} style={{fontSize:12,fontWeight:700,color:CR,background:'rgba(154,33,67,0.07)',border:'none',borderRadius:20,padding:'6px 14px',cursor:'pointer'}}>Actions</button>
