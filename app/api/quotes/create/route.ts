@@ -9,7 +9,7 @@ const CreateQuoteSchema = z.object({
   vendorId:    z.string().uuid('vendorId must be a valid UUID'),
   packageId:   z.string().min(1, 'packageId is required'),
   packageName: z.string().min(1).max(200).optional(),
-  pricingMode: z.enum(['guest-based', 'hour-based', 'fixed']).optional(),
+  pricingMode: z.enum(['guest-based', 'hour-based', 'fixed', 'time-based', 'per-person', 'package-based', 'event-based', 'quantity-based']).optional().nullable(),
   guestCount:  z.number().int().min(1).max(10000).optional().nullable(),
   hours:       z.number().min(0).max(168).optional().nullable(),
   basePrice:   z.number().min(0),
