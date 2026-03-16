@@ -674,7 +674,7 @@ function CouplePlannerContent() {
           <div className="flex gap-2">
             {(['tasks', 'budget', 'guests', 'seating'] as const).map(tab => (
               <button key={tab} onClick={() => handleTabChange(tab)} className={`flex-1 px-4 py-2 rounded-full text-sm font-semibold transition-all capitalize ${activeTab === tab ? 'bg-purple-600 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                {tab === 'seating' ? '🪑 Seats' : tab}
+                {tab === 'seating' ? 'Seats' : tab}
               </button>
             ))}
           </div>
