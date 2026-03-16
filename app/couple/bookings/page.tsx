@@ -25,8 +25,6 @@ type Tab = 'upcoming' | 'past';
 /* ─── Helpers ─────────────────────────────────────────────── */
 const fmtDate = (d: string) =>
   new Date(d + 'T00:00:00').toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' });
-const fmtPrice = (cents: number) =>
-  `R${(cents / 100).toLocaleString('en-ZA', { minimumFractionDigits: 0 })}`;
 const daysUntil = (d: string) => {
   const t = new Date(); t.setHours(0,0,0,0);
   return Math.ceil((new Date(d + 'T00:00:00').getTime() - t.getTime()) / 86400000);

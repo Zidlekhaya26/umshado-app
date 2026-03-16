@@ -29,7 +29,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     loadNotifications();
-  }, []);
+  }, [u?.id]); // re-fetch when auth resolves
 
   const loadNotifications = async () => {
     try {
@@ -131,6 +131,8 @@ export default function NotificationsPage() {
       case 'quote_status_updated':
       case 'quote_updated':
         return '💰';
+      case 'booking_confirmed':
+        return '📅';
       case 'message_received':
       case 'message':
         return '💬';
@@ -143,77 +145,80 @@ export default function NotificationsPage() {
     }
   };
 
+  const CR = '#9A2143', CR2 = '#731832', GD = '#BD983F';
+  const DARK = '#1a0d12', MUT = '#7a5060', BG = '#faf8f5', BOR = 'rgba(154,33,67,0.1)';
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-[900px] md:mx-auto min-h-[100svh] flex flex-col pb-24 pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
-        <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+    <div style={{ minHeight: '100svh', background: BG, fontFamily: 'system-ui, sans-serif' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+
+      <div style={{ maxWidth: 600, margin: '0 auto', paddingBottom: 100 }}>
+
+        {/* Header */}
+        <div style={{ background: `linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`, padding: '22px 20px 20px', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: '50%', background: 'rgba(189,152,63,0.1)', pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <UmshadoIcon size={28} />
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Notifications</h1>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  {unreadCount > 0
-                    ? `${unreadCount} unread`
-                    : 'Your latest updates'}
+                <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>Notifications</h1>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>
+                  {unreadCount > 0 ? `${unreadCount} unread` : 'Your latest updates'}
                 </p>
               </div>
             </div>
-
             {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                disabled={markingAll}
-                className="text-sm font-semibold text-purple-600 hover:text-purple-700 disabled:opacity-50"
-              >
+              <button onClick={handleMarkAllRead} disabled={markingAll}
+                style={{ padding: '7px 14px', borderRadius: 20, border: '1.5px solid rgba(255,255,255,0.22)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: markingAll ? 'default' : 'pointer', opacity: markingAll ? 0.6 : 1 }}>
                 {markingAll ? 'Marking…' : 'Mark all read'}
               </button>
             )}
           </div>
         </div>
 
-        <div className="flex-1 px-4 py-5 space-y-3 overflow-y-auto">
+        {/* Body */}
+        <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+
           {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-10 h-10 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '48px 0' }}>
+              <div style={{ width: 36, height: 36, borderRadius: '50%', border: `3px solid rgba(154,33,67,0.15)`, borderTopColor: CR, animation: 'spin 0.8s linear infinite' }} />
             </div>
           )}
 
           {!loading && items.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">No notifications yet</h3>
-              <p className="text-sm text-gray-600">
-                You&apos;ll see updates here when you receive quotes, messages, or status changes.
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(154,33,67,0.06)', border: `1.5px solid ${BOR}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 28 }}>🔔</div>
+              <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>No notifications yet</p>
+              <p style={{ margin: 0, fontSize: 13, color: MUT, lineHeight: 1.5 }}>
+                You&apos;ll see updates here when you receive quotes, messages, or bookings.
               </p>
             </div>
           )}
 
           {items.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleOpen(item)}
-              className={`w-full text-left rounded-xl border-2 p-4 transition-colors ${
-                item.is_read
-                  ? 'border-gray-200 bg-white hover:bg-gray-50'
-                  : 'border-purple-200 bg-purple-50 hover:bg-purple-100'
-              }`}
+            <button key={item.id} onClick={() => handleOpen(item)}
+              style={{
+                width: '100%', textAlign: 'left', borderRadius: 16,
+                border: `1.5px solid ${item.is_read ? 'rgba(0,0,0,0.06)' : 'rgba(154,33,67,0.2)'}`,
+                background: item.is_read ? '#fff' : 'rgba(154,33,67,0.04)',
+                padding: 16, cursor: 'pointer', transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? '#faf8f5' : 'rgba(154,33,67,0.07)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? '#fff' : 'rgba(154,33,67,0.04)'; }}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-xl flex-shrink-0 mt-0.5">{typeIcon(item.type)}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{item.title}</p>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: item.is_read ? 'rgba(0,0,0,0.04)' : 'rgba(154,33,67,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                  {typeIcon(item.type)}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: item.is_read ? 600 : 700, color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
                     {!item.is_read && (
-                      <span className="mt-1 inline-flex h-2 w-2 rounded-full bg-purple-600 flex-shrink-0" />
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: CR, flexShrink: 0, marginTop: 3 }} />
                     )}
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.body}</p>
-                  <p className="text-xs text-gray-400 mt-2">{timeAgo(item.created_at)}</p>
+                  <p style={{ margin: '0 0 5px', fontSize: 11, color: MUT, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{item.body}</p>
+                  <p style={{ margin: 0, fontSize: 10, color: '#b0a090' }}>{timeAgo(item.created_at)}</p>
                 </div>
               </div>
             </button>
