@@ -108,24 +108,26 @@ export default function MessagesIndex() {
       const rows = (data || []) as ConversationRow[];
       const resolved = await Promise.all(rows.map(async (row) => {
         const iAmVendor = activeRole === 'vendor';
-        const { data: lastMsg } = await supabase.from('messages').select('message_text')
+        const { data: lastMsg } = await supabase.from('messages').select('message_text,read,sender_id')
           .eq('conversation_id', row.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+        const unread = !!(lastMsg && lastMsg.read === false && lastMsg.sender_id !== u.id);
 
         if (iAmVendor) {
           try {
             const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
             const d = await getCoupleDisplayName(row.couple_id);
-            return { id: row.id, otherName: d.displayName || 'Couple', otherRole: 'couple' as const, logoUrl: d.avatarUrl || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null };
+            return { id: row.id, otherName: d.displayName || 'Couple', otherRole: 'couple' as const, logoUrl: d.avatarUrl || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
           } catch {
-            return { id: row.id, otherName: 'Couple', otherRole: 'couple' as const, logoUrl: null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null };
+            return { id: row.id, otherName: 'Couple', otherRole: 'couple' as const, logoUrl: null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
           }
         }
 
         const { data: mv } = await supabase.from('marketplace_vendors').select('business_name,logo_url').eq('vendor_id', row.vendor_id).maybeSingle();
-        if (mv?.business_name) return { id: row.id, otherName: mv.business_name, otherRole: 'vendor' as const, logoUrl: mv.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null };
+        if (mv?.business_name) return { id: row.id, otherName: mv.business_name, otherRole: 'vendor' as const, logoUrl: mv.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
 
         const { data: vd } = await supabase.from('vendors').select('business_name,logo_url').eq('id', row.vendor_id).maybeSingle();
-        return { id: row.id, otherName: vd?.business_name || 'Vendor', otherRole: 'vendor' as const, logoUrl: vd?.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null };
+        return { id: row.id, otherName: vd?.business_name || 'Vendor', otherRole: 'vendor' as const, logoUrl: vd?.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
       }));
 
       setItems(resolved);
@@ -133,12 +135,15 @@ export default function MessagesIndex() {
     finally { setLoading(false); }
   };
 
-  // Realtime subscription
+  // Realtime subscription — subscribe to couple_id and vendor_id so both roles get live updates
   useEffect(() => {
     if (!user) return;
-    const ch = supabase.channel(`conv_user_${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => loadConversations())
-      .subscribe();
+    let ch = supabase.channel(`conv_user_${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => loadConversations());
+    if (vendorId) {
+      ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `vendor_id=eq.${vendorId}` }, () => loadConversations());
+    }
+    ch.subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user, vendorId]);
 
@@ -243,34 +248,40 @@ export default function MessagesIndex() {
             <button key={item.id}
               onClick={() => router.push(`/messages/thread/${item.id}`)}
               style={{
-                width: '100%', textAlign: 'left', background: C.card, borderRadius: 18,
-                border: `1.5px solid ${C.border}`, padding: '14px 16px',
+                width: '100%', textAlign: 'left', borderRadius: 18,
+                border: `1.5px solid ${item.unread ? C.crimson : C.border}`,
+                background: item.unread ? 'rgba(154,33,67,0.03)' : C.card,
+                padding: '14px 16px',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14,
-                boxShadow: '0 2px 10px rgba(26,13,18,0.04)',
+                boxShadow: item.unread ? '0 2px 12px rgba(154,33,67,0.10)' : '0 2px 10px rgba(26,13,18,0.04)',
                 animation: `fadeUp 0.3s ease ${idx * 0.04}s both`,
                 transition: 'transform 0.12s, box-shadow 0.12s',
               }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(154,33,67,0.10)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ''; (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 10px rgba(26,13,18,0.04)'; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = ''; (e.currentTarget as HTMLButtonElement).style.boxShadow = item.unread ? '0 2px 12px rgba(154,33,67,0.10)' : '0 2px 10px rgba(26,13,18,0.04)'; }}
             >
               <Avatar name={item.otherName} url={item.logoUrl} size={52} />
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: C.dark, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.otherName}</p>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: C.muted, flexShrink: 0 }}>{timeAgo(item.lastMessageAt)}</span>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: item.unread ? 800 : 700, color: C.dark, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.otherName}</p>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: item.unread ? C.crimson : C.muted, flexShrink: 0 }}>{timeAgo(item.lastMessageAt)}</span>
                 </div>
                 {item.lastMessagePreview ? (
-                  <p style={{ margin: 0, fontSize: 12, color: C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4 }}>{item.lastMessagePreview}</p>
+                  <p style={{ margin: 0, fontSize: 12, color: item.unread ? C.dark : C.muted, fontWeight: item.unread ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4 }}>{item.lastMessagePreview}</p>
                 ) : (
                   <p style={{ margin: 0, fontSize: 12, color: '#c9b8c0', fontStyle: 'italic' }}>No messages yet</p>
                 )}
               </div>
 
-              {/* Chevron */}
-              <svg width="14" height="14" fill="none" stroke={C.muted} strokeWidth={2} viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: 0.5 }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
+              {/* Unread dot or chevron */}
+              {item.unread ? (
+                <div style={{ width: 10, height: 10, borderRadius: '50%', background: C.crimson, flexShrink: 0 }} />
+              ) : (
+                <svg width="14" height="14" fill="none" stroke={C.muted} strokeWidth={2} viewBox="0 0 24 24" style={{ flexShrink: 0, opacity: 0.5 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              )}
             </button>
           ))}
         </div>
