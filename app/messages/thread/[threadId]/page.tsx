@@ -605,10 +605,6 @@ export default function ChatThread() {
 
     setIsUpdatingQuote(true);
     try {
-      // Log the quote object for debugging — ensure it's the DB row
-      // eslint-disable-next-line no-console
-      console.log('Quote object being used:', quote);
-
       const isUuidLocal = (v: any) => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
       const payload: any = {
@@ -626,10 +622,6 @@ export default function ChatThread() {
         alert('Quote data not loaded. Please refresh.');
         return;
       }
-
-      // Log payload for verification
-      // eslint-disable-next-line no-console
-      console.log('Sending quote status payload', payload);
 
       const { data: sessionData, error: sessErr } = await supabase.auth.getSession();
       if (sessErr || !sessionData?.session?.access_token) {
@@ -701,6 +693,44 @@ export default function ChatThread() {
         setQuote(result.quote as Quote);
       }
     } catch (err) { console.error(err); alert('Failed to update quote.'); } finally { setIsUpdatingQuote(false); }
+  };
+
+  /* ── Vendor confirm booking ─────────────────────────────────── */
+  const handleConfirmBooking = async () => {
+    if (!quote || !currentUserId) return;
+    if (!confirm('Confirm this booking? This will notify the couple.')) return;
+    setIsUpdatingQuote(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) { alert('Please sign in again.'); return; }
+      const res = await fetch('/api/vendor/booking/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quote_id: quote.id }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) { alert(data?.error || 'Failed to confirm booking.'); return; }
+      setQuote(prev => prev ? { ...prev, status: 'booked' } : prev);
+    } catch (err) { console.error(err); alert('Failed to confirm booking.'); } finally { setIsUpdatingQuote(false); }
+  };
+
+  /* ── Vendor decline quote ────────────────────────────────────── */
+  const handleVendorDecline = async () => {
+    if (!quote || !currentUserId) return;
+    if (!confirm('Decline this quote request? The couple will be notified.')) return;
+    setIsUpdatingQuote(true);
+    try {
+      const token = await getAccessToken();
+      if (!token) { alert('Please sign in again.'); return; }
+      const res = await fetch('/api/quotes/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quoteId: quote.id, status: 'declined' }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) { alert(data?.error || 'Failed to decline quote.'); return; }
+      if (data?.quote) setQuote(data.quote as Quote);
+    } catch (err) { console.error(err); alert('Failed to decline quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
   /* ── File attachment upload ─────────────────────────────────── */
@@ -946,10 +976,16 @@ export default function ChatThread() {
                 </div>
               )}
               <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {userIsVendor && (
+                {userIsVendor && quote.status !== 'declined' && quote.status !== 'booked' && quote.status !== 'accepted' && (
                   <button onClick={() => setShowBottomSheet(true)} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(154,33,67,0.2)', opacity: isUpdatingQuote ? 0.5 : 1 }}>
                     {quote.vendor_final_price ? 'Update Final Quote' : 'Send Final Quote'}
                   </button>
+                )}
+                {userIsVendor && quote.status === 'requested' && (
+                  <button onClick={handleVendorDecline} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Decline</button>
+                )}
+                {userIsVendor && quote.status === 'accepted' && (
+                  <button onClick={handleConfirmBooking} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#22c55e', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(34,197,94,0.25)', opacity: isUpdatingQuote ? 0.5 : 1 }}>Confirm Booking</button>
                 )}
                 {conversation && currentUserId && conversation.couple_id === currentUserId && quote.status === 'negotiating' && (
                   <>

@@ -11,10 +11,24 @@ import { createServiceClient } from '@/lib/supabaseServer'
  */
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
+  // Authenticate via Bearer token (service client has no user session)
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const token = authHeader.slice(7)
+  const userRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    },
+  })
+  if (!userRes.ok) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const authUser = await userRes.json()
+  const user = authUser?.id ? authUser : null
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -102,13 +116,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Send notification to couple
-  await supabase.from('notifications').insert({
-    user_id: quote.couple_id,
+  const { notifyUsers } = await import('@/lib/server/notify')
+  await notifyUsers({
+    userIds: [quote.couple_id],
     type: 'booking_confirmed',
-    title: 'Booking Confirmed! 🎉',
-    message: `${vendor.business_name} has confirmed your booking (Ref: ${booking.booking_ref}).`,
-    link: `/couple/bookings/${booking.id}`,
-    read: false,
+    title: 'Booking Confirmed',
+    body: `${vendor.business_name} has confirmed your booking (Ref: ${booking.booking_ref}).`,
+    link: `/couple/bookings`,
+    meta: { bookingId: booking.id, bookingRef: booking.booking_ref },
   })
 
   return NextResponse.json({
