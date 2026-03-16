@@ -37,7 +37,6 @@ function StartChatContent() {
   const prefillMessage = searchParams.get('message') || '';
 
   const [message, setMessage] = useState('');
-  const [attachments, setAttachments] = useState<File[]>([]);
 
   const [vendor, setVendor] = useState<VendorInfo | null>(null);
   const [vendorLoading, setVendorLoading] = useState(true);
@@ -113,15 +112,6 @@ function StartChatContent() {
       setVendorLoading(false);
     })();
   }, [vendorId, role, router, prefillMessage]);
-
-  /* ΓöÇΓöÇ Attachment helpers ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
-  const handleAddAttachment = (files: FileList | null) => {
-    if (!files) return;
-    setAttachments(prev => [...prev, ...Array.from(files)]);
-  };
-  const removeAttachment = (index: number) => {
-    setAttachments(prev => prev.filter((_, i) => i !== index));
-  };
 
   /* ΓöÇΓöÇ Start chat / find-or-create conversation ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */
   const handleStartChat = async () => {
@@ -229,7 +219,7 @@ function StartChatContent() {
           </button>
           <h1 className="text-xl font-bold text-gray-900">Message Vendor</h1>
           <p className="text-sm text-gray-600 mt-1.5">
-            {vendor ? `Start a conversation with ${vendor.name}` : vendorLoading ? 'LoadingΓÇª' : 'Vendor not found'}
+            {vendor ? `Start a conversation with ${vendor.name}` : vendorLoading ? 'Loading…' : 'Vendor not found'}
           </p>
         </div>
 
@@ -278,38 +268,6 @@ function StartChatContent() {
             <p className="text-xs text-gray-500 mt-1.5">Start with a friendly introduction and mention your wedding date if you have one</p>
           </div>
 
-          {/* Attachments */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Attachments (Optional)</label>
-            <div className="flex gap-2 mb-3">
-              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                Add Photo
-                <input type="file" accept="image/*" multiple onChange={(e) => handleAddAttachment(e.target.files)} className="hidden" />
-              </label>
-              <label className="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-colors cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                Add Document
-                <input type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" multiple onChange={(e) => handleAddAttachment(e.target.files)} className="hidden" />
-              </label>
-            </div>
-
-            {attachments.length > 0 && (
-              <div className="space-y-2">
-                {attachments.map((file, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                      <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                      <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                    </div>
-                    <button type="button" onClick={() => removeAttachment(index)} className="ml-2 p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors" aria-label="Remove attachment">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
@@ -328,7 +286,7 @@ function StartChatContent() {
             disabled={!vendor || sending}
             className={`flex-1 px-4 py-3.5 rounded-xl font-semibold text-base text-center transition-all ${vendor && !sending ? 'bg-purple-600 text-white hover:bg-purple-700 active:scale-95 shadow-lg shadow-purple-200' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
           >
-            {sending ? 'StartingΓÇª' : 'Start Chat'}
+            {sending ? 'Starting…' : 'Start Chat'}
           </button>
         </div>
       </div>
