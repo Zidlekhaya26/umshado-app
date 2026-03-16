@@ -296,7 +296,6 @@ export default function CoupleDashboard() {
   const quickNav = [
     { icon:'📋', label:'Planner',  href:'/couple/planner' },
     { icon:'🏪', label:'Vendors',  href:'/marketplace' },
-    { icon:'💬', label:'Messages', href:'/messages' },
     { icon:'📅', label:'Bookings', href:'/couple/bookings' },
     { icon:'🎵', label:'Playlist', href:'/couple/playlist' },
     { icon:'🍽️', label:'Menu',     href:'/couple/menu' },
