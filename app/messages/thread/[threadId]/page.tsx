@@ -88,6 +88,7 @@ export default function ChatThread() {
   const conversationId = params.threadId as string | undefined;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const msgInputRef = useRef<HTMLTextAreaElement>(null);
   const [newMessage, setNewMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -729,10 +730,19 @@ export default function ChatThread() {
     } catch (err) { console.error(err); alert('Failed to confirm booking.'); } finally { setIsUpdatingQuote(false); }
   };
 
-  /* ── Vendor decline quote ────────────────────────────────────── */
-  const handleVendorDecline = async () => {
+  /* ── Couple negotiate — prefill message bar and focus it ────── */
+  const handleCoupleNegotiate = () => {
+    setNewMessage("I'd like to negotiate — ");
+    setTimeout(() => {
+      msgInputRef.current?.focus();
+      msgInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  };
+
+  /* ── Vendor: not available ───────────────────────────────────── */
+  const handleVendorNotAvailable = async () => {
     if (!quote || !currentUserId) return;
-    if (!confirm('Decline this quote request? The couple will be notified.')) return;
+    if (!confirm('Mark as not available? The couple will see this quote as unavailable.')) return;
     setIsUpdatingQuote(true);
     try {
       const token = await getAccessToken();
@@ -743,9 +753,9 @@ export default function ChatThread() {
         body: JSON.stringify({ quoteId: quote.id, status: 'declined' }),
       });
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.success) { alert(data?.error || 'Failed to decline quote.'); return; }
+      if (!res.ok || !data?.success) { alert(data?.error || 'Failed to update quote.'); return; }
       if (data?.quote) setQuote(data.quote as Quote);
-    } catch (err) { console.error(err); alert('Failed to decline quote.'); } finally { setIsUpdatingQuote(false); }
+    } catch (err) { console.error(err); alert('Failed to update quote.'); } finally { setIsUpdatingQuote(false); }
   };
 
   /* ── File attachment upload ─────────────────────────────────── */
@@ -990,7 +1000,7 @@ export default function ChatThread() {
                   </button>
                 )}
                 {isVendorInThread && quote.status === 'requested' && (
-                  <button onClick={handleVendorDecline} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Decline</button>
+                  <button onClick={handleVendorNotAvailable} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: C.bg, color: C.muted, fontSize: 12, fontWeight: 700, border: `1.5px solid ${C.border}`, cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Not Available</button>
                 )}
                 {isVendorInThread && quote.status === 'accepted' && (
                   <button onClick={handleConfirmBooking} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#22c55e', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(34,197,94,0.25)', opacity: isUpdatingQuote ? 0.5 : 1 }}>Confirm Booking</button>
@@ -998,7 +1008,7 @@ export default function ChatThread() {
                 {conversation && currentUserId && conversation.couple_id === currentUserId && quote.status === 'negotiating' && (
                   <>
                     <button onClick={() => handleCoupleDecision('accepted')} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#22c55e', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Accept</button>
-                    <button onClick={() => handleCoupleDecision('declined')} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Decline</button>
+                    <button onClick={handleCoupleNegotiate} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: C.bg, color: C.crimson, fontSize: 12, fontWeight: 700, border: `1.5px solid ${C.crimson}`, cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Negotiate</button>
                   </>
                 )}
               </div>
@@ -1036,7 +1046,7 @@ export default function ChatThread() {
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
           )}
         </button>
-        <textarea value={newMessage} onChange={(e) => { setNewMessage(e.target.value); broadcastTyping(); }} onKeyDown={handleKeyPress} style={{ flex: 1, resize: 'none', borderRadius: 22, border: `1.5px solid ${C.border}`, background: C.bg, padding: '10px 16px', fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }} rows={1} placeholder="Type a message…" onFocus={(e) => e.target.style.borderColor = C.crimson} onBlur={(e) => e.target.style.borderColor = C.border} />
+        <textarea ref={msgInputRef} value={newMessage} onChange={(e) => { setNewMessage(e.target.value); broadcastTyping(); }} onKeyDown={handleKeyPress} style={{ flex: 1, resize: 'none', borderRadius: 22, border: `1.5px solid ${C.border}`, background: C.bg, padding: '10px 16px', fontSize: 14, fontFamily: "'DM Sans', sans-serif", outline: 'none', transition: 'border-color 0.2s, box-shadow 0.2s' }} rows={1} placeholder="Type a message…" onFocus={(e) => e.target.style.borderColor = C.crimson} onBlur={(e) => e.target.style.borderColor = C.border} />
         <button onClick={handleSend} disabled={isSending || (pendingAttachments.length === 0 && !newMessage.trim())} style={{ padding: 10, borderRadius: '50%', background: (pendingAttachments.length > 0 || newMessage.trim()) ? `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})` : C.border, color: (pendingAttachments.length > 0 || newMessage.trim()) ? '#fff' : C.muted, border: 'none', cursor: (pendingAttachments.length > 0 || newMessage.trim()) ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: (pendingAttachments.length > 0 || newMessage.trim()) ? '0 3px 12px rgba(154,33,67,0.25)' : 'none', opacity: isSending ? 0.5 : 1 }}>
           {isSending ? (
             <div style={{ width: 18, height: 18, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.6s linear infinite' }} />
