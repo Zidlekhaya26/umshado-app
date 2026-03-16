@@ -9,7 +9,7 @@ import { useCurrency } from '@/app/providers/CurrencyProvider';
 interface MessageAttachment { id: string; file_path: string; file_name: string; mime_type: string | null; file_size: number | null; signed_url?: string; }
 interface Message { id: string; sender_id: string; message_text: string; created_at: string; attachments?: MessageAttachment[]; _optimistic?: boolean; }
 interface Conversation { id: string; couple_id: string; vendor_id: string; }
-interface Quote { id: string; quote_ref: string; status: 'requested'|'negotiating'|'accepted'|'declined'|'expired'; vendor_final_price: number|null; vendor_message: string|null; couple_id: string; vendor_id: string; created_at: string; add_ons?: any[]; package_name?: string|null; base_from_price?: number|null; guest_count?: number|null; hours?: number|null; }
+interface Quote { id: string; quote_ref: string; status: 'requested'|'negotiating'|'accepted'|'declined'|'expired'|'booked'; vendor_final_price: number|null; vendor_message: string|null; couple_id: string; vendor_id: string; created_at: string; add_ons?: any[]; package_name?: string|null; base_from_price?: number|null; guest_count?: number|null; hours?: number|null; }
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
 const C = {
@@ -201,7 +201,7 @@ export default function ChatThread() {
         .select('id, quote_ref, status, vendor_final_price, vendor_message, couple_id, vendor_id, created_at, add_ons, package_name, base_from_price, guest_count, hours')
         .eq('couple_id', conversation.couple_id)
         .eq('vendor_id', conversation.vendor_id)
-        .in('status', ['requested', 'negotiating', 'accepted', 'declined', 'expired'])
+        .in('status', ['requested', 'negotiating', 'accepted', 'declined', 'expired', 'booked'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
