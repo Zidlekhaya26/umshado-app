@@ -62,7 +62,9 @@ function PkgCard({ pkg, onEdit, index }: { pkg: PackageItem; onEdit: () => void;
   const modeLabel = PRICING_OPTS.find(o => o.key === pkg.pricingMode)?.label
     ?? pkg.pricingMode.replace('-', ' ');
   const subLine = pkg.pricingMode === 'guest-based' && pkg.guestRange
-    ? `${pkg.guestRange.min}–${pkg.guestRange.max} guests`
+    ? (pkg.guestRange.max > 0 && pkg.guestRange.max > pkg.guestRange.min
+        ? `${pkg.guestRange.min}–${pkg.guestRange.max} guests`
+        : `${pkg.guestRange.min}+ guests`)
     : pkg.pricingMode === 'time-based' && pkg.hours
     ? `${pkg.hours}h coverage`
     : null;
@@ -232,7 +234,7 @@ export default function VendorPackagesPage() {
       setPackages((pkgData || []).map((p: any) => ({
         id: p.id, name: p.name, fromPrice: Number(p.base_price),
         pricingMode: dbToApp(p.pricing_mode),
-        guestRange: p.pricing_mode === 'guest' ? { min: p.base_guests || 0, max: p.base_guests ? p.base_guests + 50 : 50 } : undefined,
+        guestRange: p.pricing_mode === 'guest' ? { min: p.base_guests || 0, max: 0 } : undefined,
         hours: p.pricing_mode === 'time' ? p.base_hours : undefined,
         includedServices: p.included_services || [],
         isPopular: !!p.is_popular,

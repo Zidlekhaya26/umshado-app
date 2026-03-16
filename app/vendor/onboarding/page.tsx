@@ -45,7 +45,6 @@ export default function VendorOnboarding(){
       const location=[fd.city,fd.country].filter(Boolean).join(', ')||null;
       const res=await upsertVendor(user.id,{business_name:fd.businessName||null,category:fd.category||null,location,description:fd.businessDescription||null,currency});
       if(!res.success){alert('Failed: '+(res.error||'unknown'));setSubmitting(false);return;}
-      await new Promise(r=>setTimeout(r,900));
       router.push('/vendor/services?mode=onboarding');
     }catch(err){alert('Error: '+err);setSubmitting(false);}
   };
