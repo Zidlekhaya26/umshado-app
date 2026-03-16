@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabaseClient';
 /* ─── Types ──────────────────────────────────────────────── */
 interface DbTask { id: string; couple_id: string; title: string; due_date: string | null; is_done: boolean; created_at: string; }
 interface DbBudgetItem { id: string; couple_id: string; title: string; amount: number; amount_paid: number; category: string | null; status: 'planned' | 'partial' | 'paid'; created_at: string; }
-interface RecentQuote { id: string; quote_ref: string; vendor_id: string; package_name: string; status: string; created_at: string; vendor_name: string; }
+interface RecentQuote { id: string; quote_ref: string; vendor_id: string; package_name: string; status: string; created_at: string; vendor_name: string; conversation_id: string | null; }
 interface DbGuest { id: string; couple_id: string; full_name: string; rsvp_status: 'pending' | 'accepted' | 'declined'; }
 interface CoupleProfile {
   partner_name: string | null;
@@ -94,6 +94,7 @@ function QBadge({ status }: { status:string }) {
     negotiating: { bg:'rgba(26,106,168,0.1)', color:BLU, label:'Negotiating' },
     requested:   { bg:'rgba(184,151,62,0.1)', color:G2,  label:'Pending' },
     declined:    { bg:'rgba(200,50,50,0.1)',  color:RED, label:'Declined' },
+    booked:      { bg:'rgba(45,122,79,0.15)', color:GRN, label:'Booked' },
   };
   const s = map[status] ?? { bg:'#f5f5f5', color:'#888', label:status };
   return <span style={{ padding:'3px 10px', borderRadius:20, background:s.bg, color:s.color, fontSize:10, fontWeight:700, flexShrink:0, textTransform:'capitalize' }}>{s.label}</span>;
@@ -218,12 +219,16 @@ export default function CoupleDashboard() {
         const { data, error } = await supabase.from('quotes').select('id,quote_ref,vendor_id,package_name,status,created_at').eq('couple_id', user.id).order('created_at', { ascending:false }).limit(4);
         if (!error && data) {
           const withNames = await Promise.all(data.map(async (q: any) => {
-            const { data: v } = await supabase.from('vendors').select('business_name').eq('id', q.vendor_id).maybeSingle();
-            return { ...q, vendor_name: v?.business_name || 'Vendor' } as RecentQuote;
+            const [vRes, convRes] = await Promise.all([
+              supabase.from('vendors').select('business_name').eq('id', q.vendor_id).maybeSingle(),
+              supabase.from('conversations').select('id').eq('couple_id', user.id).eq('vendor_id', q.vendor_id).maybeSingle(),
+            ]);
+            return { ...q, vendor_name: vRes.data?.business_name || 'Vendor', conversation_id: convRes.data?.id ?? null } as RecentQuote;
           }));
           setRecentQuotes(withNames);
         }
-      } catch {} finally { setLoadingQuotes(false); }
+      } catch (err) { console.error('[CoupleDashboard] Failed to load quotes:', err); }
+      finally { setLoadingQuotes(false); }
     })();
   }, []);
 
@@ -512,7 +517,7 @@ export default function CoupleDashboard() {
           <div className="dc">
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
               <h2 style={{ margin:0, fontSize:15, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>Recent Quotes</h2>
-              <Link href="/messages" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
+              <Link href="/couple/bookings" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
                 View all <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
               </Link>
             </div>
@@ -530,7 +535,7 @@ export default function CoupleDashboard() {
             ) : (
               <div style={{ background:'#fff', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.05)', border:'1.5px solid rgba(0,0,0,0.05)' }}>
                 {recentQuotes.map((q, i) => (
-                  <Link key={q.id} href="/messages"
+                  <Link key={q.id} href={q.conversation_id ? `/messages/thread/${q.conversation_id}` : '/messages'}
                     style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px', borderBottom: i < recentQuotes.length-1 ? '1px solid rgba(0,0,0,0.04)' : 'none', textDecoration:'none' }}>
                     <div style={{ width:38, height:38, borderRadius:12, background:'rgba(184,151,62,0.08)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>🏪</div>
                     <div style={{ flex:1, minWidth:0 }}>
