@@ -12,10 +12,11 @@ import {
 interface DailyStatsRow {
   day: string; profile_views: number;
   saves: number; quotes: number; messages: number;
+  package_views: number; contact_clicks: number;
 }
 interface VendorInfo { id: string; business_name: string | null; plan?: string | null; }
 interface VendorEvent {
-  event_type: 'profile_view' | 'save_vendor' | 'quote_requested' | 'message_started' | 'package_view';
+  event_type: 'profile_view' | 'save_vendor' | 'quote_requested' | 'message_started' | 'package_view' | 'contact_click';
   meta: any; created_at: string;
 }
 
@@ -28,10 +29,12 @@ const BG      = '#faf7f2';
 
 /* ─── Metric config ──────────────────────────────────────── */
 const METRICS = [
-  { key: 'profile_views', label: 'Profile Views', color: '#b8973e', icon: '👁️', desc: 'Couples who viewed your profile' },
-  { key: 'quotes',        label: 'Quote Requests', color: '#2d7a4f', icon: '📋', desc: 'Quotes requested from you' },
-  { key: 'messages',      label: 'Messages',       color: '#1a6aa8', icon: '💬', desc: 'Conversations started' },
-  { key: 'saves',         label: 'Saves',          color: '#8b3a8b', icon: '❤️', desc: 'Times saved by couples' },
+  { key: 'profile_views',  label: 'Profile Views',  color: '#b8973e', icon: '👁️', desc: 'Couples who viewed your profile' },
+  { key: 'quotes',         label: 'Quote Requests', color: '#2d7a4f', icon: '📋', desc: 'Quotes requested from you' },
+  { key: 'messages',       label: 'Messages',       color: '#1a6aa8', icon: '💬', desc: 'Conversations started' },
+  { key: 'saves',          label: 'Saves',          color: '#8b3a8b', icon: '❤️', desc: 'Times saved by couples' },
+  { key: 'package_views',  label: 'Package Views',  color: '#c47a20', icon: '📦', desc: 'Couples who browsed your packages' },
+  { key: 'contact_clicks', label: 'Contact Clicks', color: '#2a7a8b', icon: '📞', desc: 'Times your contact was clicked' },
 ];
 
 /* ─── Custom tooltip ─────────────────────────────────────── */
@@ -122,53 +125,71 @@ export default function VendorInsights() {
 
         const sinceDate = last7Days[0];
         const statsMap: Record<string, DailyStatsRow> = {};
+        const emptyRow = (day: string): DailyStatsRow => ({ day, profile_views: 0, saves: 0, quotes: 0, messages: 0, package_views: 0, contact_clicks: 0 });
 
         const { data: statsRows } = await supabase
           .from('vendor_stats_daily')
-          .select('day,profile_views,saves,quotes,messages')
+          .select('day,profile_views,saves,quotes,messages,package_views,contact_clicks')
           .eq('vendor_id', vendorRow.id)
           .gte('day', sinceDate);
 
-        (statsRows || []).forEach(row => {
-          statsMap[row.day] = { day: row.day, profile_views: row.profile_views || 0, saves: row.saves || 0, quotes: row.quotes || 0, messages: row.messages || 0 };
+        (statsRows || []).forEach((row: any) => {
+          statsMap[row.day] = {
+            day: row.day,
+            profile_views:  row.profile_views  || 0,
+            saves:          row.saves          || 0,
+            quotes:         row.quotes         || 0,
+            messages:       row.messages       || 0,
+            package_views:  row.package_views  || 0,
+            contact_clicks: row.contact_clicks || 0,
+          };
         });
 
-        if (!statsRows || statsRows.length === 0) {
-          const { data: events } = await supabase
-            .from('vendor_events')
-            .select('event_type,meta,created_at')
-            .eq('vendor_id', vendorRow.id)
-            .gte('created_at', new Date(sinceDate).toISOString());
+        // Always fetch vendor_events to fill gaps and compute top package
+        const { data: events } = await supabase
+          .from('vendor_events')
+          .select('event_type,meta,created_at')
+          .eq('vendor_id', vendorRow.id)
+          .gte('created_at', new Date(sinceDate).toISOString());
 
-          const pkgCounts: Record<string, number> = {};
+        const pkgCounts: Record<string, number> = {};
+        if (!statsRows || statsRows.length === 0) {
+          // No daily stats yet — build entirely from raw events
           (events || []).forEach((ev: VendorEvent) => {
             const dk = ev.created_at.slice(0, 10);
-            if (!statsMap[dk]) statsMap[dk] = { day: dk, profile_views: 0, saves: 0, quotes: 0, messages: 0 };
-            if (ev.event_type === 'profile_view') statsMap[dk].profile_views++;
-            if (ev.event_type === 'save_vendor') statsMap[dk].saves++;
+            if (!statsMap[dk]) statsMap[dk] = emptyRow(dk);
+            if (ev.event_type === 'profile_view')   statsMap[dk].profile_views++;
+            if (ev.event_type === 'save_vendor')     statsMap[dk].saves++;
             if (ev.event_type === 'quote_requested') statsMap[dk].quotes++;
             if (ev.event_type === 'message_started') statsMap[dk].messages++;
-            if (ev.event_type === 'package_view') {
-              const k = ev.meta?.package_name || ev.meta?.package_id || 'Unknown';
-              pkgCounts[k] = (pkgCounts[k] || 0) + 1;
-            }
+            if (ev.event_type === 'package_view')    statsMap[dk].package_views++;
+            if (ev.event_type === 'contact_click')   statsMap[dk].contact_clicks++;
           });
-          const top = Object.entries(pkgCounts).sort((a, b) => b[1] - a[1])[0];
-          setTopPackage(top ? top[0] : '');
         }
+        // Always compute top package from raw events
+        (events || []).forEach((ev: VendorEvent) => {
+          if (ev.event_type === 'package_view') {
+            const k = ev.meta?.package_name || ev.meta?.package_id || 'Unknown';
+            pkgCounts[k] = (pkgCounts[k] || 0) + 1;
+          }
+        });
+        const top = Object.entries(pkgCounts).sort((a, b) => b[1] - a[1])[0];
+        setTopPackage(top ? top[0] : '');
 
-        setDailyStats(last7Days.map(day => statsMap[day] || { day, profile_views: 0, saves: 0, quotes: 0, messages: 0 }));
+        setDailyStats(last7Days.map(day => statsMap[day] || emptyRow(day)));
       } catch (e: any) { setError(e.message || 'Failed to load insights.'); }
       finally { setLoading(false); }
     })();
   }, [last7Days]);
 
   const totals = dailyStats.reduce((acc, r) => ({
-    profile_views: acc.profile_views + r.profile_views,
-    saves: acc.saves + r.saves,
-    quotes: acc.quotes + r.quotes,
-    messages: acc.messages + r.messages,
-  }), { profile_views: 0, saves: 0, quotes: 0, messages: 0 });
+    profile_views:  acc.profile_views  + r.profile_views,
+    saves:          acc.saves          + r.saves,
+    quotes:         acc.quotes         + r.quotes,
+    messages:       acc.messages       + r.messages,
+    package_views:  acc.package_views  + r.package_views,
+    contact_clicks: acc.contact_clicks + r.contact_clicks,
+  }), { profile_views: 0, saves: 0, quotes: 0, messages: 0, package_views: 0, contact_clicks: 0 });
 
   // Format day labels for chart
   const chartData = dailyStats.map(r => ({
@@ -177,10 +198,8 @@ export default function VendorInsights() {
   }));
 
   // Best day
-  const bestDay = [...dailyStats].sort((a, b) =>
-    (b.profile_views + b.quotes + b.messages + b.saves) -
-    (a.profile_views + a.quotes + a.messages + a.saves)
-  )[0];
+  const rowTotal = (r: DailyStatsRow) => r.profile_views + r.quotes + r.messages + r.saves + r.package_views + r.contact_clicks;
+  const bestDay = [...dailyStats].sort((a, b) => rowTotal(b) - rowTotal(a))[0];
 
   if (loading) {
     return (
@@ -223,10 +242,10 @@ export default function VendorInsights() {
           </div>
 
           {/* Mini totals row */}
-          <div style={{ display: 'flex', gap: 12, marginTop: 20 }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 20, overflowX: 'auto', paddingBottom: 4 }}>
             {METRICS.map(m => (
               <button key={m.key} onClick={() => setActiveMetric(m.key)}
-                style={{ flex: 1, background: activeMetric === m.key ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: activeMetric === m.key ? '1.5px solid rgba(189,152,63,0.6)' : '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
+                style={{ flexShrink: 0, minWidth: 60, background: activeMetric === m.key ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: activeMetric === m.key ? '1.5px solid rgba(189,152,63,0.6)' : '1.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 8px', cursor: 'pointer', textAlign: 'center', transition: 'all 0.15s' }}>
                 <div style={{ fontSize: 16, marginBottom: 3 }}>{m.icon}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif', lineHeight: 1 }}>{(totals as any)[m.key]}</div>
                 <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', marginTop: 2, letterSpacing: 0.5 }}>{m.label.split(' ')[0].toUpperCase()}</div>
@@ -302,7 +321,7 @@ export default function VendorInsights() {
             </div>
             <div>
               {chartData.map((row, idx) => {
-                const total = row.profile_views + row.quotes + row.messages + row.saves;
+                const total = rowTotal(row);
                 const isBest = bestDay?.day === row.day && total > 0;
                 return (
                   <div key={row.day} style={{ display: 'flex', alignItems: 'center', padding: '12px 20px', borderBottom: idx < chartData.length-1 ? '1px solid rgba(0,0,0,0.04)' : 'none', background: isBest ? 'rgba(184,151,62,0.04)' : 'transparent' }}>
