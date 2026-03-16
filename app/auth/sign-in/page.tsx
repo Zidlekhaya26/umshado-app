@@ -7,16 +7,9 @@ import { supabase } from '@/lib/supabaseClient';
 import { getPostAuthRedirect, setAuthCookies } from '@/lib/authRouting';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
 import Image from 'next/image';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Design tokens ──────────────────────────────────────── */
-const CR  = '#9A2143';
-const CR2 = '#731832';
-const CRX = '#4d0f21';
-const GD  = '#BD983F';
-const DK  = '#1a0d12';
-const BG  = '#faf8f5';
-const MUT = '#7a5060';
-const BOR = '#e8d5d0';
 
 /* ─── Floating diamond ───────────────────────────────────── */
 function Diamond({ size = 8, style }: { size?: number; style?: React.CSSProperties }) {
@@ -317,8 +310,8 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf8f5' }}>
-        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.12)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'siSpin .8s linear infinite' }} />
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--um-ivory)' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.12)', borderTopColor: 'var(--um-crimson)', borderRadius: '50%', animation: 'siSpin .8s linear infinite' }} />
         <style>{'@keyframes siSpin{to{transform:rotate(360deg)}}'}</style>
       </div>
     }>

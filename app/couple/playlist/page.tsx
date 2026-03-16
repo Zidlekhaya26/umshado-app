@@ -4,10 +4,10 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
+import { CR, CR2, GD, GD2, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Tokens ─────────────────────────────────────────────── */
-const CR='#9A2143', CR2='#731832', GD='#BD983F', GD2='#8a6010';
-const DK='#1a0d12', MUT='#7a5060', BG='#faf8f5', BOR='rgba(154,33,67,0.1)';
+const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 const SURF='#fff';
 
 /* ─── Moment definitions ─────────────────────────────────── */
@@ -363,7 +363,7 @@ export default function DJPlaylistPage() {
       <div style={{ maxWidth:600,margin:'0 auto',paddingBottom:100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background:`linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`,padding:'20px 20px 0',position:'relative',overflow:'hidden' }}>
+        <div style={{ background:`linear-gradient(160deg,var(--um-crimson-deep) 0%,${CR} 55%,var(--um-crimson-mid) 100%)`,padding:'20px 20px 0',position:'relative',overflow:'hidden' }}>
           <div style={{ position:'absolute',top:-50,right:-50,width:180,height:180,borderRadius:'50%',background:'rgba(189,152,63,0.1)',pointerEvents:'none' }} />
           <div style={{ position:'absolute',bottom:-20,left:-20,width:100,height:100,borderRadius:'50%',background:'rgba(189,152,63,0.06)',pointerEvents:'none' }} />
 

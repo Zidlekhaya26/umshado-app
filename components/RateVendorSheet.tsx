@@ -231,7 +231,7 @@ export default function RateVendorSheet({ vendorId, vendorName, isOpen, onClose,
                   <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.5 }}>
                     Reviews must show your name so vendors can identify feedback.<br/>Add your name in your profile to continue.
                   </p>
-                  <a href="/couple/profile" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, background: '#9A2143', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
+                  <a href="/couple/profile" style={{ display: 'inline-block', padding: '10px 20px', borderRadius: 10, background: 'var(--um-crimson)', color: '#fff', fontSize: 13, fontWeight: 700, textDecoration: 'none' }}>
                     Update profile →
                   </a>
                 </div>

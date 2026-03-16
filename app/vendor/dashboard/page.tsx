@@ -11,6 +11,7 @@ import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import VerificationRequestCard from '@/components/VerificationRequestCard';
 import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
+import { CR, CR2, CRX, GD, GD2, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface VendorProfile {
@@ -31,15 +32,7 @@ interface Metrics {
 interface DayStat { day: string; profile_views: number; quotes: number; messages: number; saves: number; }
 
 /* ─── Design tokens ─────────────────────────────────────── */
-const CR   = '#9A2143';
-const CR2  = '#731832';
-const CRX  = '#4d0f21';
-const GD   = '#BD983F';
-const GD2  = '#8a6010';
-const DARK = '#1a0d12';
-const BG   = '#faf8f5';
-const MUT  = '#7a5060';
-const BOR  = '#e8d5d0';
+const DARK = 'var(--um-dark)';
 
 /* ─── Sparkline ─────────────────────────────────────────── */
 function Sparkline({ data, dataKey, color }: { data: any[]; dataKey: string; color: string }) {

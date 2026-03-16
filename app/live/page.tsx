@@ -7,6 +7,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabaseClient';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
+import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -37,14 +38,13 @@ interface CommunityComment {
 // ─── Constants ───────────────────────────────────────────
 
 // ── Brand tokens ─────────────────────────────────────────
-const CR='#9A2143', CR2='#731832', CRX='#4d0f21';
-const DK='#1a0d12', MUT='#7a5060', BG='#faf8f5', BOR='rgba(154,33,67,0.1)';
+const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 // G/G2/IVORY kept as aliases so every template expression picks up crimson automatically
 const G = CR, G2 = CR2, IVORY = BG;
 const BUCKET = 'community-images';
 
 const CATEGORIES: { key: PostCategory; label: string; emoji: string; color: string; bg: string }[] = [
-  { key: 'inspiration', label: 'Inspiration',  emoji: '✨', color: '#8a6010', bg: 'rgba(184,151,62,0.12)' },
+  { key: 'inspiration', label: 'Inspiration',  emoji: '✨', color: 'var(--um-gold-dark)', bg: 'rgba(184,151,62,0.12)' },
   { key: 'our_story',   label: 'Our Story',    emoji: '💍', color: '#b83050', bg: 'rgba(184,48,80,0.08)'  },
   { key: 'lobola',      label: 'Lobola',       emoji: '🎊', color: '#5a3a10', bg: 'rgba(90,58,16,0.08)'  },
   { key: 'vendor_tip',  label: 'Vendor Tips',  emoji: '🌟', color: '#7a5200', bg: 'rgba(200,140,0,0.1)'  },
@@ -485,7 +485,7 @@ function LivePageContent() {
       <div style={{ maxWidth: 900, margin: '0 auto', minHeight: '100svh', display: 'flex', flexDirection: 'column', paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
 
         {/* ── Header ── */}
-        <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${CR} 55%,#b8315a 100%)`, padding: '22px 20px 18px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${CR} 55%,var(--um-crimson-mid) 100%)`, padding: '22px 20px 18px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: '50%', background: 'rgba(189,152,63,0.1)', pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', bottom: -20, left: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(189,152,63,0.06)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -509,7 +509,7 @@ function LivePageContent() {
               <button key={tab.key} onClick={() => handleTabChange(tab.key)}
                 style={{ flex: 1, padding: '9px 4px', borderRadius: 12, fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', transition: 'all 0.15s',
                   background: activeTab === tab.key ? `linear-gradient(135deg,${G},${G2})` : 'rgba(154,33,67,0.07)',
-                  color: activeTab === tab.key ? '#fff' : '#7a5060',
+                  color: activeTab === tab.key ? '#fff' : 'var(--um-muted)',
                   boxShadow: activeTab === tab.key ? '0 3px 10px rgba(154,33,67,0.25)' : 'none' }}>
                 {tab.label}
               </button>
@@ -525,7 +525,7 @@ function LivePageContent() {
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
               {/* Share prompt */}
-              <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${G} 60%,#b8315a 100%)`, borderRadius: 20, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, position: 'relative', overflow: 'hidden' }}>
+              <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${G} 60%,var(--um-crimson-mid) 100%)`, borderRadius: 20, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, position: 'relative', overflow: 'hidden' }}>
                 <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)', pointerEvents: 'none' }} />
                 <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="22" height="22" fill="none" stroke="#fff" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -545,14 +545,14 @@ function LivePageContent() {
                 <button onClick={() => setFilterCat('all')}
                   style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${filterCat === 'all' ? G : 'rgba(154,33,67,0.25)'}`,
                     background: filterCat === 'all' ? `linear-gradient(135deg,${G},${G2})` : '#fff',
-                    color: filterCat === 'all' ? '#fff' : '#7a5060', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                    color: filterCat === 'all' ? '#fff' : 'var(--um-muted)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   🌍 All
                 </button>
                 {CATEGORIES.map(cat => (
                   <button key={cat.key} onClick={() => setFilterCat(cat.key)}
                     style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${filterCat === cat.key ? G : 'rgba(154,33,67,0.2)'}`,
                       background: filterCat === cat.key ? `linear-gradient(135deg,${G},${G2})` : '#fff',
-                      color: filterCat === cat.key ? '#fff' : '#7a5060', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                      color: filterCat === cat.key ? '#fff' : 'var(--um-muted)', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     {cat.emoji} {cat.label}
                   </button>
                 ))}
@@ -562,8 +562,8 @@ function LivePageContent() {
               {filteredPosts.length === 0 ? (
                 <div style={{ background: '#fff', borderRadius: 20, border: '2px dashed rgba(154,33,67,0.3)', padding: '40px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 40, marginBottom: 10 }}>✨</div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>No posts yet</p>
-                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#7a5060' }}>Be the first to share in this category!</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>No posts yet</p>
+                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: 'var(--um-muted)' }}>Be the first to share in this category!</p>
                   <button onClick={() => setShowPostModal(true)}
                     style={{ padding: '10px 22px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                     Share Something
@@ -588,12 +588,12 @@ function LivePageContent() {
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1a0d12' }}>{post.author}</p>
+                                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--um-dark)' }}>{post.author}</p>
                                 <span style={{ padding: '2px 8px', borderRadius: 20, background: cat.bg, color: cat.color, fontSize: 10, fontWeight: 700 }}>
                                   {cat.emoji} {cat.label}
                                 </span>
                               </div>
-                              <p style={{ margin: '1px 0 0', fontSize: 11, color: '#7a5060' }}>{timeAgo(post.created_at)}</p>
+                              <p style={{ margin: '1px 0 0', fontSize: 11, color: 'var(--um-muted)' }}>{timeAgo(post.created_at)}</p>
                             </div>
                             {post.user_id === userId && (
                             <button onClick={() => deletePost(post.id)} style={{ padding: 4, color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
@@ -602,7 +602,7 @@ function LivePageContent() {
                           )}
                           </div>
 
-                          <p style={{ margin: '0 0 10px', fontSize: 14, color: '#1a0d12', lineHeight: 1.6 }}>{post.content}</p>
+                          <p style={{ margin: '0 0 10px', fontSize: 14, color: 'var(--um-dark)', lineHeight: 1.6 }}>{post.content}</p>
 
                           {post.image_url && (
                             <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 10, background: 'rgba(154,33,67,0.06)' }}>
@@ -654,7 +654,7 @@ function LivePageContent() {
                               ) : (
                                 <>
                                   {(comments[post.id] ?? []).length === 0 && (
-                                    <p style={{ margin: '0 0 10px', fontSize: 12, color: '#7a5060', textAlign: 'center' }}>No comments yet — be the first!</p>
+                                    <p style={{ margin: '0 0 10px', fontSize: 12, color: 'var(--um-muted)', textAlign: 'center' }}>No comments yet — be the first!</p>
                                   )}
 
                                   {/* Threaded comments render */}
@@ -672,9 +672,9 @@ function LivePageContent() {
                                             </div>
                                             <div style={{ flex: 1, background: 'rgba(154,33,67,0.06)', borderRadius: 10, padding: '7px 10px' }}>
                                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                                                <span style={{ fontSize: 11, fontWeight: 700, color: '#1a0d12' }}>{topComment.author}</span>
+                                                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--um-dark)' }}>{topComment.author}</span>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                  <span style={{ fontSize: 10, color: '#7a5060' }}>{timeAgo(topComment.created_at)}</span>
+                                                  <span style={{ fontSize: 10, color: 'var(--um-muted)' }}>{timeAgo(topComment.created_at)}</span>
                                                   <button
                                                     onClick={() => {
                                                       if (isReplyingToThis) {
@@ -694,7 +694,7 @@ function LivePageContent() {
                                                   )}
                                                 </div>
                                               </div>
-                                              <p style={{ margin: 0, fontSize: 12, color: '#1a0d12', lineHeight: 1.5 }}>{topComment.content}</p>
+                                              <p style={{ margin: 0, fontSize: 12, color: 'var(--um-dark)', lineHeight: 1.5 }}>{topComment.content}</p>
                                             </div>
                                           </div>
 
@@ -730,9 +730,9 @@ function LivePageContent() {
                                                 </div>
                                                 <div style={{ flex: 1, background: 'rgba(154,33,67,0.04)', borderRadius: 10, padding: '6px 9px' }}>
                                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1a0d12' }}>{reply.author}</span>
+                                                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--um-dark)' }}>{reply.author}</span>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                                      <span style={{ fontSize: 10, color: '#7a5060' }}>{timeAgo(reply.created_at)}</span>
+                                                      <span style={{ fontSize: 10, color: 'var(--um-muted)' }}>{timeAgo(reply.created_at)}</span>
                                                       {reply.user_id === userId && (
                                                         <button onClick={() => deleteComment(reply.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
                                                           <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -740,7 +740,7 @@ function LivePageContent() {
                                                       )}
                                                     </div>
                                                   </div>
-                                                  <p style={{ margin: 0, fontSize: 12, color: '#1a0d12', lineHeight: 1.5 }}>
+                                                  <p style={{ margin: 0, fontSize: 12, color: 'var(--um-dark)', lineHeight: 1.5 }}>
                                                     <span style={{ color: CR, fontWeight: 700 }}>@{topComment.author} </span>
                                                     {reply.content}
                                                   </p>
@@ -759,7 +759,7 @@ function LivePageContent() {
                                       onChange={e => setNewComment(e.target.value)}
                                       onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addComment(post.id); } }}
                                       placeholder="Write a comment…"
-                                      style={{ flex: 1, padding: '8px 12px', border: '1.5px solid rgba(154,33,67,0.25)', borderRadius: 20, fontSize: 12, outline: 'none', background: IVORY, color: '#1a0d12' }}
+                                      style={{ flex: 1, padding: '8px 12px', border: '1.5px solid rgba(154,33,67,0.25)', borderRadius: 20, fontSize: 12, outline: 'none', background: IVORY, color: 'var(--um-dark)' }}
                                     />
                                     <button
                                       onClick={() => addComment(post.id)}
@@ -781,15 +781,15 @@ function LivePageContent() {
 
               {/* Vendor suggestion quick-post */}
               <div style={{ background: `linear-gradient(135deg,rgba(189,152,63,0.07),rgba(154,33,67,0.05))`, borderRadius: 18, border: `1.5px solid rgba(189,152,63,0.25)`, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg,#BD983F,#8a6010)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg,var(--um-gold),var(--um-gold-dark))`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 20 }}>🌟</span>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1a0d12' }}>Know a great vendor?</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a5060' }}>Help other couples find reliable vendors across SA</p>
+                  <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--um-dark)' }}>Know a great vendor?</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--um-muted)' }}>Help other couples find reliable vendors across SA</p>
                 </div>
                 <button onClick={() => { setNewCategory('vendor_tip'); setShowPostModal(true); }}
-                  style={{ padding: '8px 16px', borderRadius: 20, background: `linear-gradient(135deg,#BD983F,#8a6010)`, color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 3px 10px rgba(189,152,63,0.3)' }}>
+                  style={{ padding: '8px 16px', borderRadius: 20, background: `linear-gradient(135deg,var(--um-gold),var(--um-gold-dark))`, color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 3px 10px rgba(189,152,63,0.3)' }}>
                   Recommend
                 </button>
               </div>
@@ -802,8 +802,8 @@ function LivePageContent() {
 
               {/* Share with Guests */}
               <div style={{ background: '#fff', borderRadius: 18, border: '1.5px solid rgba(154,33,67,0.2)', padding: '16px' }}>
-                <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: '#1a0d12' }}>📲 Share with Guests</p>
-                <p style={{ margin: '0 0 12px', fontSize: 12, color: '#7a5060' }}>Guests can view your schedule, send wishes, and share moments.</p>
+                <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--um-dark)' }}>📲 Share with Guests</p>
+                <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--um-muted)' }}>Guests can view your schedule, send wishes, and share moments.</p>
                 {guestUrl ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -813,7 +813,7 @@ function LivePageContent() {
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <input readOnly value={guestUrl} onClick={e => (e.target as HTMLInputElement).select()}
-                        style={{ flex: 1, padding: '9px 12px', border: '1.5px solid rgba(154,33,67,0.2)', borderRadius: 10, fontSize: 11, color: '#1a0d12', background: IVORY, outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis' }} />
+                        style={{ flex: 1, padding: '9px 12px', border: '1.5px solid rgba(154,33,67,0.2)', borderRadius: 10, fontSize: 11, color: 'var(--um-dark)', background: IVORY, outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis' }} />
                       <button onClick={copyGuestLink}
                         style={{ padding: '9px 16px', borderRadius: 10, background: linkCopied ? '#3d9e6a' : `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0 }}>
                         {linkCopied ? '✓ Copied' : 'Copy'}
@@ -835,14 +835,14 @@ function LivePageContent() {
                 ) : (
                   <div style={{ textAlign: 'center', padding: '12px 0' }}>
                     <div style={{ width: 24, height: 24, borderRadius: '50%', border: `2px solid rgba(154,33,67,0.2)`, borderTopColor: G, animation: 'spin 0.8s linear infinite', margin: '0 auto 6px' }} />
-                    <p style={{ margin: 0, fontSize: 12, color: '#7a5060' }}>Generating guest link…</p>
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--um-muted)' }}>Generating guest link…</p>
                   </div>
                 )}
               </div>
 
               {/* Schedule */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1a0d12' }}>Wedding Day Schedule</p>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--um-dark)' }}>Wedding Day Schedule</p>
                 <button onClick={() => setShowScheduleModal(true)}
                   style={{ padding: '8px 18px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer', boxShadow: '0 3px 10px rgba(154,33,67,0.25)' }}>
                   + Add
@@ -852,8 +852,8 @@ function LivePageContent() {
               {schedule.length === 0 ? (
                 <div style={{ background: '#fff', borderRadius: 20, border: '2px dashed rgba(154,33,67,0.3)', padding: '36px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 8 }}>🗓️</div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>No schedule yet</p>
-                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#7a5060' }}>Add your wedding day timeline so guests know what's happening.</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>No schedule yet</p>
+                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: 'var(--um-muted)' }}>Add your wedding day timeline so guests know what's happening.</p>
                   <button onClick={() => setShowScheduleModal(true)}
                     style={{ padding: '10px 22px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                     + Add Event
@@ -870,8 +870,8 @@ function LivePageContent() {
                         {index !== schedule.length - 1 && <div style={{ width: 2, flex: 1, background: 'rgba(154,33,67,0.2)', marginTop: 6 }} />}
                       </div>
                       <div style={{ flex: 1, paddingBottom: 4 }}>
-                        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1a0d12' }}>{item.title}</p>
-                        {item.location && <p style={{ margin: '3px 0 0', fontSize: 12, color: '#7a5060' }}>📍 {item.location}</p>}
+                        <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: 'var(--um-dark)' }}>{item.title}</p>
+                        {item.location && <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--um-muted)' }}>📍 {item.location}</p>}
                       </div>
                       <div style={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexShrink: 0 }}>
                         <button onClick={() => startEditEvent(item)} style={{ padding: 5, color: '#ccc', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -909,8 +909,8 @@ function LivePageContent() {
               {wishes.length === 0 ? (
                 <div style={{ background: '#fff', borderRadius: 20, border: '2px dashed rgba(154,33,67,0.3)', padding: '40px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 40, marginBottom: 8 }}>💌</div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>No well wishes yet</p>
-                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#7a5060' }}>Share your guest link so friends & family can send you their love!</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>No well wishes yet</p>
+                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: 'var(--um-muted)' }}>Share your guest link so friends & family can send you their love!</p>
                   <button onClick={() => handleTabChange('day')}
                     style={{ padding: '10px 22px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                     Get Guest Link
@@ -926,10 +926,10 @@ function LivePageContent() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1a0d12' }}>{wish.guest_name}</span>
-                            <span style={{ fontSize: 11, color: '#7a5060' }}>{timeAgo(wish.created_at)}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--um-dark)' }}>{wish.guest_name}</span>
+                            <span style={{ fontSize: 11, color: 'var(--um-muted)' }}>{timeAgo(wish.created_at)}</span>
                           </div>
-                          <p style={{ margin: 0, fontSize: 13, color: '#1a0d12', lineHeight: 1.65, background: 'rgba(154,33,67,0.04)', padding: '8px 12px', borderRadius: 12, borderLeft: `3px solid rgba(154,33,67,0.3)` }}>{wish.message}</p>
+                          <p style={{ margin: 0, fontSize: 13, color: 'var(--um-dark)', lineHeight: 1.65, background: 'rgba(154,33,67,0.04)', padding: '8px 12px', borderRadius: 12, borderLeft: `3px solid rgba(154,33,67,0.3)` }}>{wish.message}</p>
                         </div>
                         <button onClick={() => deleteWish(wish.id)} style={{ padding: 4, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
                           <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -951,22 +951,22 @@ function LivePageContent() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 60, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
           <div style={{ background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 640, padding: '0 20px 40px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(154,33,67,0.2)', margin: '16px auto 20px' }} />
-            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>Share with Community</h3>
+            <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>Share with Community</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 8 }}>YOUR NAMES</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 8 }}>YOUR NAMES</label>
                 <input value={authorName} readOnly placeholder="e.g., Thabo & Lerato" style={inp} />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 8 }}>CATEGORY</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 8 }}>CATEGORY</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
                   {CATEGORIES.map(cat => (
                     <button key={cat.key} onClick={() => setNewCategory(cat.key)}
                       style={{ padding: '8px 6px', borderRadius: 12, border: `1.5px solid ${newCategory === cat.key ? G : 'rgba(154,33,67,0.2)'}`,
                         background: newCategory === cat.key ? `linear-gradient(135deg,${G},${G2})` : IVORY,
-                        color: newCategory === cat.key ? '#fff' : '#7a5060', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
+                        color: newCategory === cat.key ? '#fff' : 'var(--um-muted)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>
                       {cat.emoji} {cat.label}
                     </button>
                   ))}
@@ -974,7 +974,7 @@ function LivePageContent() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 8 }}>YOUR MESSAGE</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 8 }}>YOUR MESSAGE</label>
                 <textarea value={newContent} onChange={e => setNewContent(e.target.value)}
                   placeholder="Share your inspiration, story, vendor recommendation or wedding moment…"
                   rows={5}
@@ -982,7 +982,7 @@ function LivePageContent() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 8 }}>PHOTO (OPTIONAL)</label>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 8 }}>PHOTO (OPTIONAL)</label>
                 {imagePreview ? (
                   <div style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', background: 'rgba(154,33,67,0.06)' }}>
                     <img src={imagePreview} alt="Preview" style={{ width: '100%', maxHeight: 200, objectFit: 'cover', display: 'block' }} />
@@ -996,7 +996,7 @@ function LivePageContent() {
                 ) : (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    style={{ width: '100%', padding: '14px', borderRadius: 12, border: '2px dashed rgba(154,33,67,0.3)', background: IVORY, color: '#7a5060', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    style={{ width: '100%', padding: '14px', borderRadius: 12, border: '2px dashed rgba(154,33,67,0.3)', background: IVORY, color: 'var(--um-muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     📷 Tap to add a photo
                   </button>
                 )}
@@ -1019,7 +1019,7 @@ function LivePageContent() {
 
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={() => { setShowPostModal(false); setNewContent(''); setImageFile(null); setImagePreview(null); setNewCategory('general'); }}
-                style={{ flex: 1, padding: '13px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: '#7a5060', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '13px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: 'var(--um-muted)', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                 Cancel
               </button>
               <button onClick={submitPost} disabled={!newContent.trim() || uploading}
@@ -1035,15 +1035,15 @@ function LivePageContent() {
       {showScheduleModal && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 16px 48px rgba(0,0,0,0.18)', width: '100%', maxWidth: 400, padding: 24 }}>
-            <h3 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>Add Schedule Event</h3>
+            <h3 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>Add Schedule Event</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>TIME</label><input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} style={inp} /></div>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>EVENT TITLE</label><input type="text" value={scheduleTitle} onChange={e => setScheduleTitle(e.target.value)} placeholder="e.g., Ceremony begins" style={inp} /></div>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>LOCATION (OPTIONAL)</label><input type="text" value={scheduleLocation} onChange={e => setScheduleLocation(e.target.value)} placeholder="e.g., Main Chapel" style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>TIME</label><input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)} style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>EVENT TITLE</label><input type="text" value={scheduleTitle} onChange={e => setScheduleTitle(e.target.value)} placeholder="e.g., Ceremony begins" style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>LOCATION (OPTIONAL)</label><input type="text" value={scheduleLocation} onChange={e => setScheduleLocation(e.target.value)} placeholder="e.g., Main Chapel" style={inp} /></div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={() => { setShowScheduleModal(false); setScheduleTitle(''); setScheduleTime(''); setScheduleLocation(''); }}
-                style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: '#7a5060', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
+                style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: 'var(--um-muted)', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
               <button onClick={addScheduleEvent} disabled={!scheduleTime || !scheduleTitle.trim()}
                 style={{ flex: 1, padding: '12px', borderRadius: 14, background: scheduleTime && scheduleTitle.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: scheduleTime && scheduleTitle.trim() ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: scheduleTime && scheduleTitle.trim() ? 'pointer' : 'default', boxShadow: scheduleTime && scheduleTitle.trim() ? '0 4px 14px rgba(154,33,67,0.3)' : 'none' }}>Add</button>
             </div>
@@ -1055,15 +1055,15 @@ function LivePageContent() {
       {editingEvent && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 24, boxShadow: '0 16px 48px rgba(0,0,0,0.18)', width: '100%', maxWidth: 400, padding: 24 }}>
-            <h3 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>Edit Schedule Event</h3>
+            <h3 style={{ margin: '0 0 18px', fontSize: 17, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>Edit Schedule Event</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>TIME</label><input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={inp} /></div>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>EVENT TITLE</label><input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} /></div>
-              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1, marginBottom: 6 }}>LOCATION (OPTIONAL)</label><input type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)} style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>TIME</label><input type="time" value={editTime} onChange={e => setEditTime(e.target.value)} style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>EVENT TITLE</label><input type="text" value={editTitle} onChange={e => setEditTitle(e.target.value)} style={inp} /></div>
+              <div><label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--um-muted)', letterSpacing: 1, marginBottom: 6 }}>LOCATION (OPTIONAL)</label><input type="text" value={editLocation} onChange={e => setEditLocation(e.target.value)} style={inp} /></div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
               <button onClick={() => setEditingEvent(null)}
-                style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: '#7a5060', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
+                style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: 'var(--um-muted)', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
               <button onClick={saveEditEvent} disabled={!editTime || !editTitle.trim()}
                 style={{ flex: 1, padding: '12px', borderRadius: 14, background: editTime && editTitle.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: editTime && editTitle.trim() ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: editTime && editTitle.trim() ? 'pointer' : 'default' }}>Save</button>
             </div>
@@ -1150,8 +1150,8 @@ function LivePageContent() {
 export default function LivePage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100svh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(154,33,67,0.15)', borderTopColor: '#9A2143', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ minHeight: '100svh', background: 'var(--um-ivory)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(154,33,67,0.15)', borderTopColor: 'var(--um-crimson)', animation: 'spin 0.8s linear infinite' }} />
         <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
       </div>
     }>

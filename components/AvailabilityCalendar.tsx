@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { CR, CRX } from '@/lib/tokens';
 
 type BlockedDate = {
   blocked_date: string
@@ -12,8 +13,6 @@ type Props = {
   vendorId: string
 }
 
-const CR = '#9A2143'
-const CRX = '#4d0f21'
 
 const REASON_LABEL: Record<string, string> = {
   booked: 'Already booked',
@@ -79,7 +78,7 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
 
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <p style={{ margin: 0, fontSize: 13, color: '#7a5060', lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 13, color: 'var(--um-muted)', lineHeight: 1.5 }}>
           Red dates are unavailable. Tap a date to see why.
         </p>
       </div>
@@ -92,7 +91,7 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
         >
           ← Prev
         </button>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#1a0d12' }}>{monthName}</span>
+        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--um-dark)' }}>{monthName}</span>
         <button
           onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
           style={{ background: 'rgba(154,33,67,0.06)', border: '1px solid rgba(154,33,67,0.15)', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: CR, fontSize: 13 }}
@@ -147,7 +146,7 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 20, marginTop: 18, fontSize: 12, color: '#7a5060' }}>
+      <div style={{ display: 'flex', gap: 20, marginTop: 18, fontSize: 12, color: 'var(--um-muted)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div style={{ width: 14, height: 14, background: '#f0ece8', borderRadius: 4 }} />
           <span>Available</span>
@@ -182,14 +181,14 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
                 <p style={{ margin: 0, fontSize: 11, color: '#b0a090', fontWeight: 500 }}>
                   {new Date(selected.blocked_date + 'T00:00:00').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
-                <p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 700, color: '#1a0d12' }}>
+                <p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 700, color: 'var(--um-dark)' }}>
                   {REASON_LABEL[selected.reason] || selected.reason}
                 </p>
               </div>
             </div>
 
             <div style={{ borderRadius: 12, background: 'rgba(154,33,67,0.05)', border: '1.5px solid rgba(154,33,67,0.12)', padding: '12px 16px' }}>
-              <p style={{ margin: 0, fontSize: 13, color: '#7a5060', lineHeight: 1.6 }}>
+              <p style={{ margin: 0, fontSize: 13, color: 'var(--um-muted)', lineHeight: 1.6 }}>
                 This vendor is not available on this date.
               </p>
             </div>

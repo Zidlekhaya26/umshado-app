@@ -1,3 +1,4 @@
+import { GD } from '@/lib/tokens';
 const STEPS = [
   { n: 1, label: 'Profile' },
   { n: 2, label: 'Services' },
@@ -6,8 +7,6 @@ const STEPS = [
   { n: 5, label: 'Review' },
 ];
 
-const CR  = '#9A2143';
-const GD  = '#BD983F';
 
 export default function VendorOnboardingProgress({ step }: { step: number }) {
   return (

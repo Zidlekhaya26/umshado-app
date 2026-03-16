@@ -36,6 +36,7 @@
   --um-charcoal:       #2d1a21;
   --um-muted:          #7a5060;   /* warm muted text                    */
   --um-muted-light:    #a07888;
+  --um-border-rose:    #e8d5d0;   /* soft rose border / divider             */
 
   /* ── Semantic aliases ── */
   --background:        var(--um-ivory);

@@ -10,8 +10,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
 import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
+import { CR, CR2, CRX, GD2, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-const CR='#9A2143',CR2='#731832',CRX='#4d0f21',GD='#BD983F',GD2='#8a6010',DK='#1a0d12',BG='#faf8f5',MUT='#7a5060',BOR='#e8d5d0';
 
 interface VendorRow{id:string;business_name:string|null;category:string|null;location:string|null;description:string|null;logo_url:string|null;cover_url:string|null;portfolio_urls:string[]|null;social_links:Record<string,string>|null;contact:{whatsapp?:string;phone?:string;preferredContact?:string}|null;is_published:boolean;}
 interface PkgRow{id:string;name:string;base_price:number;pricing_mode:string;base_guests:number|null;base_hours:number|null;included_services:string[]|null;is_popular:boolean;}

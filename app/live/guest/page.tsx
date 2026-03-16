@@ -3,10 +3,10 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 // ─── Brand tokens ─────────────────────────────────────────
-const CR='#9A2143', CR2='#731832', CRX='#4d0f21', GD='#BD983F';
-const DK='#1a0d12', MUT='#7a5060', BG='#faf8f5', BOR='rgba(154,33,67,0.1)';
+const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 
 // ─── Types ───────────────────────────────────────────────
 
@@ -203,7 +203,7 @@ function GuestPageContent() {
       <style>{'@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}'}</style>
       <div style={{ maxWidth:400, width:'100%', animation:'fadeUp 0.4s ease-out' }}>
         {/* Invitation header */}
-        <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 60%,#b8315a 100%)`, borderRadius:'24px 24px 0 0', padding:'40px 28px 36px', textAlign:'center', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 60%,var(--um-crimson-mid) 100%)`, borderRadius:'24px 24px 0 0', padding:'40px 28px 36px', textAlign:'center', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%', background:'rgba(189,152,63,0.12)', pointerEvents:'none' }} />
           <div style={{ position:'absolute', bottom:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${GD},transparent)` }} />
           <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
@@ -252,7 +252,7 @@ function GuestPageContent() {
       <style>{'@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}} @keyframes popIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}'}</style>
 
       {/* ── Header ── */}
-      <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 55%,#b8315a 100%)`, padding:'24px 20px 20px', position:'relative', overflow:'hidden' }}>
+      <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 55%,var(--um-crimson-mid) 100%)`, padding:'24px 20px 20px', position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:-40, right:-40, width:160, height:160, borderRadius:'50%', background:'rgba(189,152,63,0.1)', pointerEvents:'none' }} />
         <div style={{ position:'absolute', bottom:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${GD},transparent)` }} />
         <div style={{ position:'relative' }}>
@@ -464,10 +464,10 @@ function GuestPageContent() {
 export default function GuestLivePage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight:'100svh', background:'#faf8f5', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
-        <div style={{ width:44, height:44, borderRadius:'50%', border:'3px solid rgba(154,33,67,0.1)', borderTopColor:'#9A2143', animation:'spin 0.8s linear infinite' }} />
+      <div style={{ minHeight:'100svh', background:'var(--um-ivory)', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:16 }}>
+        <div style={{ width:44, height:44, borderRadius:'50%', border:'3px solid rgba(154,33,67,0.1)', borderTopColor:'var(--um-crimson)', animation:'spin 0.8s linear infinite' }} />
         <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
-        <p style={{ margin:0, fontSize:14, color:'#7a5060', fontWeight:600 }}>Loading...</p>
+        <p style={{ margin:0, fontSize:14, color:'var(--um-muted)', fontWeight:600 }}>Loading...</p>
       </div>
     }>
       <GuestPageContent />

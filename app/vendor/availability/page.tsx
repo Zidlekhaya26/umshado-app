@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import VendorBottomNav from '@/components/VendorBottomNav'
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-const CR='#9A2143', CR2='#731832', CRX='#4d0f21', GD='#BD983F'
-const DK='#1a0d12', MUT='#7a5060', BOR='rgba(154,33,67,0.1)', BG='#faf8f5'
+const DK='var(--um-dark)', MUT='var(--um-muted)', BOR='rgba(154,33,67,0.1)', BG='var(--um-ivory)'
 
 const REASON_LABELS: Record<string, string> = {
   booked: 'Booked',
@@ -140,7 +140,7 @@ export default function VendorAvailabilityPage() {
       <div style={{ maxWidth:600, margin:'0 auto', paddingBottom:100 }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 55%,#b8315a 100%)`, padding:'20px 20px 22px', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:`linear-gradient(160deg,${CRX} 0%,${CR} 55%,var(--um-crimson-mid) 100%)`, padding:'20px 20px 22px', position:'relative', overflow:'hidden' }}>
           <div style={{ position:'absolute', top:-50, right:-50, width:180, height:180, borderRadius:'50%', background:'rgba(189,152,63,0.1)', pointerEvents:'none' }} />
           <div style={{ position:'absolute', bottom:0, left:0, right:0, height:2, background:`linear-gradient(90deg,transparent,${GD},transparent)` }} />
           <div style={{ display:'flex', alignItems:'center', gap:10, position:'relative' }}>

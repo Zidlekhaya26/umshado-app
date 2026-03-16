@@ -10,8 +10,8 @@ import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/ToastProvider';
+import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-const CR='#9A2143',CR2='#731832',CRX='#4d0f21',DK='#1a0d12',BG='#faf8f5',MUT='#7a5060',BOR='#e8d5d0';
 
 function ICS(f:boolean):React.CSSProperties{return{width:'100%',padding:'13px 16px',borderRadius:12,outline:'none',boxSizing:'border-box',border:`1.5px solid ${f?CR:BOR}`,background:'#fff',fontSize:14,color:DK,fontFamily:'inherit',boxShadow:f?`0 0 0 3px rgba(154,33,67,0.09)`:'none',transition:'border-color .14s,box-shadow .14s'};}
 function FL({l,req}:{l:string;req?:boolean}){return <label style={{display:'block',fontSize:10.5,fontWeight:800,letterSpacing:1.1,textTransform:'uppercase',color:MUT,marginBottom:7}}>{l}{req&&<span style={{color:CR,marginLeft:3}}>*</span>}</label>;}

@@ -6,14 +6,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
+import { CR, CR2, DK, BG } from '@/lib/tokens';
 
 // Crimson Design System v4
-const CR = '#9A2143';    // Primary crimson
-const CR2 = '#731832';   // Dark crimson
-const GD = '#BD983F';    // Gold accent
-const GD2 = '#8a6010';   // Dark gold
-const BG = '#faf8f5';    // Warm ivory background
-const DK = '#1a0d12';    // Dark text
 
 export default function Home() {
   const { user, role, loading } = useAuthRole();
@@ -271,7 +266,7 @@ export default function Home() {
           margin: '24px 0 0', 
           textAlign: 'center', 
           fontSize: 13.5, 
-          color: '#7a5060' 
+          color: 'var(--um-muted)' 
         }}>
           Already have an account?{' '}
           <Link 

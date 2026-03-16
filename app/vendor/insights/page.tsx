@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import {
+import { BG } from '@/lib/tokens';
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart,
 } from 'recharts';
@@ -21,11 +22,10 @@ interface VendorEvent {
 }
 
 /* ─── Design tokens ──────────────────────────────────────── */
-const GOLD    = '#BD983F';
+const GOLD    = 'var(--um-gold)';
 const GOLD_LT = 'rgba(189,152,63,0.15)';
-const DARK    = '#1a0d12';
-const MID     = '#7a5060';
-const BG      = '#faf8f5';
+const DARK    = 'var(--um-dark)';
+const MID     = 'var(--um-muted)';
 
 /* ─── Metric config ──────────────────────────────────────── */
 const METRICS = [
@@ -82,9 +82,9 @@ function StatCard({ icon, label, value, desc, color, change }: {
 /* ─── Plan badge ─────────────────────────────────────────── */
 function PlanBadge({ plan }: { plan?: string | null }) {
   const styles: Record<string, { bg: string; color: string; label: string }> = {
-    elite:   { bg: 'linear-gradient(135deg,#b8973e,#8a6010)', color: '#fff', label: '✦ Elite' },
+    elite:   { bg: 'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', color: '#fff', label: '✦ Elite' },
     pro:     { bg: 'linear-gradient(135deg,#4a1d96,#6d28d9)', color: '#fff', label: '⚡ Pro' },
-    starter: { bg: 'rgba(184,151,62,0.15)', color: '#8a6010', label: 'Starter' },
+    starter: { bg: 'rgba(184,151,62,0.15)', color: 'var(--um-gold-dark)', label: 'Starter' },
     free:    { bg: '#f1f1f1', color: '#888', label: 'Free' },
   };
   const s = styles[plan ?? 'free'] ?? styles.free;
@@ -230,7 +230,7 @@ export default function VendorInsights() {
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: 'linear-gradient(160deg,var(--um-crimson-deep) 0%,var(--um-crimson) 55%,var(--um-crimson-mid) 100%)', padding: '24px 20px 28px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
             <div>
@@ -328,7 +328,7 @@ export default function VendorInsights() {
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: DARK }}>{row.dayLabel}</span>
-                        {isBest && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 20, background: 'rgba(184,151,62,0.15)', color: '#8a6010' }}>Best day</span>}
+                        {isBest && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 20, background: 'rgba(184,151,62,0.15)', color: 'var(--um-gold-dark)' }}>Best day</span>}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 14 }}>

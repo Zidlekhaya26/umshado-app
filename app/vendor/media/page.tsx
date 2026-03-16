@@ -7,8 +7,8 @@ import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator'
 import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
 import { supabase } from '@/lib/supabaseClient';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
+import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-const CR='#9A2143',CR2='#731832',CRX='#4d0f21',GD='#BD983F',DK='#1a0d12',BG='#faf8f5',MUT='#7a5060',BOR='#e8d5d0';
 
 type PreferredContact='chat'|'whatsapp'|'call';
 

@@ -653,7 +653,7 @@ export default function Marketplace() {
         {serviceFilter.length > 0 && (
           <div style={{ display: 'flex', gap: 6, padding: '10px 16px', overflowX: 'auto', scrollbarWidth: 'none', background: '#fff', borderBottom: '1px solid #f1f0ee' }}>
             {serviceFilter.map(s => (
-              <button key={s} onClick={() => toggleService(s)} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(184,151,62,0.1)', color: '#8a6010', border: '1px solid rgba(184,151,62,0.25)', cursor: 'pointer' }}>
+              <button key={s} onClick={() => toggleService(s)} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600, background: 'rgba(184,151,62,0.1)', color: 'var(--um-gold-dark)', border: '1px solid rgba(184,151,62,0.25)', cursor: 'pointer' }}>
                 {s} <span style={{ fontSize: 10, opacity: 0.6 }}>✕</span>
               </button>
             ))}
@@ -670,7 +670,7 @@ export default function Marketplace() {
                 {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} {scope === 'nearby' ? `within ${NEARBY_RADIUS_KM} km` : scope === 'city' ? `in ${location.city}` : `in ${location.country}`}
               </span>
             </div>
-            <button onClick={() => setScopeOpen(true)} style={{ fontSize: 11, fontWeight: 700, color: '#8a6010', background: 'rgba(184,151,62,0.1)', border: '1px solid rgba(184,151,62,0.2)', borderRadius: 20, padding: '3px 10px', cursor: 'pointer' }}>Change</button>
+            <button onClick={() => setScopeOpen(true)} style={{ fontSize: 11, fontWeight: 700, color: 'var(--um-gold-dark)', background: 'rgba(184,151,62,0.1)', border: '1px solid rgba(184,151,62,0.2)', borderRadius: 20, padding: '3px 10px', cursor: 'pointer' }}>Change</button>
           </div>
         )}
 

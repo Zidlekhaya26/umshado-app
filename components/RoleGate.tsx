@@ -21,8 +21,8 @@ export default function RoleGate({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div role="status" aria-label="Loading" style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf8f5' }}>
-        <div aria-hidden="true" style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'rg-spin .8s linear infinite' }} />
+      <div role="status" aria-label="Loading" style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--um-ivory)' }}>
+        <div aria-hidden="true" style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: 'var(--um-crimson)', borderRadius: '50%', animation: 'rg-spin .8s linear infinite' }} />
         <style>{'@keyframes rg-spin{to{transform:rotate(360deg)}}'}</style>
       </div>
     );

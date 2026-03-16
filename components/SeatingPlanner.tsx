@@ -159,8 +159,8 @@ function TableDiagram({
             />
             <circle
               cx={sx} cy={sy} r={seatR}
-              fill={filled ? '#9A2143' : '#fff'}
-              stroke={filled ? '#731832' : '#d1d5db'}
+              fill={filled ? 'var(--um-crimson)' : '#fff'}
+              stroke={filled ? 'var(--um-crimson-dark)' : '#d1d5db'}
               strokeWidth="1.5"
               strokeDasharray={filled ? undefined : '3 2'}
             />

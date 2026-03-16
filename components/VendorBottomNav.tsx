@@ -74,7 +74,7 @@ export default function VendorBottomNav() {
           {unreadCount > 0 && (
             <span
               aria-label={`${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
-              style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: '#BD983F', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}
+              style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: 'var(--um-gold)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
@@ -111,7 +111,7 @@ export default function VendorBottomNav() {
   return (
     <nav id="um-vendor-nav" aria-label="Vendor navigation" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(154,33,67,0.1)', zIndex: 50, boxShadow: '0 -2px 16px rgba(26,13,18,0.08)' }}>
       <div className="um-nav-brand">
-        <span style={{ fontSize:18, fontWeight:800, fontFamily:'Georgia,serif', color:'#9A2143' }}>uMshado</span>
+        <span style={{ fontSize:18, fontWeight:800, fontFamily:'Georgia,serif', color:'var(--um-crimson)' }}>uMshado</span>
       </div>
       {/* Role switcher — only for dual-role users */}
       {hasCouple && (
@@ -121,10 +121,10 @@ export default function VendorBottomNav() {
             padding: '7px 16px', borderRadius: 10, textDecoration: 'none',
             background: 'rgba(154,33,67,0.06)', border: '1.5px solid rgba(154,33,67,0.15)',
           }}>
-            <svg width="13" height="13" fill="none" stroke="#9A2143" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg width="13" height="13" fill="none" stroke="var(--um-crimson)" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
             </svg>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#9A2143', letterSpacing: .2 }}>Switch to Couple view</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--um-crimson)', letterSpacing: .2 }}>Switch to Couple view</span>
           </Link>
         </div>
       )}
@@ -141,7 +141,7 @@ export default function VendorBottomNav() {
                 style={{
                   display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                   padding: '5px 10px', borderRadius: 12, minWidth: 48, textDecoration: 'none',
-                  color: active ? '#9A2143' : '#7a5060', transition: 'color 0.15s',
+                  color: active ? 'var(--um-crimson)' : 'var(--um-muted)', transition: 'color 0.15s',
                 }}
               >
                 {item.icon(active)}

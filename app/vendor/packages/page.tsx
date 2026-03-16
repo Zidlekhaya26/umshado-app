@@ -7,18 +7,10 @@ import { getOrCreateVendorForUser, getVendorSelectedServices, getServicesCatalog
 import { getPricingType } from "@/lib/marketplaceCategories";
 import ProfileCompletionIndicator from "@/components/ProfileCompletionIndicator";
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { CR, CR2, CRX, GD, GD2, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Tokens ─────────────────────────────────────────────── */
-const CR  = '#9A2143';
-const CR2 = '#731832';
-const CRX = '#4d0f21';
-const GD  = '#BD983F';
-const GD2 = '#8a6010';
-const DK  = '#1a0d12';
 const MID = '#5c3d28';
-const MUT = '#7a5060';
-const BOR = '#e8d5d0';
-const BG  = '#faf8f5';
 
 /* ─── Types ──────────────────────────────────────────────── */
 type PricingMode = "guest-based" | "time-based" | "per-person" | "package-based" | "event-based" | "quantity-based";

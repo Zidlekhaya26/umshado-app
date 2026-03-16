@@ -5,16 +5,9 @@ import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
-const CR  = '#9A2143';
-const CR2 = '#731832';
-const CRX = '#4d0f21';
-const GD  = '#BD983F';
-const DK  = '#1a0d12';
-const MUT = '#7a5060';
-const BOR = '#e8d5d0';
-const BG  = '#faf8f5';
 
 /* ─── Profile data ───────────────────────────────────────── */
 interface ProfileData {
@@ -323,9 +316,9 @@ function SwitchRoleContent() {
 export default function SwitchRolePage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100svh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: '100svh', background: 'var(--um-ivory)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <style>{'@keyframes rsSpin{to{transform:rotate(360deg)}}'}</style>
-        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.12)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'rsSpin .8s linear infinite' }} />
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.12)', borderTopColor: 'var(--um-crimson)', borderRadius: '50%', animation: 'rsSpin .8s linear infinite' }} />
       </div>
     }>
       <SwitchRoleContent />

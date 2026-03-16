@@ -7,6 +7,7 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
 import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { CR, MUT, BOR, BG } from '@/lib/tokens';
 
 interface NotificationItem {
   id: string;
@@ -145,8 +146,7 @@ export default function NotificationsPage() {
     }
   };
 
-  const CR = '#9A2143', CR2 = '#731832', GD = '#BD983F';
-  const DARK = '#1a0d12', MUT = '#7a5060', BG = '#faf8f5', BOR = 'rgba(154,33,67,0.1)';
+  const DARK = 'var(--um-dark)', MUT = 'var(--um-muted)', BG = 'var(--um-ivory)', BOR = 'rgba(154,33,67,0.1)';
 
   return (
     <div style={{ minHeight: '100svh', background: BG, fontFamily: 'system-ui, sans-serif' }}>
@@ -155,7 +155,7 @@ export default function NotificationsPage() {
       <div style={{ maxWidth: 600, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* Header */}
-        <div style={{ background: `linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`, padding: '22px 20px 20px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ background: `linear-gradient(160deg,var(--um-crimson-deep) 0%,${CR} 55%,var(--um-crimson-mid) 100%)`, padding: '22px 20px 20px', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: '50%', background: 'rgba(189,152,63,0.1)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -203,7 +203,7 @@ export default function NotificationsPage() {
                 background: item.is_read ? '#fff' : 'rgba(154,33,67,0.04)',
                 padding: 16, cursor: 'pointer', transition: 'background 0.12s',
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? '#faf8f5' : 'rgba(154,33,67,0.07)'; }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? 'var(--um-ivory)' : 'rgba(154,33,67,0.07)'; }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? '#fff' : 'rgba(154,33,67,0.04)'; }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>

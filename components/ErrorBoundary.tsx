@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '2rem',
-          background: '#faf8f5',
+          background: 'var(--um-ivory)',
           textAlign: 'center',
         }}>
           <div style={{
@@ -41,21 +41,21 @@ export default class ErrorBoundary extends Component<Props, State> {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             marginBottom: 20,
           }}>
-            <svg width="28" height="28" fill="none" stroke="#9A2143" strokeWidth={1.8} viewBox="0 0 24 24">
+            <svg width="28" height="28" fill="none" stroke="var(--um-crimson)" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
             </svg>
           </div>
-          <h1 style={{ fontSize: 20, fontWeight: 800, color: '#1a0d12', marginBottom: 8 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--um-dark)', marginBottom: 8 }}>
             Something went wrong
           </h1>
-          <p style={{ fontSize: 14, color: '#7a5060', maxWidth: 320, lineHeight: 1.6, marginBottom: 28 }}>
+          <p style={{ fontSize: 14, color: 'var(--um-muted)', maxWidth: 320, lineHeight: 1.6, marginBottom: 28 }}>
             An unexpected error occurred. Please try refreshing the page.
           </p>
           <button
             onClick={() => window.location.reload()}
             style={{
               padding: '12px 28px', borderRadius: 12,
-              background: 'linear-gradient(135deg,#9A2143,#731832)',
+              background: 'linear-gradient(135deg,var(--um-crimson),var(--um-crimson-dark))',
               color: '#fff', fontSize: 14, fontWeight: 700,
               border: 'none', cursor: 'pointer',
               boxShadow: '0 4px 12px rgba(154,33,67,0.3)',
@@ -66,7 +66,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           {process.env.NODE_ENV === 'development' && (
             <pre style={{
               marginTop: 24, padding: 16, borderRadius: 8,
-              background: '#1a0d12', color: '#f5c6d0',
+              background: 'var(--um-dark)', color: '#f5c6d0',
               fontSize: 11, textAlign: 'left', maxWidth: '90vw',
               overflowX: 'auto', whiteSpace: 'pre-wrap',
             }}>

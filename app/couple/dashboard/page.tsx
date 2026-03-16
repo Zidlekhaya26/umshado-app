@@ -34,7 +34,7 @@ const fmtDate   = (d: string) => new Date(d+'T00:00:00').toLocaleDateString('en-
 const fmtShort  = (d: string) => new Date(d+'T00:00:00').toLocaleDateString('en-ZA', { day:'numeric', month:'short' });
 
 /* ─── Tokens ──────────────────────────────────────────────── */
-const G = '#b8973e', G2 = '#8a6010', DARK = '#18100a', MID = '#5c3d28', LITE = '#8a6e4a', BG = '#faf7f2';
+const G = '#b8973e', G2 = 'var(--um-gold-dark)', DARK = '#18100a', MID = '#5c3d28', LITE = '#8a6e4a', BG = '#faf7f2';
 const GRN = '#2d7a4f', BLU = '#1a6aa8', RED = '#c83232';
 
 /* ─── SVG Donut ───────────────────────────────────────────── */
@@ -318,7 +318,7 @@ export default function CoupleDashboard() {
         <input ref={fileInputRef} type="file" accept="image/*" style={{ display:'none' }} onChange={handleAvatarUpload}/>
 
         {/* ════ HEADER ════════════════════════════════════════ */}
-        <div style={{ background:'linear-gradient(135deg,#9A2143 0%,#b8315a 100%)', padding:'22px 20px 0', position:'relative', overflow:'hidden' }}>
+        <div style={{ background:'linear-gradient(135deg,var(--um-crimson) 0%,var(--um-crimson-mid) 100%)', padding:'22px 20px 0', position:'relative', overflow:'hidden' }}>
           {/* Orbs */}
           <div style={{ position:'absolute', top:-50, right:-50, width:180, height:180, borderRadius:'50%', background:'rgba(154,33,67,0.12)', pointerEvents:'none' }}/>
           <div style={{ position:'absolute', bottom:30, left:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.08)', pointerEvents:'none' }}/>
@@ -372,7 +372,7 @@ export default function CoupleDashboard() {
                 <p style={{ margin:'0 0 4px', fontSize:17, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Set your wedding date</p>
                 <p style={{ margin:'0 0 12px', fontSize:12, color:'rgba(255,255,255,0.42)' }}>Start the countdown to your big day ✨</p>
                 <button onClick={() => { setEditDate(''); setShowDateModal(true); }}
-                  style={{ padding:'10px 22px', borderRadius:22, border:'none', background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.45)' }}>
+                  style={{ padding:'10px 22px', borderRadius:22, border:'none', background:'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 14px rgba(184,151,62,0.45)' }}>
                   Set date
                 </button>
               </div>
@@ -392,7 +392,7 @@ export default function CoupleDashboard() {
                       <span style={{ fontSize:9, color:'rgba(255,255,255,0.4)', letterSpacing:0.8 }}>ADD PHOTO</span>
                     </div>
               }
-              <div style={{ position:'absolute', bottom:3, right:3, width:30, height:30, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,#8a6010)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
+              <div style={{ position:'absolute', bottom:3, right:3, width:30, height:30, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
                 <svg width="13" height="13" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -531,7 +531,7 @@ export default function CoupleDashboard() {
                 <p style={{ margin:'0 0 4px', fontSize:32 }}>💬</p>
                 <p style={{ margin:'0 0 4px', fontSize:14, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>No quotes yet</p>
                 <p style={{ margin:'0 0 14px', fontSize:12, color:LITE }}>Browse vendors and request your first quote</p>
-                <Link href="/marketplace" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'9px 20px', borderRadius:20, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Browse Vendors</Link>
+                <Link href="/marketplace" style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'9px 20px', borderRadius:20, background:'linear-gradient(135deg,var(--um-crimson),var(--um-crimson-mid))', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Browse Vendors</Link>
               </div>
             ) : (
               <div style={{ background:'#fff', borderRadius:16, overflow:'hidden', boxShadow:'0 2px 12px rgba(0,0,0,0.05)', border:'1.5px solid rgba(0,0,0,0.05)' }}>
@@ -551,7 +551,7 @@ export default function CoupleDashboard() {
           </div>
 
           {/* ── 5. Discover vendors CTA ────────────────────── */}
-          <div className="dc" style={{ background:'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
+          <div className="dc" style={{ background:'linear-gradient(160deg,var(--um-crimson-deep) 0%,var(--um-crimson) 55%,var(--um-crimson-mid) 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
             <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(189,152,63,0.13)', pointerEvents:'none' }}/>
             <div style={{ position:'absolute', bottom:-10, left:14, width:55, height:55, borderRadius:'50%', background:'rgba(189,152,63,0.07)', pointerEvents:'none' }}/>
             <div style={{ width:48, height:48, borderRadius:14, background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.18)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🏪</div>
@@ -567,10 +567,10 @@ export default function CoupleDashboard() {
             <div style={{ position:'absolute', top:-20, right:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.06)', pointerEvents:'none' }}/>
             <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,rgba(154,33,67,0.1),rgba(184,151,62,0.15))', border:'1.5px solid rgba(184,151,62,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>📅</div>
             <div style={{ flex:1 }}>
-              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#1a0d12', fontFamily:'var(--font-display,Georgia,serif)' }}>My Bookings</p>
-              <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>Upcoming vendors · countdowns · reviews</p>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'var(--um-dark)', fontFamily:'var(--font-display,Georgia,serif)' }}>My Bookings</p>
+              <p style={{ margin:0, fontSize:11, color:'var(--um-muted)' }}>Upcoming vendors · countdowns · reviews</p>
             </div>
-            <Link href="/couple/bookings" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
+            <Link href="/couple/bookings" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,var(--um-crimson),var(--um-crimson-dark))', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
           </div>
 
           {/* ── DJ Playlist CTA ─────────────────────────────── */}
@@ -589,10 +589,10 @@ export default function CoupleDashboard() {
             <div style={{ position:'absolute', top:-20, right:-20, width:100, height:100, borderRadius:'50%', background:'rgba(154,33,67,0.05)', pointerEvents:'none' }}/>
             <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,rgba(154,33,67,0.09),rgba(184,151,62,0.1))', border:'1.5px solid rgba(154,33,67,0.13)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🎥</div>
             <div style={{ flex:1 }}>
-              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#1a0d12', fontFamily:'var(--font-display,Georgia,serif)' }}>Your live wedding page</p>
-              <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>RSVP · wishes · live updates for guests</p>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'var(--um-dark)', fontFamily:'var(--font-display,Georgia,serif)' }}>Your live wedding page</p>
+              <p style={{ margin:0, fontSize:11, color:'var(--um-muted)' }}>RSVP · wishes · live updates for guests</p>
             </div>
-            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>Open →</Link>
+            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,var(--um-crimson),var(--um-crimson-dark))', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>Open →</Link>
           </div>
 
           {/* ── 7. Wedding website customization ──────────── */}
@@ -682,7 +682,7 @@ export default function CoupleDashboard() {
             <div style={{ display:'flex', gap:10, marginTop:20 }}>
               <button onClick={() => setShowDateModal(false)} style={{ flex:1, height:48, borderRadius:14, border:'1.5px solid #e0d8cc', background:'#fff', fontSize:14, fontWeight:600, color:MID, cursor:'pointer' }}>Cancel</button>
               <button onClick={saveWeddingDate} disabled={savingDate}
-                style={{ flex:2, height:48, borderRadius:14, border:'none', background:'linear-gradient(135deg,#b8973e,#8a6010)', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 16px rgba(184,151,62,0.35)', opacity:savingDate ? 0.7 : 1 }}>
+                style={{ flex:2, height:48, borderRadius:14, border:'none', background:'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', color:'#fff', fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 16px rgba(184,151,62,0.35)', opacity:savingDate ? 0.7 : 1 }}>
                 {savingDate ? 'Saving…' : '✓ Save Date'}
               </button>
             </div>

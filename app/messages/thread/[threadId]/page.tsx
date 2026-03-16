@@ -15,11 +15,11 @@ interface Quote { id: string; quote_ref: string; status: 'requested'|'negotiatin
 
 /* ─── Helpers ────────────────────────────────────────────────────────── */
 const C = {
-  crimson: '#9A2143', crimsonDark: '#731832', crimsonDim: 'rgba(154,33,67,0.1)',
-  gold: '#BD983F', goldDim: 'rgba(189,152,63,0.1)',
-  dark: '#1a0d12', bg: '#faf8f5', card: '#fff',
-  border: '#f0ebe4', muted: '#7a5060', text: '#2d1a22',
-  myBubble: '#9A2143', myText: '#fff',
+  crimson: 'var(--um-crimson)', crimsonDark: 'var(--um-crimson-dark)', crimsonDim: 'rgba(154,33,67,0.1)',
+  gold: 'var(--um-gold)', goldDim: 'rgba(189,152,63,0.1)',
+  dark: 'var(--um-dark)', bg: 'var(--um-ivory)', card: '#fff',
+  border: '#f0ebe4', muted: 'var(--um-muted)', text: '#2d1a22',
+  myBubble: 'var(--um-crimson)', myText: '#fff',
   theirBubble: '#fff', theirText: '#2d1a22', theirBorder: '#eedbd3',
 };
 

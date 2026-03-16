@@ -7,10 +7,10 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
+import { CR, CR2, GD, GD2, DK, MUT, BOR, BG, GR } from '@/lib/tokens';
 
 /* ─── Tokens ─────────────────────────────────────────────── */
-const CR='#9A2143', CR2='#731832', GD='#BD983F', GD2='#8a6010';
-const DK='#1a0d12', MUT='#7a5060', BG='#faf8f5', BOR='rgba(154,33,67,0.1)';
+const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 const GR='#1e7c4a', AM='#c67a2e';
 
 /* ─── Types ─────────────────────────────────────────────── */
@@ -345,7 +345,7 @@ export default function CoupleBookingsPage() {
       <div style={{ maxWidth:600,margin:'0 auto',paddingBottom:100 }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`,padding:'22px 20px 0',position:'relative',overflow:'hidden' }}>
+        <div style={{ background:`linear-gradient(160deg,var(--um-crimson-deep) 0%,${CR} 55%,var(--um-crimson-mid) 100%)`,padding:'22px 20px 0',position:'relative',overflow:'hidden' }}>
           <div style={{ position:'absolute',top:-40,right:-40,width:150,height:150,borderRadius:'50%',background:'rgba(189,152,63,0.1)',pointerEvents:'none' }} />
 
           <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:18 }}>

@@ -159,7 +159,7 @@ export default function VendorBilling() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: '#9A2143' }} />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: 'var(--um-crimson)' }} />
           <p className="mt-4 text-gray-600">Loading billing...</p>
         </div>
       </div>
@@ -177,7 +177,7 @@ export default function VendorBilling() {
         <div className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
           {/* Current plan status */}
           <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm uppercase" style={{ background: '#9A2143' }}>
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm uppercase" style={{ background: 'var(--um-crimson)' }}>
               {currentPlan[0]}
             </div>
             <div>
@@ -185,7 +185,7 @@ export default function VendorBilling() {
               <p className="font-bold text-gray-900 capitalize">{currentPlan}</p>
               {planUntil && <p className="text-xs text-gray-400">Renews {planUntil}</p>}
               {vendor?.featured && featuredUntil && (
-                <p className="text-xs" style={{ color: '#9A2143' }}>Featured until {featuredUntil}</p>
+                <p className="text-xs" style={{ color: 'var(--um-crimson)' }}>Featured until {featuredUntil}</p>
               )}
             </div>
           </div>
@@ -201,12 +201,12 @@ export default function VendorBilling() {
             const isLoading = paying === plan.key;
             const borderClass = plan.highlight ? 'border-2' : isActive ? 'border-2 border-green-400' : 'border border-gray-200';
             const bgClass = plan.highlight ? 'bg-gradient-to-br from-red-50 to-pink-50' : 'bg-white';
-            const borderStyle = plan.highlight ? { borderColor: '#9A2143' } : {};
+            const borderStyle = plan.highlight ? { borderColor: 'var(--um-crimson)' } : {};
 
             return (
               <div key={plan.key} className={`rounded-xl p-4 relative ${borderClass} ${bgClass}`} style={borderStyle}>
                 {plan.badge && (
-                  <span className="absolute -top-3 left-4 text-white text-xs font-bold px-3 py-0.5 rounded-full" style={{ background: '#9A2143' }}>
+                  <span className="absolute -top-3 left-4 text-white text-xs font-bold px-3 py-0.5 rounded-full" style={{ background: 'var(--um-crimson)' }}>
                     {plan.badge}
                   </span>
                 )}
@@ -224,7 +224,7 @@ export default function VendorBilling() {
                 <ul className="space-y-1.5 mb-4">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="mt-0.5 shrink-0" style={{ color: '#9A2143' }}>✓</span>
+                      <span className="mt-0.5 shrink-0" style={{ color: 'var(--um-crimson)' }}>✓</span>
                       {f}
                     </li>
                   ))}
@@ -239,7 +239,7 @@ export default function VendorBilling() {
                       ? 'text-white hover:opacity-90 disabled:opacity-50'
                       : 'bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50'
                   }`}
-                  style={!isActive && plan.highlight ? { background: '#9A2143' } : {}}
+                  style={!isActive && plan.highlight ? { background: 'var(--um-crimson)' } : {}}
                 >
                   {isLoading ? 'Redirecting to PayFast...' : isActive ? 'Current Plan' : `Upgrade to ${plan.label}`}
                 </button>

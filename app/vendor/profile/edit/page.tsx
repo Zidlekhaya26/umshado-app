@@ -2,16 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { CR, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
-const CR  = '#9A2143';
-const CR2 = '#731832';
-const CRX = '#4d0f21';
-const GD  = '#BD983F';
-const DK  = '#1a0d12';
-const MUT = '#7a5060';
-const BOR = '#e8d5d0';
-const BG  = '#faf8f5';
 
 const SECTIONS = [
   { href: '/vendor/onboarding', label: 'Business Profile', icon: '💼', desc: 'Name, category, location, description' },

@@ -6,16 +6,9 @@ import { useRouter } from "next/navigation";
 import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import Image from 'next/image';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
-const CR  = '#9A2143';
-const CR2 = '#731832';
-const CRX = '#4d0f21';
-const GD  = '#BD983F';
-const DK  = '#1a0d12';
-const MUT = '#7a5060';
-const BOR = '#e8d5d0';
-const BG  = '#faf8f5';
 
 /* ─── Onboarding header ──────────────────────────────────── */
 function OnboardingHeader() {
@@ -132,7 +125,7 @@ function WeddingCountdown({ dateStr }: { dateStr: string }) {
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 20, background: `rgba(189,152,63,0.1)`, border: `1px solid rgba(189,152,63,0.3)`, marginTop: 7 }}>
       <span style={{ fontSize: 13 }}>💍</span>
-      <span style={{ fontSize: 12, fontWeight: 700, color: '#8a6010' }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--um-gold-dark)' }}>{label}</span>
     </div>
   );
 }

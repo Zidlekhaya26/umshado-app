@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Conversation {
@@ -24,9 +25,6 @@ interface NotifItem {
 }
 
 /* ─── Tokens ─────────────────────────────────────────────── */
-const CR = '#9A2143', CR2 = '#731832', CRX = '#4d0f21';
-const GD = '#BD983F', GD2 = '#8a6010';
-const DK = '#1a0d12', MUT = '#7a5060', BOR = '#e8d5d0', BG = '#faf8f5';
 
 /* ─── Helpers ────────────────────────────────────────────── */
 function timeAgo(dateStr: string) {
@@ -189,7 +187,7 @@ export default function VendorInboxPage() {
               }}>
                 {label}
                 {badge > 0 && (
-                  <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 10, background: t === 'chats' ? CR2 : GD, color: t === 'chats' ? '#fff' : '#1a0d12', lineHeight: 1.4 }}>{badge}</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 10, background: t === 'chats' ? CR2 : GD, color: t === 'chats' ? '#fff' : 'var(--um-dark)', lineHeight: 1.4 }}>{badge}</span>
                 )}
               </button>
             ))}

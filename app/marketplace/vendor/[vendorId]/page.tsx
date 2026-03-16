@@ -745,7 +745,7 @@ export default function VendorProfile() {
                         package_name: pkg.name
                       })
                     }
-                    className="block w-full px-4 py-3 bg-[#b8973e] text-white rounded-xl font-semibold text-sm text-center hover:bg-[#8a6010] active:scale-95 transition-all shadow-sm"
+                    className="block w-full px-4 py-3 bg-(--um-gold) text-white rounded-xl font-semibold text-sm text-center hover:bg-(--um-gold-dark) active:scale-95 transition-all shadow-sm"
                   >
                     Request Quote
                   </Link>
@@ -770,7 +770,7 @@ export default function VendorProfile() {
                     </div>
                     <Link
                       href="/vendor/dashboard"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-[#b8973e] text-white rounded-xl font-semibold text-base hover:bg-[#8a6010] active:scale-95 transition-all shadow-lg shadow-amber-200"
+                      className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-(--um-gold) text-white rounded-xl font-semibold text-base hover:bg-(--um-gold-dark) active:scale-95 transition-all shadow-lg shadow-amber-200"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
                       Back to Dashboard
@@ -789,7 +789,7 @@ export default function VendorProfile() {
                 <div className="space-y-2.5">
                   <Link
                     href={`/messages/new?vendorId=${vendor.id}`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-[#b8973e] text-white rounded-xl font-semibold text-base hover:bg-[#8a6010] active:scale-95 transition-all shadow-lg shadow-amber-200"
+                    className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-(--um-gold) text-white rounded-xl font-semibold text-base hover:bg-(--um-gold-dark) active:scale-95 transition-all shadow-lg shadow-amber-200"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

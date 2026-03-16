@@ -11,17 +11,17 @@ import { useCurrency } from '@/app/providers/CurrencyProvider';
 
 /* ─── Design tokens ──────────────────────────────────────── */
 const C = {
-  crimson:     '#9A2143',
-  crimsonDark: '#731832',
+  crimson:     'var(--um-crimson)',
+  crimsonDark: 'var(--um-crimson-dark)',
   crimsonDim:  'rgba(154,33,67,0.10)',
   crimsonGlow: 'rgba(154,33,67,0.22)',
-  gold:        '#BD983F',
+  gold:        'var(--um-gold)',
   goldDim:     'rgba(189,152,63,0.12)',
-  dark:        '#1a0d12',
-  bg:          '#faf8f5',
+  dark:        'var(--um-dark)',
+  bg:          'var(--um-ivory)',
   card:        '#ffffff',
   border:      '#f0ebe4',
-  muted:       '#7a5060',
+  muted:       'var(--um-muted)',
   text:        '#2d1a22',
   success:     '#1e7c4a',
   successDim:  'rgba(30,124,74,0.1)',
@@ -32,7 +32,7 @@ const C = {
 };
 
 const grad = {
-  header:  `linear-gradient(160deg, #4d0f21 0%, ${C.crimson} 55%, #b8315a 100%)`,
+  header:  `linear-gradient(160deg, var(--um-crimson-deep) 0%, ${C.crimson} 55%, var(--um-crimson-mid) 100%)`,
   gold:    `linear-gradient(135deg, ${C.gold}, #9a7a2a)`,
   primary: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`,
 };
@@ -674,7 +674,7 @@ function SettingsContent() {
                   <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted }}>Your wedding profile details</p>
                 </div>
                 <button onClick={() => { setShowEditProfile(false); setProfileSaveMsg(null); }}
-                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: '#faf8f5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: 'var(--um-ivory)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="12" height="12" fill="none" stroke={C.muted} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -755,7 +755,7 @@ function SettingsContent() {
                   <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted }}>A confirmation will be sent to your new address</p>
                 </div>
                 <button onClick={() => { setShowChangeEmail(false); setEmailChangeMsg(null); setNewEmail(''); }}
-                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: '#faf8f5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: 'var(--um-ivory)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <svg width="12" height="12" fill="none" stroke={C.muted} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -802,8 +802,8 @@ function SettingsContent() {
 export default function SettingsPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100svh', background: '#faf8f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <div style={{ minHeight: '100svh', background: 'var(--um-ivory)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: 'var(--um-crimson)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     }>

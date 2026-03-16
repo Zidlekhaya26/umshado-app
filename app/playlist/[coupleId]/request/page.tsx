@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
-
-const CR='#9A2143', CR2='#731832', GD='#BD983F', DK='#1a0d12', MUT='#7a5060', BG='#faf8f5', BOR='rgba(154,33,67,0.1)';
+import { CR, CR2, GD, DK, MUT, BG, BOR } from '@/lib/tokens';
 
 interface CoupleInfo { partner_name: string | null; wedding_date: string | null; }
 
@@ -62,7 +61,7 @@ export default function PlaylistRequestPage() {
       <div style={{ width:'100%',maxWidth:480,padding:'0 0 60px' }}>
 
         {/* Header */}
-        <div style={{ background:`linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`,padding:'40px 24px 32px',textAlign:'center',position:'relative',overflow:'hidden' }}>
+        <div style={{ background:`linear-gradient(160deg,var(--um-crimson-deep) 0%,${CR} 55%,var(--um-crimson-mid) 100%)`,padding:'40px 24px 32px',textAlign:'center',position:'relative',overflow:'hidden' }}>
           <div style={{ position:'absolute',top:-40,right:-40,width:160,height:160,borderRadius:'50%',background:'rgba(189,152,63,0.1)',pointerEvents:'none' }} />
           <div style={{ position:'absolute',bottom:-20,left:-20,width:90,height:90,borderRadius:'50%',background:'rgba(189,152,63,0.07)',pointerEvents:'none' }} />
           <div style={{ position:'relative' }}>

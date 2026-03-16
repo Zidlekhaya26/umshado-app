@@ -6,8 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { CR, CR2, GD, GD2, DK, MUT, BOR, BG, GR, BL } from '@/lib/tokens';
 
-const CR='#9A2143',CR2='#731832',GD='#BD983F',GD2='#8a6010',DK='#1a0d12',MUT='#7a5060',BOR='#f0ede8',BG='#faf8f5',GR='#1e7c4a',BL='#1d6fa8';
 
 interface Booking {
   id:string; booking_ref:string; package_name:string; event_date:string|null;
@@ -192,7 +192,7 @@ export default function VendorBookingsPage(){
       `}</style>
 
       {/* Header */}
-      <div style={{background:`linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`,padding:'20px 20px 0',position:'relative',overflow:'hidden'}}>
+      <div style={{background:`linear-gradient(160deg,var(--um-crimson-deep) 0%,${CR} 55%,var(--um-crimson-mid) 100%)`,padding:'20px 20px 0',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:-40,right:-40,width:160,height:160,borderRadius:'50%',background:'radial-gradient(circle,rgba(189,152,63,0.14) 0%,transparent 70%)',pointerEvents:'none'}}/>
         <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:18,position:'relative'}}>
           <Link href="/vendor/dashboard" style={{width:34,height:34,borderRadius:'50%',background:'rgba(255,255,255,0.12)',display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.15)',textDecoration:'none',flexShrink:0}}>
