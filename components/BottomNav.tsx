@@ -28,29 +28,39 @@ export default function BottomNav() {
     return () => { mounted = false; };
   }, [user]);
 
-  // Track unread messages
+  // Track unread messages — single filtered fetch + parallel counts (no N+1)
   useEffect(() => {
     if (!user) { setUnreadMessages(0); return; }
     let mounted = true;
     (async () => {
       try {
+        // Only fetch conversations this user participates in
         const { data: convs } = await supabase
-          .from('conversations').select('id,couple_id,vendor_id,last_message_at,last_read_at');
+          .from('conversations')
+          .select('id,last_message_at,last_read_at')
+          .or(`couple_id.eq.${user.id},vendor_id.eq.${user.id}`);
         if (!convs || !mounted) return;
-        let total = 0;
-        for (const conv of convs) {
-          const isParticipant = conv.couple_id === user.id || conv.vendor_id === user.id;
-          if (!isParticipant) continue;
-          const lastMsg  = conv.last_message_at ? new Date(conv.last_message_at) : null;
-          const lastRead = conv.last_read_at    ? new Date(conv.last_read_at)    : null;
-          if (lastMsg && (!lastRead || lastMsg > lastRead)) {
-            const { count } = await supabase.from('messages')
+
+        // Keep only conversations that have new messages since last read
+        const stale = convs.filter(c => {
+          const lastMsg  = c.last_message_at ? new Date(c.last_message_at) : null;
+          const lastRead = c.last_read_at    ? new Date(c.last_read_at)    : null;
+          return lastMsg && (!lastRead || lastMsg > lastRead);
+        });
+
+        if (stale.length === 0) { if (mounted) setUnreadMessages(0); return; }
+
+        // Fire all count queries in parallel — O(1 + N parallel) instead of O(N sequential)
+        const counts = await Promise.all(
+          stale.map(c =>
+            supabase.from('messages')
               .select('*', { count: 'exact', head: true })
-              .eq('conversation_id', conv.id).neq('sender_id', user.id)
-              .gt('created_at', lastRead?.toISOString() || '1970-01-01');
-            total += count || 0;
-          }
-        }
+              .eq('conversation_id', c.id)
+              .neq('sender_id', user.id)
+              .gt('created_at', c.last_read_at || '1970-01-01')
+          )
+        );
+        const total = counts.reduce((acc, { count }) => acc + (count || 0), 0);
         if (mounted) setUnreadMessages(total);
       } catch { /* non-fatal */ }
     })();

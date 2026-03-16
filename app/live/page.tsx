@@ -370,6 +370,40 @@ function LivePageContent() {
     })();
   }, [router, loadPosts, loadData, loadGuestToken]);
 
+  // ── Real-time: community_posts INSERT → prepend; UPDATE → patch counts ──────
+  useEffect(() => {
+    if (!userId) return;
+    const channel = supabase
+      .channel('community_feed')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'community_posts',
+      }, payload => {
+        const row = payload.new as CommunityPost;
+        // Don't duplicate posts the current user just submitted (already in state)
+        setPosts(prev => {
+          if (prev.some(p => p.id === row.id)) return prev;
+          return [{ ...row, liked: false, reposted: false }, ...prev];
+        });
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'community_posts',
+      }, payload => {
+        const row = payload.new as CommunityPost;
+        setPosts(prev =>
+          prev.map(p => p.id === row.id
+            ? { ...p, likes_count: row.likes_count, comments_count: row.comments_count, reposts_count: row.reposts_count }
+            : p
+          )
+        );
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
   useEffect(() => {
     if (['community', 'day', 'wishes'].includes(urlTab) && urlTab !== activeTab) {
       setActiveTab(urlTab as 'community' | 'day' | 'wishes');

@@ -8,6 +8,7 @@ import CurrencySelector from '@/components/CurrencySelector';
 import FullscreenPrompt from '@/components/FullscreenPrompt';
 import RoleGate from "@/components/RoleGate";
 import PushPermissionPrompt from '@/components/PushPermissionPrompt';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +59,7 @@ export default function RootLayout({
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         {/* ✅ No centering, no max-width here */}
+        <ErrorBoundary>
         <AuthRoleProvider>
           <CurrencyProvider>
             <ToastProvider>
@@ -76,6 +78,7 @@ export default function RootLayout({
             </ToastProvider>
             </CurrencyProvider>
           </AuthRoleProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

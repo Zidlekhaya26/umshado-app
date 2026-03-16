@@ -55,13 +55,12 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // ── ADMIN: page-level auth only ────────────────────────────────────────────
-  if (pathname.startsWith('/admin')) return NextResponse.next();
-
-  // ── Only enforce auth + role for /vendor/* and /couple/* ──────────────────
-  if (!pathname.startsWith('/vendor') && !pathname.startsWith('/couple')) {
-    return NextResponse.next();
-  }
+  // ── Only enforce auth + role for /vendor/*, /couple/*, /admin/* ──────────
+  const needsAuth =
+    pathname.startsWith('/vendor') ||
+    pathname.startsWith('/couple') ||
+    pathname.startsWith('/admin');
+  if (!needsAuth) return NextResponse.next();
 
   // Onboarding pages: no auth check (avoid redirect loops)
   if (pathname === '/vendor/onboarding' || pathname === '/couple/onboarding') {
@@ -105,6 +104,15 @@ export async function middleware(req: NextRequest) {
   const accessToken = session?.access_token ?? '';
 
   const profile = await fetchProfileState(user.id, accessToken);
+
+  // ── ADMIN GATE ─────────────────────────────────────────────────────────────
+  if (pathname.startsWith('/admin')) {
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
+    return response;
+  }
+
   if (!profile) {
     if (pathname.startsWith('/vendor')) return NextResponse.redirect(new URL('/vendor/onboarding', req.url));
     if (pathname.startsWith('/couple')) return NextResponse.redirect(new URL('/couple/onboarding', req.url));

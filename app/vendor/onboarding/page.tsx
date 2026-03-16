@@ -9,6 +9,7 @@ import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
 import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { supabase } from '@/lib/supabaseClient';
+import { useToast } from '@/components/ui/ToastProvider';
 
 const CR='#9A2143',CR2='#731832',CRX='#4d0f21',DK='#1a0d12',BG='#faf8f5',MUT='#7a5060',BOR='#e8d5d0';
 
@@ -18,6 +19,7 @@ function FL({l,req}:{l:string;req?:boolean}){return <label style={{display:'bloc
 export default function VendorOnboarding(){
   const router=useRouter();
   const {currency}=useCurrency();
+  const {show:toast}=useToast();
   const [loading,setLoading]=useState(true);
   const [submitting,setSubmitting]=useState(false);
   const [focused,setFocused]=useState('');
@@ -41,12 +43,12 @@ export default function VendorOnboarding(){
     e.preventDefault();setSubmitting(true);
     try{
       const user=await getUserOrRedirect();
-      if(!user){alert('Please sign in.');router.push('/auth/sign-in');return;}
+      if(!user){toast('Please sign in to continue.','error');router.push('/auth/sign-in');return;}
       const location=[fd.city,fd.country].filter(Boolean).join(', ')||null;
       const res=await upsertVendor(user.id,{business_name:fd.businessName||null,category:fd.category||null,location,description:fd.businessDescription||null,currency});
-      if(!res.success){alert('Failed: '+(res.error||'unknown'));setSubmitting(false);return;}
+      if(!res.success){toast('Could not save your profile. Please try again.','error');setSubmitting(false);return;}
       router.push('/vendor/services?mode=onboarding');
-    }catch(err){alert('Error: '+err);setSubmitting(false);}
+    }catch{toast('Something went wrong. Please try again.','error');setSubmitting(false);}
   };
 
   if(loading)return(
