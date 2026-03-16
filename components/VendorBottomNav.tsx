@@ -65,19 +65,11 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Chats', href: '/messages',
-      icon: (active: boolean) => (
-        <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Alerts', href: '/notifications',
+      name: 'Inbox', href: '/vendor/inbox',
       icon: (active: boolean) => (
         <div style={{ position: 'relative' }}>
           <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
           {unreadCount > 0 && (
             <span style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: '#BD983F', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
@@ -85,6 +77,14 @@ export default function VendorBottomNav() {
             </span>
           )}
         </div>
+      ),
+    },
+    {
+      name: 'Marketplace', href: '/marketplace',
+      icon: (active: boolean) => (
+        <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
       ),
     },
     {
@@ -98,7 +98,8 @@ export default function VendorBottomNav() {
   ];
 
   const isActive = (href: string) => {
-    if (href === '/messages')        return pathname.startsWith('/messages');
+    if (href === '/vendor/inbox')    return pathname.startsWith('/vendor/inbox') || pathname.startsWith('/messages') || pathname === '/notifications';
+    if (href === '/marketplace')     return pathname.startsWith('/marketplace');
     if (href === '/vendor/bookings') return pathname.startsWith('/vendor/bookings');
     if (href === '/vendor/media')    return ['/vendor/media','/vendor/services','/vendor/packages','/vendor/review'].includes(pathname);
     return pathname === href || pathname.startsWith(href + '/');
