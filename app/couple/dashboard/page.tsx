@@ -299,6 +299,7 @@ export default function CoupleDashboard() {
     { icon:'💬', label:'Messages', href:'/messages' },
     { icon:'📅', label:'Bookings', href:'/couple/bookings' },
     { icon:'🎵', label:'Playlist', href:'/couple/playlist' },
+    { icon:'🍽️', label:'Menu',     href:'/couple/menu' },
   ];
 
   return (

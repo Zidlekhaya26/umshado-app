@@ -154,7 +154,13 @@ function ShareSheet({ songs, coupleId, djName, onClose }: {
 
   const sendViaWhatsApp = () => {
     const text = encodeURIComponent(buildPlaylistText());
-    window.open(`https://wa.me/?text=${text}`, '_blank');
+    const a = document.createElement('a');
+    a.href = `https://wa.me/?text=${text}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   const copyLink = async () => {
