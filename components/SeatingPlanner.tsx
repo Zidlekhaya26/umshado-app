@@ -17,8 +17,8 @@ interface SeatingTable {
   id: string;
   name: string;
   capacity: number; // 1–12
-  seats: string[];  // guest ids
-  color: string;    // accent color class
+  seats: string[];  // guest ids (may include `${guestId}__plus1` virtual entries)
+  color: string;
 }
 
 const TABLE_COLORS = [
@@ -33,6 +33,14 @@ const TABLE_COLORS = [
 ];
 
 const getColor = (index: number) => TABLE_COLORS[index % TABLE_COLORS.length];
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
 
 // ─── Capacity Picker ─────────────────────────────────────────────────────────
 
@@ -64,7 +72,7 @@ function CapacityPicker({ value, onChange }: { value: number; onChange: (v: numb
   );
 }
 
-// ─── Seat Diagram ────────────────────────────────────────────────────────────
+// ─── Seat Diagram (compact ring in card header) ───────────────────────────────
 
 function SeatDiagram({ capacity, filled }: { capacity: number; filled: number }) {
   const pct = capacity > 0 ? filled / capacity : 0;
@@ -87,6 +95,91 @@ function SeatDiagram({ capacity, filled }: { capacity: number; filled: number })
       </svg>
       <span className="text-[10px] font-bold text-gray-600">{filled}/{capacity}</span>
     </div>
+  );
+}
+
+// ─── Table Diagram (visual circular table layout) ────────────────────────────
+
+function TableDiagram({
+  capacity, seats, guests,
+}: {
+  capacity: number;
+  seats: string[];
+  guests: DbGuest[];
+}) {
+  const size = 200;
+  const cx = size / 2;
+  const cy = size / 2;
+  const tableR = 36;
+  const seatR = capacity > 9 ? 10 : 13;
+  const orbitR = 72;
+
+  return (
+    <svg
+      width="100%"
+      viewBox={`0 0 ${size} ${size}`}
+      style={{ maxWidth: 200, display: 'block', margin: '0 auto' }}
+    >
+      {/* Shadow */}
+      <circle cx={cx} cy={cy + 3} r={tableR + 1} fill="rgba(26,13,18,0.07)" />
+      {/* Table surface */}
+      <circle cx={cx} cy={cy} r={tableR} fill="#fdf8f5" stroke="rgba(154,33,67,0.25)" strokeWidth="2.5" />
+      {/* Inner ring detail */}
+      <circle cx={cx} cy={cy} r={tableR - 7} fill="none" stroke="rgba(154,33,67,0.09)" strokeWidth="1.5" />
+
+      {Array.from({ length: capacity }, (_, i) => {
+        const angle = (2 * Math.PI * i / capacity) - Math.PI / 2;
+        const sx = cx + orbitR * Math.cos(angle);
+        const sy = cy + orbitR * Math.sin(angle);
+        const seatId = seats[i];
+        const filled = !!seatId;
+
+        let initials = '';
+        if (seatId) {
+          if (seatId.endsWith('__plus1')) {
+            initials = '+1';
+          } else {
+            const g = guests.find(g => g.id === seatId);
+            if (g) initials = getInitials(g.full_name);
+          }
+        }
+
+        const lineStartX = cx + (tableR + 3) * Math.cos(angle);
+        const lineStartY = cy + (tableR + 3) * Math.sin(angle);
+        const lineEndX   = sx - (seatR + 2) * Math.cos(angle);
+        const lineEndY   = sy - (seatR + 2) * Math.sin(angle);
+
+        return (
+          <g key={i}>
+            <line
+              x1={lineStartX} y1={lineStartY}
+              x2={lineEndX}   y2={lineEndY}
+              stroke={filled ? 'rgba(154,33,67,0.2)' : '#e5e7eb'}
+              strokeWidth="1.5"
+            />
+            <circle
+              cx={sx} cy={sy} r={seatR}
+              fill={filled ? '#9A2143' : '#fff'}
+              stroke={filled ? '#731832' : '#d1d5db'}
+              strokeWidth="1.5"
+              strokeDasharray={filled ? undefined : '3 2'}
+            />
+            {filled && (
+              <text
+                x={sx} y={sy + 0.5}
+                textAnchor="middle" dominantBaseline="middle"
+                fill="white"
+                fontSize={seatR > 11 ? '7' : '6'}
+                fontWeight="700"
+                fontFamily="system-ui, sans-serif"
+              >
+                {initials}
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
@@ -122,10 +215,10 @@ export default function SeatingPlanner({ guests, userId }: Props) {
   const touchGuestRef = useRef<string | null>(null);
   const touchTableRef = useRef<string | null>(null);
 
-  // Assign a guest panel target (tap-to-assign on mobile)
+  // Tap-to-assign (mobile)
   const [assigningGuest, setAssigningGuest] = useState<string | null>(null);
 
-  // ── Load saved layout from Supabase ────────────────────────────────────────
+  // ── Load saved layout ───────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       const { data } = await supabase
@@ -146,10 +239,9 @@ export default function SeatingPlanner({ guests, userId }: Props) {
           }))
         );
       } else {
-        // Default starter tables
         setTables([
-          { id: `t${Date.now()}1`, name: 'Head Table', capacity: 8, seats: [], color: '0' },
-          { id: `t${Date.now()}2`, name: 'Family Table', capacity: 8, seats: [], color: '1' },
+          { id: `t${Date.now()}1`, name: 'Head Table',    capacity: 8, seats: [], color: '0' },
+          { id: `t${Date.now()}2`, name: 'Family Table',  capacity: 8, seats: [], color: '1' },
           { id: `t${Date.now()}3`, name: 'Friends Table', capacity: 8, seats: [], color: '2' },
         ]);
       }
@@ -157,7 +249,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
     })();
   }, [userId]);
 
-  // ── Persist to Supabase ─────────────────────────────────────────────────────
+  // ── Save layout ─────────────────────────────────────────────────────────────
   const saveLayout = useCallback(async (currentTables: SeatingTable[]) => {
     setSaving(true);
     try {
@@ -178,23 +270,66 @@ export default function SeatingPlanner({ guests, userId }: Props) {
     }
   }, [userId]);
 
-  // ── Derived ────────────────────────────────────────────────────────────────
+  // ── Derived ─────────────────────────────────────────────────────────────────
   const activeGuests = guests.filter(g => g.rsvp_status !== 'declined');
-  const seatedIds = new Set(tables.flatMap(t => t.seats));
-  const unseated = activeGuests.filter(g => !seatedIds.has(g.id));
-  const totalSeats = tables.reduce((s, t) => s + t.capacity, 0);
-  const totalSeated = tables.reduce((s, t) => s + t.seats.length, 0);
 
-  const getGuest = (id: string) => guests.find(g => g.id === id);
+  // Only real guest IDs (not __plus1 virtuals) are tracked against activeGuests
+  const seatedRealIds = new Set(
+    tables.flatMap(t => t.seats.filter(s => !s.endsWith('__plus1')))
+  );
+  const unseated = activeGuests.filter(g => !seatedRealIds.has(g.id));
+
+  // Total people count (each +1 flag = 1 extra person)
+  const totalPeople = activeGuests.reduce((acc, g) => acc + 1 + (g.plus_one ? 1 : 0), 0);
+  const unseatedPeople = unseated.reduce((acc, g) => acc + 1 + (g.plus_one ? 1 : 0), 0);
+
+  const totalSeats   = tables.reduce((s, t) => s + t.capacity, 0);
+  const totalSeated  = tables.reduce((s, t) => s + t.seats.length, 0);
+
+  // Helper: display name for a seat entry (real guest or __plus1 virtual)
+  const getDisplayName = (seatId: string): string => {
+    if (seatId.endsWith('__plus1')) {
+      const primaryId = seatId.replace('__plus1', '');
+      const primary = guests.find(g => g.id === primaryId);
+      return primary
+        ? `${primary.full_name.split(' ')[0]}'s +1`
+        : '+1 Guest';
+    }
+    return guests.find(g => g.id === seatId)?.full_name ?? 'Unknown';
+  };
+
+  // Helper: how many seats does this guest need (1 normally, 2 with plus_one)
+  const slotsNeeded = (guestId: string): number => {
+    const g = guests.find(x => x.id === guestId);
+    return g?.plus_one ? 2 : 1;
+  };
 
   // ── Drag & drop (desktop) ──────────────────────────────────────────────────
   const handleDrop = (tableId: string) => {
     if (!dragGuest) return;
+
+    // If dragging a +1 chip, treat it as its own ID (allow free movement)
+    const isPlusOne = dragGuest.endsWith('__plus1');
+    const primaryId = isPlusOne ? dragGuest.replace('__plus1', '') : dragGuest;
+    const plusOneId = `${primaryId}__plus1`;
+    const withPlusOne = !isPlusOne && !!(guests.find(g => g.id === primaryId)?.plus_one);
+
     setTables(prev => {
-      const next = prev.map(t => ({ ...t, seats: t.seats.filter(s => s !== dragGuest) }));
-      return next.map(t =>
-        t.id === tableId && t.seats.length < t.capacity
-          ? { ...t, seats: [...t.seats, dragGuest] }
+      const cleared = prev.map(t => ({
+        ...t,
+        seats: t.seats.filter(s =>
+          isPlusOne
+            ? s !== dragGuest
+            : s !== primaryId && s !== plusOneId
+        ),
+      }));
+      const target = cleared.find(t => t.id === tableId);
+      if (!target) return cleared;
+      const needed = withPlusOne ? 2 : 1;
+      if (target.seats.length + needed > target.capacity) return cleared;
+      return cleared.map(t =>
+        t.id === tableId
+          ? { ...t, seats: [...t.seats, dragGuest, ...(withPlusOne ? [plusOneId] : [])] }
           : t
       );
     });
@@ -204,7 +339,16 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
   const handleDropUnseated = () => {
     if (!dragGuest) return;
-    setTables(prev => prev.map(t => ({ ...t, seats: t.seats.filter(s => s !== dragGuest) })));
+    // If dropping a +1 back, also remove the primary (they belong together)
+    const isPlusOne = dragGuest.endsWith('__plus1');
+    const primaryId = isPlusOne ? dragGuest.replace('__plus1', '') : dragGuest;
+    const plusOneId = `${primaryId}__plus1`;
+    setTables(prev =>
+      prev.map(t => ({
+        ...t,
+        seats: t.seats.filter(s => s !== primaryId && s !== plusOneId),
+      }))
+    );
     setDragGuest(null);
     setDragOver(null);
   };
@@ -217,14 +361,21 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
   const handleTableTap = (tableId: string) => {
     if (!assigningGuest) return;
-    const table = tables.find(t => t.id === tableId);
-    if (!table) return;
-    if (table.seats.length >= table.capacity && !table.seats.includes(assigningGuest)) return;
+    const withPlusOne = !!(guests.find(g => g.id === assigningGuest)?.plus_one);
+    const plusOneId = `${assigningGuest}__plus1`;
+
     setTables(prev => {
-      const next = prev.map(t => ({ ...t, seats: t.seats.filter(s => s !== assigningGuest) }));
-      return next.map(t =>
-        t.id === tableId && t.seats.length < t.capacity
-          ? { ...t, seats: [...t.seats, assigningGuest] }
+      const cleared = prev.map(t => ({
+        ...t,
+        seats: t.seats.filter(s => s !== assigningGuest && s !== plusOneId),
+      }));
+      const target = cleared.find(t => t.id === tableId);
+      if (!target) return cleared;
+      const needed = withPlusOne ? 2 : 1;
+      if (target.seats.length + needed > target.capacity) return cleared;
+      return cleared.map(t =>
+        t.id === tableId
+          ? { ...t, seats: [...t.seats, assigningGuest, ...(withPlusOne ? [plusOneId] : [])] }
           : t
       );
     });
@@ -232,8 +383,20 @@ export default function SeatingPlanner({ guests, userId }: Props) {
   };
 
   // ── Remove from table ──────────────────────────────────────────────────────
-  const removeFromTable = (guestId: string) => {
-    setTables(prev => prev.map(t => ({ ...t, seats: t.seats.filter(s => s !== guestId) })));
+  const removeFromTable = (seatId: string) => {
+    if (seatId.endsWith('__plus1')) {
+      // Remove only the +1 chip (user explicitly split them)
+      setTables(prev => prev.map(t => ({ ...t, seats: t.seats.filter(s => s !== seatId) })));
+    } else {
+      // Remove guest and their +1
+      const plusOneId = `${seatId}__plus1`;
+      setTables(prev =>
+        prev.map(t => ({
+          ...t,
+          seats: t.seats.filter(s => s !== seatId && s !== plusOneId),
+        }))
+      );
+    }
   };
 
   // ── Add table ──────────────────────────────────────────────────────────────
@@ -286,9 +449,19 @@ export default function SeatingPlanner({ guests, userId }: Props) {
       });
       if (res.ok) {
         const data = await res.json();
+        // After auto-assign, inject +1 seats for guests with plus_one
         setTables(prev => prev.map(t => {
           const updated = data.tables?.find((dt: any) => dt.id === t.id);
-          return updated ? { ...t, seats: updated.seats ?? [] } : t;
+          if (!updated) return t;
+          const expandedSeats: string[] = [];
+          for (const sid of (updated.seats ?? [])) {
+            expandedSeats.push(sid);
+            const g = guests.find(x => x.id === sid);
+            if (g?.plus_one && expandedSeats.length < t.capacity) {
+              expandedSeats.push(`${sid}__plus1`);
+            }
+          }
+          return { ...t, seats: expandedSeats.slice(0, t.capacity) };
         }));
       }
     } catch (e) { console.error('[seating] auto-assign error', e); }
@@ -296,9 +469,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
   };
 
   // ── Clear all ──────────────────────────────────────────────────────────────
-  const clearAll = () => {
-    setTables(prev => prev.map(t => ({ ...t, seats: [] })));
-  };
+  const clearAll = () => setTables(prev => prev.map(t => ({ ...t, seats: [] })));
 
   if (!loaded) {
     return (
@@ -311,12 +482,12 @@ export default function SeatingPlanner({ guests, userId }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* ── Top bar ─────────────────────────────────────────── */}
+      {/* ── Top bar ──────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-bold text-gray-900">Seating Plan</h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            {totalSeated} of {activeGuests.length} guests seated · {unseated.length} remaining
+            {totalSeated} of {totalPeople} people seated · {unseatedPeople} remaining
           </p>
         </div>
         <div className="flex gap-2">
@@ -344,13 +515,13 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         </div>
       </div>
 
-      {/* ── Stats bar ───────────────────────────────────────── */}
+      {/* ── Stats bar ────────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-4 gap-2">
         {[
-          { label: 'Guests', value: activeGuests.length, color: 'text-gray-900' },
-          { label: 'Seated', value: totalSeated, color: 'text-violet-600' },
-          { label: 'Unseated', value: unseated.length, color: unseated.length > 0 ? 'text-amber-600' : 'text-gray-400' },
-          { label: 'Capacity', value: totalSeats, color: 'text-gray-500' },
+          { label: 'Guests',    value: activeGuests.length,  color: 'text-gray-900' },
+          { label: 'Seated',    value: totalSeated,           color: 'text-violet-600' },
+          { label: 'Unseated',  value: unseatedPeople,        color: unseatedPeople > 0 ? 'text-amber-600' : 'text-gray-400' },
+          { label: 'Capacity',  value: totalSeats,            color: 'text-gray-500' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white rounded-xl border border-gray-200 p-3 text-center">
             <p className={`text-xl font-black ${color}`}>{value}</p>
@@ -359,7 +530,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         ))}
       </div>
 
-      {/* ── No guests state ─────────────────────────────────── */}
+      {/* ── No guests state ──────────────────────────────────────────────────── */}
       {guests.length === 0 && (
         <div className="bg-violet-50 border-2 border-dashed border-violet-200 rounded-2xl p-8 text-center">
           <span className="text-4xl">👥</span>
@@ -368,13 +539,11 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         </div>
       )}
 
-      {/* ── Unseated pool ───────────────────────────────────── */}
+      {/* ── Unseated pool ────────────────────────────────────────────────────── */}
       {unseated.length > 0 && (
         <div
           className={`rounded-2xl border-2 p-4 transition-all ${
-            dragOver === 'pool'
-              ? 'border-amber-400 bg-amber-50'
-              : 'border-amber-200 bg-amber-50'
+            dragOver === 'pool' ? 'border-amber-400 bg-amber-50' : 'border-amber-200 bg-amber-50'
           }`}
           onDragOver={e => { e.preventDefault(); setDragOver('pool'); }}
           onDragLeave={() => setDragOver(null)}
@@ -382,7 +551,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         >
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-bold text-amber-800">
-              ⚠️ Not yet seated ({unseated.length})
+              Not yet seated ({unseatedPeople})
             </p>
             {assigningGuest && (
               <p className="text-xs font-semibold text-amber-600 animate-pulse">
@@ -405,20 +574,23 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                 }`}
               >
                 {g.full_name}
-                {g.plus_one && <span className="ml-1 opacity-60">+1</span>}
+                {g.plus_one && (
+                  <span className="ml-1.5 px-1 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold border border-amber-200">
+                    +1
+                  </span>
+                )}
               </div>
             ))}
           </div>
           <p className="text-[11px] text-amber-600 mt-2">
-            Drag guests to a table, or tap a guest then tap a table · Use Auto-Assign to fill all seats
+            Drag guests to a table, or tap a guest then tap a table · Guests with +1 will auto-fill 2 seats
           </p>
         </div>
       )}
 
-      {/* ── Tables ──────────────────────────────────────────── */}
+      {/* ── Tables ───────────────────────────────────────────────────────────── */}
       {tables.length === 0 ? (
         <div className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center">
-          <span className="text-5xl">🪑</span>
           <p className="text-base font-bold text-gray-800 mt-3">No tables yet</p>
           <p className="text-sm text-gray-500 mt-1">Add tables to start building your seating plan.</p>
           <button
@@ -429,12 +601,16 @@ export default function SeatingPlanner({ guests, userId }: Props) {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           {tables.map((table, idx) => {
-            const color = getColor(Number(table.color));
-            const isFull = table.seats.length >= table.capacity;
-            const isTarget = dragOver === table.id;
-            const canReceive = assigningGuest && !isFull;
+            const color     = getColor(Number(table.color));
+            const isFull    = table.seats.length >= table.capacity;
+            const isTarget  = dragOver === table.id;
+            const needTwo   = assigningGuest
+              ? !!(guests.find(g => g.id === assigningGuest)?.plus_one)
+              : false;
+            const freeSlots = table.capacity - table.seats.length;
+            const canReceive = !!assigningGuest && freeSlots >= (needTwo ? 2 : 1);
 
             return (
               <div
@@ -444,14 +620,14 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                     ? 'border-violet-500 shadow-lg shadow-violet-100 scale-[1.01]'
                     : canReceive
                     ? `${color.border} shadow-md cursor-pointer`
-                    : `${color.border}`
+                    : color.border
                 } ${color.bg}`}
                 onDragOver={e => { e.preventDefault(); setDragOver(table.id); }}
                 onDragLeave={() => setDragOver(null)}
                 onDrop={() => { handleDrop(table.id); setDragOver(null); }}
                 onClick={() => handleTableTap(table.id)}
               >
-                {/* Table header */}
+                {/* Card header */}
                 <div className="flex items-center justify-between px-4 py-3 bg-white/60 border-b border-white/80">
                   <div className="flex items-center gap-3">
                     <div className={`w-7 h-7 rounded-full ${color.badge} flex items-center justify-center`}>
@@ -460,7 +636,9 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                     <div>
                       <p className="text-sm font-bold text-gray-900">{table.name}</p>
                       <p className="text-[11px] text-gray-500">
-                        {isFull ? '✅ Full' : `${table.capacity - table.seats.length} seat${table.capacity - table.seats.length !== 1 ? 's' : ''} open`}
+                        {isFull
+                          ? '✅ Full'
+                          : `${freeSlots} seat${freeSlots !== 1 ? 's' : ''} open`}
                       </p>
                     </div>
                   </div>
@@ -485,29 +663,44 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                   </div>
                 </div>
 
-                {/* Seats */}
-                <div className="p-3 min-h-[52px]">
-                  {table.seats.length === 0 ? (
-                    <p className="text-xs text-gray-400 text-center py-1.5 italic">
-                      {canReceive ? '👆 Tap to place guest here' : 'Drop or drag guests here'}
+                {/* Visual table diagram */}
+                <div className="px-4 pt-3 pb-1">
+                  {canReceive && (
+                    <p className="text-center text-xs font-semibold text-violet-600 animate-pulse mb-1">
+                      Tap to seat here
                     </p>
-                  ) : (
+                  )}
+                  <TableDiagram
+                    capacity={table.capacity}
+                    seats={table.seats}
+                    guests={guests}
+                  />
+                </div>
+
+                {/* Seated guest chips */}
+                {table.seats.length > 0 && (
+                  <div className="px-3 pb-3">
                     <div className="flex flex-wrap gap-1.5">
-                      {table.seats.map(gid => {
-                        const g = getGuest(gid);
+                      {table.seats.map(seatId => {
+                        const isPlusOneEntry = seatId.endsWith('__plus1');
                         return (
                           <div
-                            key={gid}
+                            key={seatId}
                             draggable
-                            onDragStart={e => { e.stopPropagation(); setDragGuest(gid); setAssigningGuest(null); }}
+                            onDragStart={e => {
+                              e.stopPropagation();
+                              setDragGuest(seatId);
+                              setAssigningGuest(null);
+                            }}
                             onDragEnd={() => setDragGuest(null)}
-                            className={`flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold border cursor-grab active:cursor-grabbing select-none ${color.chip}`}
+                            className={`flex items-center gap-1 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold border cursor-grab active:cursor-grabbing select-none ${color.chip} ${
+                              isPlusOneEntry ? 'opacity-80 italic' : ''
+                            }`}
                             onClick={e => e.stopPropagation()}
                           >
-                            <span>{g?.full_name ?? gid}</span>
-                            {g?.plus_one && <span className="opacity-50">+1</span>}
+                            <span>{getDisplayName(seatId)}</span>
                             <button
-                              onClick={e => { e.stopPropagation(); removeFromTable(gid); }}
+                              onClick={e => { e.stopPropagation(); removeFromTable(seatId); }}
                               className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center hover:bg-black/10 transition-colors"
                             >
                               ×
@@ -516,36 +709,30 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                         );
                       })}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {/* Seat slots visual */}
-                <div className="px-3 pb-3 flex gap-1 flex-wrap">
-                  {Array.from({ length: table.capacity }).map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1.5 flex-1 min-w-[12px] rounded-full transition-all ${
-                        i < table.seats.length
-                          ? color.badge.replace('bg-', 'bg-') + ' opacity-70'
-                          : 'bg-white/60 border border-white'
-                      }`}
-                    />
-                  ))}
-                </div>
+                {table.seats.length === 0 && (
+                  <div className="px-3 pb-3">
+                    <p className="text-xs text-gray-400 text-center italic">
+                      {canReceive ? 'Tap to place guest here' : 'Drag or tap guests to seat them'}
+                    </p>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* ── Action bar ──────────────────────────────────────── */}
+      {/* ── Action bar ───────────────────────────────────────────────────────── */}
       {tables.length > 0 && (
         <div className="flex gap-2 pt-1">
           <button
             onClick={clearAll}
             className="px-4 py-2.5 bg-white border-2 border-gray-200 text-gray-500 rounded-xl text-xs font-bold hover:border-red-300 hover:text-red-500 transition-all flex-1"
           >
-            🗑 Clear All Seats
+            Clear All Seats
           </button>
           <button
             onClick={() => saveLayout(tables)}
@@ -561,7 +748,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         </div>
       )}
 
-      {/* ── Add Table Modal ──────────────────────────────────── */}
+      {/* ── Add Table Modal ──────────────────────────────────────────────────── */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(75svh - env(safe-area-inset-bottom))' }}>
@@ -586,12 +773,17 @@ export default function SeatingPlanner({ guests, userId }: Props) {
               </div>
             </div>
             <div className="shrink-0 flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
-              <button onClick={() => { setShowAddModal(false); setNewName(''); setNewCapacity(8); }}
-                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
+              <button
+                onClick={() => { setShowAddModal(false); setNewName(''); setNewCapacity(8); }}
+                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all"
+              >
                 Cancel
               </button>
-              <button onClick={addTable} disabled={!newName.trim()}
-                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40">
+              <button
+                onClick={addTable}
+                disabled={!newName.trim()}
+                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40"
+              >
                 Add Table
               </button>
             </div>
@@ -599,7 +791,7 @@ export default function SeatingPlanner({ guests, userId }: Props) {
         </div>
       )}
 
-      {/* ── Edit Table Modal ─────────────────────────────────── */}
+      {/* ── Edit Table Modal ─────────────────────────────────────────────────── */}
       {editingTable && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(80svh - env(safe-area-inset-bottom))' }}>
@@ -626,18 +818,23 @@ export default function SeatingPlanner({ guests, userId }: Props) {
                 <CapacityPicker value={editCapacity} onChange={setEditCapacity} />
                 {editCapacity < editingTable.seats.length && (
                   <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
-                    ⚠️ Reducing capacity will remove {editingTable.seats.length - editCapacity} guest(s) from this table.
+                    Reducing capacity will remove {editingTable.seats.length - editCapacity} guest(s) from this table.
                   </p>
                 )}
               </div>
             </div>
             <div className="shrink-0 flex gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
-              <button onClick={() => setEditingTable(null)}
-                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all">
+              <button
+                onClick={() => setEditingTable(null)}
+                className="flex-1 px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-100 transition-all"
+              >
                 Cancel
               </button>
-              <button onClick={saveEdit} disabled={!editName.trim()}
-                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40">
+              <button
+                onClick={saveEdit}
+                disabled={!editName.trim()}
+                className="flex-1 px-4 py-3 bg-violet-600 text-white rounded-xl text-base font-extrabold hover:bg-violet-700 transition-all shadow-lg disabled:opacity-40"
+              >
                 Save Changes
               </button>
             </div>
