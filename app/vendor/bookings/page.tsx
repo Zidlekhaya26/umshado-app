@@ -43,11 +43,8 @@ export default function VendorBookingsPage(){
   const [bookings,setBookings]=useState<Booking[]>([]);
   const [tab,setTab]=useState<Tab>('upcoming');
   const [actionSheet,setActionSheet]=useState<Booking|null>(null);
-  const [completing,setCompleting]=useState(false);
-  const [requesting,setRequesting]=useState(false);
   const [notesSheet,setNotesSheet]=useState<Booking|null>(null);
   const [noteDraft,setNoteDraft]=useState('');
-  const [savingNote,setSavingNote]=useState(false);
   const [blocked,setBlocked]=useState<Map<string,BlockedDate>>(new Map());
   const [viewYear,setViewYear]=useState(()=>new Date().getFullYear());
   const [viewMonth,setViewMonth]=useState(()=>new Date().getMonth());
@@ -92,29 +89,37 @@ export default function VendorBookingsPage(){
   };
 
   const handleMarkComplete=async(b:Booking)=>{
-    setCompleting(true);
+    setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,status:'completed'}:bk));
+    setActionSheet(null);
     const{error:e}=await supabase.from('bookings').update({status:'completed'}).eq('id',b.id);
-    if(e)setError(e.message); else{await loadBookings(vendorId!);showOk('Booking completed');}
-    setCompleting(false);setActionSheet(null);
+    if(e){setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,status:b.status}:bk));setError(e.message);}
+    else showOk('Booking completed');
   };
 
   const handleReviewRequest=async(b:Booking)=>{
-    setRequesting(true);
+    setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,review_requested:true}:bk));
+    setActionSheet(null);
     try{
       const{data:{session}}=await supabase.auth.getSession();
       if(!session)throw new Error('No session');
       const res=await fetch('/api/vendor/review-request',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({bookingId:b.id,coupleId:b.couple_id})});
       if(!res.ok)throw new Error('Request failed');
-      await loadBookings(vendorId!);showOk('Review request sent!');
-    }catch(e:any){setError(e.message||'Failed');}
-    setRequesting(false);setActionSheet(null);
+      showOk('Review request sent!');
+    }catch(e:any){
+      setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,review_requested:false}:bk));
+      setError(e.message||'Failed');
+    }
   };
 
   const handleSaveNote=async()=>{
-    if(!notesSheet)return;setSavingNote(true);
-    const{error:e}=await supabase.from('bookings').update({vendor_notes:noteDraft||null}).eq('id',notesSheet.id);
-    if(e)setError(e.message); else{setBookings(bs=>bs.map(b=>b.id===notesSheet.id?{...b,vendor_notes:noteDraft||null}:b));showOk('Note saved');}
-    setSavingNote(false);setNotesSheet(null);
+    if(!notesSheet)return;
+    const snapshot=notesSheet.vendor_notes;
+    const noteVal=noteDraft||null;
+    setBookings(bs=>bs.map(b=>b.id===notesSheet.id?{...b,vendor_notes:noteVal}:b));
+    setNotesSheet(null);
+    const{error:e}=await supabase.from('bookings').update({vendor_notes:noteVal}).eq('id',notesSheet.id);
+    if(e){setBookings(bs=>bs.map(b=>b.id===notesSheet.id?{...b,vendor_notes:snapshot}:b));setError(e.message);}
+    else showOk('Note saved');
   };
 
   const prevMonth=()=>{if(viewMonth===0){setViewYear(y=>y-1);setViewMonth(11);}else setViewMonth(m=>m-1);};
@@ -157,10 +162,11 @@ export default function VendorBookingsPage(){
   const handleDeleteBlock=async()=>{
     if(!blockSheet)return;
     const ex=blocked.get(blockSheet.date);if(!ex){setBlockSheet(null);return;}
-    setSavingBlock(true);
-    await supabase.from('vendor_availability').delete().eq('id',ex.id);
     setBlocked(prev=>{const m=new Map(prev);m.delete(blockSheet.date);return m;});
-    setSavingBlock(false);setBlockSheet(null);showOk('Date unblocked');
+    setBlockSheet(null);
+    const{error:e}=await supabase.from('vendor_availability').delete().eq('id',ex.id);
+    if(e){setBlocked(prev=>{const m=new Map(prev);m.set(ex.blocked_date,ex);return m;});setError(e.message);}
+    else showOk('Date unblocked');
   };
 
   const todayStr=new Date().toISOString().slice(0,10);
@@ -356,15 +362,15 @@ export default function VendorBookingsPage(){
               <p style={{margin:'0 0 20px',fontSize:12,color:MUT}}>{actionSheet.booking_ref} · {actionSheet.package_name}</p>
               <div style={{display:'flex',flexDirection:'column',gap:10}}>
                 {actionSheet.status==='confirmed'&&(
-                  <button onClick={()=>handleMarkComplete(actionSheet)} disabled={completing} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(30,124,74,0.25)`,background:'rgba(30,124,74,0.06)',cursor:'pointer'}}>
+                  <button onClick={()=>handleMarkComplete(actionSheet)} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(30,124,74,0.25)`,background:'rgba(30,124,74,0.06)',cursor:'pointer'}}>
                     <div style={{width:38,height:38,borderRadius:10,background:'rgba(30,124,74,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>✅</div>
-                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GR}}>{completing?'Updating…':'Mark as Completed'}</p><p style={{margin:'2px 0 0',fontSize:11,color:'#5a9c78'}}>Wedding day done</p></div>
+                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GR}}>Mark as Completed</p><p style={{margin:'2px 0 0',fontSize:11,color:'#5a9c78'}}>Wedding day done</p></div>
                   </button>
                 )}
                 {(actionSheet.status==='confirmed'||actionSheet.status==='completed')&&!actionSheet.review_requested&&(
-                  <button onClick={()=>handleReviewRequest(actionSheet)} disabled={requesting} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(189,152,63,0.3)`,background:'rgba(189,152,63,0.06)',cursor:'pointer'}}>
+                  <button onClick={()=>handleReviewRequest(actionSheet)} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(189,152,63,0.3)`,background:'rgba(189,152,63,0.06)',cursor:'pointer'}}>
                     <div style={{width:38,height:38,borderRadius:10,background:'rgba(189,152,63,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>⭐</div>
-                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GD2}}>{requesting?'Sending…':'Request a Review'}</p><p style={{margin:'2px 0 0',fontSize:11,color:'#a08040'}}>Send WhatsApp review link</p></div>
+                    <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GD2}}>Request a Review</p><p style={{margin:'2px 0 0',fontSize:11,color:'#a08040'}}>Send WhatsApp review link</p></div>
                   </button>
                 )}
                 {actionSheet.review_requested&&(
@@ -400,7 +406,7 @@ export default function VendorBookingsPage(){
               <textarea value={noteDraft} onChange={e=>setNoteDraft(e.target.value)} placeholder="e.g. Bride prefers ivory linens. Final payment due 1 week before." rows={4} style={{width:'100%',padding:'12px 14px',borderRadius:12,border:`1.5px solid ${BOR}`,fontSize:13,color:DK,fontFamily:'inherit',resize:'none',outline:'none',boxSizing:'border-box',marginBottom:16}}/>
               <div style={{display:'flex',gap:10}}>
                 <button onClick={()=>setNotesSheet(null)} style={{flex:1,padding:'13px',borderRadius:13,border:`1.5px solid ${BOR}`,background:'#fff',color:MUT,fontSize:13,fontWeight:700,cursor:'pointer'}}>Cancel</button>
-                <button onClick={handleSaveNote} disabled={savingNote} style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:`linear-gradient(135deg,${GD},${GD2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:savingNote?'default':'pointer',opacity:savingNote?.7:1}}>{savingNote?'Saving…':'Save note'}</button>
+                <button onClick={handleSaveNote} style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:`linear-gradient(135deg,${GD},${GD2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:'pointer'}}>Save note</button>
               </div>
             </div>
           </div>
