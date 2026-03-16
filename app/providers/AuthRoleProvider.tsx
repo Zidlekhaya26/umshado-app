@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -17,61 +17,47 @@ const AuthRoleContext = createContext<AuthRoleContextValue | null>(null);
 
 async function fetchRole(userId: string): Promise<Role> {
   try {
-    // Race the DB fetch against a short timeout to avoid hanging the UI
-    const p = (async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("active_role")
-        .eq("id", userId)
-        .maybeSingle();
-      return { data, error } as any;
-    })();
-
     const res: any = await Promise.race([
-      p,
-      new Promise((resolve) => setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3000)),
+      supabase.from("profiles").select("active_role").eq("id", userId).maybeSingle(),
+      new Promise((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error("timeout") }), 3000)
+      ),
     ]);
-
-    if (res?.error) {
-      console.warn("AuthRoleProvider: failed to fetch role", res.error);
-      return null;
-    }
-
+    if (res?.error) return null;
     const r = (res?.data?.active_role ?? null) as Role;
     return r === "vendor" || r === "couple" ? r : null;
-  } catch (e) {
-    console.warn("AuthRoleProvider: fetchRole error", e);
+  } catch {
     return null;
   }
 }
 
 export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<Role>(null);
+  const [user, setUser]       = useState<User | null>(null);
+  const [role, setRole]       = useState<Role>(null);
   const [loading, setLoading] = useState(true);
+  const userRef     = useRef<User | null>(null);
+  const initDoneRef = useRef(false);
 
-  const refreshRole = async () => {
-    if (!user?.id) {
-      setRole(null);
-      return;
-    }
-    const r = await fetchRole(user.id);
-    setRole(r);
-  };
+  useEffect(() => { userRef.current = user; }, [user]);
+
+  const refreshRole = useCallback(async () => {
+    const uid = userRef.current?.id;
+    if (!uid) { setRole(null); return; }
+    setRole(await fetchRole(uid));
+  }, []);
 
   useEffect(() => {
     let mounted = true;
+
     const init = async () => {
       setLoading(true);
       try {
-        // Race session fetch with timeout so we don't stay stuck in loading.
-        const sessionPromise = supabase.auth.getSession();
-        const sessionRes: any = await Promise.race([
-          sessionPromise,
-          new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 4000)),
-        ]);
+        // With @supabase/ssr the middleware has already refreshed the access
+        // token server-side before this page loaded.  getSession() reads the
+        // fresh session from cookies instantly — no network call needed here.
+        const { data: { session } } = await supabase.auth.getSession();
+        const u = session?.user ?? null;
 
-        const u = sessionRes?.data?.session?.user ?? null;
         if (!mounted) return;
         setUser(u);
 
@@ -84,21 +70,23 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.warn("AuthRoleProvider: init error", e);
-        setUser(null);
-        setRole(null);
+        if (mounted) { setUser(null); setRole(null); }
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted) {
+          initDoneRef.current = true;
+          setLoading(false);
+        }
       }
     };
 
     init();
 
+    // Handle ongoing auth events (sign-out, token refresh, etc.) after init.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      // Handle auth state changes safely without leaking promises into unmounted component
-      const u = session?.user ?? null;
+      if (!initDoneRef.current) return; // let init() own the initial state
       if (!mounted) return;
+      const u = session?.user ?? null;
       setUser(u);
-
       (async () => {
         if (u?.id) {
           if (mounted) setLoading(true);
@@ -107,25 +95,40 @@ export function AuthRoleProvider({ children }: { children: React.ReactNode }) {
           setRole(r);
           if (mounted) setLoading(false);
         } else {
-          if (mounted) setRole(null);
-          if (mounted) setLoading(false);
+          if (mounted) { setRole(null); setLoading(false); }
         }
       })();
     });
 
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && userRef.current?.id) {
+        fetchRole(userRef.current.id).then((r) => { if (mounted) setRole(r); });
+      }
+    };
+    const onFocus = () => {
+      if (userRef.current?.id) {
+        fetchRole(userRef.current.id).then((r) => { if (mounted) setRole(r); });
+      }
+    };
+
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      window.addEventListener("focus", onFocus);
+    }
+
     return () => {
       mounted = false;
-      try {
-        sub?.subscription?.unsubscribe?.();
-      } catch (e) {
-        // ignore
+      try { sub?.subscription?.unsubscribe?.(); } catch {}
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener("focus", onFocus);
       }
     };
   }, []);
 
   const value = useMemo<AuthRoleContextValue>(
     () => ({ user, role, loading, refreshRole }),
-    [user, role, loading]
+    [user, role, loading, refreshRole]
   );
 
   return <AuthRoleContext.Provider value={value}>{children}</AuthRoleContext.Provider>;

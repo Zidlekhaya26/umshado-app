@@ -292,7 +292,8 @@ export default function CoupleDashboard() {
     { icon:'📋', label:'Planner',  href:'/couple/planner' },
     { icon:'🏪', label:'Vendors',  href:'/marketplace' },
     { icon:'💬', label:'Messages', href:'/messages' },
-    { icon:'👥', label:'Guests',   href:'/couple/planner?tab=guests' },
+    { icon:'📅', label:'Bookings', href:'/couple/bookings' },
+    { icon:'🎵', label:'Playlist', href:'/couple/playlist' },
   ];
 
   return (
@@ -544,25 +545,48 @@ export default function CoupleDashboard() {
           </div>
 
           {/* ── 5. Discover vendors CTA ────────────────────── */}
-          <div className="dc" style={{ background:'linear-gradient(135deg,#18100a,#3d2810)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
-            <div style={{ position:'absolute', top:-20, right:-20, width:110, height:110, borderRadius:'50%', background:'rgba(184,151,62,0.1)', pointerEvents:'none' }}/>
-            <div style={{ fontSize:38 }}>🏪</div>
+          <div className="dc" style={{ background:'linear-gradient(160deg,#4d0f21 0%,#9A2143 55%,#b8315a 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:-30, right:-30, width:120, height:120, borderRadius:'50%', background:'rgba(189,152,63,0.13)', pointerEvents:'none' }}/>
+            <div style={{ position:'absolute', bottom:-10, left:14, width:55, height:55, borderRadius:'50%', background:'rgba(189,152,63,0.07)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.18)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🏪</div>
             <div style={{ flex:1 }}>
               <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Find perfect vendors</p>
-              <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.45)' }}>Photography · Catering · Décor · More</p>
+              <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.65)' }}>Photography · Catering · Décor · and more</p>
             </div>
-            <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Browse →</Link>
+            <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.14)', border:'1.5px solid rgba(255,255,255,0.22)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Browse →</Link>
+          </div>
+
+          {/* ── My Bookings CTA ────────────────────────────── */}
+          <div className="dc" style={{ background:'linear-gradient(160deg,#fdf6ee 0%,#f5e6c8 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative', border:'1.5px solid rgba(184,151,62,0.25)' }}>
+            <div style={{ position:'absolute', top:-20, right:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.06)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,rgba(154,33,67,0.1),rgba(184,151,62,0.15))', border:'1.5px solid rgba(184,151,62,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>📅</div>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#1a0d12', fontFamily:'var(--font-display,Georgia,serif)' }}>My Bookings</p>
+              <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>Upcoming vendors · countdowns · reviews</p>
+            </div>
+            <Link href="/couple/bookings" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
+          </div>
+
+          {/* ── DJ Playlist CTA ─────────────────────────────── */}
+          <div className="dc" style={{ background:'linear-gradient(160deg,#0f1a2e 0%,#1a2a4d 55%,#2a3d6b 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
+            <div style={{ position:'absolute', top:-30, right:-30, width:110, height:110, borderRadius:'50%', background:'rgba(189,152,63,0.12)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.18)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🎵</div>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>DJ Playlist</p>
+              <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.65)' }}>Build your setlist · guest requests · share with DJ</p>
+            </div>
+            <Link href="/couple/playlist" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.14)', border:'1.5px solid rgba(255,255,255,0.22)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Open →</Link>
           </div>
 
           {/* ── 6. Live page CTA ───────────────────────────── */}
-          <div className="dc" style={{ background:'linear-gradient(135deg,#0d2240,#1a3a5c)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative' }}>
-            <div style={{ position:'absolute', top:-15, right:-15, width:90, height:90, borderRadius:'50%', background:'rgba(255,255,255,0.05)', pointerEvents:'none' }}/>
-            <div style={{ fontSize:38 }}>🎥</div>
+          <div className="dc" style={{ background:'linear-gradient(160deg,#fdf6ee 0%,#f7e9d4 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative', border:'1.5px solid rgba(184,151,62,0.22)' }}>
+            <div style={{ position:'absolute', top:-20, right:-20, width:100, height:100, borderRadius:'50%', background:'rgba(154,33,67,0.05)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'linear-gradient(135deg,rgba(154,33,67,0.09),rgba(184,151,62,0.1))', border:'1.5px solid rgba(154,33,67,0.13)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, flexShrink:0 }}>🎥</div>
             <div style={{ flex:1 }}>
-              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)' }}>Your live wedding page</p>
-              <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.45)' }}>RSVP · wishes · live updates for guests</p>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:'#1a0d12', fontFamily:'var(--font-display,Georgia,serif)' }}>Your live wedding page</p>
+              <p style={{ margin:0, fontSize:11, color:'#7a5060' }}>RSVP · wishes · live updates for guests</p>
             </div>
-            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#b8315a)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 12px rgba(154,33,67,0.35)' }}>Open →</Link>
+            <Link href="/live" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,#9A2143,#731832)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>Open →</Link>
           </div>
 
           {/* ── 7. Wedding website customization ──────────── */}
@@ -673,7 +697,7 @@ export default function CoupleDashboard() {
         <button
           onClick={() => setShowAmi(true)}
           style={{
-            position: 'fixed', bottom: 90, right: 18, zIndex: 40,
+            position: 'fixed', bottom: 'calc(72px + env(safe-area-inset-bottom))', right: 18, zIndex: 55,
             width: 52, height: 52, borderRadius: '50%', border: 'none',
             background: `linear-gradient(135deg, ${G}, ${G2})`,
             color: '#fff', fontSize: 22, cursor: 'pointer',

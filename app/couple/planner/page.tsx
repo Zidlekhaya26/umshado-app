@@ -659,7 +659,7 @@ function CouplePlannerContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-7xl md:mx-auto min-h-svh flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
+      <div className="w-full max-w-none md:max-w-[900px] md:mx-auto min-h-svh flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
         <div className="bg-white border-b border-gray-200 px-4 py-5">
           <div className="flex items-center gap-3">
             <UmshadoIcon size={28} />
@@ -904,7 +904,7 @@ function CouplePlannerContent() {
 
       {/* Add Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Task</h3>
             <div className="space-y-3">
@@ -921,7 +921,7 @@ function CouplePlannerContent() {
 
       {/* Add Budget Modal */}
       {showBudgetModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add Budget Item</h3>
             <div className="space-y-3">
@@ -939,7 +939,7 @@ function CouplePlannerContent() {
 
       {/* Edit Budget Modal */}
       {editingBudgetItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Budget Item</h3>
             <div className="space-y-3">
@@ -958,7 +958,7 @@ function CouplePlannerContent() {
 
       {/* Record Payment Modal */}
       {showPaymentModal && paymentItem && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
             <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
@@ -975,7 +975,7 @@ function CouplePlannerContent() {
 
       {/* Add Guest Modal */}
       {showGuestModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Guest</h3>
             <div className="space-y-3">
@@ -1003,7 +1003,7 @@ function CouplePlannerContent() {
 
       {/* Edit Guest Modal */}
       {editingGuest && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Guest</h3>
             <div className="space-y-3">

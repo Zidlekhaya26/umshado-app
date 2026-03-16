@@ -7,16 +7,23 @@ export default function RoleGate({ children }: { children: React.ReactNode }) {
   const { loading } = useAuthRole();
   const [mounted, setMounted] = useState(false);
 
-  // Prevent showing the loading UI in the server-rendered HTML.
-  // Only show the spinner after the component has mounted on the client.
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (mounted && loading) {
+  // Before mounted: render null so page components never mount and cannot
+  // run their useEffect auth-checks before AuthRoleProvider.init() finishes.
+  // This is the key guard — without it, child useEffects fire first (React
+  // runs child effects before parent effects), so pages call getUser() and
+  // redirect to sign-in before AuthRoleProvider has a chance to restore the
+  // session from the refresh-token cookie.
+  if (!mounted) return null;
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F7F0EA]">
-        <div className="text-sm font-semibold text-gray-600">Loading…</div>
+      <div style={{ minHeight: '100svh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#faf8f5' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(154,33,67,0.15)', borderTopColor: '#9A2143', borderRadius: '50%', animation: 'rg-spin .8s linear infinite' }} />
+        <style>{'@keyframes rg-spin{to{transform:rotate(360deg)}}'}</style>
       </div>
     );
   }

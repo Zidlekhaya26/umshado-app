@@ -436,14 +436,19 @@ function SettingsContent() {
                   const available = role === 'couple' ? profile?.has_couple : profile?.has_vendor;
                   const isActive  = profile?.active_role === role;
                   const saving    = savingRole === role;
+                  const handleClick = () => {
+                    if (saving) return;
+                    if (available) handleSwitch(role);
+                    else router.push(role === 'vendor' ? '/vendor/onboarding' : '/couple/onboarding');
+                  };
                   return (
-                    <button key={role} disabled={!available || saving}
-                      onClick={() => available && handleSwitch(role)}
+                    <button key={role} disabled={saving}
+                      onClick={handleClick}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
-                        borderRadius: 14, border: `1.5px solid ${isActive ? C.crimson : available ? C.border : '#f0ede8'}`,
-                        background: isActive ? C.crimsonDim : available ? '#fff' : '#faf7f5',
-                        cursor: available ? 'pointer' : 'not-allowed', opacity: available ? 1 : 0.5,
+                        borderRadius: 14, border: `1.5px solid ${isActive ? C.crimson : available ? C.border : 'rgba(154,33,67,0.2)'}`,
+                        background: isActive ? C.crimsonDim : available ? '#fff' : 'rgba(154,33,67,0.04)',
+                        cursor: saving ? 'default' : 'pointer', opacity: 1,
                         transition: 'all 0.15s',
                       }}>
                       <div style={{ width: 38, height: 38, borderRadius: 11, background: isActive ? C.crimsonDim : C.goldDim, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>
@@ -454,7 +459,9 @@ function SettingsContent() {
                           {role === 'couple' ? 'Couple mode' : 'Vendor mode'}
                         </p>
                         <p style={{ margin: '2px 0 0', fontSize: 11, color: C.muted }}>
-                          {role === 'couple' ? 'Plan your wedding & manage tasks' : 'Manage your business & services'}
+                          {available
+                            ? (role === 'couple' ? 'Plan your wedding & manage tasks' : 'Manage your business & services')
+                            : (role === 'vendor' ? 'Tap to set up your vendor account' : 'Tap to set up your couple account')}
                         </p>
                       </div>
                       <div>
@@ -465,7 +472,7 @@ function SettingsContent() {
                         ) : available ? (
                           <svg width="14" height="14" fill="none" stroke={C.muted} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                         ) : (
-                          <span style={{ fontSize: 10, color: '#b0a0a8' }}>Not set up</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: C.crimson, background: C.crimsonDim, border: `1px solid rgba(154,33,67,0.2)`, borderRadius: 20, padding: '3px 10px' }}>Set up →</span>
                         )}
                       </div>
                     </button>

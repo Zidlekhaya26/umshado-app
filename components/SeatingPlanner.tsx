@@ -563,8 +563,8 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Add Table Modal ──────────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[75vh]">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(75svh - env(safe-area-inset-bottom))' }}>
             <div className="shrink-0 px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-black text-gray-900">Add Table</h3>
             </div>
@@ -601,8 +601,8 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Edit Table Modal ─────────────────────────────────── */}
       {editingTable && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col max-h-[80vh]">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(80svh - env(safe-area-inset-bottom))' }}>
             <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-black text-gray-900">Edit Table</h3>
               <button

@@ -90,10 +90,29 @@ export default function VendorMedia(){
       if(type==='portfolio'){
         const newUrls:string[]=[];
         for(const file of Array.from(files)){const url=await uploadFile(file,'portfolio');if(url)newUrls.push(url);}
-        setPortfolioUrls(prev=>[...prev,...newUrls]);
+        if(newUrls.length>0){
+          setPortfolioUrls(prev=>{
+            const updated=[...prev,...newUrls];
+            // Auto-save to DB so progress survives app switching
+            supabase.from('vendors').update({portfolio_urls:updated,portfolio_images:updated.length}).eq('id',vendorId).then(({error})=>{if(error)console.error('Auto-save portfolio error:',error);});
+            return updated;
+          });
+        }
       }else{
         const url=await uploadFile(files[0],type);
-        if(url){if(type==='logo')setLogoUrl(url);else setCoverUrl(url);}
+        if(url){
+          if(type==='logo'){
+            setLogoUrl(url);
+            // Auto-save logo to DB immediately
+            const {error}=await supabase.from('vendors').update({logo_url:url}).eq('id',vendorId);
+            if(error)console.error('Auto-save logo error:',error);
+          }else{
+            setCoverUrl(url);
+            // Auto-save cover to DB immediately
+            const {error}=await supabase.from('vendors').update({cover_url:url}).eq('id',vendorId);
+            if(error)console.error('Auto-save cover error:',error);
+          }
+        }
       }
     }catch(err){console.error('Upload failed:',err);alert('Upload failed. Please try again.');}finally{setUploading(false);}
   };
