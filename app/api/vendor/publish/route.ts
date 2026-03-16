@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { notifyUsers } from '@/lib/server/notify';
+import { validateBody } from '@/lib/apiValidate';
+import { z } from 'zod';
 
 /**
  * POST /api/vendor/publish
@@ -35,17 +37,9 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Body ---
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
-  const { vendorId } = body;
-  if (!vendorId) {
-    return NextResponse.json({ error: 'Missing vendorId' }, { status: 400 });
-  }
+  const { data: bodyData, error: bodyError } = await validateBody(req, z.object({ vendorId: z.string().uuid('vendorId must be a valid UUID') }));
+  if (bodyError) return bodyError;
+  const { vendorId } = bodyData;
 
   const supabase = createServiceClient();
 
