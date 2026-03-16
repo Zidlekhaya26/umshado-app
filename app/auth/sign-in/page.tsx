@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostAuthRedirect, setAuthCookies } from '@/lib/authRouting';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
+import Image from 'next/image';
 
 /* ─── Design tokens ──────────────────────────────────────── */
 const CR  = '#9A2143';
@@ -188,7 +189,7 @@ function SignInContent() {
 
         {/* Centre content */}
         <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 48px', textAlign: 'center' }}>
-          <img src="/logo-icon.png" alt="uMshado" style={{ width: 70, height: 70, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .93, marginBottom: 28 }} />
+          <Image src="/logo-icon.png" alt="uMshado" width={70} height={70} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .93, marginBottom: 28 }} />
           <h1 style={{ margin: '0 0 14px', fontSize: 34, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', lineHeight: 1.18, letterSpacing: -.5 }}>
             Your wedding,<br />beautifully planned
           </h1>
@@ -220,7 +221,7 @@ function SignInContent() {
           <Diamond size={7} style={{ top: '22%', left: '16%', animation: 'siFltA 7s ease-in-out infinite' }} />
           <Diamond size={5} style={{ bottom: '24%', right: '20%', animation: 'siFltB 9s ease-in-out infinite' }} />
           <div style={{ position: 'relative', textAlign: 'center' }}>
-            <img src="/logo-icon.png" alt="uMshado" style={{ width: 56, height: 56, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .92, display: 'block', margin: '0 auto 14px' }} />
+            <Image src="/logo-icon.png" alt="uMshado" width={56} height={56} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .92, display: 'block', margin: '0 auto 14px' }} />
             <h1 style={{ margin: '0 0 6px', fontSize: 24, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', letterSpacing: -.3 }}>Welcome back</h1>
             <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Sign in to continue your wedding journey</p>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -105,7 +106,7 @@ function QuoteCard({ quote, status, format, onChat }: {
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         {quote.couple_avatar ? (
-          <img src={quote.couple_avatar} alt={quote.couple_name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BOR}` }} />
+          <Image src={quote.couple_avatar} alt={quote.couple_name} width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BOR}` }} />
         ) : (
           <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${CR},${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
             {(quote.couple_name || 'C').split(' ').map((s: string) => s[0]).slice(0,2).join('').toUpperCase()}
@@ -387,8 +388,8 @@ export default function VendorDashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, position: 'relative' }}>
             {vendor?.logo_url ? (
               <button onClick={() => { setLogoSrc(vendor.logo_url!); setLogoAlt(vendor.business_name || ''); setLogoOpen(true); }}
-                style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(189,152,63,0.55)', background: '#fff', padding: 0, cursor: 'zoom-in', flexShrink: 0 }}>
-                <img src={vendor.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(189,152,63,0.55)', background: '#fff', padding: 0, cursor: 'zoom-in', flexShrink: 0, position: 'relative' }}>
+                <Image src={vendor.logo_url} alt={vendor.business_name || ''} fill style={{ objectFit: 'cover' }} />
               </button>
             ) : (
               <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>

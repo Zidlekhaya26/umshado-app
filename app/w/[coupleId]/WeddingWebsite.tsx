@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 // ─── Theme Definitions ────────────────────────────────────────────────────────
 
@@ -500,7 +501,7 @@ export default function WeddingWebsite({
           {/* Background layer */}
           {avatarUrl ? (
             <>
-              <img src={avatarUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', opacity: 0.25 }} />
+              <Image src={avatarUrl} alt="" fill style={{ objectFit: 'cover', objectPosition: 'center top', opacity: 0.25 }} />
               <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to bottom, ${t.bg}60 0%, ${t.bg}90 45%, ${t.bg} 80%)` }} />
               {/* Vignette edges */}
               <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at center, transparent 40%, ${t.bg}80 100%)` }} />
@@ -544,7 +545,7 @@ export default function WeddingWebsite({
                   boxShadow: `0 0 0 6px ${t.accentLight}, 0 20px 60px rgba(0,0,0,0.4)`,
                   position: 'relative',
                 }}>
-                  <img src={avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <Image src={avatarUrl} alt="" fill style={{ objectFit: 'cover' }} />
                 </div>
               </div>
             )}
@@ -909,9 +910,9 @@ export default function WeddingWebsite({
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
                   {moments.map((m, i) => (
                     <FadeIn key={m.id} delay={i * 40}>
-                      <div style={{ aspectRatio: '1', borderRadius: '18px', overflow: 'hidden', background: t.card, border: `1px solid ${t.cardBorder}` }}>
+                      <div style={{ aspectRatio: '1', borderRadius: '18px', overflow: 'hidden', background: t.card, border: `1px solid ${t.cardBorder}`, position: 'relative' }}>
                         {m.media_url ? (
-                          <img src={m.media_url} alt={m.caption ?? ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={m.media_url} alt={m.caption ?? ''} fill style={{ objectFit: 'cover' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>📸</div>
                         )}

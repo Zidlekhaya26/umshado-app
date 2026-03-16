@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
@@ -228,7 +229,7 @@ export default function VendorBookingsPage(){
                       <div style={{height:3,background:st.color}}/>
                       <div style={{padding:'16px 18px'}}>
                         <div style={{display:'flex',alignItems:'flex-start',gap:12,marginBottom:14}}>
-                          {booking.couple_avatar?<img src={booking.couple_avatar} alt="" style={{width:44,height:44,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
+                          {booking.couple_avatar?<Image src={booking.couple_avatar} alt="" width={44} height={44} style={{borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
                             :<div style={{width:44,height:44,borderRadius:'50%',background:`linear-gradient(135deg,${CR},${CR2})`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:800,fontSize:17,flexShrink:0}}>{(booking.couple_name||'C')[0].toUpperCase()}</div>}
                           <div style={{flex:1,minWidth:0}}>
                             <p style={{margin:0,fontSize:15,fontWeight:800,color:DK}}>{booking.couple_name}</p>

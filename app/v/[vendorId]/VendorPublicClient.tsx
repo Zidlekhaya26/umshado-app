@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import PortfolioGallery from './PortfolioGallery';
 import { trackVendorEvent } from '@/lib/analytics';
 import { formatWhatsappLink } from '@/lib/whatsapp';
@@ -175,7 +176,7 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
         {/* Hero Cover */}
         <div className="relative w-full" style={{ height: 'clamp(280px,52vw,480px)' }}>
           {coverImg ? (
-            <img src={coverImg} alt={vendor.business_name} className="absolute inset-0 w-full h-full object-cover" loading="eager" />
+            <Image src={coverImg} alt={vendor.business_name} fill className="object-cover" priority />
           ) : (
             <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg,#6b1f3a 0%,#8a2a4d 40%,#c97a8e 100%)' }} />
           )}
@@ -207,8 +208,8 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
           <div className="absolute bottom-0 left-0 right-0 p-6" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 100%)' }}>
             <div className="flex items-start gap-3">
               {vendor.logo_url && (
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/20 backdrop-blur border-2 border-white/50 flex-shrink-0">
-                  <img src={vendor.logo_url} alt={vendor.business_name} className="w-full h-full object-cover" />
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/20 backdrop-blur border-2 border-white/50 flex-shrink-0 relative">
+                  <Image src={vendor.logo_url} alt={vendor.business_name} fill className="object-cover" />
                 </div>
               )}
               <div className="flex-1 min-w-0">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import VendorBottomNav from '@/components/VendorBottomNav';
@@ -218,7 +219,7 @@ export default function VendorInboxPage() {
                     <Link key={conv.id} href={`/messages/thread/${conv.id}`} className="ib-conv"
                       style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: i < convs.length - 1 ? `1px solid ${BOR}` : 'none', background: '#fff', transition: 'background .12s' }}>
                       {conv.couple_avatar ? (
-                        <img src={conv.couple_avatar} alt="" style={{ width: 46, height: 46, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BOR}` }} />
+                        <Image src={conv.couple_avatar} alt="" width={46} height={46} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BOR}` }} />
                       ) : (
                         <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg,${CR},${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, flexShrink: 0 }}>
                           {(conv.couple_name || 'C')[0].toUpperCase()}

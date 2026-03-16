@@ -5,6 +5,7 @@ import { getUserOrRedirect, upsertCouple } from '@/lib/onboarding';
 import { useRouter } from "next/navigation";
 import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import Image from 'next/image';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
 const CR  = '#9A2143';
@@ -35,7 +36,7 @@ function OnboardingHeader() {
       <div style={{ position: 'relative' }}>
         {/* Logo + brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
-          <img src="/logo-icon.png" alt="uMshado" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .88 }} />
+          <Image src="/logo-icon.png" alt="uMshado" width={34} height={34} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .88 }} />
           <div>
             <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 1.3, textTransform: 'uppercase', fontWeight: 700 }}>uMshado</p>
             <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Welcome to the family 💍</p>

@@ -2,6 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { supabase } from '@/lib/supabaseClient';
@@ -377,10 +378,10 @@ export default function VendorProfile() {
                       <button
                         type="button"
                         onClick={() => { (window as any).__vendorLogoPreview = logo; /* noop for SSR */ }}
-                        className="w-full h-full flex items-center justify-center"
+                        className="relative w-full h-full flex items-center justify-center"
                         aria-label="View vendor logo"
                       >
-                        <img src={logo} alt="vendor" className="w-full h-full object-contain p-2" />
+                        <Image src={logo} alt="vendor" fill className="object-contain p-2" />
                       </button>
                     ) : (
                       <span>{vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
 const CR  = '#9A2143';
@@ -43,7 +44,7 @@ export default function VendorProfileEditHub() {
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GD},transparent)` }} />
         <div style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-            <img src="/logo-icon.png" alt="uMshado" style={{ width: 34, height: 34, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .9 }} />
+            <Image src="/logo-icon.png" alt="uMshado" width={34} height={34} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .9 }} />
             <div>
               <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 1.3, textTransform: 'uppercase', fontWeight: 700 }}>Vendor Studio</p>
               <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Edit Profile</p>

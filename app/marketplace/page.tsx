@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 import { LOCKED_CATEGORIES } from '@/lib/marketplaceCategories';
@@ -303,8 +304,8 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
             {vendor.logoUrl ? (
               <button type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
-                style={{ width: 50, height: 50, borderRadius: 12, overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>
-                <img src={vendor.logoUrl} alt={vendor.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                style={{ width: 50, height: 50, borderRadius: 12, overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', position: 'relative' }}>
+                <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'cover' }} />
               </button>
             ) : (
               <div style={{ width: 50, height: 50, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif', border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>

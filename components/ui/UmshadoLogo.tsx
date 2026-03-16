@@ -23,7 +23,7 @@ interface IconProps {
 export function UmshadoIcon({ size = 40, className = '' }: IconProps) {
    
   return (
-    <img
+    <Image
       src="/logo-icon.png"
       alt="uMshado"
       width={size}

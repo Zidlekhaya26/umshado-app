@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { getPostAuthRedirect, setAuthCookies } from '@/lib/authRouting';
 import { BETA_INVITE_ONLY } from '@/lib/betaGate';
+import Image from 'next/image';
 
 /* ─── Tokens (match sign-in) ────────────────────────────── */
 const CR  = '#9A2143';
@@ -275,7 +276,7 @@ function SignUpContent() {
         <Diamond size={4}  style={{ top: '30%', right: '14%', animation: 'suFltA 11s ease-in-out 2s infinite', opacity: .4 }} />
 
         <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '64px 48px', textAlign: 'center' }}>
-          <img src="/logo-icon.png" alt="uMshado" style={{ width: 70, height: 70, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .93, marginBottom: 28 }} />
+          <Image src="/logo-icon.png" alt="uMshado" width={70} height={70} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .93, marginBottom: 28 }} />
           <h1 style={{ margin: '0 0 14px', fontSize: 34, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', lineHeight: 1.18, letterSpacing: -.5 }}>
             {isVendor ? 'Grow your wedding business' : 'Start planning your perfect wedding'}
           </h1>
@@ -313,7 +314,7 @@ function SignUpContent() {
           <Diamond size={7} style={{ top: '22%', left: '16%', animation: 'suFltA 7s ease-in-out infinite' }} />
           <Diamond size={5} style={{ bottom: '24%', right: '20%', animation: 'suFltB 9s ease-in-out infinite' }} />
           <div style={{ position: 'relative', textAlign: 'center' }}>
-            <img src="/logo-icon.png" alt="uMshado" style={{ width: 54, height: 54, objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .92, display: 'block', margin: '0 auto 14px' }} />
+            <Image src="/logo-icon.png" alt="uMshado" width={54} height={54} style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)', opacity: .92, display: 'block', margin: '0 auto 14px' }} />
             <h1 style={{ margin: '0 0 6px', fontSize: 23, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', letterSpacing: -.3 }}>
               {isVendor ? 'Create your vendor account' : 'Create your couple account'}
             </h1>

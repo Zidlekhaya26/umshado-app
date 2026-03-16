@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
+import Image from 'next/image';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
 const CR  = '#9A2143';
@@ -249,7 +250,7 @@ function SwitchRoleContent() {
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <img src="/logo-icon.png" alt="" style={{ width: 30, height: 30, filter: 'brightness(0) invert(1)', opacity: .85, objectFit: 'contain' }} />
+            <Image src="/logo-icon.png" alt="" width={30} height={30} style={{ filter: 'brightness(0) invert(1)', opacity: .85, objectFit: 'contain' }} />
             <p style={{ margin: 0, fontSize: 10, color: 'rgba(255,255,255,0.5)', letterSpacing: 1.3, textTransform: 'uppercase', fontWeight: 700 }}>uMshado</p>
           </div>
           <h1 style={{ margin: '0 0 5px', fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Switch Account</h1>

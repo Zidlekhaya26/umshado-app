@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
@@ -385,7 +386,7 @@ export default function CoupleDashboard() {
                     <div style={{ width:22, height:22, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.2)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }}/>
                   </div>
                 : coupleProfile?.avatar_url
-                  ? <img src={coupleProfile.avatar_url} alt="Profile" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
+                  ? <Image src={coupleProfile.avatar_url} alt="Profile" fill style={{ objectFit:'cover' }} />
                   : <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3 }}>
                       <span style={{ fontSize:42 }}>💍</span>
                       <span style={{ fontSize:9, color:'rgba(255,255,255,0.4)', letterSpacing:0.8 }}>ADD PHOTO</span>

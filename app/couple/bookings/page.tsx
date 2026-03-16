@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
@@ -170,8 +171,9 @@ function BookingCard({ booking, onReview, onCancel, format }: {
         {/* Vendor row */}
         <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:14 }}>
           {booking.vendor_logo ? (
-            <img src={booking.vendor_logo} alt={booking.vendor_name}
-              style={{ width:46,height:46,borderRadius:'50%',objectFit:'cover',border:`2px solid rgba(184,151,62,0.25)`,flexShrink:0 }} />
+            <Image src={booking.vendor_logo} alt={booking.vendor_name}
+              width={46} height={46}
+              style={{ borderRadius:'50%',objectFit:'cover',border:`2px solid rgba(184,151,62,0.25)`,flexShrink:0 }} />
           ) : (
             <div style={{ width:46,height:46,borderRadius:'50%',background:`linear-gradient(135deg,${CR},${CR2})`,display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:700,fontSize:18,fontFamily:'Georgia,serif',flexShrink:0 }}>
               {booking.vendor_name.charAt(0).toUpperCase()}

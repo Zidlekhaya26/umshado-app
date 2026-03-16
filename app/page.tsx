@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
@@ -71,14 +72,12 @@ export default function Home() {
         <div style={{ textAlign: 'center', marginBottom: 32, position: 'relative' }}>
           {/* Logo */}
           <div style={{ display: 'inline-block', marginBottom: 20 }}>
-            <img 
-              src="/logo-full.png" 
-              alt="uMshado" 
-              style={{ 
-                height: 52, 
-                width: 'auto',
-                filter: 'none'
-              }} 
+            <Image
+              src="/logo-full.png"
+              alt="uMshado"
+              width={160}
+              height={52}
+              style={{ height: 52, width: 'auto', objectFit: 'contain' }}
             />
           </div>
 

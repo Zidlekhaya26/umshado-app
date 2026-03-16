@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
@@ -50,10 +51,10 @@ function Avatar({ name, url, size = 52, showOnline = false }: {
         width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
         background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        border: `2px solid ${C.crimsonDim}`,
+        border: `2px solid ${C.crimsonDim}`, position: 'relative',
       }}>
         {url ? (
-          <img src={url} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <Image src={url} alt={name} fill style={{ objectFit: 'cover' }} />
         ) : (
           <span style={{ color: '#fff', fontWeight: 800, fontSize: size * 0.33, fontFamily: 'Georgia, serif' }}>{initials}</span>
         )}
