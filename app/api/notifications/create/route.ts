@@ -10,7 +10,7 @@ const NotifySchema = z.object({
   title: z.string().min(1).max(200),
   body: z.string().min(1).max(1000),
   link: z.string().max(500).optional(),
-  meta: z.record(z.unknown()).optional(),
+  meta: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
