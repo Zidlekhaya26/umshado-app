@@ -438,14 +438,17 @@ function LivePageContent() {
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
               {/* Share prompt */}
-              <div style={{ background: `linear-gradient(135deg,${G},${G2})`, borderRadius: 18, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 28 }}>🤝</span>
-                <div style={{ flex: 1 }}>
+              <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${G} 60%,#b8315a 100%)`, borderRadius: 20, padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.12)', pointerEvents: 'none' }} />
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: '1.5px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="22" height="22" fill="none" stroke="#fff" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div style={{ flex: 1, position: 'relative' }}>
                   <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff' }}>Share your journey</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>Inspire other couples with your story, traditions & tips</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>Inspire couples with your story, traditions & vendor tips</p>
                 </div>
                 <button onClick={() => setShowPostModal(true)}
-                  style={{ padding: '8px 16px', borderRadius: 20, background: 'rgba(255,255,255,0.2)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+                  style={{ padding: '9px 18px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', border: '1.5px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: 12, fontWeight: 800, cursor: 'pointer', flexShrink: 0, backdropFilter: 'blur(4px)' }}>
                   + Post
                 </button>
               </div>
@@ -505,9 +508,11 @@ function LivePageContent() {
                               </div>
                               <p style={{ margin: '1px 0 0', fontSize: 11, color: '#7a5060' }}>{timeAgo(post.created_at)}</p>
                             </div>
-                            <button onClick={() => deletePost(post.id)} style={{ padding: 4, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                            {post.user_id === userId && (
+                            <button onClick={() => deletePost(post.id)} style={{ padding: 4, color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
                               <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
+                          )}
                           </div>
 
                           <p style={{ margin: '0 0 10px', fontSize: 14, color: '#1a0d12', lineHeight: 1.6 }}>{post.content}</p>
@@ -593,15 +598,17 @@ function LivePageContent() {
               )}
 
               {/* Vendor suggestion quick-post */}
-              <div style={{ background: '#fff', borderRadius: 16, border: '1.5px solid rgba(154,33,67,0.2)', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{ fontSize: 22, flexShrink: 0 }}>🌟</span>
+              <div style={{ background: `linear-gradient(135deg,rgba(189,152,63,0.07),rgba(154,33,67,0.05))`, borderRadius: 18, border: `1.5px solid rgba(189,152,63,0.25)`, padding: '16px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+                <div style={{ width: 44, height: 44, borderRadius: '50%', background: `linear-gradient(135deg,#BD983F,#8a6010)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 20 }}>🌟</span>
+                </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1a0d12' }}>Know a great vendor?</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a5060' }}>Help other couples by recommending reliable vendors</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7a5060' }}>Help other couples find reliable vendors across SA</p>
                 </div>
                 <button onClick={() => { setNewCategory('vendor_tip'); setShowPostModal(true); }}
-                  style={{ padding: '7px 14px', borderRadius: 20, background: 'rgba(154,33,67,0.1)', color: CR, fontSize: 12, fontWeight: 700, border: '1px solid rgba(154,33,67,0.3)', cursor: 'pointer', flexShrink: 0 }}>
-                  Suggest
+                  style={{ padding: '8px 16px', borderRadius: 20, background: `linear-gradient(135deg,#BD983F,#8a6010)`, color: '#fff', fontSize: 12, fontWeight: 700, border: 'none', cursor: 'pointer', flexShrink: 0, boxShadow: '0 3px 10px rgba(189,152,63,0.3)' }}>
+                  Recommend
                 </button>
               </div>
             </div>
@@ -630,6 +637,18 @@ function LivePageContent() {
                         {linkCopied ? '✓ Copied' : 'Copy'}
                       </button>
                     </div>
+                    <button
+                      onClick={() => {
+                        if (!guestUrl) return;
+                        const text = encodeURIComponent(`You're invited! View our wedding schedule and send your wishes here: ${guestUrl}`);
+                        const a = document.createElement('a'); a.href = `https://wa.me/?text=${text}`;
+                        a.target = '_blank'; a.rel = 'noopener noreferrer';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                      }}
+                      style={{ width: '100%', padding: '11px', borderRadius: 12, border: 'none', background: '#25d366', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                      Share via WhatsApp
+                    </button>
                   </div>
                 ) : (
                   <div style={{ textAlign: 'center', padding: '12px 0' }}>
@@ -690,37 +709,53 @@ function LivePageContent() {
           {/* ════ WISHES TAB ════ */}
           {activeTab === 'wishes' && (
             <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1a0d12' }}>Well Wishes</p>
-                {wishes.length > 0 && <span style={{ padding: '2px 10px', borderRadius: 20, background: 'rgba(154,33,67,0.1)', color: G2, fontSize: 11, fontWeight: 700 }}>{wishes.length}</span>}
+              {/* Header with count + hint */}
+              <div style={{ background: `linear-gradient(135deg,rgba(154,33,67,0.06),rgba(189,152,63,0.06))`, borderRadius: 18, padding: '16px 18px', border: `1.5px solid ${BOR}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${G},${G2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 18 }}>💌</span>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DK }}>
+                      Well Wishes {wishes.length > 0 && <span style={{ padding: '2px 9px', borderRadius: 20, background: 'rgba(154,33,67,0.12)', color: G2, fontSize: 11, marginLeft: 6 }}>{wishes.length}</span>}
+                    </p>
+                    <p style={{ margin: '2px 0 0', fontSize: 12, color: MUT }}>Share your guest link so guests can send love</p>
+                  </div>
+                </div>
               </div>
 
               {wishes.length === 0 ? (
                 <div style={{ background: '#fff', borderRadius: 20, border: '2px dashed rgba(154,33,67,0.3)', padding: '40px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 40, marginBottom: 8 }}>💌</div>
                   <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1a0d12', fontFamily: 'Georgia,serif' }}>No well wishes yet</p>
-                  <p style={{ margin: '6px 0 0', fontSize: 13, color: '#7a5060' }}>Share your guest link so friends & family can send you their love!</p>
+                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: '#7a5060' }}>Share your guest link so friends & family can send you their love!</p>
+                  <button onClick={() => handleTabChange('day')}
+                    style={{ padding: '10px 22px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
+                    Get Guest Link
+                  </button>
                 </div>
               ) : (
-                wishes.map(wish => (
-                  <div key={wish.id} style={{ background: '#fff', borderRadius: 16, border: '1.5px solid rgba(154,33,67,0.12)', padding: '14px 16px' }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 18 }}>💌</span>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1a0d12' }}>{wish.guest_name}</span>
-                          <span style={{ fontSize: 11, color: '#7a5060' }}>{timeAgo(wish.created_at)}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {wishes.map(wish => (
+                    <div key={wish.id} style={{ background: '#fff', borderRadius: 18, border: '1.5px solid rgba(154,33,67,0.12)', padding: '14px 16px', boxShadow: '0 1px 8px rgba(26,13,18,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                        <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,rgba(154,33,67,0.12),rgba(154,33,67,0.06))`, border: '1px solid rgba(154,33,67,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: CR2 }}>{wish.guest_name.slice(0,2).toUpperCase()}</span>
                         </div>
-                        <p style={{ margin: 0, fontSize: 13, color: '#1a0d12', lineHeight: 1.55 }}>{wish.message}</p>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1a0d12' }}>{wish.guest_name}</span>
+                            <span style={{ fontSize: 11, color: '#7a5060' }}>{timeAgo(wish.created_at)}</span>
+                          </div>
+                          <p style={{ margin: 0, fontSize: 13, color: '#1a0d12', lineHeight: 1.65, background: 'rgba(154,33,67,0.04)', padding: '8px 12px', borderRadius: 12, borderLeft: `3px solid rgba(154,33,67,0.3)` }}>{wish.message}</p>
+                        </div>
+                        <button onClick={() => deleteWish(wish.id)} style={{ padding: 4, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
+                          <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                       </div>
-                      <button onClick={() => deleteWish(wish.id)} style={{ padding: 4, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
                     </div>
-                  </div>
-                ))
+                  ))}
+                </div>
               )}
             </div>
           )}
