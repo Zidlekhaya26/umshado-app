@@ -142,6 +142,12 @@ function SettingsContent() {
   const [authEmail, setAuthEmail]   = useState<string | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
 
+  const [showChangeEmail, setShowChangeEmail]   = useState(false);
+  const [newEmail, setNewEmail]                 = useState('');
+  const [emailChangeMsg, setEmailChangeMsg]     = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [emailChangeSaving, setEmailChangeSaving] = useState(false);
+  const [pwResetMsg, setPwResetMsg]             = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   const [showEditProfile, setShowEditProfile]     = useState(false);
   const [editYourName, setEditYourName]           = useState('');
   const [editWeddingDate, setEditWeddingDate]     = useState('');
@@ -307,6 +313,36 @@ function SettingsContent() {
     } else {
       const body = await res.json().catch(() => ({}));
       alert(body.error || 'Failed to delete account. Please try again.');
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!authEmail) return;
+    setPwResetMsg(null);
+    const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+      redirectTo: `${window.location.origin}/auth/sign-in`,
+    });
+    if (error) {
+      setPwResetMsg({ type: 'error', text: error.message });
+    } else {
+      setPwResetMsg({ type: 'success', text: 'Reset link sent — check your inbox.' });
+      setTimeout(() => setPwResetMsg(null), 5000);
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes('@')) { setEmailChangeMsg({ type: 'error', text: 'Enter a valid email address.' }); return; }
+    if (trimmed === authEmail?.toLowerCase()) { setEmailChangeMsg({ type: 'error', text: 'That is already your current email.' }); return; }
+    setEmailChangeSaving(true);
+    setEmailChangeMsg(null);
+    const { error } = await supabase.auth.updateUser({ email: trimmed });
+    setEmailChangeSaving(false);
+    if (error) {
+      setEmailChangeMsg({ type: 'error', text: error.message });
+    } else {
+      setEmailChangeMsg({ type: 'success', text: 'Confirmation sent to your new email.' });
+      setTimeout(() => { setShowChangeEmail(false); setNewEmail(''); setEmailChangeMsg(null); }, 2500);
     }
   };
 
@@ -573,6 +609,18 @@ function SettingsContent() {
           {/* ── Account ── */}
           <Section title="Account" icon="👤">
             <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>}
+              label="Change Password"
+              sub={pwResetMsg ? pwResetMsg.text : 'Send a reset link to your email'}
+              onClick={handleChangePassword}
+            />
+            <Row
+              icon={<svg width="17" height="17" fill="none" stroke={C.crimson} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>}
+              label="Change Email"
+              sub={authEmail ?? 'Update your email address'}
+              onClick={() => { setShowChangeEmail(true); setEmailChangeMsg(null); setNewEmail(''); }}
+            />
+            <Row
               icon={<svg width="17" height="17" fill="none" stroke={C.error} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>}
               label="Sign Out"
               danger
@@ -677,6 +725,66 @@ function SettingsContent() {
                 <button onClick={saveProfile} disabled={profileSaving}
                   style={{ flex: 2, padding: '13px', borderRadius: 14, border: 'none', background: profileSaving ? '#e5ddd8' : grad.primary, color: profileSaving ? C.muted : '#fff', fontSize: 13, fontWeight: 800, cursor: profileSaving ? 'default' : 'pointer', boxShadow: profileSaving ? 'none' : `0 4px 16px ${C.crimsonGlow}`, transition: 'all 0.15s' }}>
                   {profileSaving ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ════════════ CHANGE EMAIL SHEET ════════════ */}
+      {showChangeEmail && (
+        <>
+          <div onClick={() => { setShowChangeEmail(false); setEmailChangeMsg(null); setNewEmail(''); }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,13,18,0.55)', zIndex: 40, animation: 'fadeIn 0.2s ease' }} />
+
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0,
+            background: C.card, borderRadius: '24px 24px 0 0', zIndex: 50,
+            animation: 'sheetUp 0.3s cubic-bezier(.32,.72,0,1)',
+            padding: '0 0 env(safe-area-inset-bottom)',
+            maxWidth: 560, margin: '0 auto',
+          }}>
+            <div style={{ width: 40, height: 4, background: C.crimsonDim, borderRadius: 2, margin: '14px auto 0' }} />
+
+            <div style={{ padding: '20px 20px 32px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.dark, fontFamily: 'Georgia, serif' }}>Change Email</h2>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: C.muted }}>A confirmation will be sent to your new address</p>
+                </div>
+                <button onClick={() => { setShowChangeEmail(false); setEmailChangeMsg(null); setNewEmail(''); }}
+                  style={{ width: 32, height: 32, borderRadius: '50%', border: `1.5px solid ${C.border}`, background: '#faf8f5', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="12" height="12" fill="none" stroke={C.muted} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+
+              {emailChangeMsg && (
+                <div style={{ marginBottom: 18, padding: '11px 14px', borderRadius: 12, fontSize: 13, fontWeight: 600, background: emailChangeMsg.type === 'success' ? C.successDim : C.errorDim, color: emailChangeMsg.type === 'success' ? C.success : C.error, border: `1.5px solid ${emailChangeMsg.type === 'success' ? 'rgba(30,124,74,0.25)' : 'rgba(192,50,42,0.2)'}` }}>
+                  {emailChangeMsg.type === 'success' ? '✓ ' : '⚠ '}{emailChangeMsg.text}
+                </div>
+              )}
+
+              <Field label="New Email Address" required>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={e => setNewEmail(e.target.value)}
+                  placeholder="e.g., you@example.com"
+                  className="settings-input"
+                  style={inputStyle}
+                  autoComplete="email"
+                />
+              </Field>
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+                <button onClick={() => { setShowChangeEmail(false); setEmailChangeMsg(null); setNewEmail(''); }}
+                  style={{ flex: 1, padding: '13px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#f4ede8', color: C.muted, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+                <button onClick={handleChangeEmail} disabled={emailChangeSaving}
+                  style={{ flex: 2, padding: '13px', borderRadius: 14, border: 'none', background: emailChangeSaving ? '#e5ddd8' : grad.primary, color: emailChangeSaving ? C.muted : '#fff', fontSize: 13, fontWeight: 800, cursor: emailChangeSaving ? 'default' : 'pointer', boxShadow: emailChangeSaving ? 'none' : `0 4px 16px ${C.crimsonGlow}`, transition: 'all 0.15s' }}>
+                  {emailChangeSaving ? 'Saving…' : 'Update Email'}
                 </button>
               </div>
             </div>

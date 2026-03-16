@@ -33,7 +33,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     id: 'acct-3',
     question: 'How do I change my email or password?',
-    answer: 'Go to Settings → Edit Profile to update your display name. To change your email or password, use the Supabase password-reset flow from the sign-in page. Full in-app email/password change is coming in a future release.',
+    answer: 'Go to Settings → Account. Tap "Change Password" to receive a reset link by email. Tap "Change Email" to enter a new address — a confirmation will be sent to verify it.',
     category: 'Account',
   },
   {
