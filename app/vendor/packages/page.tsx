@@ -182,14 +182,6 @@ export default function VendorPackagesPage() {
   useEffect(() => { loadVendorAndPackages(); }, []);
 
   useEffect(() => {
-    try {
-      const isDev = process.env.NODE_ENV === 'development';
-      const urlFlag = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('debugPackages') === '1';
-      setShowDebug(Boolean(isDev || urlFlag));
-    } catch { setShowDebug(false); }
-  }, []);
-
-  useEffect(() => {
     if (typeof window !== 'undefined') {
       setForcedEdit(new URLSearchParams(window.location.search).get('mode') === 'edit');
     }
