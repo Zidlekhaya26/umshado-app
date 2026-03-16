@@ -24,11 +24,14 @@ interface CommunityPost {
   id: string; user_id: string; author: string; category: PostCategory;
   content: string; image_url: string | null; likes_count: number;
   comments_count: number; created_at: string; liked?: boolean;
+  reposts_count: number;
+  reposted?: boolean;
 }
 
 interface CommunityComment {
   id: string; post_id: string; user_id: string; author: string;
   content: string; created_at: string;
+  parent_id?: string | null;
 }
 
 // ─── Constants ───────────────────────────────────────────
@@ -139,6 +142,7 @@ function LivePageContent() {
   // Community feed
   const [posts, setPosts]                   = useState<CommunityPost[]>([]);
   const [myLikes, setMyLikes]               = useState<Set<string>>(new Set());
+  const [myReposts, setMyReposts]           = useState<Set<string>>(new Set());
   const [filterCat, setFilterCat]           = useState<PostCategory | 'all'>('all');
   const [showPostModal, setShowPostModal]   = useState(false);
   const [newContent, setNewContent]         = useState('');
@@ -157,6 +161,14 @@ function LivePageContent() {
   const [newComment, setNewComment]             = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
+  // Threaded replies
+  const [replyingTo, setReplyingTo] = useState<{ commentId: string; author: string; postId: string } | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+
+  // Share sheet
+  const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
   // Schedule form
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleTitle, setScheduleTitle]         = useState('');
@@ -172,13 +184,21 @@ function LivePageContent() {
   const loadPosts = useCallback(async (uid: string) => {
     setLoadingPosts(true);
     try {
-      const [postsRes, likesRes] = await Promise.all([
+      const [postsRes, likesRes, repostsRes] = await Promise.all([
         supabase.from('community_posts').select('*').order('created_at', { ascending: false }),
         supabase.from('community_likes').select('post_id').eq('user_id', uid),
+        supabase.from('community_reposts').select('post_id').eq('user_id', uid),
       ]);
       const likedSet = new Set<string>((likesRes.data ?? []).map((l: { post_id: string }) => l.post_id));
+      const repostSet = new Set<string>((repostsRes.data ?? []).map((r: { post_id: string }) => r.post_id));
       setMyLikes(likedSet);
-      setPosts((postsRes.data ?? []).map((p: CommunityPost) => ({ ...p, liked: likedSet.has(p.id) })));
+      setMyReposts(repostSet);
+      setPosts((postsRes.data ?? []).map((p: CommunityPost) => ({
+        ...p,
+        liked: likedSet.has(p.id),
+        reposted: repostSet.has(p.id),
+        reposts_count: p.reposts_count ?? 0,
+      })));
     } finally {
       setLoadingPosts(false);
     }
@@ -212,7 +232,7 @@ function LivePageContent() {
         image_url,
       }).select().single();
       if (!error && data) {
-        setPosts(prev => [{ ...data, liked: false }, ...prev]);
+        setPosts(prev => [{ ...data, liked: false, reposted: false, reposts_count: 0 }, ...prev]);
         setNewContent(''); setImageFile(null); setImagePreview(null);
         setNewCategory('general'); setShowPostModal(false);
       }
@@ -233,6 +253,20 @@ function LivePageContent() {
       await supabase.from('community_likes').delete().eq('post_id', postId).eq('user_id', userId);
     } else {
       await supabase.from('community_likes').insert({ post_id: postId, user_id: userId });
+    }
+  };
+
+  const toggleRepost = async (postId: string) => {
+    if (!userId) return;
+    const reposted = myReposts.has(postId);
+    setMyReposts(prev => { const s = new Set(prev); reposted ? s.delete(postId) : s.add(postId); return s; });
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, reposted: !reposted, reposts_count: Math.max(0, (p.reposts_count || 0) + (reposted ? -1 : 1)) }
+      : p));
+    if (reposted) {
+      await supabase.from('community_reposts').delete().eq('post_id', postId).eq('user_id', userId);
+    } else {
+      await supabase.from('community_reposts').insert({ post_id: postId, user_id: userId });
     }
   };
 
@@ -260,11 +294,30 @@ function LivePageContent() {
       post_id: postId,
       user_id: userId,
       content: newComment.trim(),
+      parent_id: null,
     }).select().single();
     if (!error && data) {
       setComments(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), data] }));
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p));
       setNewComment('');
+    }
+    setSubmittingComment(false);
+  };
+
+  const addReply = async (postId: string, parentId: string) => {
+    if (!replyContent.trim() || !userId || submittingComment) return;
+    setSubmittingComment(true);
+    const { data, error } = await supabase.from('community_comments').insert({
+      post_id: postId,
+      user_id: userId,
+      content: replyContent.trim(),
+      parent_id: parentId,
+    }).select().single();
+    if (!error && data) {
+      setComments(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), data] }));
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p));
+      setReplyContent('');
+      setReplyingTo(null);
     }
     setSubmittingComment(false);
   };
@@ -524,16 +577,36 @@ function LivePageContent() {
                             </div>
                           )}
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingTop: 6, borderTop: '1px solid rgba(154,33,67,0.1)' }}>
+                          {/* ── Actions row ── */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 6, borderTop: '1px solid rgba(154,33,67,0.1)', flexWrap: 'wrap' }}>
+                            {/* Like */}
                             <button onClick={() => toggleLike(post.id)}
-                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: post.liked ? '#e04444' : '#7a5060', fontSize: 13, fontWeight: 600 }}>
+                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: post.liked ? '#e04444' : MUT, fontSize: 13, fontWeight: 600 }}>
                               <span style={{ fontSize: 16 }}>{post.liked ? '❤️' : '🤍'}</span>
                               {post.likes_count}
                             </button>
                             <span style={{ fontSize: 12, color: '#b0a090' }}>·</span>
+                            {/* Repost */}
+                            <button onClick={() => toggleRepost(post.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: post.reposted ? CR : MUT, fontSize: 13, fontWeight: 600 }}>
+                              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                              </svg>
+                              {post.reposts_count || 0}
+                            </button>
+                            <span style={{ fontSize: 12, color: '#b0a090' }}>·</span>
+                            {/* Comments */}
                             <button onClick={() => toggleComments(post.id)}
-                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: expandedPost === post.id ? G2 : '#7a5060', fontSize: 13, fontWeight: 600 }}>
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 0', background: 'none', border: 'none', cursor: 'pointer', color: expandedPost === post.id ? G2 : MUT, fontSize: 13, fontWeight: 600 }}>
                               💬 {post.comments_count} {post.comments_count === 1 ? 'comment' : 'comments'}
+                            </button>
+                            <span style={{ fontSize: 12, color: '#b0a090' }}>·</span>
+                            {/* Share */}
+                            <button onClick={() => { setSharePost(post); setShareCopied(false); }}
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', background: 'none', border: 'none', cursor: 'pointer', color: MUT, fontSize: 13, fontWeight: 600, marginLeft: 'auto' }}>
+                              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                              </svg>
                             </button>
                           </div>
 
@@ -549,28 +622,103 @@ function LivePageContent() {
                                   {(comments[post.id] ?? []).length === 0 && (
                                     <p style={{ margin: '0 0 10px', fontSize: 12, color: '#7a5060', textAlign: 'center' }}>No comments yet — be the first!</p>
                                   )}
-                                  {(comments[post.id] ?? []).map(c => (
-                                    <div key={c.id} style={{ display: 'flex', gap: 8, marginBottom: 10, alignItems: 'flex-start' }}>
-                                      <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                        <span style={{ fontSize: 9, fontWeight: 700, color: G2 }}>{initials(c.author)}</span>
-                                      </div>
-                                      <div style={{ flex: 1, background: 'rgba(154,33,67,0.06)', borderRadius: 10, padding: '7px 10px' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-                                          <span style={{ fontSize: 11, fontWeight: 700, color: '#1a0d12' }}>{c.author}</span>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                            <span style={{ fontSize: 10, color: '#7a5060' }}>{timeAgo(c.created_at)}</span>
-                                            {c.user_id === userId && (
-                                              <button onClick={() => deleteComment(c.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                                <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                              </button>
-                                            )}
+
+                                  {/* Threaded comments render */}
+                                  {(comments[post.id] ?? [])
+                                    .filter(c => !c.parent_id)
+                                    .map(topComment => {
+                                      const replies = (comments[post.id] ?? []).filter(r => r.parent_id === topComment.id);
+                                      const isReplyingToThis = replyingTo?.commentId === topComment.id;
+                                      return (
+                                        <div key={topComment.id} style={{ marginBottom: 12 }}>
+                                          {/* Top-level comment */}
+                                          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(154,33,67,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                              <span style={{ fontSize: 9, fontWeight: 700, color: G2 }}>{initials(topComment.author)}</span>
+                                            </div>
+                                            <div style={{ flex: 1, background: 'rgba(154,33,67,0.06)', borderRadius: 10, padding: '7px 10px' }}>
+                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                                                <span style={{ fontSize: 11, fontWeight: 700, color: '#1a0d12' }}>{topComment.author}</span>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                  <span style={{ fontSize: 10, color: '#7a5060' }}>{timeAgo(topComment.created_at)}</span>
+                                                  <button
+                                                    onClick={() => {
+                                                      if (isReplyingToThis) {
+                                                        setReplyingTo(null); setReplyContent('');
+                                                      } else {
+                                                        setReplyingTo({ commentId: topComment.id, author: topComment.author, postId: post.id });
+                                                        setReplyContent('');
+                                                      }
+                                                    }}
+                                                    style={{ fontSize: 11, color: MUT, background: 'none', border: 'none', cursor: 'pointer', padding: '1px 4px', fontWeight: 600 }}>
+                                                    {isReplyingToThis ? 'Cancel' : 'Reply'}
+                                                  </button>
+                                                  {topComment.user_id === userId && (
+                                                    <button onClick={() => deleteComment(topComment.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                      <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    </button>
+                                                  )}
+                                                </div>
+                                              </div>
+                                              <p style={{ margin: 0, fontSize: 12, color: '#1a0d12', lineHeight: 1.5 }}>{topComment.content}</p>
+                                            </div>
                                           </div>
+
+                                          {/* Inline reply form — appears directly below parent */}
+                                          {isReplyingToThis && (
+                                            <div style={{ marginLeft: 36, marginTop: 6, borderLeft: '2px solid rgba(154,33,67,0.15)', paddingLeft: 10 }}>
+                                              <p style={{ margin: '0 0 4px', fontSize: 11, color: CR, fontWeight: 700 }}>@{replyingTo!.author}</p>
+                                              <div style={{ display: 'flex', gap: 6 }}>
+                                                <input
+                                                  value={replyContent}
+                                                  onChange={e => setReplyContent(e.target.value)}
+                                                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addReply(post.id, topComment.id); } }}
+                                                  placeholder={`Reply to ${replyingTo!.author}…`}
+                                                  autoFocus
+                                                  style={{ flex: 1, padding: '7px 11px', border: '1.5px solid rgba(154,33,67,0.25)', borderRadius: 18, fontSize: 12, outline: 'none', background: IVORY, color: DK }}
+                                                />
+                                                <button
+                                                  onClick={() => addReply(post.id, topComment.id)}
+                                                  disabled={!replyContent.trim() || submittingComment}
+                                                  style={{ padding: '7px 13px', borderRadius: 18, background: replyContent.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: replyContent.trim() ? '#fff' : '#9a8a70', fontSize: 12, fontWeight: 700, border: 'none', cursor: replyContent.trim() ? 'pointer' : 'default', flexShrink: 0 }}>
+                                                  {submittingComment ? '…' : 'Send'}
+                                                </button>
+                                              </div>
+                                            </div>
+                                          )}
+
+                                          {/* Replies indented below parent */}
+                                          {replies.map(reply => (
+                                            <div key={reply.id} style={{ marginLeft: 36, marginTop: 6, borderLeft: '2px solid rgba(154,33,67,0.15)', paddingLeft: 10 }}>
+                                              <div style={{ display: 'flex', gap: 7, alignItems: 'flex-start' }}>
+                                                <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(154,33,67,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                  <span style={{ fontSize: 8, fontWeight: 700, color: G2 }}>{initials(reply.author)}</span>
+                                                </div>
+                                                <div style={{ flex: 1, background: 'rgba(154,33,67,0.04)', borderRadius: 10, padding: '6px 9px' }}>
+                                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#1a0d12' }}>{reply.author}</span>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                                      <span style={{ fontSize: 10, color: '#7a5060' }}>{timeAgo(reply.created_at)}</span>
+                                                      {reply.user_id === userId && (
+                                                        <button onClick={() => deleteComment(reply.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
+                                                          <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        </button>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                  <p style={{ margin: 0, fontSize: 12, color: '#1a0d12', lineHeight: 1.5 }}>
+                                                    <span style={{ color: CR, fontWeight: 700 }}>@{topComment.author} </span>
+                                                    {reply.content}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          ))}
                                         </div>
-                                        <p style={{ margin: 0, fontSize: 12, color: '#1a0d12', lineHeight: 1.5 }}>{c.content}</p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {/* Add comment input */}
+                                      );
+                                    })}
+
+                                  {/* Add top-level comment input */}
                                   <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                                     <input
                                       value={newComment}
@@ -885,6 +1033,77 @@ function LivePageContent() {
               <button onClick={saveEditEvent} disabled={!editTime || !editTitle.trim()}
                 style={{ flex: 1, padding: '12px', borderRadius: 14, background: editTime && editTitle.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: editTime && editTitle.trim() ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: editTime && editTitle.trim() ? 'pointer' : 'default' }}>Save</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Share Sheet Modal ── */}
+      {sharePost && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          {/* Backdrop */}
+          <div
+            onClick={() => { setSharePost(null); setShareCopied(false); }}
+            style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }}
+          />
+          {/* Sheet */}
+          <div style={{ position: 'relative', background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: 480, padding: '0 20px 40px', zIndex: 1 }}>
+            {/* Handle */}
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(154,33,67,0.2)', margin: '16px auto 18px' }} />
+            <h3 style={{ margin: '0 0 14px', fontSize: 16, fontWeight: 700, color: DK, fontFamily: 'Georgia,serif' }}>Share Post</h3>
+
+            {/* Post preview */}
+            <div style={{ background: 'rgba(154,33,67,0.05)', borderRadius: 14, border: '1px solid rgba(154,33,67,0.12)', padding: '12px 14px', marginBottom: 18 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: `linear-gradient(135deg,${G},${G2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>{initials(sharePost.author)}</span>
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: DK }}>{sharePost.author}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 12, color: '#3a2030', lineHeight: 1.5 }}>
+                {sharePost.content.length > 120 ? sharePost.content.slice(0, 120) + '…' : sharePost.content}
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <button
+                onClick={async () => {
+                  const text = `${sharePost.author}: ${sharePost.content}`;
+                  try { await navigator.clipboard.writeText(text); }
+                  catch {
+                    const el = document.createElement('textarea');
+                    el.value = text; document.body.appendChild(el); el.select();
+                    document.execCommand('copy'); document.body.removeChild(el);
+                  }
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+                }}
+                style={{ width: '100%', padding: '13px', borderRadius: 14, background: shareCopied ? '#3d9e6a' : 'rgba(154,33,67,0.07)', color: shareCopied ? '#fff' : DK, fontSize: 14, fontWeight: 700, border: `1.5px solid ${shareCopied ? '#3d9e6a' : 'rgba(154,33,67,0.15)'}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' }}>
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                {shareCopied ? '✓ Copied!' : 'Copy Text'}
+              </button>
+
+              <button
+                onClick={() => {
+                  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://umshado.co.za';
+                  const text = encodeURIComponent(`${sharePost.author} on uMshado Community:\n\n${sharePost.content}\n\nJoin the community: ${origin}/live`);
+                  const a = document.createElement('a');
+                  a.href = `https://wa.me/?text=${text}`;
+                  a.target = '_blank'; a.rel = 'noopener noreferrer';
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }}
+                style={{ width: '100%', padding: '13px', borderRadius: 14, background: '#25d366', color: '#fff', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                Share on WhatsApp
+              </button>
+            </div>
+
+            {/* Cancel */}
+            <button
+              onClick={() => { setSharePost(null); setShareCopied(false); }}
+              style={{ width: '100%', padding: '13px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: MUT, fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer', marginTop: 10 }}>
+              Cancel
+            </button>
           </div>
         </div>
       )}
