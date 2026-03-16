@@ -18,7 +18,7 @@ export async function validateBody<T>(
 
   const result = schema.safeParse(raw);
   if (!result.success) {
-    const message = result.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
+    const message = result.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join('; ');
     return { data: null, error: NextResponse.json({ error: message }, { status: 400 }) };
   }
 
