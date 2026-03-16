@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { trackVendorEvent } from '@/lib/analytics';
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
 interface MessageAttachment { id: string; file_path: string; file_name: string; mime_type: string | null; file_size: number | null; signed_url?: string; }
@@ -691,6 +692,12 @@ export default function ChatThread() {
 
       if (result && result.quote) {
         setQuote(result.quote as Quote);
+      }
+
+      // Track quote outcome against the vendor
+      if (conversation?.vendor_id) {
+        const eventType = decision === 'accepted' ? 'quote_accepted' : 'quote_declined';
+        trackVendorEvent(conversation.vendor_id, eventType, { quote_id: quote.id, quote_ref: (quote as any).quote_ref }).catch(() => {});
       }
     } catch (err) { console.error(err); alert('Failed to update quote.'); } finally { setIsUpdatingQuote(false); }
   };
