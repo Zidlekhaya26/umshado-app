@@ -20,66 +20,73 @@ async function getAuthUser(req: NextRequest) {
 
 // POST /api/role/switch
 export async function POST(req: NextRequest) {
-  const user = await getAuthUser(req);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { role } = await req.json();
-  if (role !== 'couple' && role !== 'vendor') {
-    return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-  }
+    const { role } = await req.json();
+    if (role !== 'couple' && role !== 'vendor') {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+    }
 
-  const admin = getAdminSupabase();
+    const admin = getAdminSupabase();
 
-  // Check that the user actually has this role before switching
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('has_couple, has_vendor, active_role')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (!profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
-  }
-
-  // Verify the target role exists for this user
-  if (role === 'couple' && !profile.has_couple) {
-    // Verify by checking couples table directly (in case flag is stale)
-    const { data: coupleRow } = await admin
-      .from('couples')
-      .select('id')
+    // Check that the user actually has this role before switching
+    const { data: profile, error: profileError } = await admin
+      .from('profiles')
+      .select('has_couple, has_vendor, active_role')
       .eq('id', user.id)
       .maybeSingle();
 
-    if (!coupleRow) {
-      return NextResponse.json({ error: 'No couple account found' }, { status: 400 });
+    if (profileError) throw profileError;
+
+    if (!profile) {
+      return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
-    // Backfill the flag if missing
-    await admin.from('profiles').update({ has_couple: true }).eq('id', user.id);
-  }
 
-  if (role === 'vendor' && !profile.has_vendor) {
-    // Verify by checking vendors table directly
-    const { data: vendorRow } = await admin
-      .from('vendors')
-      .select('id')
-      .or(`id.eq.${user.id},user_id.eq.${user.id}`)
-      .limit(1)
-      .maybeSingle();
+    // Verify the target role exists for this user
+    if (role === 'couple' && !profile.has_couple) {
+      // Verify by checking couples table directly (in case flag is stale)
+      const { data: coupleRow } = await admin
+        .from('couples')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
 
-    if (!vendorRow) {
-      return NextResponse.json({ error: 'No vendor account found' }, { status: 400 });
+      if (!coupleRow) {
+        return NextResponse.json({ error: 'No couple account found' }, { status: 400 });
+      }
+      // Backfill the flag if missing
+      await admin.from('profiles').update({ has_couple: true }).eq('id', user.id);
     }
-    // Backfill the flag if missing
-    await admin.from('profiles').update({ has_vendor: true }).eq('id', user.id);
+
+    if (role === 'vendor' && !profile.has_vendor) {
+      // Verify by checking vendors table directly
+      const { data: vendorRow } = await admin
+        .from('vendors')
+        .select('id')
+        .or(`id.eq.${user.id},user_id.eq.${user.id}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (!vendorRow) {
+        return NextResponse.json({ error: 'No vendor account found' }, { status: 400 });
+      }
+      // Backfill the flag if missing
+      await admin.from('profiles').update({ has_vendor: true }).eq('id', user.id);
+    }
+
+    // Perform the switch
+    const { error } = await admin
+      .from('profiles')
+      .update({ active_role: role })
+      .eq('id', user.id);
+
+    if (error) throw error;
+
+    return NextResponse.json({ ok: true, active_role: role });
+  } catch (err) {
+    console.error('[role/switch] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-
-  // Perform the switch
-  const { error } = await admin
-    .from('profiles')
-    .update({ active_role: role })
-    .eq('id', user.id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-
-  return NextResponse.json({ ok: true, active_role: role });
 }

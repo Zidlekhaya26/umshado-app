@@ -110,9 +110,11 @@ function GuestPageContent() {
       }
       const data = await res.json();
       setCoupleNames(data.couple?.names || 'The Happy Couple');
-      setSchedule(data.schedule || []);
+      const loadedSchedule = data.schedule || [];
+      setSchedule(loadedSchedule);
       setWishes(data.wishes || []);
       setMoments(data.moments || []);
+      if (loadedSchedule.length === 0) setActiveTab('wishes');
     } catch {
       setError('Failed to load. Please try again.');
     } finally {
@@ -315,7 +317,7 @@ function GuestPageContent() {
               {schedule.length === 0 ? (
                 <div className="bg-white rounded-xl border-2 border-dashed border-gray-300 p-8 text-center">
                   <span className="text-3xl mb-2 block">🗓️</span>
-                  <p className="text-sm text-gray-600">Schedule coming soon!</p>
+                  <p className="text-sm text-gray-600">No schedule has been added yet.</p>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border-2 border-gray-200 overflow-hidden">

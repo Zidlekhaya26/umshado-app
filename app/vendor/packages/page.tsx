@@ -152,7 +152,6 @@ export default function VendorPackagesPage() {
   const [isFormOpen, setIsFormOpen]               = useState(false);
   const [editingId, setEditingId]                 = useState<string | null>(null);
   const [vendorId, setVendorId]                   = useState<string | null>(null);
-  const [showDebug, setShowDebug]                 = useState(false);
   const [saving, setSaving]                       = useState(false);
 
   const [formData, setFormData] = useState<{
@@ -374,13 +373,6 @@ export default function VendorPackagesPage() {
 
         {/* ── Body ────────────────────────────────────────── */}
         <div style={{ flex: 1, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-          {/* Debug banner */}
-          {showDebug && (
-            <div style={{ background: '#fef9e7', border: '1.5px solid #f39c12', borderRadius: 12, padding: '10px 14px', fontSize: 12, color: '#7d6608' }}>
-              <strong>DEBUG</strong> · isFormOpen: {String(isFormOpen)} · vendorId: {vendorId ?? 'null'} · packages: {packages.length} · catalog: {servicesCatalog.length}
-            </div>
-          )}
 
           {/* Progress pill */}
           <div style={{

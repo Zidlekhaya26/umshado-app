@@ -306,13 +306,12 @@ export default function InviteCard({
         <div style={{ height: 5, background: 'linear-gradient(90deg, #6b5020 0%, #b8973e 20%, #e8d090 50%, #b8973e 80%, #6b5020 100%)' }} />
 
         {/* Photo */}
-        <div style={{ width: '100%', height: 300, overflow: 'hidden', background: '#ede3d8', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-          {avatarUrl
-            ? <img src={avatarUrl} alt="Couple" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
-            : <p style={{ color: '#c4a882', fontSize: 12, letterSpacing: 3, textTransform: 'uppercase' }}>Photo coming soon</p>
-          }
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, #fdfaf6, transparent)', pointerEvents: 'none' }} />
-        </div>
+        {avatarUrl && (
+          <div style={{ width: '100%', height: 300, overflow: 'hidden', background: '#ede3d8', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            <img src={avatarUrl} alt="Couple" crossOrigin="anonymous" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 100, background: 'linear-gradient(to top, #fdfaf6, transparent)', pointerEvents: 'none' }} />
+          </div>
+        )}
 
         {/* Body */}
         <div style={{ padding: '4px 36px 36px', textAlign: 'center', background: '#fdfaf6' }}>

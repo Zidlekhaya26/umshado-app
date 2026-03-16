@@ -21,12 +21,17 @@ async function getAuthUser(req: NextRequest) {
 // Cascades via ON DELETE CASCADE to profiles, couples/vendors, and all
 // related rows — no manual cleanup needed.
 export async function DELETE(req: NextRequest) {
-  const user = await getAuthUser(req);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const adminClient = getAdminSupabase();
-  const { error } = await adminClient.auth.admin.deleteUser(user.id);
+    const adminClient = getAdminSupabase();
+    const { error } = await adminClient.auth.admin.deleteUser(user.id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ success: true });
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('[account/delete] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }

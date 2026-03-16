@@ -407,7 +407,10 @@ export default function WeddingWebsite({
   coupleMessage,
 }: Props) {
   const t = THEMES[weddingTheme as ThemeKey] ?? THEMES.champagne;
-  const [activeTab, setActiveTab] = useState<'story' | 'schedule' | 'wishes' | 'gifts' | 'gallery'>('story');
+  const hasStoryContentInit = !!(howWeMet || proposalStory || coupleMessage);
+  const [activeTab, setActiveTab] = useState<'story' | 'schedule' | 'wishes' | 'gifts' | 'gallery'>(
+    hasStoryContentInit ? 'story' : 'wishes'
+  );
   const [wishes, setWishes] = useState<WellWish[]>(initWishes);
 
   const prettyDate = formatPrettyDate(weddingDate);
@@ -417,15 +420,15 @@ export default function WeddingWebsite({
   const name2 = partnerName ?? 'Couple';
   const coupleDisplay = `${name1} & ${name2}`;
 
+  const hasStoryContent = howWeMet || proposalStory || coupleMessage;
+
   const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: 'story', label: 'Our Story' },
-    { id: 'schedule', label: 'Schedule' },
+    ...(hasStoryContent ? [{ id: 'story' as const, label: 'Our Story' }] : []),
+    ...(schedule.length > 0 ? [{ id: 'schedule' as const, label: 'Schedule' }] : []),
     { id: 'wishes', label: `Wishes${wishes.length ? ` · ${wishes.length}` : ''}` },
     ...(giftEnabled ? [{ id: 'gifts' as const, label: 'Registry' }] : []),
-    { id: 'gallery', label: 'Gallery' },
+    ...(moments.length > 0 ? [{ id: 'gallery' as const, label: 'Gallery' }] : []),
   ];
-
-  const hasStoryContent = howWeMet || proposalStory || coupleMessage;
 
   return (
     <>
