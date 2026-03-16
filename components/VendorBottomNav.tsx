@@ -72,7 +72,10 @@ export default function VendorBottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
           {unreadCount > 0 && (
-            <span style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: '#BD983F', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}>
+            <span
+              aria-label={`${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
+              style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: '#BD983F', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}
+            >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -106,7 +109,7 @@ export default function VendorBottomNav() {
   };
 
   return (
-    <nav id="um-vendor-nav" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(154,33,67,0.1)', zIndex: 50, boxShadow: '0 -2px 16px rgba(26,13,18,0.08)' }}>
+    <nav id="um-vendor-nav" aria-label="Vendor navigation" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: '1px solid rgba(154,33,67,0.1)', zIndex: 50, boxShadow: '0 -2px 16px rgba(26,13,18,0.08)' }}>
       <div className="um-nav-brand">
         <span style={{ fontSize:18, fontWeight:800, fontFamily:'Georgia,serif', color:'#9A2143' }}>uMshado</span>
       </div>
@@ -130,13 +133,19 @@ export default function VendorBottomNav() {
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link key={item.name} href={item.href} style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                padding: '5px 10px', borderRadius: 12, minWidth: 48, textDecoration: 'none',
-                color: active ? '#9A2143' : '#7a5060', transition: 'color 0.15s',
-              }}>
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-label={item.name}
+                aria-current={active ? 'page' : undefined}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  padding: '5px 10px', borderRadius: 12, minWidth: 48, textDecoration: 'none',
+                  color: active ? '#9A2143' : '#7a5060', transition: 'color 0.15s',
+                }}
+              >
                 {item.icon(active)}
-                <span style={{ fontSize: 9.5, marginTop: 3, fontWeight: active ? 700 : 500, letterSpacing: 0.2 }}>{item.name}</span>
+                <span aria-hidden="true" style={{ fontSize: 9.5, marginTop: 3, fontWeight: active ? 700 : 500, letterSpacing: 0.2 }}>{item.name}</span>
               </Link>
             );
           })}

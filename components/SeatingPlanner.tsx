@@ -750,10 +750,10 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Add Table Modal ──────────────────────────────────────────────────── */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="add-table-title" className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-60 p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(75svh - env(safe-area-inset-bottom))' }}>
             <div className="shrink-0 px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-black text-gray-900">Add Table</h3>
+              <h3 id="add-table-title" className="text-lg font-black text-gray-900">Add Table</h3>
             </div>
             <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0">
               <div className="space-y-4">
@@ -793,10 +793,10 @@ export default function SeatingPlanner({ guests, userId }: Props) {
 
       {/* ── Edit Table Modal ─────────────────────────────────────────────────── */}
       {editingTable && (
-        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-[60] p-0 sm:p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="edit-table-title" className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-60 p-0 sm:p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-sm flex flex-col" style={{ maxHeight: 'calc(80svh - env(safe-area-inset-bottom))' }}>
             <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-black text-gray-900">Edit Table</h3>
+              <h3 id="edit-table-title" className="text-lg font-black text-gray-900">Edit Table</h3>
               <button
                 onClick={() => deleteTable(editingTable.id)}
                 className="px-3 py-1.5 bg-red-50 text-red-600 rounded-xl text-xs font-bold hover:bg-red-100 transition-all"

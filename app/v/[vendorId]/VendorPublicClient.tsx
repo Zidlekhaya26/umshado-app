@@ -467,10 +467,7 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
         vendorName={vendor.business_name}
         isOpen={showRating}
         onClose={() => setShowRating(false)}
-        onSaved={(rating, count) => {
-          // Optionally update local vendor state with new rating
-          console.log('Rating saved:', rating, count);
-        }}
+        onSaved={() => {}}
       />
     </>
   );

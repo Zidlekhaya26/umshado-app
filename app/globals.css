@@ -220,6 +220,34 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px var(--um-crimson-dim);
 }
 
+/* ── Keyboard focus ring (visible only for keyboard nav, not mouse clicks) ── */
+:focus-visible {
+  outline: 2px solid var(--um-crimson);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Buttons and links get a slightly larger ring */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--um-crimson);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+/* ── Screen-reader-only utility ─────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 input::placeholder, textarea::placeholder {
   color: var(--muted) !important;
   opacity: 0.55;

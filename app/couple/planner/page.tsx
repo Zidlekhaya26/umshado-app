@@ -191,33 +191,24 @@ function CouplePlannerContent() {
   }, [loaded]);
 
   const applySeatingPayload = (payload: any) => {
-    console.log('[Planner] Applying seating payload:', payload);
     try {
       const map: Record<string, { tableId: string; seatIndex: number }> = {};
-      
+
       if (!payload || typeof payload !== 'object') {
-        console.warn('[Planner] Invalid payload - not an object:', payload);
         toastCtx.show('Invalid seating data', 'error');
         return;
       }
 
       if (!Array.isArray(payload.tables)) {
-        console.warn('[Planner] Payload missing tables array');
         toastCtx.show('Seating data has no tables', 'error');
         return;
       }
 
       let assignedCount = 0;
       payload.tables.forEach((t: any, tableIndex: number) => {
-        if (!t || typeof t !== 'object') {
-          console.warn(`[Planner] Invalid table at index ${tableIndex}:`, t);
-          return;
-        }
+        if (!t || typeof t !== 'object') return;
 
-        if (!Array.isArray(t.seats)) {
-          console.warn(`[Planner] Table ${t.id || t.name || tableIndex} has no seats array`);
-          return;
-        }
+        if (!Array.isArray(t.seats)) return;
 
         const tableId = String(t.id || t.name || `table-${tableIndex + 1}`);
         
@@ -229,7 +220,6 @@ function CouplePlannerContent() {
         });
       });
 
-      console.log(`[Planner] Mapped ${assignedCount} guest assignments across ${payload.tables.length} tables`);
       setSeatingAssignments(map);
       toastCtx.show(`Seating applied: ${assignedCount} guests at ${payload.tables.length} tables`, 'default');
     } catch (e: any) {

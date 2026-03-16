@@ -114,7 +114,10 @@ export default function BottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
           {unreadMessages > 0 && (
-            <span style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}>
+            <span
+              aria-label={`${unreadMessages} unread message${unreadMessages !== 1 ? 's' : ''}`}
+              style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}
+            >
               {unreadMessages > 99 ? '99+' : unreadMessages}
             </span>
           )}
@@ -137,7 +140,10 @@ export default function BottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           {unreadCount > 0 && (
-            <span style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}>
+            <span
+              aria-label={`${unreadCount} unread alert${unreadCount !== 1 ? 's' : ''}`}
+              style={{ position:'absolute', top:-5, right:-6, minWidth:16, height:16, borderRadius:8, background:'var(--um-gold)', color:'#fff', fontSize:9, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 3px', lineHeight:1 }}
+            >
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -152,7 +158,7 @@ export default function BottomNav() {
   };
 
   return (
-    <nav id="um-couple-nav" style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
+    <nav id="um-couple-nav" aria-label="Main navigation" style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
       <div className="um-nav-brand">
         <span style={{ fontSize:18, fontWeight:800, fontFamily:'Georgia,serif', color:'#9A2143' }}>uMshado</span>
       </div>
@@ -177,13 +183,19 @@ export default function BottomNav() {
           {navItems.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link key={item.name} href={item.href} style={{
-                display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-                padding:'6px 12px', borderRadius:12, minWidth:52, textDecoration:'none',
-                color: active ? 'var(--um-gold)' : 'var(--muted)', transition:'color 0.15s',
-              }}>
+              <Link
+                key={item.name}
+                href={item.href}
+                aria-label={item.name}
+                aria-current={active ? 'page' : undefined}
+                style={{
+                  display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+                  padding:'6px 12px', borderRadius:12, minWidth:52, textDecoration:'none',
+                  color: active ? 'var(--um-gold)' : 'var(--muted)', transition:'color 0.15s',
+                }}
+              >
                 {item.icon(active)}
-                <span style={{ fontSize:10, marginTop:3, fontWeight: active ? 700 : 500, letterSpacing:0.2 }}>
+                <span aria-hidden="true" style={{ fontSize:10, marginTop:3, fontWeight: active ? 700 : 500, letterSpacing:0.2 }}>
                   {item.name}
                 </span>
               </Link>
