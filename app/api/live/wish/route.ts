@@ -49,7 +49,6 @@ export async function POST(req: NextRequest) {
     }
     couple_id = link.couple_id;
   }
-  }
 
   const { data, error } = await supabase
     .from('live_well_wishes')
