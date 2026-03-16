@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { notifyUsers, shouldThrottleMessageNotification } from '@/lib/server/notify';
+
+const SendMessageSchema = z.object({
+  conversationId: z.string().uuid('conversationId must be a valid UUID'),
+  messageText: z.string().min(1, 'messageText is required').max(5000, 'messageText too long'),
+});
 
 /**
  * POST /api/messages/send
@@ -39,18 +46,10 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Body ---
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await validateBody(req, SendMessageSchema);
+  if (bodyError) return bodyError;
 
   const { conversationId, messageText } = body;
-
-  if (!conversationId || !messageText?.trim()) {
-    return NextResponse.json({ error: 'Missing conversationId or messageText' }, { status: 400 });
-  }
 
   const supabase = createServiceClient();
 

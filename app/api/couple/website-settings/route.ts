@@ -1,5 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+
+const WebsiteSettingsSchema = z.object({
+  weddingTheme:   z.string().max(50).optional(),
+  giftEnabled:    z.boolean().optional(),
+  giftMessage:    z.string().max(500).nullable().optional(),
+  giftItems:      z.array(z.object({
+    title:       z.string().max(200),
+    description: z.string().max(500).optional(),
+    price:       z.number().min(0).optional(),
+    link:        z.string().url().max(2000).optional(),
+  })).max(50).optional(),
+  howWeMet:       z.string().max(2000).nullable().optional(),
+  proposalStory:  z.string().max(2000).nullable().optional(),
+  coupleMessage:  z.string().max(1000).nullable().optional(),
+});
 
 async function getAuthUser(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -20,8 +37,8 @@ export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+  const { data: body, error: bodyError } = await validateBody(req, WebsiteSettingsSchema);
+  if (bodyError) return bodyError;
 
   const supabase = createServiceClient();
   const { error } = await supabase.from('couples').update({

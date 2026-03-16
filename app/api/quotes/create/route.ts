@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { formatPrice } from '@/lib/currency';
 import { notifyUsers } from '@/lib/server/notify';
+
+const CreateQuoteSchema = z.object({
+  vendorId:    z.string().uuid('vendorId must be a valid UUID'),
+  packageId:   z.string().min(1, 'packageId is required'),
+  packageName: z.string().min(1).max(200).optional(),
+  pricingMode: z.enum(['guest-based', 'hour-based', 'fixed']).optional(),
+  guestCount:  z.number().int().min(1).max(10000).optional().nullable(),
+  hours:       z.number().min(0).max(168).optional().nullable(),
+  basePrice:   z.number().min(0),
+  addOns:      z.array(z.unknown()).optional(),
+  notes:       z.string().max(2000).optional().nullable(),
+  quoteRef:    z.string().min(1).max(50, 'quoteRef too long'),
+});
 
 /**
  * POST /api/quotes/create
@@ -46,29 +61,10 @@ export async function POST(req: NextRequest) {
   }
 
   // --- Parse body ---
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await validateBody(req, CreateQuoteSchema);
+  if (bodyError) return bodyError;
 
-  const {
-    vendorId,
-    packageId,
-    packageName,
-    pricingMode,
-    guestCount,
-    hours,
-    basePrice,
-    addOns,
-    notes,
-    quoteRef,
-  } = body;
-
-  if (!vendorId || !packageId || !quoteRef) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-  }
+  const { vendorId, packageId, packageName, pricingMode, guestCount, hours, basePrice, addOns, notes, quoteRef } = body;
 
   const supabase = createServiceClient();
 

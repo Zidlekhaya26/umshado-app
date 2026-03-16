@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+
+const ReviewSchema = z.object({
+  rating:     z.number().int().min(1).max(5),
+  reviewText: z.string().max(2000).optional().nullable(),
+});
 
 async function getAuthUser(req: NextRequest) {
   const authHeader = req.headers.get('authorization');
@@ -60,10 +67,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ven
     return NextResponse.json({ error: 'Only couples can leave vendor reviews' }, { status: 403 });
   }
 
-  const body = await req.json().catch(() => null);
-  if (!body?.rating || body.rating < 1 || body.rating > 5) {
-    return NextResponse.json({ error: 'Rating must be 1–5' }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await validateBody(req, ReviewSchema);
+  if (bodyError) return bodyError;
 
   const supabase = createServiceClient();
   const { data, error } = await supabase
