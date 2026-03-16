@@ -1,7 +1,6 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import ImageLightbox from '@/components/ui/ImageLightbox';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
@@ -75,10 +74,6 @@ export default function MessagesIndex() {
   const [isVendor, setIsVendor] = useState(false);
   const [vendorId, setVendorId] = useState<string | null>(null);
   const [isPublished, setIsPublished] = useState(false);
-  const [logoOpen, setLogoOpen] = useState(false);
-  const [logoSrc, setLogoSrc] = useState<string | null>(null);
-  const [logoAlt, setLogoAlt] = useState<string | undefined>(undefined);
-
   useEffect(() => { setIsVendor(role === 'vendor'); }, [role]);
   useEffect(() => { loadConversations(); }, [user]);
 
@@ -307,7 +302,6 @@ export default function MessagesIndex() {
         )}
       </div>
 
-      <ImageLightbox src={logoSrc} alt={logoAlt} isOpen={logoOpen} onClose={() => setLogoOpen(false)} />
       {isVendor ? <VendorBottomNav /> : <BottomNav />}
     </div>
   );

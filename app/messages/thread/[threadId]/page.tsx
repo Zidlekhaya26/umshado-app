@@ -73,6 +73,7 @@ const getQuoteStatusColor = (status: string) => {
     case 'requested': return '#3b82f6';
     case 'negotiating': return C.gold;
     case 'accepted': return '#22c55e';
+    case 'booked':   return '#22c55e';
     case 'declined': return '#ef4444';
     case 'expired': return '#9ca3af';
     default: return C.muted;
@@ -110,6 +111,7 @@ export default function ChatThread() {
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [quote, setQuote] = useState<Quote | null>(null);
   const [isUpdatingQuote, setIsUpdatingQuote] = useState(false);
+  const [isVendorInThread, setIsVendorInThread] = useState(false);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [finalPrice, setFinalPrice] = useState('');
   const [finalMessage, setFinalMessage] = useState('');
@@ -165,6 +167,8 @@ export default function ChatThread() {
         console.warn('Could not resolve vendor identity for current user', err);
         iAmVendor = conv.vendor_id === currentUserId;
       }
+
+      setIsVendorInThread(iAmVendor);
 
       if (iAmVendor) {
         // Prefer the public `couples` table (partner1/partner2, partner_name, avatar) via helper
@@ -589,7 +593,7 @@ export default function ChatThread() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   /* ── Auth helper: get access token for API calls ────────────── */
@@ -808,13 +812,6 @@ export default function ChatThread() {
   const formatFileSize = (b: number | null) => { if (!b) return ''; if (b < 1024) return `${b} B`; if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`; return `${(b / (1024 * 1024)).toFixed(1)} MB`; };
   const formatTimestamp = (ts: string) => new Date(ts).toLocaleString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-  const userIsVendor = conversation && currentUserId && (async () => {
-    try {
-      const { data: myVendor } = await supabase.from('vendors').select('id').eq('user_id', currentUserId).maybeSingle();
-      return myVendor?.id === conversation.vendor_id;
-    } catch { return false; }
-  })();
-
   const items = insertDateSeparators(messages);
 
   /* ── Render ─────────────────────────────────────────────────── */
@@ -983,15 +980,15 @@ export default function ChatThread() {
                 </div>
               )}
               <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                {userIsVendor && quote.status !== 'declined' && quote.status !== 'booked' && quote.status !== 'accepted' && (
+                {isVendorInThread && quote.status !== 'declined' && quote.status !== 'booked' && quote.status !== 'accepted' && (
                   <button onClick={() => setShowBottomSheet(true)} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(154,33,67,0.2)', opacity: isUpdatingQuote ? 0.5 : 1 }}>
                     {quote.vendor_final_price ? 'Update Final Quote' : 'Send Final Quote'}
                   </button>
                 )}
-                {userIsVendor && quote.status === 'requested' && (
+                {isVendorInThread && quote.status === 'requested' && (
                   <button onClick={handleVendorDecline} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', opacity: isUpdatingQuote ? 0.5 : 1 }}>Decline</button>
                 )}
-                {userIsVendor && quote.status === 'accepted' && (
+                {isVendorInThread && quote.status === 'accepted' && (
                   <button onClick={handleConfirmBooking} disabled={isUpdatingQuote} style={{ padding: '10px 16px', borderRadius: 12, background: '#22c55e', color: '#fff', fontSize: 12, fontWeight: 800, border: 'none', cursor: 'pointer', boxShadow: '0 3px 12px rgba(34,197,94,0.25)', opacity: isUpdatingQuote ? 0.5 : 1 }}>Confirm Booking</button>
                 )}
                 {conversation && currentUserId && conversation.couple_id === currentUserId && quote.status === 'negotiating' && (
