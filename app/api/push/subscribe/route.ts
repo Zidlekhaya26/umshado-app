@@ -1,5 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+
+const SubscribeSchema = z.object({
+  endpoint:  z.string().url().max(2000),
+  keys: z.object({
+    p256dh: z.string().min(1).max(500),
+    auth:   z.string().min(1).max(500),
+  }),
+  userAgent: z.string().max(500).optional(),
+});
+
+const UnsubscribeSchema = z.object({
+  endpoint: z.string().url().max(2000),
+});
 
 /**
  * POST /api/push/subscribe
@@ -31,13 +46,9 @@ export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
-
+  const { data: body, error: bodyError } = await validateBody(req, SubscribeSchema);
+  if (bodyError) return bodyError;
   const { endpoint, keys, userAgent } = body;
-  if (!endpoint || !keys?.p256dh || !keys?.auth) {
-    return NextResponse.json({ error: 'Missing endpoint or keys' }, { status: 400 });
-  }
 
   const supabase = createServiceClient();
 
@@ -64,11 +75,9 @@ export async function DELETE(req: NextRequest) {
   const user = await getAuthUser(req);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  let body: any;
-  try { body = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
-
+  const { data: body, error: bodyError } = await validateBody(req, UnsubscribeSchema);
+  if (bodyError) return bodyError;
   const { endpoint } = body;
-  if (!endpoint) return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
 
   const supabase = createServiceClient();
   await supabase.from('push_subscriptions').delete().eq('user_id', user.id).eq('endpoint', endpoint);

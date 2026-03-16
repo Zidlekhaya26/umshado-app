@@ -1,33 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { validateBody } from "@/lib/apiValidate";
 import { createServiceClient } from "@/lib/supabaseServer";
 
-type Body = {
-  quoteId?: string;       // uuid
-  quoteRef?: string;      // e.g. Q-20260217-94032
-  vendorId?: string;      // optional safety
-  status?: string;        // requested | sent | accepted | declined | etc
-  finalPrice?: number;    // vendor final price
-  message?: string;       // vendor message
-};
-
-const isUuid = (v: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+const QuoteStatusSchema = z.object({
+  quoteId:    z.string().uuid().optional(),
+  quoteRef:   z.string().min(1).max(50).optional(),
+  vendorId:   z.string().uuid().optional(),
+  status:     z.enum(['requested', 'sent', 'negotiating', 'accepted', 'declined', 'cancelled']).optional(),
+  finalPrice: z.number().min(0).max(10_000_000).optional(),
+  message:    z.string().max(2000).optional(),
+}).refine(d => d.quoteId || d.quoteRef, { message: 'quoteId or quoteRef is required' });
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json().catch(() => null)) as Body | null;
-    if (!body) {
-      return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
-    }
+    const { data: body, error: bodyError } = await validateBody(req, QuoteStatusSchema);
+    if (bodyError) return bodyError;
 
     const { quoteId, quoteRef, vendorId, status, finalPrice, message } = body;
-
-    if (!quoteId && !quoteRef) {
-      return NextResponse.json(
-        { success: false, error: "Missing quoteId or quoteRef" },
-        { status: 400 }
-      );
-    }
 
     // Normalize status: accept 'sent' from older UIs and store it as 'negotiating'
     const normalizedStatus = status === "sent" ? "negotiating" : status;
@@ -35,7 +25,7 @@ export async function POST(req: NextRequest) {
     const svc = createServiceClient();
 
     // Build WHERE
-    const whereById = quoteId && isUuid(quoteId);
+    const whereById = !!quoteId;
 
     let q = svc.from("quotes").update({
       ...(normalizedStatus ? { status: normalizedStatus } : {}),

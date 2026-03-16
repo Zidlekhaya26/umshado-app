@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+
+const MomentSchema = z.object({
+  token:      z.string().min(1).max(500),
+  guest_name: z.string().min(1).max(200).transform(s => s.trim()),
+  caption:    z.string().max(2000).optional().nullable().transform(s => s?.trim() || null),
+  media_url:  z.string().url().max(2000).optional().nullable(),
+}).refine(d => d.caption || d.media_url, { message: 'At least caption or media_url is required' });
 
 /**
  * POST /api/live/moment
@@ -7,22 +16,9 @@ import { createServiceClient } from '@/lib/supabaseServer';
  * Body: { token: string, guest_name: string, caption?: string, media_url?: string }
  */
 export async function POST(req: NextRequest) {
-  let body: { token?: string; guest_name?: string; caption?: string; media_url?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
-
+  const { data: body, error: bodyError } = await validateBody(req, MomentSchema);
+  if (bodyError) return bodyError;
   const { token, guest_name, caption, media_url } = body;
-
-  if (!token || !guest_name?.trim()) {
-    return NextResponse.json({ error: 'token and guest_name are required' }, { status: 400 });
-  }
-
-  if (!caption?.trim() && !media_url?.trim()) {
-    return NextResponse.json({ error: 'At least caption or media_url is required' }, { status: 400 });
-  }
 
   const supabase = createServiceClient();
 
@@ -46,9 +42,9 @@ export async function POST(req: NextRequest) {
     .from('live_moments')
     .insert({
       couple_id: link.couple_id,
-      guest_name: guest_name.trim(),
-      caption: caption?.trim() || null,
-      media_url: media_url?.trim() || null,
+      guest_name,
+      caption: caption || null,
+      media_url: media_url || null,
     })
     .select()
     .single();

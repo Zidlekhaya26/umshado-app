@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { validateBody } from '@/lib/apiValidate'
 import { createServiceClient } from '@/lib/supabaseServer'
+
+const BlockDateSchema = z.object({
+  blocked_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'blocked_date must be YYYY-MM-DD'),
+  reason: z.enum(['booked', 'unavailable', 'holiday']).optional(),
+  note: z.string().max(500).optional().nullable(),
+})
 
 /**
  * GET /api/vendor/availability?vendor_id=...
@@ -53,12 +61,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
   }
 
-  const body = await req.json()
+  const { data: body, error: bodyError } = await validateBody(req, BlockDateSchema)
+  if (bodyError) return bodyError
   const { blocked_date, reason, note } = body
-
-  if (!blocked_date) {
-    return NextResponse.json({ error: 'blocked_date required' }, { status: 400 })
-  }
 
   const { data, error } = await supabase
     .from('vendor_availability')

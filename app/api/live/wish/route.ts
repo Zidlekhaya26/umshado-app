@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+
+const WishSchema = z.object({
+  // accept both naming conventions
+  guest_name: z.string().max(200).optional(),
+  guestName:  z.string().max(200).optional(),
+  message:    z.string().min(1).max(2000),
+  // auth paths (at least one required — enforced below)
+  coupleId: z.string().uuid().optional(),
+  token:    z.string().min(1).max(500).optional(),
+}).refine(d => d.guest_name?.trim() || d.guestName?.trim(), { message: 'guest_name is required' })
+  .refine(d => d.coupleId || d.token, { message: 'Provide either coupleId or token' });
 
 /**
  * POST /api/live/wish
@@ -8,29 +21,22 @@ import { createServiceClient } from '@/lib/supabaseServer';
  *   { coupleId, guestName, message }    — public wedding website (new flow)
  */
 export async function POST(req: NextRequest) {
-  let body: any;
-  try { body = await req.json(); } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
-  }
+  const { data: body, error: bodyError } = await validateBody(req, WishSchema);
+  if (bodyError) return bodyError;
 
   const supabase = createServiceClient();
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   let couple_id: string | null = null;
   const guest_name = (body.guest_name ?? body.guestName ?? '').trim();
-  const message    = (body.message ?? '').trim();
-
-  if (!guest_name || !message) {
-    return NextResponse.json({ error: 'guest_name and message are required' }, { status: 400 });
-  }
+  const message    = body.message.trim();
 
   // Path 1: coupleId direct (public wedding website)
-  if (body.coupleId && uuidRegex.test(body.coupleId)) {
+  if (body.coupleId) {
     const { data: profile } = await supabase.from('profiles').select('id').eq('id', body.coupleId).maybeSingle();
     if (!profile) return NextResponse.json({ error: 'Couple not found' }, { status: 404 });
     couple_id = body.coupleId;
   }
-  // Path 2: token-based (live guest link — existing flow unchanged)
+  // Path 2: token-based (live guest link)
   else if (body.token) {
     const { data: link } = await supabase
       .from('live_guest_links')
@@ -43,8 +49,6 @@ export async function POST(req: NextRequest) {
     }
     couple_id = link.couple_id;
   }
-  else {
-    return NextResponse.json({ error: 'Provide either coupleId or token' }, { status: 400 });
   }
 
   const { data, error } = await supabase

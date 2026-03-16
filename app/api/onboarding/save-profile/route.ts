@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import getAdminSupabase from '@/lib/supabaseAdminClient';
+
+const SaveProfileSchema = z.object({
+  userId:        z.string().uuid().optional(),
+  user_id:       z.string().uuid().optional(),
+  wedding_date:  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'wedding_date must be YYYY-MM-DD').nullable().optional(),
+  wedding_venue: z.string().max(500).nullable().optional(),
+}).refine(d => d.userId || d.user_id, { message: 'userId is required' });
 
 /**
  * POST /api/onboarding/save-profile
@@ -7,14 +16,12 @@ import getAdminSupabase from '@/lib/supabaseAdminClient';
  * Upserts the profile record using the service role key.
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  const userId = body?.userId || body?.user_id;
-  const wedding_date = body?.wedding_date ?? null;
-  const wedding_venue = body?.wedding_venue ?? null;
+  const { data: body, error: bodyError } = await validateBody(req, SaveProfileSchema);
+  if (bodyError) return bodyError;
 
-  if (!userId) {
-    return NextResponse.json({ success: false, error: 'Missing userId' }, { status: 400 });
-  }
+  const userId = body.userId || body.user_id;
+  const wedding_date = body.wedding_date ?? null;
+  const wedding_venue = body.wedding_venue ?? null;
 
   try {
     const supabase = getAdminSupabase();
