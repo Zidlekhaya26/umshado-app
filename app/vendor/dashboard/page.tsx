@@ -32,12 +32,13 @@ interface DayStat { day: string; profile_views: number; quotes: number; messages
 /* ─── Design tokens ─────────────────────────────────────── */
 const CR   = '#9A2143';
 const CR2  = '#731832';
-const GD   = '#b8973e';
+const CRX  = '#4d0f21';
+const GD   = '#BD983F';
 const GD2  = '#8a6010';
 const DARK = '#1a0d12';
 const BG   = '#faf8f5';
 const MUT  = '#7a5060';
-const BOR  = 'rgba(154,33,67,0.1)';
+const BOR  = '#e8d5d0';
 
 /* ─── Sparkline ─────────────────────────────────────────── */
 function Sparkline({ data, dataKey, color }: { data: any[]; dataKey: string; color: string }) {
@@ -46,7 +47,7 @@ function Sparkline({ data, dataKey, color }: { data: any[]; dataKey: string; col
       <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={'sg_' + dataKey} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%"  stopColor={color} stopOpacity={0.2} />
+            <stop offset="5%"  stopColor={color} stopOpacity={0.25} />
             <stop offset="95%" stopColor={color} stopOpacity={0}   />
           </linearGradient>
         </defs>
@@ -64,16 +65,25 @@ function StatCard({ icon, label, value, color, sparkData, sparkKey, note }: {
   sparkData: any[]; sparkKey: string; note?: string;
 }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 18, padding: '16px 16px 10px', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: '1.5px solid rgba(154,33,67,0.07)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-        <div style={{ width: 32, height: 32, borderRadius: 10, background: color + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>{icon}</div>
+    <div style={{
+      background: '#fff', borderRadius: 18, padding: '16px 16px 10px',
+      boxShadow: '0 2px 12px rgba(26,13,18,0.07)',
+      border: `1.5px solid ${BOR}`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+        <div style={{
+          width: 36, height: 36, borderRadius: 11,
+          background: `${color}20`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+          flexShrink: 0,
+        }}>{icon}</div>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{value}</div>
-          <div style={{ fontSize: 10, color: MUT, fontWeight: 600, marginTop: 1 }}>{label}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{value}</div>
+          <div style={{ fontSize: 10.5, color: MUT, fontWeight: 700, marginTop: 2, letterSpacing: 0.3 }}>{label}</div>
         </div>
       </div>
       {note ? (
-        <div style={{ fontSize: 10, color: '#b0a090', fontStyle: 'italic', paddingBottom: 6 }}>{note}</div>
+        <div style={{ fontSize: 10, color: '#c0a898', fontStyle: 'italic', paddingBottom: 4 }}>{note}</div>
       ) : (
         <Sparkline data={sparkData} dataKey={sparkKey} color={color} />
       )}
@@ -88,34 +98,52 @@ function QuoteCard({ quote, status, format, onChat }: {
 }) {
   const isPending = status === 'requested';
   return (
-    <div style={{ background: '#fff', borderRadius: 16, padding: '16px', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: isPending ? '1.5px solid rgba(184,151,62,0.35)' : `1.5px solid ${BOR}` }}>
+    <div style={{
+      background: '#fff', borderRadius: 16, padding: '16px',
+      boxShadow: '0 2px 12px rgba(26,13,18,0.07)',
+      border: isPending ? `1.5px solid rgba(189,152,63,0.4)` : `1.5px solid ${BOR}`,
+    }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         {quote.couple_avatar ? (
-          <img src={quote.couple_avatar} alt={quote.couple_name} style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+          <img src={quote.couple_avatar} alt={quote.couple_name} style={{ width: 40, height: 40, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BOR}` }} />
         ) : (
-          <div style={{ width: 38, height: 38, borderRadius: '50%', background: `linear-gradient(135deg,${CR},${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${CR},${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
             {(quote.couple_name || 'C').split(' ').map((s: string) => s[0]).slice(0,2).join('').toUpperCase()}
           </div>
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.couple_name}</div>
-          <div style={{ fontSize: 10, color: MUT, marginTop: 1 }}>{quote.quote_ref}</div>
+          <div style={{ fontSize: 10.5, color: MUT, marginTop: 1, fontWeight: 600 }}>{quote.quote_ref}</div>
         </div>
-        <div style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: isPending ? 'rgba(184,151,62,0.1)' : 'rgba(154,33,67,0.08)', color: isPending ? GD2 : CR }}>
+        <div style={{
+          fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20,
+          background: isPending ? 'rgba(189,152,63,0.12)' : 'rgba(154,33,67,0.08)',
+          color: isPending ? GD2 : CR,
+          letterSpacing: 0.3,
+        }}>
           {isPending ? 'Pending' : 'Negotiating'}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
-        <div style={{ background: BG, borderRadius: 8, padding: '7px 10px' }}>
-          <div style={{ fontSize: 9, color: MUT, fontWeight: 600, marginBottom: 2 }}>PACKAGE</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.package_name}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+        <div style={{ background: BG, borderRadius: 10, padding: '8px 11px', border: `1px solid ${BOR}` }}>
+          <div style={{ fontSize: 9, color: MUT, fontWeight: 800, marginBottom: 3, letterSpacing: 0.8, textTransform: 'uppercase' }}>Package</div>
+          <div style={{ fontSize: 12.5, fontWeight: 700, color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{quote.package_name}</div>
         </div>
-        <div style={{ background: BG, borderRadius: 8, padding: '7px 10px' }}>
-          <div style={{ fontSize: 9, color: MUT, fontWeight: 600, marginBottom: 2 }}>ESTIMATE</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: GD }}>{format(Number(quote.base_from_price))}</div>
+        <div style={{ background: BG, borderRadius: 10, padding: '8px 11px', border: `1px solid ${BOR}` }}>
+          <div style={{ fontSize: 9, color: MUT, fontWeight: 800, marginBottom: 3, letterSpacing: 0.8, textTransform: 'uppercase' }}>Estimate</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: GD2, fontFamily: 'Georgia,serif' }}>{format(Number(quote.base_from_price))}</div>
         </div>
       </div>
-      <button onClick={onChat} style={{ width: '100%', padding: '10px', borderRadius: 10, border: 'none', background: isPending ? `linear-gradient(135deg,${GD},${GD2})` : `linear-gradient(135deg,${CR},${CR2})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+      <button onClick={onChat} style={{
+        width: '100%', padding: '11px', borderRadius: 11, border: 'none',
+        background: isPending
+          ? `linear-gradient(135deg,${GD},${GD2})`
+          : `linear-gradient(135deg,${CR},${CR2})`,
+        color: '#fff', fontWeight: 800, fontSize: 13, cursor: 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+        boxShadow: isPending ? '0 3px 12px rgba(189,152,63,0.3)' : '0 3px 12px rgba(154,33,67,0.25)',
+        fontFamily: 'inherit',
+      }}>
         <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
         Open Chat
       </button>
@@ -132,7 +160,6 @@ function LoadingScreen() {
           0%   { background-position: -400px 0 }
           100% { background-position: 400px 0 }
         }
-        @keyframes vdFade { 0%,100%{opacity:.5} 50%{opacity:1} }
         .vd-skel {
           background: linear-gradient(90deg, #f0ebe4 25%, #faf5ee 50%, #f0ebe4 75%);
           background-size: 800px 100%;
@@ -141,7 +168,7 @@ function LoadingScreen() {
         }
         @keyframes vdPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
       `}</style>
-      <div style={{ background: `linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`, padding: '22px 20px 24px' }}>
+      <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${CR} 55%,#c03050 100%)`, padding: '22px 20px 24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
           <div className="vd-skel" style={{ width: 48, height: 48, borderRadius: '50%' }} />
           <div style={{ flex: 1 }}>
@@ -156,7 +183,7 @@ function LoadingScreen() {
       <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div className="vd-skel" style={{ height: 90, borderRadius: 18 }} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {[1,2,3,4].map(i => <div key={i} className="vd-skel" style={{ height: 82, borderRadius: 18 }} />)}
+          {[1,2,3,4].map(i => <div key={i} className="vd-skel" style={{ height: 88, borderRadius: 18 }} />)}
         </div>
         <div className="vd-skel" style={{ height: 120, borderRadius: 18 }} />
       </div>
@@ -319,10 +346,10 @@ export default function VendorDashboard() {
   if (loading) return <LoadingScreen />;
 
   const statCards = [
-    { icon: '👁️', label: 'Profile Views', value: metrics.profileViews,   color: GD,        sparkKey: 'profile_views', note: metrics.profileViews   === 0 ? 'No views yet' : undefined },
-    { icon: '❤️', label: 'Saves',         value: metrics.savedByCouples, color: CR,        sparkKey: 'saves',         note: metrics.savedByCouples === 0 ? 'Not saved yet' : undefined },
-    { icon: '💬', label: 'Chats',         value: metrics.chatsStarted,   color: '#c67a2e', sparkKey: 'messages',      note: undefined },
-    { icon: '📋', label: 'Quotes',        value: metrics.quotesReceived, color: '#5a7a40', sparkKey: 'quotes',        note: undefined },
+    { icon: '👁️', label: 'Profile Views', value: metrics.profileViews,   color: GD,        sparkKey: 'profile_views', note: metrics.profileViews   === 0 ? 'No views yet'   : undefined },
+    { icon: '❤️', label: 'Saves',         value: metrics.savedByCouples, color: CR,        sparkKey: 'saves',         note: metrics.savedByCouples === 0 ? 'Not saved yet'  : undefined },
+    { icon: '💬', label: 'Chats',         value: metrics.chatsStarted,   color: '#4A78A8', sparkKey: 'messages',      note: undefined },
+    { icon: '📋', label: 'Quotes',        value: metrics.quotesReceived, color: '#2d7a52', sparkKey: 'quotes',        note: undefined },
   ];
 
   const quickLinks = [
@@ -333,63 +360,72 @@ export default function VendorDashboard() {
   ];
 
   return (
-    <div style={{ minHeight: '100svh', background: BG, fontFamily: 'system-ui,sans-serif' }}>
+    <div style={{ minHeight: '100svh', background: BG, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <style>{`
         @keyframes vdSpin { to { transform:rotate(360deg) } }
         @keyframes vdFadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         .vd-section { animation: vdFadeIn .35s ease both }
-        button,a { font-family: inherit!important }
+        button, a { font-family: inherit!important }
+        .vd-menu-item:hover { background: #faf5f0!important }
+        .vd-quick-link:hover { background: rgba(255,255,255,0.22)!important; border-color: rgba(255,255,255,0.28)!important }
+        .vd-share-btn:hover { background: rgba(255,255,255,0.22)!important }
       `}</style>
 
       <div style={{ maxWidth: 900, margin: '0 auto', paddingBottom: 100 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: `linear-gradient(160deg,#4d0f21 0%,${CR} 55%,#b8315a 100%)`, padding: '20px 20px 22px', position: 'relative' }}>
+        <div style={{
+          background: `linear-gradient(160deg,${CRX} 0%,${CR} 55%,#c03050 100%)`,
+          padding: '20px 20px 22px', position: 'relative',
+        }}>
           <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-            <div style={{ position: 'absolute', top: -40, right: -40, width: 150, height: 150, borderRadius: '50%', background: 'rgba(184,151,62,0.1)' }} />
-            <div style={{ position: 'absolute', bottom: -20, left: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(184,151,62,0.05)' }} />
+            <div style={{ position: 'absolute', top: -50, right: -50, width: 180, height: 180, borderRadius: '50%', border: '1.5px solid rgba(189,152,63,0.12)' }} />
+            <div style={{ position: 'absolute', top: -24, right: -24, width: 108, height: 108, borderRadius: '50%', border: '1.5px solid rgba(189,152,63,0.18)' }} />
+            <div style={{ position: 'absolute', bottom: -30, left: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(189,152,63,0.05)' }} />
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, position: 'relative' }}>
             {vendor?.logo_url ? (
               <button onClick={() => { setLogoSrc(vendor.logo_url!); setLogoAlt(vendor.business_name || ''); setLogoOpen(true); }}
-                style={{ width: 48, height: 48, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(189,152,63,0.5)', background: '#fff', padding: 0, cursor: 'zoom-in', flexShrink: 0 }}>
+                style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', border: '2px solid rgba(189,152,63,0.55)', background: '#fff', padding: 0, cursor: 'zoom-in', flexShrink: 0 }}>
                 <img src={vendor.logo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </button>
             ) : (
-              <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
+              <div style={{ width: 50, height: 50, borderRadius: '50%', background: 'rgba(255,255,255,0.12)', border: '2px solid rgba(255,255,255,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 20, fontFamily: 'Georgia,serif', flexShrink: 0 }}>
                 {(vendor?.business_name || 'V')[0].toUpperCase()}
               </div>
             )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <h1 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor?.business_name || 'Your Vendor Hub'}</h1>
-                {vendor?.is_published && <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(255,255,255,0.15)', color: '#a8ffb8', border: '1px solid rgba(255,255,255,0.2)' }}>✓ LIVE</span>}
+                <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: -0.3 }}>{vendor?.business_name || 'Your Vendor Hub'}</h1>
+                {vendor?.is_published && (
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 8px', borderRadius: 20, background: 'rgba(30,180,90,0.2)', color: '#7effa8', border: '1px solid rgba(30,180,90,0.3)', letterSpacing: 0.5 }}>LIVE</span>
+                )}
               </div>
-              <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{vendor?.category ?? 'Your business hub'}</p>
+              <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{vendor?.category ?? 'Your business hub'}</p>
             </div>
             {/* Menu */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              <button onClick={() => setShowMenu(p => !p)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.8)" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
+              <button onClick={() => setShowMenu(p => !p)} style={{ width: 36, height: 36, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,0.22)', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.85)" stroke="none"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: 44, background: '#fff', borderRadius: 16, boxShadow: '0 8px 32px rgba(26,13,18,0.18)', zIndex: 100, minWidth: 190, overflow: 'hidden' }}>
-                  <Link href="/vendor/billing" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, color: DARK, textDecoration: 'none' }}>
+                <div style={{ position: 'absolute', right: 0, top: 44, background: '#fff', borderRadius: 16, boxShadow: '0 8px 40px rgba(26,13,18,0.18)', zIndex: 100, minWidth: 195, overflow: 'hidden', border: `1px solid ${BOR}` }}>
+                  <Link href="/vendor/billing" className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
                     <span>💳</span> Billing & Plans
                   </Link>
-                  <button onClick={handleShareProfile} style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderTop: `1px solid ${BOR}` }}>
+                  <button onClick={handleShareProfile} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span>🔗</span> Share Profile
                   </button>
                   {vendor?.is_published && (
-                    <Link href={'/marketplace/vendor/' + vendor.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, color: DARK, textDecoration: 'none', borderTop: `1px solid ${BOR}` }}>
+                    <Link href={'/marketplace/vendor/' + vendor.id} className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, fontWeight: 600, color: DARK, textDecoration: 'none', borderTop: `1px solid ${BOR}` }}>
                       <span>🏪</span> View Public Profile
                     </Link>
                   )}
-                  <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }} style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderTop: `1px solid ${BOR}` }}>
+                  <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span>🚪</span> Log out
                   </button>
-                  <button onClick={handleDeleteAccount} style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', fontSize: 13, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, borderTop: `1px solid ${BOR}` }}>
+                  <button onClick={handleDeleteAccount} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span>🗑️</span> Delete Account
                   </button>
                 </div>
@@ -398,11 +434,11 @@ export default function VendorDashboard() {
           </div>
 
           {/* Quick nav */}
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
             {quickLinks.map(l => (
-              <Link key={l.href} href={l.href} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '10px 4px', borderRadius: 12, background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.12)', textDecoration: 'none', textAlign: 'center' }}>
+              <Link key={l.href} href={l.href} className="vd-quick-link" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '11px 4px', borderRadius: 13, background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.15)', textDecoration: 'none', textAlign: 'center', transition: 'all .14s' }}>
                 <span style={{ fontSize: 18 }}>{l.icon}</span>
-                <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.7)', letterSpacing: 0.3 }}>{l.label}</span>
+                <span style={{ fontSize: 9.5, fontWeight: 800, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.4 }}>{l.label}</span>
               </Link>
             ))}
           </div>
@@ -413,40 +449,40 @@ export default function VendorDashboard() {
           {/* ── Onboarding / status banner ── */}
           <div className="vd-section" style={{ animationDelay: '.05s' }}>
             {!vendor?.is_published && requiresOnboarding && completedSteps < totalSteps ? (
-              <div style={{ background: `linear-gradient(135deg,${GD},${GD2})`, borderRadius: 18, padding: '16px 18px', color: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ background: `linear-gradient(135deg,${GD},${GD2})`, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 4px 20px rgba(189,152,63,0.28)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                   <div>
-                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, fontFamily: 'Georgia,serif' }}>Complete your profile</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>{completedSteps} of {totalSteps} steps done</p>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 800, fontFamily: 'Georgia,serif' }}>Complete your profile</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>{completedSteps} of {totalSteps} steps done</p>
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>{pct}%</div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', letterSpacing: -1 }}>{pct}%</div>
                 </div>
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.2)', borderRadius: 3, marginBottom: 12 }}>
-                  <div style={{ height: '100%', width: pct + '%', background: '#fff', borderRadius: 3, transition: 'width 0.3s' }} />
+                <div style={{ height: 5, background: 'rgba(255,255,255,0.25)', borderRadius: 3, marginBottom: 14, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: pct + '%', background: '#fff', borderRadius: 3, transition: 'width 0.4s ease' }} />
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {!profileChecks?.businessInfo && <Link href="/vendor/onboarding" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, textDecoration: 'underline' }}>→ Add business name, category & description</Link>}
-                  {!profileChecks?.services && <Link href="/vendor/services" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, textDecoration: 'underline' }}>→ Select at least 1 service</Link>}
-                  {!profileChecks?.packages && <Link href="/vendor/packages" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, textDecoration: 'underline' }}>→ Create at least 1 package</Link>}
-                  {!profileChecks?.portfolio && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, textDecoration: 'underline' }}>→ Upload a portfolio image</Link>}
-                  {!profileChecks?.contact && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12, textDecoration: 'underline' }}>→ Add contact details</Link>}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {!profileChecks?.businessInfo && <Link href="/vendor/onboarding" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Add business name, category &amp; description</Link>}
+                  {!profileChecks?.services && <Link href="/vendor/services" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Select at least 1 service</Link>}
+                  {!profileChecks?.packages && <Link href="/vendor/packages" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Create at least 1 package</Link>}
+                  {!profileChecks?.portfolio && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Upload a portfolio image</Link>}
+                  {!profileChecks?.contact && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Add contact details</Link>}
                 </div>
               </div>
             ) : vendor?.is_published ? (
-              <div style={{ background: 'linear-gradient(135deg,#1e4a30,#2d7a4f)', borderRadius: 18, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ background: 'linear-gradient(135deg,#1e4a30,#2d7a4f)', borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 18px rgba(30,74,48,0.22)' }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>You&apos;re live on the marketplace ✓</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Couples can discover and contact you</p>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>You&apos;re live on the marketplace</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)' }}>Couples can discover and contact you</p>
                 </div>
-                <button onClick={handleShareProfile} style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>Share</button>
+                <button onClick={handleShareProfile} className="vd-share-btn" style={{ padding: '9px 16px', borderRadius: 11, border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', transition: 'background .14s', fontFamily: 'inherit' }}>Share</button>
               </div>
             ) : (
-              <div style={{ background: `linear-gradient(135deg,${CR},${CR2})`, borderRadius: 18, padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ background: `linear-gradient(135deg,${CR},${CR2})`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 18px rgba(154,33,67,0.25)' }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#fff', fontFamily: 'Georgia,serif' }}>Ready to go live?</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>Review and publish your profile</p>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Ready to go live?</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)' }}>Review and publish your profile</p>
                 </div>
-                <Link href="/vendor/review" style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Review →</Link>
+                <Link href="/vendor/review" style={{ padding: '9px 16px', borderRadius: 11, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12.5, fontWeight: 800, textDecoration: 'none' }}>Review →</Link>
               </div>
             )}
           </div>
@@ -456,27 +492,27 @@ export default function VendorDashboard() {
             <VerificationRequestCard vendorVerified={vendor?.verified ?? false} />
           </div>
 
-          {/* ── Upgrade banner (free plan) ── */}
+          {/* ── Upgrade banner (free plan) — gold to distinguish from crimson CTAs ── */}
           {(!vendor?.plan || vendor.plan === 'free') && (
-            <div className="vd-section" style={{ animationDelay: '.15s', background: `linear-gradient(135deg,${CR},${CR2})`, borderRadius: 18, padding: '16px 18px', color: '#fff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div className="vd-section" style={{ animationDelay: '.15s', background: `linear-gradient(135deg,${GD},${GD2})`, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 4px 20px rgba(189,152,63,0.28)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 700, fontFamily: 'Georgia,serif' }}>Unlock Premium Features</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>Get featured, verified & more visibility</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 800, fontFamily: 'Georgia,serif' }}>Unlock Premium Features</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>Get featured, verified &amp; more visibility</p>
                 </div>
-                <div style={{ fontSize: 24 }}>✨</div>
+                <div style={{ fontSize: 26, flexShrink: 0 }}>✨</div>
               </div>
-              <Link href="/vendor/billing" style={{ display: 'inline-block', marginTop: 8, padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>View Plans →</Link>
+              <Link href="/vendor/billing" style={{ display: 'inline-block', padding: '9px 18px', borderRadius: 11, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 12.5, fontWeight: 800, textDecoration: 'none' }}>View Plans →</Link>
             </div>
           )}
 
           {/* ── Bookings shortcut ── */}
           <div className="vd-section" style={{ animationDelay: '.18s' }}>
-            <Link href="/vendor/bookings" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 18, background: '#fff', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: `1.5px solid ${BOR}`, textDecoration: 'none' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 14, background: `rgba(154,33,67,0.08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📅</div>
+            <Link href="/vendor/bookings" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', borderRadius: 18, background: '#fff', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}`, textDecoration: 'none' }}>
+              <div style={{ width: 46, height: 46, borderRadius: 14, background: `rgba(154,33,67,0.07)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📅</div>
               <div style={{ flex: 1 }}>
-                <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Bookings & Availability</p>
-                <p style={{ margin: 0, fontSize: 11, color: MUT }}>Manage confirmed bookings and block dates</p>
+                <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Bookings &amp; Availability</p>
+                <p style={{ margin: 0, fontSize: 11.5, color: MUT }}>Manage confirmed bookings and block dates</p>
               </div>
               <svg width="14" height="14" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
             </Link>
@@ -485,8 +521,8 @@ export default function VendorDashboard() {
           {/* ── Stats ── */}
           <div className="vd-section" style={{ animationDelay: '.2s' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Last 7 days</h2>
-              <Link href="/vendor/insights" style={{ fontSize: 12, fontWeight: 600, color: GD, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Last 7 days</h2>
+              <Link href="/vendor/insights" style={{ fontSize: 12.5, fontWeight: 700, color: GD, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
                 Full insights
                 <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
               </Link>
@@ -502,8 +538,8 @@ export default function VendorDashboard() {
           {quoteRequests.length > 0 && (
             <div className="vd-section" style={{ animationDelay: '.25s' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Quote Requests</h2>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: 'rgba(184,151,62,0.1)', color: GD2 }}>{quoteRequests.length} new</span>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Quote Requests</h2>
+                <span style={{ fontSize: 10.5, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: 'rgba(189,152,63,0.12)', color: GD2, letterSpacing: 0.3 }}>{quoteRequests.length} new</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {quoteRequests.map(q => (
@@ -517,8 +553,8 @@ export default function VendorDashboard() {
           {negotiations.length > 0 && (
             <div className="vd-section" style={{ animationDelay: '.28s' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Negotiations</h2>
-                <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: `rgba(154,33,67,0.08)`, color: CR }}>{negotiations.length} active</span>
+                <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Negotiations</h2>
+                <span style={{ fontSize: 10.5, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: `rgba(154,33,67,0.09)`, color: CR, letterSpacing: 0.3 }}>{negotiations.length} active</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {negotiations.map(q => (
@@ -531,54 +567,54 @@ export default function VendorDashboard() {
           {/* ── Recent activity ── */}
           <div className="vd-section" style={{ animationDelay: '.3s' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <h2 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Recent Activity</h2>
-              {recentNotifications.length > 0 && <Link href="/notifications" style={{ fontSize: 12, fontWeight: 600, color: GD, textDecoration: 'none' }}>View all</Link>}
+              <h2 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Recent Activity</h2>
+              {recentNotifications.length > 0 && <Link href="/notifications" style={{ fontSize: 12.5, fontWeight: 700, color: GD, textDecoration: 'none' }}>View all</Link>}
             </div>
             {recentNotifications.length > 0 ? (
-              <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: `1.5px solid ${BOR}` }}>
+              <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}` }}>
                 {recentNotifications.map((n, i) => (
                   <div key={n.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 16px', borderBottom: i < recentNotifications.length - 1 ? `1px solid ${BOR}` : 'none' }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(184,151,62,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🔔</div>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: `rgba(189,152,63,0.12)`, border: `1px solid rgba(189,152,63,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🔔</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 600, color: DARK }}>{n.title}</p>
-                      {n.body && <p style={{ margin: '0 0 3px', fontSize: 11, color: MUT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.body}</p>}
-                      <p style={{ margin: 0, fontSize: 10, color: '#b0a090' }}>{new Date(n.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                      <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 700, color: DARK }}>{n.title}</p>
+                      {n.body && <p style={{ margin: '0 0 3px', fontSize: 11.5, color: MUT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.body}</p>}
+                      <p style={{ margin: 0, fontSize: 10.5, color: '#b0a090', fontWeight: 500 }}>{new Date(n.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ background: '#fff', borderRadius: 18, padding: '32px 20px', textAlign: 'center', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: `1.5px solid ${BOR}` }}>
-                <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>🔔</div>
-                <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: DARK }}>No activity yet</p>
-                <p style={{ margin: 0, fontSize: 11, color: MUT }}>When couples view, save or contact you, it&apos;ll show here.</p>
+              <div style={{ background: '#fff', borderRadius: 18, padding: '34px 20px', textAlign: 'center', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}` }}>
+                <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.25 }}>🔔</div>
+                <p style={{ margin: '0 0 4px', fontSize: 13.5, fontWeight: 700, color: DARK }}>No activity yet</p>
+                <p style={{ margin: 0, fontSize: 11.5, color: MUT }}>When couples view, save or contact you, it&apos;ll show here.</p>
               </div>
             )}
           </div>
 
           {/* ── Account ── */}
           <div className="vd-section" style={{ animationDelay: '.35s' }}>
-            <h2 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700, color: DARK, fontFamily: 'Georgia,serif' }}>Your Account</h2>
-            <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 1px 8px rgba(26,13,18,0.06)', border: `1.5px solid ${BOR}` }}>
+            <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Your Account</h2>
+            <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}` }}>
               {[
-                { href: '/vendor/billing', icon: '💳', label: 'Billing & Plans', sub: 'Manage your subscription' },
-                { href: '/vendor/billing#featured', icon: '⭐', label: 'Feature Your Listing', sub: 'Boost visibility & stand out' },
-                { href: '/vendor/billing#verification', icon: '✓', label: 'Get Verified', sub: 'Build trust with the badge' },
+                { href: '/vendor/billing',              icon: '💳', label: 'Billing & Plans',      sub: 'Manage your subscription' },
+                { href: '/vendor/billing#featured',     icon: '⭐', label: 'Feature Your Listing', sub: 'Boost visibility & stand out' },
+                { href: '/vendor/billing#verification', icon: '✓',  label: 'Get Verified',         sub: 'Build trust with the badge' },
               ].map((item) => (
-                <Link key={item.href} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: `1px solid ${BOR}` }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(154,33,67,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{item.icon}</div>
+                <Link key={item.href} href={item.href} className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: `1px solid ${BOR}`, transition: 'background .12s' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: `rgba(154,33,67,0.07)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{item.icon}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: DARK }}>{item.label}</p>
-                    <p style={{ margin: '2px 0 0', fontSize: 11, color: MUT }}>{item.sub}</p>
+                    <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: DARK }}>{item.label}</p>
+                    <p style={{ margin: '2px 0 0', fontSize: 11.5, color: MUT }}>{item.sub}</p>
                   </div>
                   <svg width="14" height="14" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
                 </Link>
               ))}
-              <button onClick={handleDeleteAccount} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-                <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(200,50,50,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🗑️</div>
+              <button onClick={handleDeleteAccount} className="vd-menu-item" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .12s' }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(200,50,50,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🗑️</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#c83232' }}>Delete Account</p>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#a05050' }}>Permanently removes your account and all data</p>
+                  <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#c83232' }}>Delete Account</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#a05050' }}>Permanently removes your account and all data</p>
                 </div>
               </button>
             </div>
