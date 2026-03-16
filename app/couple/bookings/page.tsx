@@ -113,11 +113,9 @@ function ReviewSheet({ booking, onClose, onDone }: {
 function CancelSheet({ booking, onClose, onDone }: {
   booking: Booking; onClose: () => void; onDone: () => void;
 }) {
-  const [cancelling, setCancelling] = useState(false);
   const cancel = async () => {
-    setCancelling(true);
-    await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
     onDone();
+    await supabase.from('bookings').update({ status: 'cancelled' }).eq('id', booking.id);
   };
   return (
     <>
@@ -133,8 +131,8 @@ function CancelSheet({ booking, onClose, onDone }: {
           </p>
           <div style={{ display:'flex',gap:10 }}>
             <button onClick={onClose} style={{ flex:1,padding:13,borderRadius:12,border:`1.5px solid ${BOR}`,background:'#fff',color:DK,fontSize:14,fontWeight:700,cursor:'pointer' }}>Keep</button>
-            <button onClick={cancel} disabled={cancelling} style={{ flex:1,padding:13,borderRadius:12,border:'none',background:`linear-gradient(135deg,${CR},${CR2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:'pointer' }}>
-              {cancelling?'Cancelling…':'Yes, Cancel'}
+            <button onClick={cancel} style={{ flex:1,padding:13,borderRadius:12,border:'none',background:`linear-gradient(135deg,${CR},${CR2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:'pointer' }}>
+              Yes, Cancel
             </button>
           </div>
         </div>
@@ -319,18 +317,20 @@ export default function CoupleBookingsPage() {
 
   const displayList = tab === 'upcoming' ? upcomingList : pastList;
 
-  const handleReviewDone = async () => {
+  const handleReviewDone = () => {
+    if (reviewTarget) {
+      setBookings(prev => prev.map(b => b.id === reviewTarget.id ? { ...b, review_submitted: true } : b));
+    }
     setReviewTarget(null);
     showOk('Review submitted — thank you! 🌟');
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await loadBookings(user.id);
   };
 
-  const handleCancelDone = async () => {
+  const handleCancelDone = () => {
+    if (cancelTarget) {
+      setBookings(prev => prev.map(b => b.id === cancelTarget.id ? { ...b, status: 'cancelled' } : b));
+    }
     setCancelTarget(null);
     showOk('Booking cancelled.');
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) await loadBookings(user.id);
   };
 
   return (
