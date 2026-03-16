@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminSupabase } from '@/lib/supabaseAdminClient';
+import { validateBody } from '@/lib/apiValidate';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,10 +26,9 @@ export async function POST(req: NextRequest) {
     const user = await getAuthUser(req);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { role } = await req.json();
-    if (role !== 'couple' && role !== 'vendor') {
-      return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
-    }
+    const { data: bodyData, error: bodyError } = await validateBody(req, z.object({ role: z.enum(['couple', 'vendor']) }));
+    if (bodyError) return bodyError;
+    const { role } = bodyData;
 
     const admin = getAdminSupabase();
 

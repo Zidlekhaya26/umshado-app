@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabaseServer'
+import { validateBody } from '@/lib/apiValidate'
+import { z } from 'zod'
 
 /**
  * POST /api/vendor/booking/confirm
@@ -44,12 +46,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
   }
 
-  const body = await req.json()
-  const { quote_id } = body
-
-  if (!quote_id) {
-    return NextResponse.json({ error: 'quote_id required' }, { status: 400 })
-  }
+  const { data: bodyData, error: bodyError } = await validateBody(req, z.object({ quote_id: z.string().uuid('quote_id must be a valid UUID') }))
+  if (bodyError) return bodyError
+  const { quote_id } = bodyData
 
   // Get quote details
   const { data: quote, error: quoteErr } = await supabase

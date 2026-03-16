@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
+import { validateBody } from '@/lib/apiValidate';
+import { z } from 'zod';
+
+const RsvpSchema = z.object({
+  guestId: z.string().uuid('guestId must be a valid UUID'),
+  token: z.string().min(1),
+  status: z.enum(['accepted', 'declined']),
+});
 
 /**
  * POST /api/rsvp
- * body: { guestId: string, status: 'accepted' | 'declined' }
+ * body: { guestId: string, token: string, status: 'accepted' | 'declined' }
  */
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
-  const guestId = body?.guestId;
-  const status = body?.status;
-  const token = body?.token;
-
-  if (!guestId || !token || !status || !['accepted', 'declined'].includes(status)) {
-    return NextResponse.json({ success: false, error: 'Missing or invalid parameters' }, { status: 400 });
-  }
+  const { data, error: bodyError } = await validateBody(req, RsvpSchema);
+  if (bodyError) return bodyError;
+  const { guestId, token, status } = data;
 
   try {
     const supabase = createServiceClient();
