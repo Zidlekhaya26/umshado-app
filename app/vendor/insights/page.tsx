@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
-import {
 import { BG } from '@/lib/tokens';
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart,
 } from 'recharts';

@@ -37,8 +37,6 @@ interface CommunityComment {
 
 // ─── Constants ───────────────────────────────────────────
 
-// ── Brand tokens ─────────────────────────────────────────
-const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 // G/G2/IVORY kept as aliases so every template expression picks up crimson automatically
 const G = CR, G2 = CR2, IVORY = BG;
 const BUCKET = 'community-images';

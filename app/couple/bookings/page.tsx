@@ -9,9 +9,7 @@ import { useCurrency } from '@/app/providers/CurrencyProvider';
 import BottomNav from '@/components/BottomNav';
 import { CR, CR2, GD, GD2, DK, MUT, BOR, BG, GR } from '@/lib/tokens';
 
-/* ─── Tokens ─────────────────────────────────────────────── */
-const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
-const GR='#1e7c4a', AM='#c67a2e';
+const AM='#c67a2e';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Booking {

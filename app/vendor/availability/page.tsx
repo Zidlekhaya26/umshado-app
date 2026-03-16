@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseClient'
 import VendorBottomNav from '@/components/VendorBottomNav'
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-const DK='var(--um-dark)', MUT='var(--um-muted)', BOR='rgba(154,33,67,0.1)', BG='var(--um-ivory)'
 
 const REASON_LABELS: Record<string, string> = {
   booked: 'Booked',

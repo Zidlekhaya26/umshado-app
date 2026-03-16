@@ -5,8 +5,6 @@ import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-// ─── Brand tokens ─────────────────────────────────────────
-const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 
 // ─── Types ───────────────────────────────────────────────
 

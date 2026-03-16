@@ -6,8 +6,6 @@ import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
 import { CR, CR2, GD, GD2, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-/* ─── Tokens ─────────────────────────────────────────────── */
-const DK='var(--um-dark)', MUT='var(--um-muted)', BG='var(--um-ivory)', BOR='rgba(154,33,67,0.1)';
 const SURF='#fff';
 
 /* ─── Moment definitions ─────────────────────────────────── */
