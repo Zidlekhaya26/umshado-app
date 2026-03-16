@@ -251,18 +251,33 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
 
         {/* Sticky Tab Bar */}
         <div className="sticky top-0 z-10 bg-white border-b" style={{ borderColor: 'var(--border,#eadfd6)' }}>
-          <div className="max-w-2xl mx-auto flex">
-            {(['about', 'portfolio', 'packages', 'availability'] as const).map(tab => (
+          <div style={{ maxWidth: 672, margin: '0 auto', display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
+            {([
+              { key: 'about',        label: 'About'     },
+              { key: 'portfolio',    label: 'Portfolio' },
+              { key: 'packages',     label: 'Packages'  },
+              { key: 'availability', label: 'Dates'     },
+            ] as const).map(({ key, label }) => (
               <button
-                key={tab}
-                onClick={() => setActiveSection(tab)}
-                className="flex-1 py-3 text-sm font-semibold uppercase tracking-wider transition relative"
+                key={key}
+                onClick={() => setActiveSection(key)}
                 style={{
-                  color: activeSection === tab ? 'var(--primary,#6b1f3a)' : 'var(--muted,#8b7355)',
-                  borderBottom: activeSection === tab ? '2px solid var(--primary,#6b1f3a)' : '2px solid transparent'
+                  flex: '1 0 auto',
+                  padding: '12px 16px',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  whiteSpace: 'nowrap',
+                  border: 'none',
+                  borderBottom: activeSection === key ? '2px solid var(--primary,#6b1f3a)' : '2px solid transparent',
+                  background: 'transparent',
+                  color: activeSection === key ? 'var(--primary,#6b1f3a)' : 'var(--muted,#8b7355)',
+                  cursor: 'pointer',
+                  transition: 'color 0.15s',
                 }}
               >
-                {tab}
+                {label}
               </button>
             ))}
           </div>

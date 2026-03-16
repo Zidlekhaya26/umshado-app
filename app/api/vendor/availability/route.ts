@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('vendor_availability')
-    .select('blocked_date, reason')
+    .select('blocked_date, reason, note')
     .eq('vendor_id', vendor_id)
     .order('blocked_date', { ascending: true })
 

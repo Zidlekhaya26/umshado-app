@@ -5,16 +5,27 @@ import { useEffect, useState } from 'react'
 type BlockedDate = {
   blocked_date: string
   reason: string
+  note?: string
 }
 
 type Props = {
   vendorId: string
 }
 
+const CR = '#9A2143'
+const CRX = '#4d0f21'
+
+const REASON_LABEL: Record<string, string> = {
+  booked: 'Already booked',
+  unavailable: 'Unavailable',
+  holiday: 'Holiday / personal time',
+}
+
 export default function AvailabilityCalendar({ vendorId }: Props) {
   const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([])
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState<BlockedDate | null>(null)
 
   useEffect(() => {
     loadAvailability()
@@ -46,164 +57,152 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
     year: 'numeric',
   })
 
-  const isBlocked = (day: number) => {
+  const getBlocked = (day: number): BlockedDate | undefined => {
     const date = `${currentMonth.getFullYear()}-${String(
       currentMonth.getMonth() + 1
     ).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-    return blockedDates.some((b) => b.blocked_date === date)
+    return blockedDates.find((b) => b.blocked_date === date)
   }
 
   if (loading) {
     return (
-      <div style={{ padding: 20, textAlign: 'center', color: '#666' }}>
-        Loading availability...
+      <div style={{ padding: 28, textAlign: 'center' }}>
+        <div style={{ width: 32, height: 32, borderRadius: '50%', border: `3px solid rgba(154,33,67,0.15)`, borderTopColor: CR, animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: 20 }}>
-      <h3 style={{ fontSize: 20, fontWeight: 600, marginBottom: 10 }}>
-        📅 Availability Calendar
-      </h3>
-      <p style={{ color: '#666', marginBottom: 20, fontSize: 14 }}>
-        Green dates are available, gray dates are blocked.
-      </p>
+    <div style={{ padding: '20px 16px' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: 10,
-          padding: 20,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 20,
-          }}
-        >
-          <button
-            onClick={() =>
-              setCurrentMonth(
-                new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
-              )
-            }
-            style={{
-              background: '#f1f1f1',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            ← Prev
-          </button>
-          <h4 style={{ fontSize: 18, fontWeight: 600 }}>{monthName}</h4>
-          <button
-            onClick={() =>
-              setCurrentMonth(
-                new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
-              )
-            }
-            style={{
-              background: '#f1f1f1',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: 6,
-              cursor: 'pointer',
-              fontWeight: 600,
-            }}
-          >
-            Next →
-          </button>
-        </div>
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <p style={{ margin: 0, fontSize: 13, color: '#7a5060', lineHeight: 1.5 }}>
+          Red dates are unavailable. Tap a date to see why.
+        </p>
+      </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: 8,
-          }}
+      {/* Month nav */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <button
+          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1))}
+          style={{ background: 'rgba(154,33,67,0.06)', border: '1px solid rgba(154,33,67,0.15)', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: CR, fontSize: 13 }}
         >
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div
-              key={d}
+          ← Prev
+        </button>
+        <span style={{ fontSize: 15, fontWeight: 700, color: '#1a0d12' }}>{monthName}</span>
+        <button
+          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1))}
+          style={{ background: 'rgba(154,33,67,0.06)', border: '1px solid rgba(154,33,67,0.15)', padding: '7px 14px', borderRadius: 8, cursor: 'pointer', fontWeight: 600, color: CR, fontSize: 13 }}
+        >
+          Next →
+        </button>
+      </div>
+
+      {/* Day headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 4 }}>
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+          <div key={d} style={{ textAlign: 'center', fontWeight: 600, fontSize: 11, color: '#b0a090', padding: '4px 0' }}>
+            {d}
+          </div>
+        ))}
+      </div>
+
+      {/* Calendar grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
+        {Array.from({ length: firstDay }).map((_, i) => (
+          <div key={`empty-${i}`} />
+        ))}
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const day = i + 1
+          const blocked = getBlocked(day)
+
+          return (
+            <button
+              key={day}
+              onClick={() => blocked ? setSelected(blocked) : undefined}
               style={{
                 textAlign: 'center',
-                fontWeight: 600,
+                padding: '9px 2px',
+                borderRadius: 8,
+                border: 'none',
+                background: blocked ? `rgba(154,33,67,0.12)` : '#f0ece8',
+                color: blocked ? CR : '#5a4050',
+                fontWeight: blocked ? 700 : 500,
                 fontSize: 14,
-                color: '#999',
-                padding: 8,
+                cursor: blocked ? 'pointer' : 'default',
+                outline: 'none',
+                position: 'relative',
               }}
             >
-              {d}
-            </div>
-          ))}
-          {Array.from({ length: firstDay }).map((_, i) => (
-            <div key={`empty-${i}`} />
-          ))}
-          {Array.from({ length: daysInMonth }).map((_, i) => {
-            const day = i + 1
-            const blocked = isBlocked(day)
+              {day}
+              {blocked && (
+                <div style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: CR }} />
+              )}
+            </button>
+          )
+        })}
+      </div>
 
-            return (
-              <div
-                key={day}
-                style={{
-                  textAlign: 'center',
-                  padding: 12,
-                  borderRadius: 8,
-                  background: blocked ? '#e0e0e0' : '#d4edda',
-                  color: blocked ? '#666' : '#155724',
-                  fontWeight: 500,
-                  fontSize: 16,
-                }}
-              >
-                {day}
-              </div>
-            )
-          })}
+      {/* Legend */}
+      <div style={{ display: 'flex', gap: 20, marginTop: 18, fontSize: 12, color: '#7a5060' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 14, height: 14, background: '#f0ece8', borderRadius: 4 }} />
+          <span>Available</span>
         </div>
-
-        {/* Legend */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            gap: 20,
-            marginTop: 20,
-            fontSize: 14,
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 20,
-                height: 20,
-                background: '#d4edda',
-                borderRadius: 4,
-              }}
-            />
-            <span>Available</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 20,
-                height: 20,
-                background: '#e0e0e0',
-                borderRadius: 4,
-              }}
-            />
-            <span>Blocked</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ width: 14, height: 14, background: 'rgba(154,33,67,0.12)', borderRadius: 4, border: `1px solid rgba(154,33,67,0.2)` }} />
+          <span>Unavailable</span>
         </div>
       </div>
+
+      {/* Bottom sheet — reason popover */}
+      {selected && (
+        <>
+          <div
+            onClick={() => setSelected(null)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(26,13,18,0.45)', zIndex: 60 }}
+          />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 70,
+            background: '#fff', borderRadius: '20px 20px 0 0',
+            padding: '24px 24px 40px',
+            boxShadow: '0 -4px 32px rgba(26,13,18,0.18)',
+          }}>
+            {/* Handle bar */}
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: 'rgba(154,33,67,0.15)', margin: '0 auto 20px' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(154,33,67,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+                🚫
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 11, color: '#b0a090', fontWeight: 500 }}>
+                  {new Date(selected.blocked_date + 'T00:00:00').toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 16, fontWeight: 700, color: '#1a0d12' }}>
+                  {REASON_LABEL[selected.reason] || selected.reason}
+                </p>
+              </div>
+            </div>
+
+            <div style={{ borderRadius: 12, background: 'rgba(154,33,67,0.05)', border: '1.5px solid rgba(154,33,67,0.12)', padding: '12px 16px' }}>
+              <p style={{ margin: 0, fontSize: 13, color: '#7a5060', lineHeight: 1.6 }}>
+                This vendor is not available on this date.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setSelected(null)}
+              style={{ marginTop: 20, width: '100%', padding: '14px', borderRadius: 14, border: 'none', background: `linear-gradient(135deg,${CRX},${CR})`, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
