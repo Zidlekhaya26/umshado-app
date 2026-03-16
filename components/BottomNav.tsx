@@ -142,10 +142,13 @@ export default function BottomNav() {
   };
 
   return (
-    <nav style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
+    <nav id="um-couple-nav" style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--surface)', borderTop:'1px solid var(--border-subtle)', zIndex:50, boxShadow:'0 -2px 16px rgba(0,0,0,0.1)' }}>
+      <div className="um-nav-brand">
+        <span style={{ fontSize:18, fontWeight:800, fontFamily:'Georgia,serif', color:'#9A2143' }}>uMshado</span>
+      </div>
       {/* Role switcher chip — only shown to dual-role users */}
       {hasVendor && (
-        <div style={{ borderBottom: '1px solid rgba(154,33,67,0.1)', padding: '6px 12px' }}>
+        <div className="um-nav-switcher" style={{ borderBottom: '1px solid rgba(154,33,67,0.1)', padding: '6px 12px' }}>
           <Link href="/switch-role" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
             padding: '8px 16px', borderRadius: 10, textDecoration: 'none',
@@ -159,7 +162,7 @@ export default function BottomNav() {
         </div>
       )}
 
-      <div style={{ maxWidth:520, margin:'0 auto' }}>
+      <div className="um-nav-main" style={{ maxWidth:520, margin:'0 auto' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-around', padding:'8px 4px', paddingBottom:'calc(8px + env(safe-area-inset-bottom))' }}>
           {navItems.map((item) => {
             const active = isActive(item.href);

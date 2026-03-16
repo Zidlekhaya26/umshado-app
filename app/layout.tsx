@@ -61,7 +61,7 @@ export default function RootLayout({
         <AuthRoleProvider>
           <CurrencyProvider>
             <ToastProvider>
-            <div className="w-full">
+            <div id="um-main" className="w-full">
               <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
                 <div className="flex items-center gap-3">
                   <CurrencySelector />
@@ -69,7 +69,7 @@ export default function RootLayout({
                 </div>
               </header>
               <RoleGate>
-                <div className="min-h-screen w-full">{children}</div>
+                <div id="um-page-wrap" className="min-h-screen w-full">{children}</div>
                 <PushPermissionPrompt />
               </RoleGate>
             </div>

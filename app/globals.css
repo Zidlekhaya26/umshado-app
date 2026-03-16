@@ -631,3 +631,99 @@ input::placeholder, textarea::placeholder {
   background-size: 200% auto;
   animation: um-shimmer 1.5s linear infinite;
 }
+
+
+/* ══════════════════════════════════════════════════════════════
+   Desktop responsive — sidebar nav (≥ 768 px)
+══════════════════════════════════════════════════════════════ */
+
+/* Brand header — hidden on mobile, shown inside sidebar on desktop */
+.um-nav-brand { display: none; }
+
+@media (min-width: 768px) {
+  /* ── Convert bottom nav to left sidebar ── */
+  body:has(#um-couple-nav) #um-couple-nav,
+  body:has(#um-vendor-nav) #um-vendor-nav {
+    bottom: unset !important;
+    right: unset !important;
+    top: 0 !important;
+    width: 220px !important;
+    height: 100svh !important;
+    border-top: none !important;
+    border-right: 1px solid rgba(154,33,67,0.12) !important;
+    box-shadow: 2px 0 16px rgba(26,13,18,0.06) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  /* Brand mark at top of sidebar */
+  .um-nav-brand {
+    display: flex !important;
+    align-items: center !important;
+    padding: 20px 18px 16px !important;
+    border-bottom: 1px solid rgba(154,33,67,0.08) !important;
+    flex-shrink: 0 !important;
+    order: 0 !important;
+  }
+
+  /* Nav items area expands to fill available height */
+  .um-nav-main {
+    flex: 1 !important;
+    max-width: unset !important;
+    width: 100% !important;
+    margin: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    order: 1 !important;
+  }
+
+  /* Items row → column */
+  .um-nav-main > div {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding: 10px 0 !important;
+    gap: 2px !important;
+  }
+
+  /* Each nav link → horizontal row with icon + label */
+  .um-nav-main a {
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    padding: 11px 16px !important;
+    min-width: unset !important;
+    border-radius: 10px !important;
+    margin: 0 8px !important;
+    width: auto !important;
+  }
+
+  /* Nav label size */
+  .um-nav-main a span {
+    font-size: 13px !important;
+    margin-top: 0 !important;
+  }
+
+  /* Role switcher pushed to bottom of sidebar */
+  .um-nav-switcher {
+    order: 2 !important;
+    border-bottom: none !important;
+    border-top: 1px solid rgba(154,33,67,0.08) !important;
+    padding: 8px 10px 16px !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* ── Offset main content so it doesn't go under the sidebar ── */
+  body:has(#um-couple-nav) #um-main,
+  body:has(#um-vendor-nav) #um-main {
+    padding-left: 220px !important;
+  }
+
+  /* ── Expand page content containers to fill available width ── */
+  body:has(#um-couple-nav) #um-page-wrap > * > div:first-child,
+  body:has(#um-vendor-nav) #um-page-wrap > * > div:first-child {
+    max-width: 100% !important;
+    padding-bottom: 24px !important;
+  }
+}
