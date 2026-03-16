@@ -453,7 +453,7 @@ export default function Marketplace() {
       try {
         const result = await supabase.rpc('get_vendor_activity_7d');
         if (result.data) actData = result.data;
-      } catch {}
+      } catch (err) { console.error('[Marketplace] Activity scores failed:', err); }
       const actMap = new Map<string, VendorActivityScore>();
       (actData || []).forEach((r: VendorActivityScore) => actMap.set(r.vendor_id, r));
 
@@ -482,8 +482,9 @@ export default function Marketplace() {
           distanceKm: dist,
         };
       });
-      setAllServices(Array.from(new Set(mapped.flatMap(v => v.services))).sort());
-      setAllVendors(mapped);
+      const live = mapped.filter(v => !v.isDemo);
+      setAllServices(Array.from(new Set(live.flatMap(v => v.services))).sort());
+      setAllVendors(live);
     } finally { setLoading(false); }
   };
 
