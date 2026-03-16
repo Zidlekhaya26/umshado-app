@@ -264,7 +264,10 @@ export default function ChatThread() {
       }
     };
 
-    loadInitial();
+    loadInitial().then(() => {
+      // Mark conversation as read when thread opens
+      supabase.from('conversations').update({ last_read_at: new Date().toISOString() }).eq('id', conversationId);
+    });
 
     // Realtime: append new messages only (skip if _optimistic flag is set to avoid duplicates)
     const channel = supabase
