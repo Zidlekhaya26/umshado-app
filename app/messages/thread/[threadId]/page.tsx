@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import Image from 'next/image';
+import NextImage from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
@@ -29,7 +29,7 @@ function Avatar({ name, url, size = 44, showOnline = false }: { name: string; ur
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${C.crimsonDim}`, position: 'relative' }}>
-        {url ? <Image src={url} alt={name} fill style={{ objectFit: 'cover' }} /> : <span style={{ color: '#fff', fontWeight: 800, fontSize: size * 0.33, fontFamily: 'Georgia, serif' }}>{initials}</span>}
+        {url ? <NextImage src={url} alt={name} fill style={{ objectFit: 'cover' }} /> : <span style={{ color: '#fff', fontWeight: 800, fontSize: size * 0.33, fontFamily: 'Georgia, serif' }}>{initials}</span>}
       </div>
       {showOnline && <div style={{ position: 'absolute', bottom: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: '#22c55e', border: '2px solid #fff' }} />}
     </div>
