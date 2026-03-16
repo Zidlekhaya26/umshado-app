@@ -258,12 +258,21 @@ function CouplePlannerContent() {
 
   // ── Task actions ───────────────────────────────────────
   const toggleTask = async (task: DbTask) => {
+    setTasks(prev => prev.map(t => t.id === task.id ? { ...t, is_done: !t.is_done } : t));
     const { error } = await supabase.from('couple_tasks').update({ is_done: !task.is_done }).eq('id', task.id);
-    if (!error) setTasks(prev => prev.map(t => t.id === task.id ? { ...t, is_done: !t.is_done } : t));
+    if (error) {
+      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, is_done: task.is_done } : t));
+      toastCtx.show('Failed to update task', 'error');
+    }
   };
   const deleteTask = async (id: string) => {
+    const removed = tasks.find(t => t.id === id);
+    setTasks(prev => prev.filter(t => t.id !== id));
     const { error } = await supabase.from('couple_tasks').delete().eq('id', id);
-    if (!error) setTasks(prev => prev.filter(t => t.id !== id));
+    if (error && removed) {
+      setTasks(prev => [...prev, removed].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+      toastCtx.show('Failed to delete task', 'error');
+    }
   };
   const addTask = async () => {
     if (!newTaskTitle.trim() || !userId) return;
@@ -307,16 +316,18 @@ function CouplePlannerContent() {
     const amountPaid = parseFloat(editBudgetAmountPaid) || 0;
     const status = computeBudgetStatus(amount, amountPaid);
     const base = { title: editBudgetTitle.trim(), amount, category: editBudgetCategory.trim() || null };
-    // Try with amount_paid + partial status; fall back without them
-    const statusForDb = status === 'partial' ? 'planned' : status; // 'partial' may not be in CHECK yet
-    let result = await supabase.from('couple_budget_items').update({ ...base, amount_paid: amountPaid, status }).eq('id', editingBudgetItem.id);
-    if (result.error && (result.error.message?.includes('amount_paid') || result.error.message?.includes('partial'))) {
-      result = await supabase.from('couple_budget_items').update({ ...base, status: statusForDb }).eq('id', editingBudgetItem.id);
-    }
-    if (!result.error) {
-      setBudgetItems(prev => prev.map(b => b.id === editingBudgetItem.id ? { ...b, ...base, amount_paid: amountPaid, status } : b));
-    }
+    const snapshot = editingBudgetItem;
+    setBudgetItems(prev => prev.map(b => b.id === snapshot.id ? { ...b, ...base, amount_paid: amountPaid, status } : b));
     setEditingBudgetItem(null);
+    const statusForDb = status === 'partial' ? 'planned' : status;
+    let result = await supabase.from('couple_budget_items').update({ ...base, amount_paid: amountPaid, status }).eq('id', snapshot.id);
+    if (result.error && (result.error.message?.includes('amount_paid') || result.error.message?.includes('partial'))) {
+      result = await supabase.from('couple_budget_items').update({ ...base, status: statusForDb }).eq('id', snapshot.id);
+    }
+    if (result.error) {
+      setBudgetItems(prev => prev.map(b => b.id === snapshot.id ? snapshot : b));
+      toastCtx.show('Failed to save budget item', 'error');
+    }
   };
 
   const openPaymentModal = (item: DbBudgetItem) => {
@@ -347,8 +358,13 @@ function CouplePlannerContent() {
   };
 
   const deleteBudgetItem = async (id: string) => {
+    const removed = budgetItems.find(b => b.id === id);
+    setBudgetItems(prev => prev.filter(b => b.id !== id));
     const { error } = await supabase.from('couple_budget_items').delete().eq('id', id);
-    if (!error) setBudgetItems(prev => prev.filter(b => b.id !== id));
+    if (error && removed) {
+      setBudgetItems(prev => [...prev, removed].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+      toastCtx.show('Failed to delete budget item', 'error');
+    }
   };
 
   // ── Guest actions ──────────────────────────────────────
@@ -564,12 +580,21 @@ function CouplePlannerContent() {
   const cycleGuestStatus = async (guest: DbGuest) => {
     const order: DbGuest['rsvp_status'][] = ['pending', 'accepted', 'declined'];
     const ns = order[(order.indexOf(guest.rsvp_status) + 1) % order.length];
+    setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_status: ns } : g));
     const { error } = await supabase.from('couple_guests').update({ rsvp_status: ns }).eq('id', guest.id);
-    if (!error) setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_status: ns } : g));
+    if (error) {
+      setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_status: guest.rsvp_status } : g));
+      toastCtx.show('Failed to update RSVP status', 'error');
+    }
   };
   const deleteGuest = async (id: string) => {
+    const removed = guests.find(g => g.id === id);
+    setGuests(prev => prev.filter(g => g.id !== id));
     const { error } = await supabase.from('couple_guests').delete().eq('id', id);
-    if (!error) setGuests(prev => prev.filter(g => g.id !== id));
+    if (error && removed) {
+      setGuests(prev => [...prev, removed].sort((a, b) => a.created_at.localeCompare(b.created_at)));
+      toastCtx.show('Failed to delete guest', 'error');
+    }
   };
 
   const inviteViaWhatsapp = async (guest: DbGuest) => {
