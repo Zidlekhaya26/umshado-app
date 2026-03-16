@@ -347,8 +347,8 @@ export default function VendorBookingsPage(){
       {/* Action sheet */}
       {actionSheet&&(
         <>
-          <div onClick={()=>setActionSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
-          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+          <div onClick={()=>setActionSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:60,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:70,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
             <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
             <div style={{padding:'20px 20px 24px'}}>
               <p style={{margin:'0 0 2px',fontSize:17,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>{actionSheet.couple_name}</p>
@@ -390,8 +390,8 @@ export default function VendorBookingsPage(){
       {/* Notes sheet */}
       {notesSheet&&(
         <>
-          <div onClick={()=>setNotesSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
-          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+          <div onClick={()=>setNotesSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:60,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:70,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
             <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
             <div style={{padding:'20px 20px 24px'}}>
               <p style={{margin:'0 0 4px',fontSize:16,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>Private Note</p>
@@ -409,8 +409,8 @@ export default function VendorBookingsPage(){
       {/* Block date sheet */}
       {blockSheet&&(
         <>
-          <div onClick={()=>setBlockSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:40,animation:'fadeIn .2s ease'}}/>
-          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:50,animation:'slideUp .3s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+          <div onClick={()=>setBlockSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:60,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:70,animation:'slideUp .3s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
             <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
             <div style={{padding:'20px 20px 24px'}}>
               <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:20}}>
