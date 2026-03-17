@@ -115,6 +115,10 @@ export async function upsertVendor(userId: string, data: {
   business_name?: string | null;
   category?: string | null;
   location?: string | null;
+  country?: string | null;
+  country_code?: string | null;
+  lat?: number | null;
+  lng?: number | null;
   description?: string | null;
   currency?: string | null;
 }): Promise<{ success: boolean; vendorId?: string; error?: string }> {
@@ -126,6 +130,10 @@ export async function upsertVendor(userId: string, data: {
       description: data.description ?? null,
       updated_at: new Date().toISOString()
     };
+    if (data.country   !== undefined) fields.country      = data.country;
+    if (data.country_code !== undefined) fields.country_code = data.country_code;
+    if (data.lat       !== undefined) fields.lat           = data.lat;
+    if (data.lng       !== undefined) fields.lng           = data.lng;
 
     // Find existing vendor row — could be id=userId OR user_id=userId
     let existingId: string | null = null;

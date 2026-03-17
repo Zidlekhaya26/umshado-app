@@ -25,6 +25,7 @@ interface MarketplaceVendor {
   min_from_price: number | null; services: string[]; package_count: number;
   rating?: number | null; review_count?: number | null;
   vendor_lat?: number | null; vendor_lng?: number | null;
+  country_code?: string | null;
 }
 interface VendorActivityScore {
   vendor_id: string; profile_views: number; quotes: number;
@@ -386,7 +387,7 @@ export default function Marketplace() {
   const [categoryFilter, setCategoryFilter] = useState('');
   const [serviceFilter, setServiceFilter]   = useState<string[]>([]);
   const [sortBy, setSortBy]                 = useState<SortOption>('recommended');
-  const [scope, setScope]                   = useState<LocationScope>('country');
+  const [scope, setScope]                   = useState<LocationScope>('all');
   const [vendors, setVendors]               = useState<Vendor[]>([]);
   const [allVendors, setAllVendors]         = useState<Vendor[]>([]);
   const [loading, setLoading]               = useState(true);
@@ -469,7 +470,7 @@ export default function Marketplace() {
           location: [v.city, v.country].filter(Boolean).join(', ') || 'Location not set',
           city: v.city || '',
           country: v.country || '',
-          countryCode: (v.country || '').toUpperCase().slice(0, 2),
+          countryCode: v.country_code || '',
           fromPrice: v.min_from_price || 0,
           services: v.services || [],
           score: calculateScore(v, actMap.get(v.vendor_id), location),
@@ -494,6 +495,7 @@ export default function Marketplace() {
 
     if (location && scope !== 'all') {
       if (scope === 'nearby') {
+        // Filter to vendors within radius; fall back to same city if no coords
         f = f.filter(v => v.lat != null && v.lng != null
           ? distanceKm(location.lat, location.lng, v.lat!, v.lng!) <= NEARBY_RADIUS_KM
           : v.city.toLowerCase() === location.city.toLowerCase());
@@ -501,9 +503,9 @@ export default function Marketplace() {
         const uc = location.city.toLowerCase();
         f = f.filter(v => v.city.toLowerCase().includes(uc) || uc.includes(v.city.toLowerCase()));
       } else if (scope === 'country') {
+        // Exact ISO code match first, then exact country name — no substring (prevents cross-country bleed)
         const uCC = location.countryCode.toUpperCase();
         const uCN = location.country.toLowerCase();
-        // Exact matches only — substring checks caused cross-country bleed (e.g. Zimbabwe showing in South Africa)
         f = f.filter(v => {
           if (v.countryCode && v.countryCode.toUpperCase() === uCC) return true;
           if (v.country.toLowerCase() === uCN) return true;
@@ -511,6 +513,10 @@ export default function Marketplace() {
         });
       }
     }
+
+    // When showing all vendors and location is known: sort by nearest (Uber-style)
+    // so the most relevant vendors bubble up without hiding anyone
+    const effectiveSortBy = (scope === 'all' && location && sortBy === 'recommended') ? 'nearest' : sortBy;
 
     const q = searchQuery.toLowerCase().trim();
     if (q) f = f.filter(v =>
@@ -522,7 +528,7 @@ export default function Marketplace() {
     if (categoryFilter) f = f.filter(v => v.category === categoryFilter);
     if (serviceFilter.length) f = f.filter(v => serviceFilter.every(s => v.services.includes(s)));
 
-    switch (sortBy) {
+    switch (effectiveSortBy) {
       case 'recommended': f.sort((a, b) => b.score - a.score); break;
       case 'nearest':     f.sort((a, b) => { if (a.distanceKm == null) return 1; if (b.distanceKm == null) return -1; return a.distanceKm - b.distanceKm; }); break;
       case 'price_low':   f.sort((a, b) => { if (!a.fromPrice) return 1; if (!b.fromPrice) return -1; return a.fromPrice - b.fromPrice; }); break;
@@ -572,7 +578,7 @@ export default function Marketplace() {
                   <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>uMshado Marketplace</h1>
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                  {loading ? '…' : locationLabel || (location ? `Vendors near you` : `${allVendors.length} trusted vendors`)}
+                  {loading ? '…' : locationLabel || (location ? `Sorted by distance · ${allVendors.length} vendors` : `${allVendors.length} trusted vendors`)}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -671,7 +677,7 @@ export default function Marketplace() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 13 }}>📍</span>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#7a5c30' }}>
-                {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} {scope === 'nearby' ? `within ${NEARBY_RADIUS_KM} km` : scope === 'city' ? `in ${location.city}` : `in ${location.country}`}
+                {vendors.length} vendor{vendors.length !== 1 ? 's' : ''}{scope === 'nearby' ? ` within ${NEARBY_RADIUS_KM} km` : scope === 'city' ? ` in ${location?.city}` : scope === 'country' ? ` in ${location?.country}` : ''}
               </span>
             </div>
             <button onClick={() => setScopeOpen(true)} style={{ fontSize: 11, fontWeight: 700, color: 'var(--um-gold-dark)', background: 'rgba(184,151,62,0.1)', border: '1px solid rgba(184,151,62,0.2)', borderRadius: 20, padding: '3px 10px', cursor: 'pointer' }}>Change</button>

@@ -23,17 +23,27 @@ export default function VendorOnboarding(){
   const [loading,setLoading]=useState(true);
   const [submitting,setSubmitting]=useState(false);
   const [focused,setFocused]=useState('');
-  const [fd,setFd]=useState({businessName:'',category:'',city:'',country:'',businessDescription:''});
+  const [fd,setFd]=useState({businessName:'',category:'',city:'',country:'',countryCode:'',businessDescription:''});
+
+  // African countries for the dropdown — name → ISO-3166-1 alpha-2
+  const COUNTRIES=[
+    {name:'South Africa',code:'ZA'},{name:'Zimbabwe',code:'ZW'},{name:'Botswana',code:'BW'},
+    {name:'Namibia',code:'NA'},{name:'Zambia',code:'ZM'},{name:'Mozambique',code:'MZ'},
+    {name:'Lesotho',code:'LS'},{name:'Eswatini',code:'SZ'},{name:'Kenya',code:'KE'},
+    {name:'Nigeria',code:'NG'},{name:'Ghana',code:'GH'},{name:'Tanzania',code:'TZ'},
+    {name:'Uganda',code:'UG'},{name:'Rwanda',code:'RW'},{name:'Ethiopia',code:'ET'},
+    {name:'Malawi',code:'MW'},{name:'Angola',code:'AO'},{name:'Other',code:''},
+  ];
 
   useEffect(()=>{
     (async()=>{
       try{
         const user=await getUserOrRedirect();
         if(!user){setLoading(false);return;}
-        const {data}=await supabase.from('vendors').select('business_name,category,location,description').eq('user_id',user.id).limit(1).maybeSingle();
+        const {data}=await supabase.from('vendors').select('business_name,category,location,country,country_code,description').eq('user_id',user.id).limit(1).maybeSingle();
         if(data){
-          const [city='',country='']=(data.location||'').split(', ');
-          setFd({businessName:data.business_name||'',category:data.category||'',city,country,businessDescription:data.description||''});
+          const cityFromLocation=(data.location||'').split(', ')[0]||'';
+          setFd({businessName:data.business_name||'',category:data.category||'',city:cityFromLocation,country:data.country||'',countryCode:data.country_code||'',businessDescription:data.description||''});
         }
       }catch{/*ok*/}finally{setLoading(false);}
     })();
@@ -45,7 +55,7 @@ export default function VendorOnboarding(){
       const user=await getUserOrRedirect();
       if(!user){toast('Please sign in to continue.','error');router.push('/auth/sign-in');return;}
       const location=[fd.city,fd.country].filter(Boolean).join(', ')||null;
-      const res=await upsertVendor(user.id,{business_name:fd.businessName||null,category:fd.category||null,location,description:fd.businessDescription||null,currency});
+      const res=await upsertVendor(user.id,{business_name:fd.businessName||null,category:fd.category||null,location,country:fd.country||null,country_code:fd.countryCode||null,description:fd.businessDescription||null,currency});
       if(!res.success){toast('Could not save your profile. Please try again.','error');setSubmitting(false);return;}
       router.push('/vendor/services?mode=onboarding');
     }catch{toast('Something went wrong. Please try again.','error');setSubmitting(false);}
@@ -125,9 +135,21 @@ export default function VendorOnboarding(){
           </div>
           <div>
             <FL l="Country" req/>
-            <input type="text" value={fd.country} required placeholder="South Africa"
-              onFocus={()=>setFocused('co')} onBlur={()=>setFocused('')}
-              onChange={e=>setFd({...fd,country:e.target.value})} style={ICS(focused==='co')}/>
+            <div style={{position:'relative'}}>
+              <select value={fd.country} required
+                onFocus={()=>setFocused('co')} onBlur={()=>setFocused('')}
+                onChange={e=>{
+                  const selected=COUNTRIES.find(c=>c.name===e.target.value);
+                  setFd({...fd,country:e.target.value,countryCode:selected?.code||''});
+                }}
+                style={{...ICS(focused==='co'),paddingRight:36,appearance:'none',cursor:'pointer',color:fd.country?DK:MUT}}>
+                <option value="" disabled>Select country</option>
+                {COUNTRIES.map(c=><option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+              <div style={{position:'absolute',right:12,top:'50%',transform:'translateY(-50%)',pointerEvents:'none',color:MUT}}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
           </div>
         </div>
 
