@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { notifyUsers, shouldThrottleMessageNotification } from '@/lib/server/notify';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const SendMessageSchema = z.object({
   conversationId: z.string().uuid('conversationId must be a valid UUID'),
@@ -44,6 +45,10 @@ export async function POST(req: NextRequest) {
   if (!senderId) {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
   }
+
+  // Rate limit: 30 messages per userId per 1 minute
+  const { allowed: msgAllowed } = checkRateLimit(`message:${senderId}`, 30, 60 * 1000);
+  if (!msgAllowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   // --- Body ---
   const { data: body, error: bodyError } = await validateBody(req, SendMessageSchema);

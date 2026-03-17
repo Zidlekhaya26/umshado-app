@@ -4,6 +4,7 @@ import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { formatPrice } from '@/lib/currency';
 import { notifyUsers } from '@/lib/server/notify';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const CreateQuoteSchema = z.object({
   vendorId:    z.string().uuid('vendorId must be a valid UUID'),
@@ -59,6 +60,10 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
   }
+
+  // Rate limit: 5 quote requests per userId per 10 minutes
+  const { allowed: quoteAllowed } = checkRateLimit(`quote:${userId}`, 5, 10 * 60 * 1000);
+  if (!quoteAllowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   // --- Parse body ---
   const { data: body, error: bodyError } = await validateBody(req, CreateQuoteSchema);

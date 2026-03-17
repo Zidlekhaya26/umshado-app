@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
 import { validateBody } from '@/lib/apiValidate';
 import { z } from 'zod';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 const RsvpSchema = z.object({
   guestId: z.string().uuid('guestId must be a valid UUID'),
@@ -14,6 +15,11 @@ const RsvpSchema = z.object({
  * body: { guestId: string, token: string, status: 'accepted' | 'declined' }
  */
 export async function POST(req: NextRequest) {
+  // Rate limit: 8 RSVP submissions per IP per 10 minutes
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const { allowed } = checkRateLimit(`rsvp:${ip}`, 8, 10 * 60 * 1000);
+  if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+
   const { data, error: bodyError } = await validateBody(req, RsvpSchema);
   if (bodyError) return bodyError;
   const { guestId, token, status } = data;
