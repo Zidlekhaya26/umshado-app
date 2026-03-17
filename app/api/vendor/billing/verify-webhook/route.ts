@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const passphrase = process.env.PAYFAST_PASSPHRASE || '';
     if (!verifySignature(params, passphrase, params.signature || '')) {
-      console.error('verify-webhook: invalid signature');
+      console.error(JSON.stringify({ route: 'verify-webhook', event: 'signature_invalid' }));
       return new NextResponse('Invalid signature', { status: 400 });
     }
 
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         .from('verification_requests')
         .update({ status: 'payment_failed', updated_at: now })
         .eq('id', verRequestId);
+      console.log(JSON.stringify({ route: 'verify-webhook', event: 'payment_not_complete', verRequestId, vendorId, paymentStatus }));
       return new NextResponse('OK', { status: 200 });
     }
 
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (existingReq?.status === 'paid_pending_review') {
+      console.log(JSON.stringify({ route: 'verify-webhook', event: 'idempotency_skip', verRequestId, vendorId }));
       return new NextResponse('OK', { status: 200 });
     }
 
@@ -133,9 +135,17 @@ export async function POST(req: NextRequest) {
       console.error('Failed to notify admin:', notifyErr);
     }
 
+    console.log(JSON.stringify({
+      route: 'verify-webhook',
+      event: 'payment_complete',
+      verRequestId,
+      vendorId,
+      amountCents: Math.round(parseFloat(params.amount_gross || '0') * 100),
+      pfPaymentId: params.pf_payment_id,
+    }));
     return new NextResponse('OK', { status: 200 });
   } catch (err) {
-    console.error('verify-webhook error:', err);
+    console.error(JSON.stringify({ route: 'verify-webhook', event: 'unexpected_error', error: err instanceof Error ? err.message : String(err) }));
     return new NextResponse('Internal error', { status: 500 });
   }
 }

@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
           conversationId = retry?.id;
         }
         if (!conversationId) {
+          console.error(JSON.stringify({ route: 'quotes/create', event: 'conversation_failed', quoteId: quoteData.id, coupleId: userId, vendorId }));
           return NextResponse.json({ error: 'Quote created but conversation failed', quoteId: quoteData.id }, { status: 500 });
         }
       } else {
@@ -191,6 +192,15 @@ export async function POST(req: NextRequest) {
       meta: { quoteId: quoteData.id, quoteRef, conversationId },
     });
 
+    console.log(JSON.stringify({
+      route: 'quotes/create',
+      event: 'quote_created',
+      quoteId: quoteData.id,
+      quoteRef,
+      coupleId: userId,
+      vendorId,
+      conversationId,
+    }));
     return NextResponse.json({
       success: true,
       quoteId: quoteData.id,
@@ -198,7 +208,7 @@ export async function POST(req: NextRequest) {
       quoteRef,
     });
   } catch (err: any) {
-    console.error('[quotes/create] unexpected error:', err);
+    console.error(JSON.stringify({ route: 'quotes/create', event: 'unexpected_error', coupleId: userId, vendorId, quoteRef, error: err?.message }));
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
 }

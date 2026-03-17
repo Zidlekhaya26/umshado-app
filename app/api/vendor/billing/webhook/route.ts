@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     // Verify signature
     if (!verifySignature(params, passphrase, signature)) {
-      console.error('PayFast webhook: invalid signature');
+      console.error(JSON.stringify({ route: 'webhook', event: 'signature_invalid' }));
       return new NextResponse('Invalid signature', { status: 400 });
     }
 
@@ -56,6 +56,7 @@ export async function POST(req: NextRequest) {
         .from('payment_intents')
         .update({ status: paymentStatus.toLowerCase(), updated_at: new Date().toISOString() })
         .eq('id', intentId);
+      console.log(JSON.stringify({ route: 'webhook', event: 'payment_not_complete', intentId, vendorId, paymentStatus }));
       return new NextResponse('OK', { status: 200 });
     }
 
@@ -74,6 +75,7 @@ export async function POST(req: NextRequest) {
     // (vendor update, boost insert, billing_transactions insert). Return 200
     // immediately so retries are no-ops rather than creating duplicate rows.
     if (intent?.status === 'complete') {
+      console.log(JSON.stringify({ route: 'webhook', event: 'idempotency_skip', intentId, vendorId }));
       return new NextResponse('OK', { status: 200 });
     }
 
@@ -175,9 +177,18 @@ export async function POST(req: NextRequest) {
       created_at: nowIso,
     });
 
+    console.log(JSON.stringify({
+      route: 'webhook',
+      event: 'payment_complete',
+      intentId,
+      vendorId,
+      type: effectiveType,
+      amountCents: Math.round(parseFloat(params.amount_gross || '0') * 100),
+      pfPaymentId: params.pf_payment_id,
+    }));
     return new NextResponse('OK', { status: 200 });
   } catch (err) {
-    console.error('Webhook error:', err);
+    console.error(JSON.stringify({ route: 'webhook', event: 'unexpected_error', error: err instanceof Error ? err.message : String(err) }));
     return new NextResponse('Internal error', { status: 500 });
   }
 }
