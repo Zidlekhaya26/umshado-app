@@ -101,6 +101,16 @@ const POSTS: CommunityPost[] = [
 /* ── Dummy ads ───────────────────────────────────────────── */
 const ADS: SponsoredAd[] = [
   {
+    id: 'ca-noxa',
+    headline: 'Noxa — Wedding Planning, Reimagined',
+    body: 'Stress-free planning from first look to last dance. Noxa brings together coordination, vendor matching & day-of support for modern SA weddings.',
+    cta: 'Explore Services',
+    category: 'Planning & Coordination',
+    color: '#9A2143',
+    emoji: '🌟',
+    badge: 'Verified Pro',
+  },
+  {
     id: 'ca1',
     headline: 'Luminary Photography — Capturing Your Story',
     body: 'Award-winning wedding photography. Available across SA. Booking 2025–2026 now.',

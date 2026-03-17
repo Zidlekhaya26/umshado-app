@@ -28,6 +28,15 @@ interface SponsoredAd {
 
 const DUMMY_ADS: SponsoredAd[] = [
   {
+    id: 'ad-noxa',
+    headline: 'Noxa — Full-Service Wedding Planning & Tech',
+    body: 'From intimate ceremonies to grand celebrations — Noxa handles coordination, vendor management, and everything in between. Verified Pro partner on uMshado.',
+    cta: 'View Services',
+    category: 'Planning & Coordination',
+    color: '#9A2143',
+    emoji: '🌟',
+  },
+  {
     id: 'ad-1',
     headline: 'Luminary Photography — Now Booking 2026 Dates',
     body: 'Award-winning wedding photography across South Africa. Over 300 love stories captured. Limited dates available.',
