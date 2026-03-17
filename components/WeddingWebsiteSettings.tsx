@@ -206,7 +206,7 @@ export default function WeddingWebsiteSettings({
 
             {/* Preview link */}
             <a
-              href={weddingWebsiteUrl}
+              href={`${weddingWebsiteUrl}?preview=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-violet-600 border border-violet-200 hover:bg-violet-50 transition-colors"
@@ -228,6 +228,7 @@ export default function WeddingWebsiteSettings({
               {THEME_KEYS.map((key) => {
                 const theme = THEMES[key];
                 const isSelected = selectedTheme === key;
+                const isLight = ['ivory', 'blush', 'garden'].includes(key);
                 return (
                   <button
                     key={key}
@@ -238,6 +239,9 @@ export default function WeddingWebsiteSettings({
                         : 'border border-gray-200 hover:border-violet-300'
                     }`}
                   >
+                    {isLight && (
+                      <span className="absolute top-2 right-2 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">Light</span>
+                    )}
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-2xl">{theme.emoji}</span>
                       <div className="flex-1 min-w-0">
@@ -246,7 +250,7 @@ export default function WeddingWebsiteSettings({
                     </div>
                     <div className="flex gap-1.5">
                       <div
-                        className="w-6 h-6 rounded-full border border-white shadow-sm"
+                        className="w-6 h-6 rounded-full border border-gray-200 shadow-sm"
                         style={{ background: theme.bg }}
                       />
                       <div
@@ -264,7 +268,7 @@ export default function WeddingWebsiteSettings({
             </div>
 
             <a
-              href={weddingWebsiteUrl}
+              href={`${weddingWebsiteUrl}?preview=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-violet-600 border border-violet-200 hover:bg-violet-50 transition-colors"

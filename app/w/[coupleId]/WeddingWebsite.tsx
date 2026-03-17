@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
 // ─── Theme Definitions ────────────────────────────────────────────────────────
@@ -131,6 +132,48 @@ export const THEMES = {
     bodyFont: "'EB Garamond', Georgia, serif",
     gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
     grain: 'rgba(139,107,61,0.02)',
+  },
+  blush: {
+    name: 'Blush & White',
+    emoji: '🌸',
+    bg: '#fff8f9',
+    bgMid: '#fff0f3',
+    accent: '#d9607a',
+    accentLight: 'rgba(217,96,122,0.08)',
+    accentBorder: 'rgba(217,96,122,0.2)',
+    text: '#3a1a22',
+    textMid: 'rgba(58,26,34,0.65)',
+    textFaint: 'rgba(58,26,34,0.35)',
+    card: 'rgba(217,96,122,0.04)',
+    cardBorder: 'rgba(217,96,122,0.14)',
+    btnPrimary: 'linear-gradient(135deg, #b84060 0%, #d9607a 50%, #b84060 100%)',
+    btnText: '#fff',
+    heroBg: 'linear-gradient(160deg, #fff8f9 0%, #ffe4ec 50%, #fff8f9 100%)',
+    font: "'Cormorant Garamond', Georgia, serif",
+    bodyFont: "'EB Garamond', Georgia, serif",
+    gfont: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=EB+Garamond:ital,wght@0,400;1,400',
+    grain: 'rgba(217,96,122,0.02)',
+  },
+  garden: {
+    name: 'Garden White',
+    emoji: '🌿',
+    bg: '#f8fbf8',
+    bgMid: '#eff7ef',
+    accent: '#3a7d52',
+    accentLight: 'rgba(58,125,82,0.08)',
+    accentBorder: 'rgba(58,125,82,0.2)',
+    text: '#1a3325',
+    textMid: 'rgba(26,51,37,0.65)',
+    textFaint: 'rgba(26,51,37,0.38)',
+    card: 'rgba(58,125,82,0.04)',
+    cardBorder: 'rgba(58,125,82,0.12)',
+    btnPrimary: 'linear-gradient(135deg, #2a6040 0%, #3a7d52 50%, #2a6040 100%)',
+    btnText: '#fff',
+    heroBg: 'linear-gradient(160deg, #f8fbf8 0%, #e6f5ec 50%, #f8fbf8 100%)',
+    font: "'Playfair Display', Georgia, serif",
+    bodyFont: "'Lora', Georgia, serif",
+    gfont: 'Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,700&family=Lora:ital,wght@0,400;1,400',
+    grain: 'rgba(58,125,82,0.02)',
   },
 } as const;
 
@@ -407,6 +450,9 @@ export default function WeddingWebsite({
   proposalStory,
   coupleMessage,
 }: Props) {
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get('preview') === '1';
+
   const t = THEMES[weddingTheme as ThemeKey] ?? THEMES.champagne;
   const hasStoryContentInit = !!(howWeMet || proposalStory || coupleMessage);
   const [activeTab, setActiveTab] = useState<'story' | 'schedule' | 'wishes' | 'gifts' | 'gallery'>(
@@ -493,10 +539,21 @@ export default function WeddingWebsite({
 
       <div style={{ background: t.bg, minHeight: '100dvh', fontFamily: t.bodyFont, color: t.text }}>
 
+        {/* Preview back banner */}
+        {isPreview && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: 'rgba(154,33,67,0.95)', backdropFilter: 'blur(8px)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <a href="/couple/dashboard" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 600, fontFamily: 'system-ui, sans-serif' }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Back to dashboard
+            </a>
+            <span style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.75)', fontFamily: 'system-ui, sans-serif', textAlign: 'center' }}>Preview mode — this is how guests see your website</span>
+          </div>
+        )}
+
         {/* ══════════════════════════════════════════════════
             HERO
         ══════════════════════════════════════════════════ */}
-        <section className="hero-enter relative" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+        <section className="hero-enter relative" style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', paddingTop: isPreview ? '44px' : undefined }}>
 
           {/* Background layer */}
           {avatarUrl ? (

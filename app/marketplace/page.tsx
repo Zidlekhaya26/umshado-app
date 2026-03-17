@@ -304,11 +304,11 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
             {vendor.logoUrl ? (
               <button type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
-                style={{ width: 50, height: 50, borderRadius: 12, overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', position: 'relative' }}>
-                <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'cover' }} />
+                style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', position: 'relative' }}>
+                <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'contain', padding: 4 }} />
               </button>
             ) : (
-              <div style={{ width: 50, height: 50, borderRadius: 12, flexShrink: 0, background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif', border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>
+              <div style={{ width: 50, height: 50, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif', border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>
                 {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
               </div>
             )}
@@ -503,7 +503,12 @@ export default function Marketplace() {
       } else if (scope === 'country') {
         const uCC = location.countryCode.toUpperCase();
         const uCN = location.country.toLowerCase();
-        f = f.filter(v => v.countryCode.toUpperCase() === uCC || v.country.toLowerCase() === uCN || v.country.toLowerCase().includes(uCN) || uCN.includes(v.country.toLowerCase()));
+        // Exact matches only — substring checks caused cross-country bleed (e.g. Zimbabwe showing in South Africa)
+        f = f.filter(v => {
+          if (v.countryCode && v.countryCode.toUpperCase() === uCC) return true;
+          if (v.country.toLowerCase() === uCN) return true;
+          return false;
+        });
       }
     }
 
@@ -564,11 +569,10 @@ export default function Marketplace() {
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 10 }}>
               <div>
                 <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 700, letterSpacing: 1.8, textTransform: 'uppercase', lineHeight: 1, marginBottom: 4 }}>uMshado</div>
-                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>Wedding Marketplace</h1>
+                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>uMshado Marketplace</h1>
                 </div>
                 <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                  {loading ? '…' : locationLabel || `${allVendors.length} trusted vendors`}
+                  {loading ? '…' : locationLabel || (location ? `Vendors near you` : `${allVendors.length} trusted vendors`)}
                 </p>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>

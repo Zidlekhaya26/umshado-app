@@ -17,27 +17,30 @@ export function generateWhatsappInviteLink(opts: {
   const rsvp = `${base}/rsvp/${guestId}${token ? `?t=${encodeURIComponent(token)}&view=card` : ''}`;
 
   const host = coupleName ? coupleName : 'the couple';
-  const greeting = guestName ? `Hi ${guestName},\n\n` : '';
+  const greeting = guestName ? `Hi ${guestName}! 👋\n\n` : '';
 
   // Optionally include date and venue when available
-  let eventLine = '';
+  let dateLine = '';
+  let venueLine = '';
   try {
     if (coupleDate) {
       const d = new Date(coupleDate);
       if (!isNaN(d.getTime())) {
-        eventLine += `When: ${d.toLocaleString(undefined, { dateStyle: 'long' })}`;
+        dateLine = `📅 ${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
       }
     }
   } catch (e) {
     // ignore formatting errors
   }
   if (coupleVenue) {
-    eventLine += (eventLine ? ' — ' : '') + `Where: ${coupleVenue}`;
+    venueLine = `📍 ${coupleVenue}`;
   }
 
+  const eventDetails = [dateLine, venueLine].filter(Boolean).join('\n');
+
   const message = nudge
-    ? `${greeting}Just a friendly reminder — ${host} are still waiting on your RSVP! We'd love to know if you can make it.\nRespond here:\n${rsvp}`.trim()
-    : `${greeting}${host} invites you to their wedding 💍${eventLine ? `\n${eventLine}` : ''}\nView your invite & RSVP:\n${rsvp}`.trim();
+    ? `${greeting}Just a friendly reminder 💌\n\n${host} are still waiting on your RSVP! We'd love to know if you can make it.\n\nRespond here 👇\n${rsvp}`.trim()
+    : `${greeting}💍 *${host}* invite you to celebrate their wedding!\n\n${eventDetails ? `${eventDetails}\n\n` : ''}View your personal invite & RSVP 👇\n${rsvp}`.trim();
 
   if (!phone) return rsvp;
 

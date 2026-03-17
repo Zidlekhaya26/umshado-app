@@ -69,6 +69,24 @@ function EmptyState({ icon, title, description, actionLabel, onAction }: {
   );
 }
 
+// ─── Budget category colors ──────────────────────────────
+const CATEGORY_PALETTES = [
+  { bg: '#fef3c7', border: '#fbbf24', text: '#92400e' }, // amber
+  { bg: '#ede9fe', border: '#8b5cf6', text: '#5b21b6' }, // violet
+  { bg: '#dcfce7', border: '#22c55e', text: '#166534' }, // green
+  { bg: '#fee2e2', border: '#f87171', text: '#991b1b' }, // red
+  { bg: '#e0f2fe', border: '#38bdf8', text: '#075985' }, // sky
+  { bg: '#fce7f3', border: '#f472b6', text: '#9d174d' }, // pink
+  { bg: '#d1fae5', border: '#34d399', text: '#065f46' }, // emerald
+  { bg: '#ffedd5', border: '#fb923c', text: '#9a3412' }, // orange
+];
+function categoryColor(cat: string | null): { bg: string; border: string; text: string } {
+  if (!cat) return CATEGORY_PALETTES[0];
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash = ((hash << 5) - hash) + cat.charCodeAt(i);
+  return CATEGORY_PALETTES[Math.abs(hash) % CATEGORY_PALETTES.length];
+}
+
 // ─── Main Content ────────────────────────────────────────
 
 function CouplePlannerContent() {
@@ -103,6 +121,10 @@ function CouplePlannerContent() {
   // Task form
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
+  // Task edit
+  const [editingTask, setEditingTask] = useState<DbTask | null>(null);
+  const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [editTaskDate, setEditTaskDate] = useState('');
 
   // Budget form (add + edit)
   const [newBudgetTitle, setNewBudgetTitle] = useState('');
@@ -145,19 +167,18 @@ function CouplePlannerContent() {
       if (!user) { router.replace('/auth/sign-in'); return; }
       setUserId(user.id);
       await loadData(user.id);
-      // fetch couple profile name
+      // fetch couple profile name + partner name + date/venue
       try {
-        // Try to fetch extended profile fields (may not exist on older schemas)
-        const { data: profile, error } = await supabase.from('profiles').select('full_name, wedding_date, wedding_venue').eq('id', user.id).maybeSingle();
-        if (!error && profile) {
-          setCoupleName((profile as any)?.full_name ?? null);
-          setCoupleDate((profile as any)?.wedding_date ?? null);
-          setCoupleVenue((profile as any)?.wedding_venue ?? null);
-        } else {
-          // Fallback to just full_name if extended columns don't exist
-          const { data: p2 } = await supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle();
-          setCoupleName((p2 as any)?.full_name ?? null);
-        }
+        const [profRes, coupleRes] = await Promise.all([
+          supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle(),
+          supabase.from('couples').select('partner_name, wedding_date, location').eq('id', user.id).maybeSingle(),
+        ]);
+        const myName = profRes.data?.full_name ?? null;
+        const partnerName = coupleRes.data?.partner_name ?? null;
+        const combined = myName && partnerName ? `${myName} & ${partnerName}` : myName;
+        setCoupleName(combined);
+        setCoupleDate(coupleRes.data?.wedding_date ?? null);
+        setCoupleVenue(coupleRes.data?.location ?? null);
       } catch (e) {
         setCoupleName(null);
       }
@@ -279,6 +300,18 @@ function CouplePlannerContent() {
     const { data, error } = await supabase.from('couple_tasks').insert({ couple_id: userId, title: newTaskTitle.trim(), due_date: newTaskDate || null }).select().single();
     if (!error && data) setTasks(prev => [...prev, data]);
     setNewTaskTitle(''); setNewTaskDate(''); setShowTaskModal(false);
+  };
+  const openEditTask = (task: DbTask) => {
+    setEditingTask(task);
+    setEditTaskTitle(task.title);
+    setEditTaskDate(task.due_date ?? '');
+  };
+  const saveEditTask = async () => {
+    if (!editingTask || !editTaskTitle.trim()) return;
+    const updated = { title: editTaskTitle.trim(), due_date: editTaskDate || null };
+    setTasks(prev => prev.map(t => t.id === editingTask.id ? { ...t, ...updated } : t));
+    await supabase.from('couple_tasks').update(updated).eq('id', editingTask.id);
+    setEditingTask(null);
   };
 
   // ── Budget actions ─────────────────────────────────────
@@ -712,21 +745,33 @@ function CouplePlannerContent() {
               {tasks.length === 0 ? (
                 <EmptyState icon="📋" title="No tasks yet" description="Add your first wedding planning task to get started." actionLabel="+ Add Task" onAction={() => setShowTaskModal(true)} />
               ) : (
-                <div className="bg-white rounded-xl border-2 border-gray-200 divide-y divide-gray-100 overflow-hidden">
-                  {tasks.map(task => (
-                    <div key={task.id} className="px-4 py-3.5 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start gap-3">
-                        <input type="checkbox" checked={task.is_done} onChange={() => toggleTask(task)} className="mt-0.5 w-5 h-5 rounded border-2 border-gray-300 text-purple-600 focus:ring-2 focus:ring-purple-500 cursor-pointer" />
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-semibold ${task.is_done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</p>
-                          <p className="text-xs text-gray-500 mt-1">{task.due_date ? new Date(task.due_date).toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' }) : 'No date set'}</p>
+                <div className="space-y-2">
+                  {tasks.map(task => {
+                    const isOverdue = !task.is_done && task.due_date && new Date(task.due_date + 'T23:59:59') < new Date();
+                    return (
+                      <div key={task.id} className={`bg-white rounded-xl border-2 px-4 py-3.5 transition-colors ${task.is_done ? 'border-green-100 opacity-70' : isOverdue ? 'border-red-200' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => toggleTask(task)} className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${task.is_done ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-purple-400'}`}>
+                            {task.is_done && <svg className="w-3 h-3" fill="none" stroke="white" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold ${task.is_done ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</p>
+                            {task.due_date && (
+                              <p className={`text-xs mt-0.5 font-medium ${isOverdue ? 'text-red-500' : 'text-gray-500'}`}>
+                                {isOverdue ? '⚠ ' : ''}{new Date(task.due_date).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </p>
+                            )}
+                          </div>
+                          <button onClick={() => openEditTask(task)} className="text-gray-400 hover:text-purple-500 transition-colors p-1.5" aria-label="Edit task">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                          </button>
+                          <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5" aria-label="Delete task">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
                         </div>
-                        <button onClick={() => deleteTask(task.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete task">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -765,12 +810,18 @@ function CouplePlannerContent() {
                   </div>
 
                   <div className="space-y-3">
-                    {budgetItems.map(item => (
-                      <div key={item.id} className="bg-white rounded-xl border-2 border-gray-200 p-4">
+                    {budgetItems.map(item => {
+                      const pal = categoryColor(item.category);
+                      return (
+                      <div key={item.id} className="bg-white rounded-xl overflow-hidden" style={{ border: `2px solid ${pal.border}` }}>
+                        {/* Colored category header */}
+                        <div className="px-4 py-2 flex items-center gap-2" style={{ background: pal.bg }}>
+                          <span className="text-xs font-bold" style={{ color: pal.text }}>{item.category || 'Uncategorised'}</span>
+                        </div>
+                        <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-gray-900">{item.title}</p>
-                            {item.category && <p className="text-xs text-gray-500 mt-0.5">🏪 {item.category}</p>}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                             <p className="text-sm font-semibold text-gray-700">{format(Number(item.amount))}</p>
@@ -802,8 +853,10 @@ function CouplePlannerContent() {
                             </button>
                           )}
                         </div>
+                        </div>{/* close p-4 */}
                       </div>
-                    ))}
+                    );
+                    })}
                   </div>
                 </>
               )}
@@ -937,7 +990,7 @@ function CouplePlannerContent() {
 
           {/* ════════════ SEATING ════════════ */}
           {activeTab === 'seating' && userId && (
-            <div className="p-4">
+            <div className="p-4 pb-[calc(env(safe-area-inset-bottom)+100px)]">
               <SeatingPlanner guests={guests} userId={userId} />
             </div>
           )}
@@ -958,6 +1011,23 @@ function CouplePlannerContent() {
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowTaskModal(false)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
               <button onClick={addTask} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Add Task</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Task</h3>
+            <div className="space-y-3">
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Task Title</label><input type="text" value={editTaskTitle} onChange={e => setEditTaskTitle(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+              <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Due Date (Optional)</label><input type="date" value={editTaskDate} onChange={e => setEditTaskDate(e.target.value)} className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" /></div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button onClick={() => setEditingTask(null)} className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition-colors">Cancel</button>
+              <button onClick={saveEditTask} className="flex-1 px-4 py-2.5 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition-colors shadow-lg shadow-purple-200">Save</button>
             </div>
           </div>
         </div>

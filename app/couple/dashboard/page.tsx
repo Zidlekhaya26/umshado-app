@@ -122,6 +122,9 @@ function MilestoneTimeline({ daysLeft }: { daysLeft:number }) {
     <div style={{ background:'#fff', borderRadius:20, padding:'18px 18px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)', border:'1.5px solid rgba(0,0,0,0.05)' }}>
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
         <p style={{ margin:0, fontSize:15, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>📅 What to book next</p>
+        <Link href="/marketplace" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
+          Browse vendors <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+        </Link>
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
         {upcoming.map((m, i) => {
@@ -129,7 +132,7 @@ function MilestoneTimeline({ daysLeft }: { daysLeft:number }) {
           const done = diff < -7;
           const now  = Math.abs(diff) <= 7;
           return (
-            <div key={m.label} style={{ display:'flex', alignItems:'center', gap:12, opacity: done ? 0.4 : 1 }}>
+            <Link key={m.label} href="/marketplace" style={{ display:'flex', alignItems:'center', gap:12, opacity: done ? 0.4 : 1, textDecoration:'none' }}>
               <div style={{ width:40, height:40, borderRadius:12, flexShrink:0,
                 background: now ? `${G}18` : done ? '#f5f5f5' : 'rgba(184,151,62,0.06)',
                 border:`1.5px solid ${now ? `${G}40` : 'rgba(0,0,0,0.06)'}`,
@@ -142,11 +145,11 @@ function MilestoneTimeline({ daysLeft }: { daysLeft:number }) {
                 {done
                   ? <span style={{ fontSize:10, color:GRN, fontWeight:700 }}>✓ Done</span>
                   : now
-                  ? <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:`${G}18`, color:G2 }}>NOW</span>
-                  : <span style={{ fontSize:10, color:LITE, fontWeight:600 }}>{diff > 0 ? `in ~${diff}d` : 'overdue'}</span>
+                  ? <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20, background:`${G}18`, color:G2 }}>Find now</span>
+                  : <svg width="14" height="14" fill="none" stroke={LITE} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
                 }
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
@@ -379,26 +382,38 @@ export default function CoupleDashboard() {
             )}
 
             {/* Couple photo */}
-            <button onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}
-              style={{ width:120, height:120, borderRadius:'50%', overflow:'hidden', border:'4px solid rgba(184,151,62,0.5)', flexShrink:0, cursor:'pointer', background:'rgba(255,255,255,0.08)', position:'relative' }}>
-              {uploadingAvatar
-                ? <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                    <div style={{ width:22, height:22, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.2)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }}/>
-                  </div>
-                : coupleProfile?.avatar_url
-                  ? <Image src={coupleProfile.avatar_url} alt="Profile" fill style={{ objectFit:'cover' }} />
-                  : <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:3 }}>
-                      <span style={{ fontSize:42 }}>💍</span>
-                      <span style={{ fontSize:9, color:'rgba(255,255,255,0.4)', letterSpacing:0.8 }}>ADD PHOTO</span>
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:6, flexShrink:0 }}>
+              <button onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}
+                style={{ width:120, height:120, borderRadius:'50%', overflow:'hidden',
+                  border: coupleProfile?.avatar_url ? '4px solid rgba(184,151,62,0.5)' : '3px dashed rgba(184,151,62,0.7)',
+                  cursor:'pointer', background:'rgba(255,255,255,0.08)', position:'relative' }}>
+                {uploadingAvatar
+                  ? <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <div style={{ width:22, height:22, borderRadius:'50%', border:'2px solid rgba(255,255,255,0.2)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }}/>
                     </div>
-              }
-              <div style={{ position:'absolute', bottom:3, right:3, width:30, height:30, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
-                <svg width="13" height="13" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-              </div>
-            </button>
+                  : coupleProfile?.avatar_url
+                    ? <Image src={coupleProfile.avatar_url} alt="Profile" fill style={{ objectFit:'cover' }} />
+                    : <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:6 }}>
+                        <svg width="32" height="32" fill="none" stroke="rgba(184,151,62,0.8)" strokeWidth={1.8} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span style={{ fontSize:10, color:'rgba(255,255,255,0.7)', fontWeight:600, letterSpacing:0.6, textAlign:'center', lineHeight:1.3 }}>TAP TO ADD{'\n'}PHOTO</span>
+                      </div>
+                }
+                <div style={{ position:'absolute', bottom:3, right:3, width:30, height:30, borderRadius:'50%', background:'linear-gradient(135deg,#b8973e,var(--um-gold-dark))', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 6px rgba(0,0,0,0.3)' }}>
+                  <svg width="13" height="13" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </div>
+              </button>
+              {!coupleProfile?.avatar_url && !uploadingAvatar && (
+                <span style={{ fontSize:11, color:'rgba(255,255,255,0.6)', textAlign:'center', maxWidth:110, lineHeight:1.4 }}>
+                  Add your invite photo
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Quick nav */}
@@ -518,7 +533,7 @@ export default function CoupleDashboard() {
           <div className="dc">
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
               <h2 style={{ margin:0, fontSize:15, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>Recent Quotes</h2>
-              <Link href="/couple/bookings" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
+              <Link href="/messages" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
                 View all <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
               </Link>
             </div>
