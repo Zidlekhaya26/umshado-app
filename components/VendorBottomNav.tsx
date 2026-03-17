@@ -15,16 +15,32 @@ export default function VendorBottomNav() {
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
     let mounted = true;
-    (async () => {
+
+    const fetchCount = async () => {
       try {
         const { count } = await supabase.from('notifications')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', user.id).eq('is_read', false);
         if (mounted) setUnreadCount(count || 0);
       } catch {}
-    })();
-    return () => { mounted = false; };
-  }, [user]);
+    };
+
+    fetchCount();
+
+    const channel = supabase
+      .channel(`vendor-notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => { fetchCount(); },
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) { setHasCouple(false); return; }

@@ -13,20 +13,37 @@ export default function BottomNav() {
   const [hasVendor, setHasVendor]         = useState(false);
   const { user } = useAuthRole();
 
-  // Track unread notifications
+  // Track unread notifications — initial fetch + realtime updates
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
     let mounted = true;
-    (async () => {
+
+    const fetchCount = async () => {
       try {
         const { count } = await supabase
           .from('notifications').select('*', { count: 'exact', head: true })
           .eq('user_id', user.id).eq('is_read', false);
         if (mounted) setUnreadCount(count || 0);
       } catch { /* non-fatal */ }
-    })();
-    return () => { mounted = false; };
-  }, [user]);
+    };
+
+    fetchCount();
+
+    // Subscribe to realtime inserts/updates so badge refreshes without a page reload
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        () => { fetchCount(); },
+      )
+      .subscribe();
+
+    return () => {
+      mounted = false;
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
 
   // Track unread messages — single filtered fetch + parallel counts (no N+1)
   useEffect(() => {
