@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 type SeatingRow = { id: string; name?: string; payload: any; created_at: string };
 
@@ -10,10 +11,17 @@ export default function SeatingsPage() {
 
   useEffect(() => { fetchList(); }, []);
 
+  async function getAuthHeader(): Promise<{ Authorization: string } | Record<string, never>> {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) return {};
+    return { Authorization: `Bearer ${session.access_token}` };
+  }
+
   async function fetchList() {
     setLoading(true);
     try {
-      const res = await fetch('/api/seating/list');
+      const auth = await getAuthHeader();
+      const res = await fetch('/api/seating/list', { headers: auth });
       const json = await res.json();
       setRows(json.data || []);
     } catch (e) {
@@ -23,7 +31,8 @@ export default function SeatingsPage() {
 
   async function viewRow(id: string) {
     try {
-      const res = await fetch('/api/seating/get?id=' + encodeURIComponent(id));
+      const auth = await getAuthHeader();
+      const res = await fetch('/api/seating/get?id=' + encodeURIComponent(id), { headers: auth });
       const json = await res.json();
       setSelected(json.data || null);
     } catch (e) { console.error(e); }
@@ -60,7 +69,8 @@ export default function SeatingsPage() {
                   <button onClick={() => copyJson(r.payload)}>Copy JSON</button>{' '}
                   <button onClick={async () => {
                     // ensure full payload is fetched
-                    const res = await fetch('/api/seating/get?id=' + encodeURIComponent(r.id));
+                    const auth = await getAuthHeader();
+                    const res = await fetch('/api/seating/get?id=' + encodeURIComponent(r.id), { headers: auth });
                     const json = await res.json();
                     if (json && json.data && json.data.payload) loadIntoPlanner(json.data.payload);
                   }}>Load</button>
