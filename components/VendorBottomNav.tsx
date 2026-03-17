@@ -99,6 +99,14 @@ export default function VendorBottomNav() {
       ),
     },
     {
+      name: 'Marketplace', href: '/marketplace',
+      icon: (active: boolean) => (
+        <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      ),
+    },
+    {
       name: 'Settings', href: '/vendor/settings',
       icon: (active: boolean) => (
         <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
@@ -107,21 +115,13 @@ export default function VendorBottomNav() {
         </svg>
       ),
     },
-    {
-      name: 'Profile', href: '/vendor/media',
-      icon: (active: boolean) => (
-        <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-    },
   ];
 
   const isActive = (href: string) => {
     if (href === '/vendor/inbox')     return pathname.startsWith('/vendor/inbox') || pathname.startsWith('/messages') || pathname === '/notifications';
+    if (href === '/marketplace')      return pathname.startsWith('/marketplace');
     if (href === '/vendor/settings')  return pathname.startsWith('/vendor/settings');
     if (href === '/vendor/bookings')  return pathname.startsWith('/vendor/bookings');
-    if (href === '/vendor/media')    return ['/vendor/media','/vendor/services','/vendor/packages','/vendor/review'].includes(pathname);
     return pathname === href || pathname.startsWith(href + '/');
   };
 
