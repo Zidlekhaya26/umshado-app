@@ -102,29 +102,56 @@ export default function MessagesIndex() {
         .or(roleFilter).order('last_message_at', { ascending: false });
 
       const rows = (data || []) as ConversationRow[];
-      const resolved = await Promise.all(rows.map(async (row) => {
-        const iAmVendor = activeRole === 'vendor';
-        const { data: lastMsg } = await supabase.from('messages').select('message_text,read,sender_id')
-          .eq('conversation_id', row.id).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (rows.length === 0) { setItems([]); return; }
 
-        const unread = !!(lastMsg && lastMsg.read === false && lastMsg.sender_id !== u.id);
+      const iAmVendor = activeRole === 'vendor';
+      const convIds   = rows.map(r => r.id);
+      const otherIds  = [...new Set(iAmVendor ? rows.map(r => r.couple_id) : rows.map(r => r.vendor_id))];
+
+      // Batch fetch: last messages + other-party info in parallel (3 queries total)
+      const [msgsRes, vendorRes, coupleRes, profileRes] = await Promise.all([
+        supabase.from('messages')
+          .select('conversation_id,message_text,read,sender_id,created_at')
+          .in('conversation_id', convIds)
+          .order('created_at', { ascending: false })
+          .limit(convIds.length * 3),
+        !iAmVendor
+          ? supabase.from('vendors').select('id,business_name,logo_url').in('id', otherIds)
+          : Promise.resolve({ data: [] }),
+        iAmVendor
+          ? supabase.from('couples').select('id,partner_name,avatar_url').in('id', otherIds)
+          : Promise.resolve({ data: [] }),
+        iAmVendor
+          ? supabase.from('profiles').select('id,full_name').in('id', otherIds)
+          : Promise.resolve({ data: [] }),
+      ]);
+
+      // Build lookup maps
+      const lastMsgMap: Record<string, typeof msgsRes.data extends (infer T)[] | null ? T : never> = {};
+      (msgsRes.data || []).forEach((m: any) => { if (!lastMsgMap[m.conversation_id]) lastMsgMap[m.conversation_id] = m; });
+
+      const vendorMap: Record<string, any> = {};
+      (vendorRes.data || []).forEach((v: any) => { vendorMap[v.id] = v; });
+
+      const coupleMap: Record<string, any> = {};
+      (coupleRes.data || []).forEach((c: any) => { coupleMap[c.id] = c; });
+
+      const profileMap: Record<string, any> = {};
+      (profileRes.data || []).forEach((p: any) => { profileMap[p.id] = p; });
+
+      const resolved = rows.map(row => {
+        const lastMsg = lastMsgMap[row.id] as any;
+        const unread  = !!(lastMsg && lastMsg.read === false && lastMsg.sender_id !== u.id);
 
         if (iAmVendor) {
-          try {
-            const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
-            const d = await getCoupleDisplayName(row.couple_id);
-            return { id: row.id, otherName: d.displayName || 'Couple', otherRole: 'couple' as const, logoUrl: d.avatarUrl || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
-          } catch {
-            return { id: row.id, otherName: 'Couple', otherRole: 'couple' as const, logoUrl: null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
-          }
+          const c = coupleMap[row.couple_id];
+          const p = profileMap[row.couple_id];
+          return { id: row.id, otherName: c?.partner_name || p?.full_name || 'Couple', otherRole: 'couple' as const, logoUrl: c?.avatar_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
         }
 
-        const { data: mv } = await supabase.from('marketplace_vendors').select('business_name,logo_url').eq('vendor_id', row.vendor_id).maybeSingle();
-        if (mv?.business_name) return { id: row.id, otherName: mv.business_name, otherRole: 'vendor' as const, logoUrl: mv.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
-
-        const { data: vd } = await supabase.from('vendors').select('business_name,logo_url').eq('id', row.vendor_id).maybeSingle();
-        return { id: row.id, otherName: vd?.business_name || 'Vendor', otherRole: 'vendor' as const, logoUrl: vd?.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
-      }));
+        const v = vendorMap[row.vendor_id];
+        return { id: row.id, otherName: v?.business_name || 'Vendor', otherRole: 'vendor' as const, logoUrl: v?.logo_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
+      });
 
       setItems(resolved);
     } catch (err) { console.error(err); setItems([]); }
