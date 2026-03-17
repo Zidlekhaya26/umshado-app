@@ -99,7 +99,7 @@ export default function VendorBottomNav() {
       ),
     },
     {
-      name: 'Marketplace', href: '/marketplace',
+      name: 'My Listing', href: user?.id ? `/v/${user.id}` : '/vendor/dashboard',
       icon: (active: boolean) => (
         <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -119,7 +119,7 @@ export default function VendorBottomNav() {
 
   const isActive = (href: string) => {
     if (href === '/vendor/inbox')     return pathname.startsWith('/vendor/inbox') || pathname.startsWith('/messages') || pathname === '/notifications';
-    if (href === '/marketplace')      return pathname.startsWith('/marketplace');
+    if (href.startsWith('/v/'))        return pathname.startsWith('/v/');
     if (href === '/vendor/settings')  return pathname.startsWith('/vendor/settings');
     if (href === '/vendor/bookings')  return pathname.startsWith('/vendor/bookings');
     return pathname === href || pathname.startsWith(href + '/');
