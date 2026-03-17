@@ -308,12 +308,13 @@ export default function VendorDashboard() {
 
   const profileChecks = vendor ? {
     businessInfo: !!vendor.business_name && !!vendor.category && !!vendor.location && !!vendor.description,
+    logo: !!vendor.logo_url,
     services: servicesCount > 0, packages: packagesCount > 0,
     portfolio: Array.isArray(vendor.portfolio_urls) && vendor.portfolio_urls.length > 0,
     contact: !!(vendor.contact?.whatsapp || vendor.contact?.phone),
   } : null;
   const completedSteps = profileChecks ? Object.values(profileChecks).filter(Boolean).length : 0;
-  const totalSteps = 5;
+  const totalSteps = 6;
   const pct = Math.round((completedSteps / totalSteps) * 100);
   const requiresOnboarding = needsOnboarding !== null ? Boolean(needsOnboarding) : ((vendor as any)?.onboarding_completed === false);
 
@@ -456,19 +457,40 @@ export default function VendorDashboard() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {!profileChecks?.businessInfo && <Link href="/vendor/onboarding" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Add business name, category &amp; description</Link>}
+                  {!profileChecks?.logo && <Link href="/vendor/profile/edit" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Upload a profile logo</Link>}
                   {!profileChecks?.services && <Link href="/vendor/services" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Select at least 1 service</Link>}
                   {!profileChecks?.packages && <Link href="/vendor/packages" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Create at least 1 package</Link>}
                   {!profileChecks?.portfolio && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Upload a portfolio image</Link>}
-                  {!profileChecks?.contact && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Add contact details</Link>}
+                  {!profileChecks?.contact && <Link href="/vendor/profile/edit" style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12.5, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ opacity: 0.7 }}>→</span> Add contact details</Link>}
                 </div>
               </div>
             ) : vendor?.is_published ? (
-              <div style={{ background: 'linear-gradient(135deg,#1e4a30,#2d7a4f)', borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 18px rgba(30,74,48,0.22)' }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>You&apos;re live on the marketplace</p>
-                  <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)' }}>Couples can discover and contact you</p>
+              <div style={{ background: 'linear-gradient(135deg,#1e4a30,#2d7a4f)', borderRadius: 18, padding: '16px 20px', boxShadow: '0 4px 18px rgba(30,74,48,0.22)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>You&apos;re live on the marketplace</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.6)' }}>Couples can discover and contact you</p>
+                  </div>
+                  <button onClick={handleShareProfile} className="vd-share-btn" style={{ padding: '9px 16px', borderRadius: 11, border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', transition: 'background .14s', fontFamily: 'inherit', flexShrink: 0 }}>Share</button>
                 </div>
-                <button onClick={handleShareProfile} className="vd-share-btn" style={{ padding: '9px 16px', borderRadius: 11, border: 'none', background: 'rgba(255,255,255,0.15)', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', transition: 'background .14s', fontFamily: 'inherit' }}>Share</button>
+                {pct < 100 && profileChecks && (
+                  <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.15)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>Profile {pct}% complete — stronger profiles get more enquiries</span>
+                      <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.55)' }}>{completedSteps}/{totalSteps}</span>
+                    </div>
+                    <div style={{ height: 4, background: 'rgba(255,255,255,0.2)', borderRadius: 2, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: pct + '%', background: 'rgba(255,255,255,0.7)', borderRadius: 2, transition: 'width 0.4s ease' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
+                      {!profileChecks.logo && <Link href="/vendor/profile/edit" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>→ Upload a profile logo</Link>}
+                      {!profileChecks.businessInfo && <Link href="/vendor/onboarding" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>→ Complete business info</Link>}
+                      {!profileChecks.packages && <Link href="/vendor/packages" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>→ Add a package</Link>}
+                      {!profileChecks.portfolio && <Link href="/vendor/media" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>→ Upload portfolio images</Link>}
+                      {!profileChecks.contact && <Link href="/vendor/profile/edit" style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>→ Add contact details</Link>}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <div style={{ background: `linear-gradient(135deg,${CR},${CR2})`, borderRadius: 18, padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 18px rgba(154,33,67,0.25)' }}>
