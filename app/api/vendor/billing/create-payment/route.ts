@@ -2,18 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// PayFast plan amounts in ZAR cents (PayFast uses integers)
-const PLAN_AMOUNTS: Record<string, number> = {
-  starter: 29900,
-  pro: 69900,
-  elite: 129900,
-};
+type BillingType = 'pro' | 'verification' | 'boost';
+type BillingCycle = 'monthly' | 'yearly';
 
-const PLAN_LABELS: Record<string, string> = {
-  starter: 'uMshado Starter Plan',
-  pro: 'uMshado Pro Plan',
-  elite: 'uMshado Elite Plan',
-};
+const PRICE_CENTS = {
+  pro: { monthly: 4999, yearly: 49900 },
+  verification: 9900,
+  boost: 19900,
+} as const;
+
+const ITEM_LABELS = {
+  pro: 'uMshado Pro Subscription',
+  verification: 'uMshado Business Verification (One-time)',
+  boost: 'uMshado Marketplace & Community Boost (30 days)',
+} as const;
+
+function getBillingAmount(type: BillingType, cycle: BillingCycle): number {
+  if (type === 'pro') return PRICE_CENTS.pro[cycle];
+  if (type === 'verification') return PRICE_CENTS.verification;
+  return PRICE_CENTS.boost;
+}
+
+function resolveAuthToken(req: NextRequest, bodyToken?: string): string | undefined {
+  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7).trim();
+  return req.headers.get('x-supabase-auth') || bodyToken;
+}
 
 function generateSignature(data: Record<string, string>, passphrase: string): string {
   // Build query string from ordered params
@@ -31,35 +45,26 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Auth check
-    const authHeader = req.headers.get('authorization') || req.headers.get('cookie') || '';
-    // Use supabase auth from cookie
-    const { data: { user }, error: authError } = await supabase.auth.getUser(
-      req.headers.get('x-supabase-auth') || undefined
-    );
-
-    // Fallback: parse from request body if token passed
+    // Parse body first for fallback token and payment details
     const body = await req.json();
-    const { plan, token } = body;
+    const rawType = body?.type || body?.plan; // keep backward compatibility with old "plan"
+    const type: BillingType = rawType === 'verification' || rawType === 'boost' || rawType === 'pro'
+      ? rawType
+      : 'pro';
+    const billingCycle: BillingCycle = body?.billingCycle === 'yearly' ? 'yearly' : 'monthly';
+    const adCreative = body?.adCreative ?? null;
 
-    let authedUser = user;
-    if (!authedUser && token) {
-      const { data } = await supabase.auth.getUser(token);
-      authedUser = data.user;
-    }
+    const authToken = resolveAuthToken(req, body?.token);
+    const { data: { user: authedUser } } = await supabase.auth.getUser(authToken);
 
     if (!authedUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!plan || !PLAN_AMOUNTS[plan]) {
-      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
-    }
-
     // Get vendor
     const { data: vendor } = await supabase
       .from('vendors')
-      .select('id, business_name, plan')
+      .select('id, business_name, subscription_tier, subscription_status, verified')
       .eq('user_id', authedUser.id)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -74,6 +79,7 @@ export async function POST(req: NextRequest) {
     const passphrase = process.env.PAYFAST_PASSPHRASE || '';
     const isSandbox = process.env.PAYFAST_SANDBOX === 'true';
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://umshado.co.za';
+    const amountCents = getBillingAmount(type, billingCycle);
 
     // Create a payment_intent record in Supabase for tracking
     const { data: intent, error: intentError } = await supabase
@@ -81,10 +87,15 @@ export async function POST(req: NextRequest) {
       .insert({
         vendor_id: vendor.id,
         user_id: authedUser.id,
-        plan,
-        amount_cents: PLAN_AMOUNTS[plan],
+        payment_type: type,
+        plan: type,
+        billing_cycle: type === 'pro' ? billingCycle : null,
+        amount_cents: amountCents,
         status: 'pending',
+        ad_creative: type === 'boost' ? adCreative : null,
+        metadata: type === 'boost' ? { adCreative } : null,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .select('id')
       .single();
@@ -104,11 +115,17 @@ export async function POST(req: NextRequest) {
       name_last: '',
       email_address: authedUser.email || '',
       m_payment_id: intent.id,
-      amount: (PLAN_AMOUNTS[plan] / 100).toFixed(2),
-      item_name: PLAN_LABELS[plan],
-      item_description: `Monthly subscription for ${PLAN_LABELS[plan]}`,
+      amount: (amountCents / 100).toFixed(2),
+      item_name: ITEM_LABELS[type],
+      item_description:
+        type === 'pro'
+          ? `uMshado Pro ${billingCycle} subscription`
+          : type === 'verification'
+            ? 'One-time business verification payment'
+            : '30-day sponsored marketplace/community boost',
       custom_str1: vendor.id,
-      custom_str2: plan,
+      custom_str2: type,
+      custom_str3: type === 'pro' ? billingCycle : '',
     };
 
     // Remove empty values

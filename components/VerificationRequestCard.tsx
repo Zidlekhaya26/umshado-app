@@ -47,7 +47,7 @@ export default function VerificationRequestCard({ vendorVerified }: { vendorVeri
           </div>
           <div>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>Get Verified</p>
-            <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>One-time application · R299</p>
+            <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>One-time application · R99 · No renewals</p>
           </div>
         </div>
         <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20, background: 'rgba(189,152,63,0.2)', color: '#BD983F', letterSpacing: 0.5 }}>BADGE</span>
@@ -88,7 +88,7 @@ export default function VerificationRequestCard({ vendorVerified }: { vendorVeri
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
-          Apply for Verification — R299
+          Apply for Verification — R99
         </Link>
 
         <p style={{ margin: '8px 0 0', fontSize: 10.5, color: '#9ca3af', textAlign: 'center', lineHeight: 1.5 }}>

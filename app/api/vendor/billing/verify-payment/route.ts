@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-// One-time verification fee: R499
-const VERIFICATION_AMOUNT = 49900; // cents
+// One-time verification fee: R99
+const VERIFICATION_AMOUNT = 9900; // cents
 const VERIFICATION_LABEL = 'uMshado Business Verification';
 
 function generateSignature(data: Record<string, string>, passphrase: string): string {
@@ -27,8 +27,10 @@ export async function POST(req: NextRequest) {
     const { token } = body;
 
     let authedUser = null;
+    const bearer = req.headers.get('authorization') || req.headers.get('Authorization');
+    const bearerToken = bearer?.startsWith('Bearer ') ? bearer.slice(7).trim() : null;
     const headerToken = req.headers.get('x-supabase-auth');
-    const authToken = headerToken || token;
+    const authToken = bearerToken || headerToken || token;
 
     if (authToken) {
       const { data } = await supabase.auth.getUser(authToken);

@@ -19,6 +19,12 @@ function addMonths(date: Date, months: number): Date {
   return d;
 }
 
+function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
 export async function POST(req: NextRequest) {
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -41,7 +47,8 @@ export async function POST(req: NextRequest) {
     const paymentStatus = params.payment_status;
     const intentId = params.m_payment_id;
     const vendorId = params.custom_str1;
-    const plan = params.custom_str2;
+    const paymentType = params.custom_str2 || 'pro';
+    const billingCycle = params.custom_str3 || 'monthly';
 
     if (paymentStatus !== 'COMPLETE') {
       // Update intent to failed/cancelled
@@ -53,23 +60,89 @@ export async function POST(req: NextRequest) {
     }
 
     const now = new Date();
-    const planUntil = addMonths(now, 1).toISOString();
+    const nowIso = now.toISOString();
 
-    // Activate vendor plan
-    const { error: vendorError } = await supabase
-      .from('vendors')
-      .update({
-        plan,
-        plan_until: planUntil,
-        featured: plan === 'elite' || plan === 'pro',
-        featured_until: plan === 'elite' ? planUntil : plan === 'pro' ? planUntil : null,
-        updated_at: now.toISOString(),
-      })
-      .eq('id', vendorId);
+    // Load intent for richer metadata (billing cycle + ad creative)
+    const { data: intent } = await supabase
+      .from('payment_intents')
+      .select('id,user_id,payment_type,billing_cycle,ad_creative,metadata')
+      .eq('id', intentId)
+      .maybeSingle();
 
-    if (vendorError) {
-      console.error('Failed to update vendor plan:', vendorError);
-      return new NextResponse('DB error', { status: 500 });
+    const effectiveType = intent?.payment_type || paymentType;
+    const effectiveCycle = intent?.billing_cycle || billingCycle;
+
+    if (effectiveType === 'pro') {
+      const subUntil = addMonths(now, effectiveCycle === 'yearly' ? 12 : 1).toISOString();
+      const { error: vendorError } = await supabase
+        .from('vendors')
+        .update({
+          subscription_tier: 'pro',
+          subscription_status: 'active',
+          subscription_expires_at: subUntil,
+          plan: 'pro',
+          plan_until: subUntil,
+          updated_at: nowIso,
+        })
+        .eq('id', vendorId);
+
+      if (vendorError) {
+        console.error('Failed to update vendor pro subscription:', vendorError);
+        return new NextResponse('DB error', { status: 500 });
+      }
+    }
+
+    if (effectiveType === 'verification') {
+      await supabase
+        .from('verification_requests')
+        .upsert({
+          vendor_id: vendorId,
+          user_id: intent?.user_id || null,
+          amount_cents: Math.round(parseFloat(params.amount_gross || '0') * 100),
+          status: 'paid_pending_review',
+          payfast_payment_id: params.pf_payment_id,
+          paid_at: nowIso,
+          updated_at: nowIso,
+        }, { onConflict: 'vendor_id' });
+
+      await supabase
+        .from('vendors')
+        .update({
+          verification_status: 'paid_pending_review',
+          verification_paid_at: nowIso,
+          updated_at: nowIso,
+        })
+        .eq('id', vendorId);
+    }
+
+    if (effectiveType === 'boost') {
+      const boostEnd = addDays(now, 30).toISOString();
+      const creative = intent?.ad_creative || intent?.metadata?.adCreative || null;
+
+      await supabase
+        .from('vendor_boosts')
+        .insert({
+          vendor_id: vendorId,
+          status: 'active',
+          amount_cents: Math.round(parseFloat(params.amount_gross || '0') * 100),
+          ad_headline: creative?.headline || null,
+          ad_body: creative?.body || null,
+          ad_cta: creative?.cta || null,
+          started_at: nowIso,
+          ends_at: boostEnd,
+          payfast_payment_id: params.pf_payment_id,
+          created_at: nowIso,
+          updated_at: nowIso,
+        });
+
+      await supabase
+        .from('vendors')
+        .update({
+          featured: true,
+          featured_until: boostEnd,
+          updated_at: nowIso,
+        })
+        .eq('id', vendorId);
     }
 
     // Mark intent as complete
@@ -78,18 +151,20 @@ export async function POST(req: NextRequest) {
       .update({
         status: 'complete',
         payfast_payment_id: params.pf_payment_id,
-        updated_at: now.toISOString(),
+        updated_at: nowIso,
       })
       .eq('id', intentId);
 
     // Log the transaction
     await supabase.from('billing_transactions').insert({
       vendor_id: vendorId,
-      plan,
+      plan: effectiveType,
+      payment_type: effectiveType,
+      billing_cycle: effectiveType === 'pro' ? effectiveCycle : null,
       amount_cents: Math.round(parseFloat(params.amount_gross || '0') * 100),
       payfast_payment_id: params.pf_payment_id,
       status: 'complete',
-      created_at: now.toISOString(),
+      created_at: nowIso,
     });
 
     return new NextResponse('OK', { status: 200 });

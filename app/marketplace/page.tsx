@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,57 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { useLocation, distanceKm, type UserLocation } from '@/hooks/useLocation';
+
+/* ─── Sponsored Ad Types & Dummy Data ───────────────────── */
+interface SponsoredAd {
+  id: string;
+  vendorId?: string;
+  headline: string;
+  body: string;
+  cta: string;
+  category: string;
+  color: string;
+  emoji: string;
+}
+
+const DUMMY_ADS: SponsoredAd[] = [
+  {
+    id: 'ad-1',
+    headline: 'Luminary Photography — Now Booking 2026 Dates',
+    body: 'Award-winning wedding photography across South Africa. Over 300 love stories captured. Limited dates available.',
+    cta: 'View Packages',
+    category: 'Photography & Video',
+    color: '#3a7bec',
+    emoji: '📸',
+  },
+  {
+    id: 'ad-2',
+    headline: 'The Grand Botanical — SA\'s Most Sought-After Venue',
+    body: 'Iconic gardens, world-class catering, and accommodation for up to 350 guests. Cape Town & Joburg.',
+    cta: 'Check Availability',
+    category: 'Wedding Venues',
+    color: '#10b981',
+    emoji: '🌿',
+  },
+  {
+    id: 'ad-3',
+    headline: 'Velvet Touch Hair & Makeup — For Your Perfect Day',
+    body: 'Bridal packages from R2 500. Destination weddings welcome. 5-star rated by over 180 brides.',
+    cta: 'Book a Trial',
+    category: 'Makeup & Hair',
+    color: '#ec4899',
+    emoji: '💄',
+  },
+  {
+    id: 'ad-4',
+    headline: 'Bliss Events Catering — From Intimate to Grand',
+    body: 'Traditional & fusion menus tailored to your culture. Halaal, kosher & vegan options available.',
+    cta: 'Get a Quote',
+    category: 'Catering & Food',
+    color: '#e8523a',
+    emoji: '🍽️',
+  },
+];
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface MarketplaceVendor {
@@ -228,6 +279,45 @@ function ScopeSheet({
         </div>
       </div>
     </>
+  );
+}
+
+/* ─── Sponsored Ad Card ─────────────────────────────────── */
+function SponsoredAdCard({ ad, isVendor }: { ad: SponsoredAd; isVendor: boolean }) {
+  const router = useRouter();
+  return (
+    <div style={{ gridColumn: '1 / -1', borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${ad.color}30`, boxShadow: `0 4px 20px ${ad.color}14`, background: '#fff', position: 'relative' }}>
+      {/* Sponsored label */}
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(4px)' }}>
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+        <span style={{ fontSize: 9.5, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>SPONSORED</span>
+      </div>
+
+      {/* Top band */}
+      <div style={{ height: 80, background: `linear-gradient(135deg, ${ad.color}22, ${ad.color}08)`, borderBottom: `1px solid ${ad.color}18`, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 14 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg, ${ad.color}cc, ${ad.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, boxShadow: `0 4px 12px ${ad.color}30` }}>
+          {ad.emoji}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: `${ad.color}15`, color: ad.color, border: `1px solid ${ad.color}25`, fontWeight: 600 }}>{ad.category}</span>
+          </div>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.3 }}>{ad.headline}</h3>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <p style={{ flex: 1, margin: 0, fontSize: 13, color: '#4b5563', lineHeight: 1.55 }}>{ad.body}</p>
+        {!isVendor && (
+          <button
+            onClick={() => ad.vendorId ? router.push(`/v/${ad.vendorId}`) : undefined}
+            style={{ flexShrink: 0, padding: '10px 18px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${ad.color}cc, ${ad.color})`, color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: `0 3px 12px ${ad.color}35`, fontFamily: 'inherit' }}>
+            {ad.cta}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -724,11 +814,20 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
-              {vendors.slice(0, displayedCount).map((v, idx) => (
-                <div key={v.id} style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
-                  <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
-                </div>
-              ))}
+              {vendors.slice(0, displayedCount).map((v, idx) => {
+                const showAdAfter = (idx + 1) % 5 === 0;
+                const adIndex = Math.floor(idx / 5) % DUMMY_ADS.length;
+                return (
+                  <Fragment key={v.id}>
+                    <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
+                      <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
+                    </div>
+                    {showAdAfter && (
+                      <SponsoredAdCard key={`ad-${idx}`} ad={DUMMY_ADS[adIndex]} isVendor={isVendor} />
+                    )}
+                  </Fragment>
+                );
+              })}
             </div>
           )}
           <div ref={loadMoreRef} style={{ height: 40 }} />

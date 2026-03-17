@@ -7,9 +7,9 @@ const THROTTLE_SECONDS: Record<string, number> = {
   save_vendor:  300,  // notify at most once per 5 min per viewer
 };
 
-export async function POST(req: NextRequest, { params }: { params: { vendorId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
   try {
-    const { vendorId } = params;
+    const { vendorId } = await params;
     const { eventType, actorId } = await req.json();
 
     if (!vendorId || !eventType || !actorId) {

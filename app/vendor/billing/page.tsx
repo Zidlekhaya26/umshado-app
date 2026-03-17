@@ -5,373 +5,334 @@ import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import { LoadingPage } from '@/components/ui/UmshadoLogo';
+import { getEffectiveTier, getTrialDaysLeft, type VendorSubscription } from '@/lib/subscription';
+import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 
-type VendorPlan = {
-  id?: string | null;
-  plan?: string | null;
-  plan_until?: string | null;
-  featured?: boolean | null;
-  featured_until?: string | null;
-  business_name?: string | null;
-  email?: string | null;
-  verified?: boolean | null;
-  verification_status?: string | null;
-};
+function CheckIcon({ color = CR }: { color?: string }) {
+  return (
+    <svg width="14" height="14" fill="none" stroke={color} strokeWidth={2.5} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
 
-type PlanKey = 'starter' | 'pro' | 'elite';
+function TrialBanner({ daysLeft }: { daysLeft: number }) {
+  const pct = Math.round(((30 - daysLeft) / 30) * 100);
+  const urgent = daysLeft <= 7;
+  return (
+    <div style={{ borderRadius: 16, padding: '16px 18px', background: urgent ? `linear-gradient(135deg,${CRX},${CR})` : 'linear-gradient(135deg,#0f2027,#203a43,#2c5364)', color: '#fff', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: -30, right: -30, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.04)', pointerEvents: 'none' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div>
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase', color: urgent ? 'rgba(255,255,255,0.7)' : '#BD983F' }}>{urgent ? 'Trial ending soon' : 'Free trial active'}</p>
+          <p style={{ margin: '3px 0 0', fontSize: 20, fontWeight: 800, fontFamily: 'Georgia,serif' }}>{daysLeft} {daysLeft === 1 ? 'day' : 'days'} left</p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>All features unlocked</p>
+          <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>except Verification</p>
+        </div>
+      </div>
+      <div style={{ height: 5, borderRadius: 4, background: 'rgba(255,255,255,0.15)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 4, background: urgent ? '#fff' : '#BD983F' }} />
+      </div>
+      <p style={{ margin: '8px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.55)' }}>{pct}% of trial used · Upgrade before it ends to keep all features</p>
+    </div>
+  );
+}
 
-const PLANS = [
-  {
-    key: 'starter' as PlanKey,
-    label: 'Starter',
-    price: 159,
-    priceLabel: 'R159/mo',
-    badge: null,
-    features: [
-      'Up to 3 packages',
-      'Basic 7-day insights',
-      'WhatsApp reply button on profile',
-      'Marketplace listing',
-    ],
-    highlight: false,
-  },
-  {
-    key: 'pro' as PlanKey,
-    label: 'Pro',
-    price: 359,
-    priceLabel: 'R359/mo',
-    badge: 'Most Popular',
-    features: [
-      'Unlimited packages',
-      '30-day insights dashboard',
-      'Featured badge on profile',
-      'Priority quote sorting',
-      'Quote analytics',
-    ],
-    highlight: true,
-  },
-  {
-    key: 'elite' as PlanKey,
-    label: 'Elite',
-    price: 499,
-    priceLabel: 'R499/mo',
-    badge: null,
-    features: [
-      'Everything in Pro',
-      'Top-of-category placement',
-      'Monthly promotional boosts',
-      'Dedicated support',
-    ],
-    highlight: false,
-  },
-];
+function FreeBanner() {
+  return (
+    <div style={{ borderRadius: 16, padding: '14px 18px', background: '#f9f5f0', border: `1.5px solid ${BOR}`, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#e8d5d0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="18" height="18" fill="none" stroke={MUT} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      </div>
+      <div>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: DK }}>Free plan</p>
+        <p style={{ margin: '2px 0 0', fontSize: 11.5, color: MUT }}>Your trial has ended. Upgrade to Pro to unlock all features.</p>
+      </div>
+    </div>
+  );
+}
+
+function ProBanner({ expiresAt }: { expiresAt: string | null }) {
+  const exp = expiresAt ? new Date(expiresAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+  return (
+    <div style={{ borderRadius: 16, padding: '14px 18px', background: `linear-gradient(135deg,${CRX},${CR})`, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3l14 9-14 9V3z" /></svg>
+      </div>
+      <div>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>Pro plan — active</p>
+        {exp && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>Renews {exp}</p>}
+      </div>
+    </div>
+  );
+}
+
+type BillingVendor = VendorSubscription & { id?: string; business_name?: string | null; email?: string };
+type AdCreative = { headline: string; body: string; cta: string };
 
 export default function VendorBilling() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [paying, setPaying] = useState<PlanKey | null>(null);
-  const [requestingVerify, setRequestingVerify] = useState(false);
-  const [vendor, setVendor] = useState<VendorPlan | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [loading, setLoading]     = useState(true);
+  const [vendor, setVendor]       = useState<BillingVendor | null>(null);
+  const [billingCycle, setCycle]  = useState<'monthly' | 'yearly'>('monthly');
+  const [submitting, setSubmitting] = useState<string | null>(null);
+  const [ad, setAd]               = useState<AdCreative>({ headline: '', body: '', cta: 'View Profile' });
+  const [adFocused, setAdFocused] = useState('');
+  const [errorMsg, setErrorMsg]   = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
-      setLoading(true);
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const user = userData?.user;
-        if (!user) { router.push('/auth/sign-in'); return; }
-
-        const { data: vendorByUser } = await supabase
-          .from('vendors')
-          .select('id,plan,plan_until,featured,featured_until,business_name,verified,verification_status')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        const { data: vendorById } = await supabase
-          .from('vendors')
-          .select('id,plan,plan_until,featured,featured_until,business_name,verified,verification_status')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        const v = vendorByUser || vendorById || null;
-        setVendor(v ? { ...v, email: user.email } : { email: user.email });
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load billing info. Please try again.');
-      } finally {
-        setLoading(false);
-      }
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/auth/sign-in'); return; }
+      const { data } = await supabase
+        .from('vendors')
+        .select('id,business_name,subscription_tier,subscription_status,trial_started_at,subscription_expires_at,verified,verification_paid_at,verification_status,created_at')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setVendor(data ? { ...data, email: user.email } : { email: user.email, created_at: user.created_at });
+      setLoading(false);
     })();
   }, [router]);
 
-  const handleUpgrade = async (planKey: PlanKey) => {
-    setPaying(planKey);
-    setError(null);
+  const initiatePayment = async (type: string) => {
+    setSubmitting(type); setErrorMsg(null);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/vendor/billing/create-payment', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-supabase-auth': session?.access_token || '',
-        },
-        body: JSON.stringify({ plan: planKey }),
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ type, billingCycle, adCreative: type === 'boost' ? ad : undefined }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Payment initiation failed');
-      window.location.href = data.redirectUrl;
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setPaying(null);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Payment failed');
+      window.location.href = json.redirectUrl;
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Something went wrong. Please try again.');
+      setSubmitting(null);
     }
   };
-
-  const handleRequestVerification = async () => {
-    setRequestingVerify(true);
-    setError(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/vendor/billing/verify-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-supabase-auth': session?.access_token || '',
-        },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not initiate verification');
-      window.location.href = data.redirectUrl;
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setRequestingVerify(false);
-    }
-  };
-
-  const currentPlan = (vendor?.plan || 'free').toLowerCase();
-  const planUntil = vendor?.plan_until ? new Date(vendor.plan_until).toLocaleDateString('en-ZA') : null;
-  const featuredUntil = vendor?.featured_until ? new Date(vendor.featured_until).toLocaleDateString('en-ZA') : null;
 
   if (loading) return <LoadingPage />;
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="w-full max-w-none md:max-w-[900px] md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)]">
-        <div className="bg-white border-b border-gray-200 px-4 py-5">
-          <h1 className="text-xl font-bold text-gray-900">Billing & Plans</h1>
-          <p className="text-sm text-gray-500 mt-1">Upgrade to unlock more features and visibility</p>
-        </div>
+  const tier               = getEffectiveTier(vendor || {});
+  const daysLeft           = getTrialDaysLeft(vendor || {});
+  const isPro              = tier === 'pro';
+  const isVerified         = vendor?.verified;
+  const verificationStatus = vendor?.verification_status;
 
-        <div className="flex-1 px-4 py-5 space-y-5 overflow-y-auto">
-          {/* Current plan status */}
-          <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-200 p-4">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm uppercase" style={{ background: 'var(--um-crimson)' }}>
-              {currentPlan[0]}
+  const IS = (f: string): React.CSSProperties => ({
+    width: '100%', padding: '11px 14px', borderRadius: 10,
+    border: `1.5px solid ${adFocused === f ? CR : BOR}`,
+    outline: 'none', fontSize: 13, color: DK, background: '#fff',
+    fontFamily: 'inherit', boxSizing: 'border-box',
+    boxShadow: adFocused === f ? `0 0 0 3px rgba(154,33,67,0.08)` : 'none',
+    transition: 'border-color .14s,box-shadow .14s',
+  });
+
+  return (
+    <div style={{ minHeight: '100svh', background: BG, fontFamily: "'DM Sans',system-ui,sans-serif" }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} input,textarea,button{font-family:inherit!important}`}</style>
+
+      {/* Header */}
+      <div style={{ background: `linear-gradient(160deg,${CRX} 0%,${CR} 52%,#c03050 100%)`, padding: '20px 20px 24px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 130, height: 130, borderRadius: '50%', border: '1.5px solid rgba(189,152,63,0.1)', pointerEvents: 'none' }} />
+        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 14 }}>
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" /></svg>
+          Back
+        </button>
+        <h1 style={{ margin: '0 0 3px', fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Billing & Plans</h1>
+        <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>Manage your subscription and boost your visibility</p>
+      </div>
+
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '20px 16px calc(100px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+        {/* Status */}
+        {tier === 'trial' && <TrialBanner daysLeft={daysLeft} />}
+        {tier === 'free'  && <FreeBanner />}
+        {tier === 'pro'   && <ProBanner expiresAt={vendor?.subscription_expires_at || null} />}
+
+        {errorMsg && <div style={{ padding: '12px 16px', borderRadius: 12, background: '#fef2f2', border: '1.5px solid #fca5a5', color: '#dc2626', fontSize: 13 }}>{errorMsg}</div>}
+
+        {/* ── Pro upgrade card ───────────────────── */}
+        {!isPro && (
+          <div style={{ borderRadius: 20, overflow: 'hidden', border: `2px solid ${CR}`, boxShadow: `0 8px 32px rgba(154,33,67,0.14)` }}>
+            <div style={{ background: `linear-gradient(135deg,${CRX},${CR})`, padding: '18px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.2, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase' }}>Upgrade to</span>
+                  <h2 style={{ margin: '2px 0 0', fontSize: 24, fontWeight: 900, color: '#fff', fontFamily: 'Georgia,serif' }}>Pro</h2>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontSize: 28, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{billingCycle === 'monthly' ? 'R49.99' : 'R499'}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{billingCycle === 'monthly' ? 'per month' : 'per year · save R101'}</p>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 0, marginTop: 14, background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 3 }}>
+                {(['monthly', 'yearly'] as const).map(c => (
+                  <button key={c} onClick={() => setCycle(c)} style={{ flex: 1, padding: '7px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', transition: 'all .14s', background: billingCycle === c ? '#fff' : 'transparent', color: billingCycle === c ? CR : 'rgba(255,255,255,0.65)' }}>
+                    {c === 'monthly' ? 'Monthly' : 'Yearly · save R101'}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500">Current plan</p>
-              <p className="font-bold text-gray-900 capitalize">{currentPlan}</p>
-              {planUntil && <p className="text-xs text-gray-400">Renews {planUntil}</p>}
-              {vendor?.featured && featuredUntil && (
-                <p className="text-xs" style={{ color: 'var(--um-crimson)' }}>Featured until {featuredUntil}</p>
-              )}
+            <div style={{ background: '#fff', padding: '18px 20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', marginBottom: 16 }}>
+                {['Unlimited packages','Unlimited photos','WhatsApp button on profile','90-day analytics','Verification eligible','Featured placement eligible','Priority in marketplace','Full quote management'].map(f => (
+                  <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                    <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon /></div>
+                    <span style={{ fontSize: 12.5, color: DK, lineHeight: 1.4 }}>{f}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => initiatePayment('pro')} disabled={submitting !== null}
+                style={{ width: '100%', padding: '14px', borderRadius: 12, border: 'none', cursor: submitting ? 'default' : 'pointer', background: `linear-gradient(135deg,${CR},${CR2})`, color: '#fff', fontSize: 15, fontWeight: 800, fontFamily: 'inherit', boxShadow: `0 4px 18px rgba(154,33,67,0.3)`, opacity: submitting ? .65 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .15s' }}>
+                {submitting === 'pro' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
+                {submitting === 'pro' ? 'Redirecting to PayFast…' : `Upgrade to Pro — ${billingCycle === 'monthly' ? 'R49.99/mo' : 'R499/yr'}`}
+              </button>
+              <p style={{ margin: '8px 0 0', fontSize: 11, color: MUT, textAlign: 'center' }}>Cancel anytime. No hidden fees. Secured by PayFast.</p>
             </div>
           </div>
+        )}
 
-          {error && (
-            <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-              {error}
+        {/* ── Free vs Pro comparison ─────────────── */}
+        {!isPro && (
+          <div style={{ borderRadius: 16, border: `1.5px solid ${BOR}`, background: '#fff', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BOR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: DK }}>Free vs Pro</p>
+              <div style={{ display: 'flex', gap: 20 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: MUT, width: 60, textAlign: 'right' }}>Free</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: CR, width: 90, textAlign: 'right' }}>Pro</span>
+              </div>
+            </div>
+            {[
+              { label: 'Packages',       free: 'Up to 2',  pro: 'Unlimited' },
+              { label: 'Photos',         free: 'Up to 6',  pro: 'Unlimited' },
+              { label: 'Analytics',      free: '7 days',   pro: '90 days' },
+              { label: 'WhatsApp button',free: 'No',       pro: 'Yes' },
+              { label: 'Verification',   free: 'No',       pro: 'Eligible (R99)' },
+              { label: 'Boost & Ads',    free: 'No',       pro: 'Eligible (R199)' },
+            ].map((row, i, arr) => (
+              <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, padding: '11px 18px', borderBottom: i < arr.length - 1 ? `1px solid ${BOR}` : 'none' }}>
+                <span style={{ color: MUT, fontWeight: 500 }}>{row.label}</span>
+                <div style={{ display: 'flex', gap: 20 }}>
+                  <span style={{ color: row.free === 'No' ? '#dc2626' : MUT, width: 60, textAlign: 'right' }}>{row.free}</span>
+                  <span style={{ color: CR, fontWeight: 700, width: 90, textAlign: 'right' }}>{row.pro}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── Verification ──────────────────────── */}
+        <div id="verification" style={{ borderRadius: 16, border: isVerified ? '1.5px solid #86efac' : `1.5px solid ${BOR}`, background: isVerified ? '#f0fdf4' : '#fff', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 18px', background: isVerified ? '#dcfce7' : 'linear-gradient(135deg,#0f0c29,#302b63)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: isVerified ? '#16a34a' : 'rgba(189,152,63,0.2)', border: `1.5px solid ${isVerified ? '#16a34a' : 'rgba(189,152,63,0.4)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" fill="none" stroke={isVerified ? '#fff' : '#BD983F'} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isVerified ? '#15803d' : '#fff' }}>{isVerified ? 'Verified Business' : 'Get Verified'}</p>
+                <p style={{ margin: '1px 0 0', fontSize: 11, color: isVerified ? '#16a34a' : 'rgba(255,255,255,0.5)' }}>{isVerified ? 'Your badge is live on your profile' : 'One-time fee · R99 · No renewals ever'}</p>
+              </div>
+            </div>
+            {isVerified && <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: '#16a34a', color: '#fff' }}>VERIFIED</span>}
+          </div>
+
+          {!isVerified && (
+            <div style={{ padding: '14px 18px' }}>
+              {['Verified shield badge on your profile','Higher placement in marketplace search','Build instant trust with couples','One-time payment — badge is permanent','Full refund if your business cannot be verified'].map(f => (
+                <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#302b63" /></div>
+                  <span style={{ fontSize: 12.5, color: DK }}>{f}</span>
+                </div>
+              ))}
+
+              {verificationStatus === 'paid_pending_review' ? (
+                <div style={{ marginTop: 12, padding: '12px 16px', borderRadius: 12, background: '#fffbeb', border: '1.5px solid #fbbf24', color: '#92400e', fontSize: 13, textAlign: 'center' }}>
+                  Payment received — our team is reviewing your profile (usually 48 hours).
+                </div>
+              ) : (
+                <div style={{ marginTop: 12 }}>
+                  {!isPro && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', marginBottom: 10, fontSize: 12, color: '#9a3412' }}>Verification is available on Pro plan only. Upgrade first.</div>}
+                  <button onClick={() => isPro && initiatePayment('verification')} disabled={!isPro || submitting !== null}
+                    style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: isPro && !submitting ? 'pointer' : 'default', background: isPro ? 'linear-gradient(135deg,#0f0c29,#302b63)' : '#e5e7eb', color: isPro ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: isPro ? '0 3px 12px rgba(15,12,41,0.22)' : 'none', opacity: submitting && submitting !== 'verification' ? .5 : 1, transition: 'all .15s' }}>
+                    {submitting === 'verification' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
+                    {submitting === 'verification' ? 'Redirecting…' : 'Apply for Verification — R99'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
+        </div>
 
-          {PLANS.map((plan) => {
-            const isActive = currentPlan === plan.key;
-            const isLoading = paying === plan.key;
-            const borderClass = plan.highlight ? 'border-2' : isActive ? 'border-2 border-green-400' : 'border border-gray-200';
-            const bgClass = plan.highlight ? 'bg-gradient-to-br from-red-50 to-pink-50' : 'bg-white';
-            const borderStyle = plan.highlight ? { borderColor: 'var(--um-crimson)' } : {};
-
-            return (
-              <div key={plan.key} className={`rounded-xl p-4 relative ${borderClass} ${bgClass}`} style={borderStyle}>
-                {plan.badge && (
-                  <span className="absolute -top-3 left-4 text-white text-xs font-bold px-3 py-0.5 rounded-full" style={{ background: 'var(--um-crimson)' }}>
-                    {plan.badge}
-                  </span>
-                )}
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-bold text-lg text-gray-900">{plan.label}</p>
-                    <p className="text-2xl font-extrabold text-gray-900">{plan.priceLabel}</p>
-                  </div>
-                  {isActive && (
-                    <span className="bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full self-start">
-                      Active
-                    </span>
-                  )}
-                </div>
-                <ul className="space-y-1.5 mb-4">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                      <span className="mt-0.5 shrink-0" style={{ color: 'var(--um-crimson)' }}>✓</span>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => handleUpgrade(plan.key)}
-                  disabled={isActive || paying !== null}
-                  className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                    isActive
-                      ? 'bg-gray-100 text-gray-400 cursor-default'
-                      : plan.highlight
-                      ? 'text-white hover:opacity-90 disabled:opacity-50'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50'
-                  }`}
-                  style={!isActive && plan.highlight ? { background: 'var(--um-crimson)' } : {}}
-                >
-                  {isLoading ? 'Redirecting to PayFast...' : isActive ? 'Current Plan' : `Upgrade to ${plan.label}`}
-                </button>
-              </div>
-            );
-          })}
-
-          <div className="rounded-xl bg-white border border-gray-100 p-4 flex items-center gap-3">
-            <div className="text-2xl">🔒</div>
+        {/* ── Boost & Ads ───────────────────────── */}
+        <div id="boost" style={{ borderRadius: 16, border: '2px solid rgba(189,152,63,0.4)', background: '#fff', overflow: 'hidden', boxShadow: '0 4px 20px rgba(189,152,63,0.1)' }}>
+          <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg,#7c5c0a,#BD983F)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <p className="text-xs font-semibold text-gray-800">Secured by PayFast</p>
-              <p className="text-xs text-gray-500">SA&apos;s leading payment gateway. EFT, cards & instant pay.</p>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.65)', letterSpacing: 1, textTransform: 'uppercase' }}>Advertise</p>
+              <h3 style={{ margin: '2px 0 0', fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Boost & Sponsor</h3>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#fff' }}>R199</p>
+              <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>per month</p>
             </div>
           </div>
 
-          {/* ── Verification Card ─────────────────────── */}
-          <div id="verification" className={`rounded-xl border-2 p-4 ${
-            vendor?.verified
-              ? 'border-blue-300 bg-blue-50'
-              : vendor?.verification_status === 'paid_pending_review'
-              ? 'border-amber-300 bg-amber-50'
-              : 'border-gray-200 bg-white'
-          }`}>
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <p className="font-bold text-lg text-gray-900">Business Verification</p>
-                <p className="text-sm text-gray-600 mt-0.5">R499 one-time fee</p>
+          <div style={{ padding: '16px 20px' }}>
+            {['Featured at top of marketplace','Sponsored ad cards in marketplace scroll','Your ads appear in the Couples Community feed','Star badge and "Sponsored" label on your profile card','Custom headline, message, and call-to-action','30-day campaign · renew anytime'].map(f => (
+              <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+                <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#BD983F" /></div>
+                <span style={{ fontSize: 12.5, color: DK }}>{f}</span>
               </div>
-              {vendor?.verified && (
-                <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full self-start">
-                  ✓ Verified
-                </span>
-              )}
-              {vendor?.verification_status === 'paid_pending_review' && (
-                <span className="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full self-start">
-                  ⏳ Reviewing
-                </span>
-              )}
-            </div>
+            ))}
 
-            <ul className="space-y-1.5 mb-4">
-              {[
-                'Manual review by the uMshado team',
-                'Blue ✓ Verified badge on your profile',
-                'Higher trust & conversion from couples',
-                'Priority placement in search results',
-                'One-time payment — badge is permanent',
-              ].map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="text-blue-500 mt-0.5 shrink-0">✓</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            {vendor?.verified ? (
-              <div className="text-center py-2 text-sm text-blue-700 font-semibold">
-                ✓ Your business is verified
-              </div>
-            ) : vendor?.verification_status === 'paid_pending_review' ? (
-              <div className="bg-amber-100 rounded-lg px-4 py-3 text-sm text-amber-800 text-center">
-                Payment received. The uMshado team is reviewing your profile — usually within 48 hours.
-              </div>
-            ) : (
-              <button
-                onClick={handleRequestVerification}
-                disabled={requestingVerify || paying !== null}
-                className="w-full py-2.5 rounded-lg font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 transition-all"
-              >
-                {requestingVerify ? 'Redirecting to PayFast...' : 'Apply for Verification — R499'}
-              </button>
-            )}
-          </div>
-
-          {/* ── Featured Listing Options ── */}
-          <div id="featured" className="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 to-yellow-50 p-4">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <p className="font-bold text-lg text-gray-900">⭐ Featured Listing</p>
-                <p className="text-sm text-gray-600 mt-0.5">Stand out with highlighted placement</p>
+            {/* Ad creative form */}
+            <div style={{ padding: '14px 16px', borderRadius: 12, background: '#fdfaf4', border: '1.5px solid rgba(189,152,63,0.25)', margin: '16px 0' }}>
+              <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 800, color: '#7c5c0a', letterSpacing: 0.5, textTransform: 'uppercase' }}>Your Ad Creative</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Headline</label>
+                  <input type="text" value={ad.headline} placeholder="e.g. Book Luminary Photography for your big day" maxLength={60}
+                    onFocus={() => setAdFocused('h')} onBlur={() => setAdFocused('')}
+                    onChange={e => setAd({ ...ad, headline: e.target.value })} style={IS('h')} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Short description</label>
+                  <textarea value={ad.body} placeholder="Capturing memories across South Africa — 5-star rated, over 200 weddings shot." rows={2} maxLength={120}
+                    onFocus={() => setAdFocused('b')} onBlur={() => setAdFocused('')}
+                    onChange={e => setAd({ ...ad, body: e.target.value })} style={{ ...IS('b'), resize: 'none' }} />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Button label</label>
+                  <input type="text" value={ad.cta} placeholder="View Profile" maxLength={24}
+                    onFocus={() => setAdFocused('c')} onBlur={() => setAdFocused('')}
+                    onChange={e => setAd({ ...ad, cta: e.target.value })} style={IS('c')} />
+                </div>
               </div>
             </div>
 
-            <ul className="space-y-1.5 mb-4">
-              {[
-                'Highlighted with star badge on marketplace',
-                'Appears in top rows of search results',
-                'Higher click-through rate from couples',
-                'Choose 7-day or 30-day featured period',
-              ].map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="text-amber-600 mt-0.5 shrink-0">✓</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            <div className="grid grid-cols-2 gap-3">
-              <button className="py-2.5 px-3 rounded-lg font-semibold text-sm bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-all">
-                7 Days — R99
-              </button>
-              <button className="py-2.5 px-3 rounded-lg font-semibold text-sm bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 transition-all">
-                30 Days — R299
-              </button>
-            </div>
-          </div>
-
-          {/* ── Sponsored Listing ── */}
-          <div className="rounded-xl border-2 border-indigo-300 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div>
-                <p className="font-bold text-lg text-gray-900">🚀 Sponsored Listing</p>
-                <p className="text-sm text-gray-600 mt-0.5">R149/week</p>
-              </div>
-            </div>
-
-            <ul className="space-y-1.5 mb-4">
-              {[
-                'Top placement in your category',
-                'Priority in couple search results',
-                'Weekly promotional pushes',
-                'Best ROI for high-season weddings',
-              ].map(f => (
-                <li key={f} className="flex items-start gap-2 text-sm text-gray-700">
-                  <span className="text-indigo-600 mt-0.5 shrink-0">✓</span>
-                  {f}
-                </li>
-              ))}
-            </ul>
-
-            <button className="w-full py-2.5 rounded-lg font-semibold text-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-all">
-              Get Sponsored — R149/week
+            {!isPro && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', marginBottom: 10, fontSize: 12, color: '#9a3412' }}>Boost is available on Pro plan only. Upgrade first.</div>}
+            <button onClick={() => isPro && initiatePayment('boost')} disabled={!isPro || submitting !== null}
+              style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: isPro && !submitting ? 'pointer' : 'default', background: isPro ? 'linear-gradient(135deg,#7c5c0a,#BD983F)' : '#e5e7eb', color: isPro ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: isPro ? '0 4px 16px rgba(189,152,63,0.3)' : 'none', opacity: submitting && submitting !== 'boost' ? .5 : 1, transition: 'all .15s' }}>
+              {submitting === 'boost' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
+              {submitting === 'boost' ? 'Redirecting…' : 'Start 30-day Boost Campaign — R199'}
             </button>
+            <p style={{ margin: '8px 0 0', fontSize: 11, color: MUT, textAlign: 'center' }}>Your ads go live instantly after payment is confirmed.</p>
           </div>
+        </div>
 
-          <p className="text-center text-xs text-gray-400 pb-4">
-            Cancel anytime. Plans renew monthly. No hidden fees.
-          </p>
+        {/* PayFast note */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, background: '#fff', border: `1px solid ${BOR}` }}>
+          <svg width="22" height="22" fill="none" stroke={MUT} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+          <div>
+            <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: DK }}>Secured by PayFast</p>
+            <p style={{ margin: '1px 0 0', fontSize: 11, color: MUT }}>SA's leading payment gateway. EFT, cards & instant EFT supported.</p>
+          </div>
         </div>
       </div>
+
       <VendorBottomNav />
     </div>
   );
