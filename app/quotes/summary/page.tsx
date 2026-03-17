@@ -10,11 +10,26 @@ import { trackVendorEvent } from '@/lib/analytics';
 import { getVendorSelectedServices, getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
+type DbPricingMode = 'guest' | 'time' | 'fixed' | 'per-person' | 'package' | 'package-based' | 'event' | 'event-based' | 'quantity' | 'quantity-based' | string;
+
+const DB_TO_API_MODE: Record<string, string> = {
+  'guest':          'guest-based',
+  'time':           'time-based',
+  'fixed':          'fixed',
+  'per-person':     'per-person',
+  'package':        'package-based',
+  'package-based':  'package-based',
+  'event':          'event-based',
+  'event-based':    'event-based',
+  'quantity':       'quantity-based',
+  'quantity-based': 'quantity-based',
+};
+
 interface VendorPackage {
   id: string;
   name: string;
   description: string;
-  pricing_mode: 'guest' | 'time';
+  pricing_mode: DbPricingMode;
   base_price: number;
   base_guests: number;
   base_hours: number;
@@ -248,7 +263,7 @@ function QuoteSummaryContent() {
           vendorId,
           packageId,
           packageName: pkg.name,
-          pricingMode: pkg.pricing_mode === 'guest' ? 'guest-based' : 'time-based',
+          pricingMode: DB_TO_API_MODE[pkg.pricing_mode] ?? pkg.pricing_mode,
           guestCount: pkg.pricing_mode === 'guest' ? guestCount : null,
           hours: pkg.pricing_mode === 'time' ? hours : null,
           basePrice: calculateTotal(),
