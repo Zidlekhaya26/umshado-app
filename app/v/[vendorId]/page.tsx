@@ -4,11 +4,8 @@ import VendorPublicClient from './VendorPublicClient';
 
 /**
  * Public vendor page — accessible to anyone with the link.
- * Uses service role to bypass RLS so shared links always work.
- * NOTE: We intentionally do NOT filter by is_published here
- * because vendors share their /v/ link with clients who may not
- * be logged in. If a vendor is truly unpublished (e.g. suspended),
- * admins can enforce that via the vendors table directly.
+ * Uses service role to bypass RLS (no public SELECT policy on vendors table).
+ * Only published (is_published = true) vendors resolve; all others return 404.
  */
 export default async function VendorPublicPage({ params }: { params: { vendorId: string } }) {
   const { vendorId } = await params;
@@ -18,11 +15,12 @@ export default async function VendorPublicPage({ params }: { params: { vendorId:
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
   const supabase = createClient(supabaseUrl, supabaseKey);
 
-  // Fetch vendor — no is_published filter so shared links always resolve
+  // Only published vendors are publicly accessible; unpublished/suspended return 404
   const { data: vendorData, error: vendorError } = await supabase
     .from('vendors')
-    .select('id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, contact, social_links, verified, top_rated, rating, review_count, is_published')
+    .select('id, business_name, category, location, description, logo_url, cover_url, portfolio_urls, contact, social_links, verified, top_rated, rating, review_count')
     .eq('id', vendorId)
+    .eq('is_published', true)
     .maybeSingle();
 
   if (vendorError) {
@@ -107,6 +105,7 @@ export async function generateMetadata({ params }: { params: { vendorId: string 
       .from('vendors')
       .select('business_name, logo_url, description, category, location')
       .eq('id', vendorId)
+      .eq('is_published', true)
       .maybeSingle();
 
     if (!v) return { title: 'Wedding Vendor | uMshado' };
