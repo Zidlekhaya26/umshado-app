@@ -65,9 +65,17 @@ export async function POST(req: NextRequest) {
     // Load intent for richer metadata (billing cycle + ad creative)
     const { data: intent } = await supabase
       .from('payment_intents')
-      .select('id,user_id,payment_type,billing_cycle,ad_creative,metadata')
+      .select('id,user_id,payment_type,billing_cycle,ad_creative,metadata,status')
       .eq('id', intentId)
       .maybeSingle();
+
+    // Idempotency guard: PayFast retries on non-2xx or network failure.
+    // If the intent is already complete all downstream writes already happened
+    // (vendor update, boost insert, billing_transactions insert). Return 200
+    // immediately so retries are no-ops rather than creating duplicate rows.
+    if (intent?.status === 'complete') {
+      return new NextResponse('OK', { status: 200 });
+    }
 
     const effectiveType = intent?.payment_type || paymentType;
     const effectiveCycle = intent?.billing_cycle || billingCycle;

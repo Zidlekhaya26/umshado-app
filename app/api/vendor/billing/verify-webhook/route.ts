@@ -44,6 +44,19 @@ export async function POST(req: NextRequest) {
       return new NextResponse('OK', { status: 200 });
     }
 
+    // Idempotency guard: if already processed, skip all downstream writes.
+    // This prevents duplicate billing_transactions rows and duplicate admin
+    // notifications on PayFast retries.
+    const { data: existingReq } = await supabase
+      .from('verification_requests')
+      .select('status')
+      .eq('id', verRequestId)
+      .maybeSingle();
+
+    if (existingReq?.status === 'paid_pending_review') {
+      return new NextResponse('OK', { status: 200 });
+    }
+
     // Mark payment received — now awaiting manual review by uMshado team
     const { error: updateError } = await supabase
       .from('verification_requests')
