@@ -21,6 +21,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Non-app directories that should not be linted:
+    "android/**",
+    "scripts/**",
   ]),
 ]);
 
