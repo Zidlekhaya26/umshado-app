@@ -11,6 +11,7 @@ import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/ToastProvider';
 import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 
 function ICS(f:boolean):React.CSSProperties{return{width:'100%',padding:'13px 16px',borderRadius:12,outline:'none',boxSizing:'border-box',border:`1.5px solid ${f?CR:BOR}`,background:'#fff',fontSize:14,color:DK,fontFamily:'inherit',boxShadow:f?`0 0 0 3px rgba(154,33,67,0.09)`:'none',transition:'border-color .14s,box-shadow .14s'};}
@@ -61,12 +62,7 @@ export default function VendorOnboarding(){
     }catch{toast('Something went wrong. Please try again.','error');setSubmitting(false);}
   };
 
-  if(loading)return(
-    <div style={{minHeight:'100svh',display:'flex',alignItems:'center',justifyContent:'center',background:BG}}>
-      <div style={{width:38,height:38,border:`3px solid rgba(154,33,67,0.1)`,borderTopColor:CR,borderRadius:'50%',animation:'obs .8s linear infinite'}}/>
-      <style>{'@keyframes obs{to{transform:rotate(360deg)}}'}</style>
-    </div>
-  );
+  if(loading)return <LoadingPage />;
 
   const dLen=fd.businessDescription.length;
 

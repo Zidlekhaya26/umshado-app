@@ -8,6 +8,7 @@ import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
 import { supabase } from '@/lib/supabaseClient';
 import { getVendorSetupStatus } from '@/lib/vendorOnboarding';
 import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 
 type PreferredContact='chat'|'whatsapp'|'call';
@@ -137,12 +138,7 @@ export default function VendorMedia(){
 
   const ytId=videoUrl.trim()?extractYouTubeId(videoUrl.trim()):null;
 
-  if(loading)return(
-    <div style={{minHeight:'100svh',display:'flex',alignItems:'center',justifyContent:'center',background:BG}}>
-      <div style={{width:38,height:38,border:`3px solid rgba(154,33,67,0.1)`,borderTopColor:CR,borderRadius:'50%',animation:'mdspin .8s linear infinite'}}/>
-      <style>{'@keyframes mdspin{to{transform:rotate(360deg)}}'}</style>
-    </div>
-  );
+  if(loading)return <LoadingPage />;
 
   return(
     <div style={{minHeight:'100svh',background:BG,fontFamily:"'DM Sans',system-ui,sans-serif"}}>

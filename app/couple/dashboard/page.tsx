@@ -8,6 +8,7 @@ import BottomNav from '@/components/BottomNav';
 import WeddingWebsiteSettings from '@/components/WeddingWebsiteSettings';
 import AmiChat from '@/components/AmiChat';
 import { supabase } from '@/lib/supabaseClient';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface DbTask { id: string; couple_id: string; title: string; due_date: string | null; is_done: boolean; created_at: string; }
@@ -286,12 +287,7 @@ export default function CoupleDashboard() {
   };
 
   /* ── Loading ────────────────────────────────────────────── */
-  if (!loaded) return (
-    <div style={{ minHeight:'100svh', background:BG, display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <div style={{ width:38, height:38, borderRadius:'50%', border:'3px solid rgba(184,151,62,0.15)', borderTopColor:G, animation:'spin 0.8s linear infinite' }}/>
-      <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
-    </div>
-  );
+  if (!loaded) return <LoadingPage />;
 
   const coupleTitle = coupleProfile?.partner_name
     ? `Hi, ${coupleProfile.partner_name} 👋`

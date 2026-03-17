@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import { BG } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, Legend, Area, AreaChart,
@@ -201,15 +202,7 @@ export default function VendorInsights() {
   const rowTotal = (r: DailyStatsRow) => r.profile_views + r.quotes + r.messages + r.saves + r.package_views + r.contact_clicks;
   const bestDay = [...dailyStats].sort((a, b) => rowTotal(b) - rowTotal(a))[0];
 
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100svh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid rgba(184,151,62,0.2)', borderTopColor: GOLD, animation: 'spin 0.8s linear infinite' }} />
-        <p style={{ color: '#9a7c58', fontSize: 13, fontFamily: 'Georgia,serif' }}>Loading insights…</p>
-        <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
-      </div>
-    );
-  }
+  if (loading) return <LoadingPage />;
 
   if (error) {
     return (

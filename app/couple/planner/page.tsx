@@ -5,7 +5,7 @@ import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
-import { UmshadoIcon } from '@/components/ui/UmshadoLogo';
+import { UmshadoIcon, LoadingPage } from '@/components/ui/UmshadoLogo';
 import { supabase } from '@/lib/supabaseClient';
 import { generateWhatsappInviteLink } from '@/lib/invite';
 import { normalizeInternationalPhone } from '@/lib/whatsapp';
@@ -709,7 +709,7 @@ function CouplePlannerContent() {
     return 'bg-yellow-100 text-yellow-700';
   };
 
-  if (!loaded) return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" /></div>;
+  if (!loaded) return <LoadingPage />;
 
   return (
     <div className="min-h-screen bg-gray-50">

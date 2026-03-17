@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import { CR, CR2, GD, GD2, DK, MUT, BOR, BG, GR, BL } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 
 interface Booking {
@@ -175,12 +176,7 @@ export default function VendorBookingsPage(){
   const filtered=tab==='upcoming'?upcoming:tab==='past'?past:[];
   const upcomingBlocked=Array.from(blocked.values()).filter(b=>b.blocked_date>=todayKey()).sort((a,b)=>a.blocked_date.localeCompare(b.blocked_date));
 
-  if(loading)return(
-    <div style={{minHeight:'100svh',background:BG,display:'flex',alignItems:'center',justifyContent:'center'}}>
-      <style>{'@keyframes bkSpin{to{transform:rotate(360deg)}}'}</style>
-      <div style={{width:36,height:36,border:`3px solid rgba(154,33,67,0.12)`,borderTopColor:CR,borderRadius:'50%',animation:'bkSpin .8s linear infinite'}}/>
-    </div>
-  );
+  if(loading)return <LoadingPage />;
 
   return(
     <div style={{minHeight:'100svh',background:BG,fontFamily:"'DM Sans',system-ui,sans-serif"}}>

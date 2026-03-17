@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import VendorBottomNav from '@/components/VendorBottomNav'
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 
 const REASON_LABELS: Record<string, string> = {
@@ -122,15 +123,7 @@ export default function VendorAvailabilityPage() {
   }
 
 
-  if (loading) {
-    return (
-      <div style={{ minHeight:'100svh', background:BG, display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:14 }}>
-        <style>{'@keyframes spin{to{transform:rotate(360deg)}}'}</style>
-        <div style={{ width:36, height:36, borderRadius:'50%', border:`3px solid rgba(154,33,67,0.12)`, borderTopColor:CR, animation:'spin 0.8s linear infinite' }} />
-        <p style={{ margin:0, fontSize:13, color:MUT, fontWeight:600 }}>Loading availability...</p>
-      </div>
-    )
-  }
+  if (loading) return <LoadingPage />;
 
   return (
     <div style={{ minHeight:'100svh', background:BG, fontFamily:'system-ui,sans-serif' }}>

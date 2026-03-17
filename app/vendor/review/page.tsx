@@ -11,6 +11,7 @@ import Image from 'next/image';
 import ProfileCompletionIndicator from '@/components/ProfileCompletionIndicator';
 import VendorOnboardingProgress from '@/components/VendorOnboardingProgress';
 import { CR, CR2, CRX, GD2, DK, MUT, BOR, BG } from '@/lib/tokens';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 
 interface VendorRow{id:string;business_name:string|null;category:string|null;location:string|null;description:string|null;logo_url:string|null;cover_url:string|null;portfolio_urls:string[]|null;social_links:Record<string,string>|null;contact:{whatsapp?:string;phone?:string;preferredContact?:string}|null;is_published:boolean;}
@@ -129,12 +130,7 @@ export default function VendorReview(){
     }catch(err){console.error('Publish error:',err);alert('Failed to publish. Please try again.');}finally{setIsPublishing(false);}
   };
 
-  if(loading)return(
-    <div style={{minHeight:'100svh',display:'flex',alignItems:'center',justifyContent:'center',background:BG}}>
-      <div style={{width:38,height:38,border:`3px solid rgba(154,33,67,0.1)`,borderTopColor:CR,borderRadius:'50%',animation:'rvspin .8s linear infinite'}}/>
-      <style>{'@keyframes rvspin{to{transform:rotate(360deg)}}'}</style>
-    </div>
-  );
+  if(loading)return <LoadingPage />;
 
   return(
     <div style={{minHeight:'100svh',background:BG,fontFamily:"'DM Sans',system-ui,sans-serif"}}>

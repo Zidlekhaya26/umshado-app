@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import VendorBottomNav from '@/components/VendorBottomNav';
+import { LoadingPage } from '@/components/ui/UmshadoLogo';
 
 type VendorPlan = {
   id?: string | null;
@@ -155,16 +156,7 @@ export default function VendorBilling() {
   const planUntil = vendor?.plan_until ? new Date(vendor.plan_until).toLocaleDateString('en-ZA') : null;
   const featuredUntil = vendor?.featured_until ? new Date(vendor.featured_until).toLocaleDateString('en-ZA') : null;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto" style={{ borderColor: 'var(--um-crimson)' }} />
-          <p className="mt-4 text-gray-600">Loading billing...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <LoadingPage />;
 
   return (
     <div className="min-h-screen bg-gray-50">
