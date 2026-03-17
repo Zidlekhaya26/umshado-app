@@ -637,6 +637,12 @@ function CouplePlannerContent() {
     window.open(url, '_blank', 'noopener');
   };
 
+  const nudgeViaWhatsapp = (guest: DbGuest) => {
+    if (!guest.phone || !guest.rsvp_token) return;
+    const url = generateWhatsappInviteLink({ phone: guest.phone, guestId: guest.id, coupleName, guestName: guest.full_name, token: guest.rsvp_token, coupleDate, coupleVenue, nudge: true });
+    window.open(url, '_blank', 'noopener');
+  };
+
   // ── Computed ───────────────────────────────────────────
   const totalBudget = budgetItems.reduce((s, b) => s + Number(b.amount), 0);
   const totalPaid = budgetItems.reduce((s, b) => s + Number(b.amount_paid || 0), 0);
@@ -847,16 +853,28 @@ function CouplePlannerContent() {
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <p className="text-sm font-semibold text-gray-900">Guest List</p>
                     <div className="flex items-center gap-2 flex-wrap">
-                      {guests.filter(g => g.rsvp_status === 'pending' && g.phone).length > 0 && (
+                      {guests.filter(g => g.rsvp_status === 'pending' && g.phone && !g.rsvp_token).length > 0 && (
                         <button
                           onClick={() => {
-                            const pending = guests.filter(g => g.rsvp_status === 'pending' && g.phone);
-                            if (!window.confirm('Send WhatsApp invites to ' + pending.length + ' pending guest' + (pending.length > 1 ? 's' : '') + ' with a phone number?')) return;
-                            pending.forEach((g, i) => { setTimeout(() => inviteViaWhatsapp(g), i * 800); });
+                            const uninvited = guests.filter(g => g.rsvp_status === 'pending' && g.phone && !g.rsvp_token);
+                            if (!window.confirm('Send WhatsApp invites to ' + uninvited.length + ' guest' + (uninvited.length > 1 ? 's' : '') + '?')) return;
+                            uninvited.forEach((g, i) => { setTimeout(() => inviteViaWhatsapp(g), i * 800); });
                           }}
                           className="px-3 py-2 bg-green-500 text-white rounded-full text-sm font-semibold hover:bg-green-600 transition-colors"
                         >
-                          Invite All ({guests.filter(g => g.rsvp_status === 'pending' && g.phone).length})
+                          Invite All ({guests.filter(g => g.rsvp_status === 'pending' && g.phone && !g.rsvp_token).length})
+                        </button>
+                      )}
+                      {guests.filter(g => g.rsvp_status === 'pending' && g.phone && g.rsvp_token).length > 0 && (
+                        <button
+                          onClick={() => {
+                            const nudgeable = guests.filter(g => g.rsvp_status === 'pending' && g.phone && g.rsvp_token);
+                            if (!window.confirm('Send reminder to ' + nudgeable.length + ' pending guest' + (nudgeable.length > 1 ? 's' : '') + '?')) return;
+                            nudgeable.forEach((g, i) => { setTimeout(() => nudgeViaWhatsapp(g), i * 800); });
+                          }}
+                          className="px-3 py-2 bg-amber-500 text-white rounded-full text-sm font-semibold hover:bg-amber-600 transition-colors"
+                        >
+                          Nudge All ({guests.filter(g => g.rsvp_status === 'pending' && g.phone && g.rsvp_token).length})
                         </button>
                       )}
                       <button onClick={() => setShowGuestModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Guest</button>
@@ -884,15 +902,26 @@ function CouplePlannerContent() {
                             <button onClick={() => startEditGuest(guest)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
-                            <button 
-                              onClick={() => inviteViaWhatsapp(guest)} 
-                              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${guest.phone ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                              disabled={!guest.phone}
-                              aria-label="Invite via WhatsApp" 
-                              title={guest.phone ? "Send WhatsApp invitation" : "No phone number"}
-                            >
-                              Invite
-                            </button>
+                            {guest.rsvp_status === 'pending' && (
+                              guest.rsvp_token && guest.phone ? (
+                                <button
+                                  onClick={() => nudgeViaWhatsapp(guest)}
+                                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all bg-amber-500 text-white hover:bg-amber-600"
+                                  title="Send a reminder"
+                                >
+                                  Nudge
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => inviteViaWhatsapp(guest)}
+                                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${guest.phone ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                                  disabled={!guest.phone}
+                                  title={guest.phone ? 'Send WhatsApp invitation' : 'No phone number'}
+                                >
+                                  Invite
+                                </button>
+                              )
+                            )}
                             <button onClick={() => deleteGuest(guest.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Delete guest">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                             </button>
