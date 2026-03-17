@@ -65,8 +65,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
     }
 
-    if (conv.couple_id !== senderId && conv.vendor_id !== senderId) {
-      return NextResponse.json({ error: 'Not a participant' }, { status: 403 });
+    // Resolve vendor auth user id — conv.vendor_id may be vendors.id (row UUID) not auth UUID
+    let vendorAuthId = conv.vendor_id;
+    if (conv.vendor_id !== senderId && conv.couple_id !== senderId) {
+      // sender might be a vendor whose user_id differs from vendors.id
+      const { data: myVendor } = await supabase
+        .from('vendors')
+        .select('id')
+        .eq('user_id', senderId)
+        .maybeSingle();
+      if (myVendor?.id !== conv.vendor_id) {
+        return NextResponse.json({ error: 'Not a participant' }, { status: 403 });
+      }
+    }
+
+    // For notification: resolve the vendor's auth user_id for the receiver side
+    if (conv.vendor_id !== conv.couple_id) {
+      const { data: vRow } = await supabase
+        .from('vendors')
+        .select('user_id')
+        .eq('id', conv.vendor_id)
+        .maybeSingle();
+      if (vRow?.user_id) vendorAuthId = vRow.user_id;
     }
 
     // 2. Insert message
@@ -92,8 +112,9 @@ export async function POST(req: NextRequest) {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId);
 
-    // 4. Identify receiver
-    const receiverId = conv.couple_id === senderId ? conv.vendor_id : conv.couple_id;
+    // 4. Identify receiver — use resolved auth user id for vendor side
+    const senderIsCouple = conv.couple_id === senderId;
+    const receiverId = senderIsCouple ? vendorAuthId : conv.couple_id;
 
     // 5. Anti-spam check: skip notification if one was sent within 60s for same thread
     const throttled = await shouldThrottleMessageNotification(receiverId, conversationId, 60);
