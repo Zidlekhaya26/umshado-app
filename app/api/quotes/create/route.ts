@@ -130,10 +130,16 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Insert initial message
-    const messageText = `Quote request ${quoteRef} created\n\nPackage: ${packageName}\n${
-      pricingMode === 'guest-based' ? `Guests: ${guestCount}` : `Hours: ${hours}`
-    }\nEstimated Total: ${formatPrice((basePrice || 0), 'ZAR')}\n${
-      notes ? `\nNotes: ${notes}` : ''
+    const pricingLine = pricingMode === 'guest-based' || pricingMode === 'per-person'
+      ? `Guests: ${guestCount}`
+      : pricingMode === 'time-based' || pricingMode === 'hour-based'
+      ? `Hours: ${hours}`
+      : null;
+
+    const messageText = `Quote request ${quoteRef} created\n\nPackage: ${packageName}${
+      pricingLine ? `\n${pricingLine}` : ''
+    }\nEstimated Total: ${formatPrice((basePrice || 0), 'ZAR')}${
+      notes ? `\n\nNotes: ${notes}` : ''
     }`;
 
     await supabase.from('messages').insert({
@@ -149,19 +155,20 @@ export async function POST(req: NextRequest) {
       .update({ last_message_at: new Date().toISOString() })
       .eq('id', conversationId);
 
-    // 5. Fetch vendor business name for notification text
+    // 5. Fetch vendor user_id + business name for notification
     const { data: vendorData } = await supabase
       .from('vendors')
-      .select('business_name')
+      .select('business_name, user_id')
       .eq('id', vendorId)
       .maybeSingle();
 
-    const vendorName = vendorData?.business_name || 'a vendor';
+    const vendorName   = vendorData?.business_name || 'a vendor';
+    const vendorUserId = vendorData?.user_id ?? vendorId; // user_id is the auth UUID
 
     // 6. Notify BOTH parties
-    // Vendor gets "New quote request"
+    // Vendor gets "New quote request" — must use user_id, not vendor row id
     await notifyUsers({
-      userIds: [vendorId],
+      userIds: [vendorUserId],
       type: 'quote_created',
       title: `New quote request (${quoteRef})`,
       body: `A couple requested a quote for ${packageName}.`,

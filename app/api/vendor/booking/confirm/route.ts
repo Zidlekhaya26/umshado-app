@@ -84,16 +84,21 @@ export async function POST(req: NextRequest) {
   }
 
   // Create booking
+  // confirmed_price stored in cents — both booking pages divide by 100 to display
+  const finalPriceCents = Math.round(
+    ((quote.vendor_final_price ?? quote.base_from_price ?? 0) as number) * 100
+  );
+
   const { data: booking, error: bookingErr } = await supabase
     .from('bookings')
     .insert({
       quote_id,
       vendor_id: vendor.id,
       couple_id: quote.couple_id,
-      package_name: quote.vendor_packages?.name || 'Custom Package',
-      event_date: quote.event_date,
-      event_location: quote.event_location,
-      confirmed_price: quote.agreed_price || quote.quoted_price,
+      package_name: quote.package_name || quote.vendor_packages?.name || 'Custom Package',
+      event_date: (quote as any).event_date ?? null,
+      event_location: (quote as any).event_location ?? null,
+      confirmed_price: finalPriceCents,
       status: 'confirmed',
     })
     .select()
