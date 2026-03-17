@@ -435,9 +435,13 @@ export default function SeatingPlanner({ guests, userId }: Props) {
     if (activeGuests.length === 0 || tables.length === 0) return;
     setAssigning(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/seating/auto-assign', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({
           guests: activeGuests.map(g => ({
             id: g.id, name: g.full_name,

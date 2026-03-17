@@ -34,17 +34,42 @@ export async function handleAutoAssignPayload(body: any, opts?: { save?: boolean
 }
 
 export async function POST(req: any) {
-  const body = await req.json();
-  const out = await handleAutoAssignPayload(body);
   const { NextResponse } = await import('next/server');
+
+  // --- Auth: require authenticated user via Bearer token ---
+  const authHeader = (req as any).headers?.get
+    ? (req as any).headers.get('authorization')
+    : (req as any).headers?.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const token = authHeader.slice(7);
+  const userRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL!}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY! },
+  });
+
+  if (!userRes.ok) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const authedUser = await userRes.json();
+  if (!authedUser?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const shouldSave = body.save === true;
+
+  // Validate payload and compute assignment
+  const out = await handleAutoAssignPayload(body, shouldSave ? { save: false } : undefined);
   if (out.status && out.status !== 200) {
     return NextResponse.json({ error: out.error }, { status: out.status });
   }
 
+  // Persist only when caller explicitly requests it
   let savedId: string | null = null;
-  // attempt to persist and include DB response id in the API response when possible
-  try {
-    // Prefer service-role admin client when available
+  if (shouldSave) {
     try {
       const { getAdminSupabase } = await import('../../../../lib/supabaseAdminClient');
       const admin = getAdminSupabase();
@@ -52,16 +77,9 @@ export async function POST(req: any) {
       if (resp && resp.data && Array.isArray(resp.data) && resp.data[0] && resp.data[0].id) {
         savedId = resp.data[0].id;
       }
-    } catch (e) {
-      // fallback to public client if admin not configured
-      const { supabase } = await import('../../../../lib/supabaseClient');
-      const resp = await persistAssignment(supabase, { guests: body.guests, tables: out.tables });
-      if (resp && resp.data && Array.isArray(resp.data) && resp.data[0] && resp.data[0].id) {
-        savedId = resp.data[0].id;
-      }
+    } catch (_) {
+      // ignore persistence errors so API remains usable
     }
-  } catch (_) {
-    // ignore persistence errors so API remains usable
   }
 
   return NextResponse.json({ tables: out.tables, savedId });
