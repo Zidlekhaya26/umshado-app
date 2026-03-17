@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
@@ -38,6 +40,18 @@ function generateSignature(data: Record<string, string>, passphrase: string): st
   return crypto.createHash('md5').update(withPassphrase).digest('hex');
 }
 
+const CreatePaymentSchema = z.object({
+  type: z.enum(['pro', 'verification', 'boost']).optional(),
+  plan: z.enum(['pro', 'verification', 'boost']).optional(),
+  billingCycle: z.enum(['monthly', 'yearly']).optional(),
+  adCreative: z.object({
+    headline: z.string().max(100).optional(),
+    body: z.string().max(300).optional(),
+    cta: z.string().max(100).optional(),
+  }).optional().nullable(),
+  token: z.string().optional(),
+});
+
 export async function POST(req: NextRequest) {
   try {
     const supabase = createClient(
@@ -45,16 +59,15 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Parse body first for fallback token and payment details
-    const body = await req.json();
-    const rawType = body?.type || body?.plan; // keep backward compatibility with old "plan"
-    const type: BillingType = rawType === 'verification' || rawType === 'boost' || rawType === 'pro'
-      ? rawType
-      : 'pro';
-    const billingCycle: BillingCycle = body?.billingCycle === 'yearly' ? 'yearly' : 'monthly';
-    const adCreative = body?.adCreative ?? null;
+    // Parse and validate body — invalid enum values return 400 instead of silently coercing
+    const { data: body, error: bodyError } = await validateBody(req, CreatePaymentSchema);
+    if (bodyError) return bodyError;
+    const rawType = body.type || body.plan; // backward compat: 'plan' alias still accepted
+    const type: BillingType = rawType ?? 'pro';
+    const billingCycle: BillingCycle = body.billingCycle ?? 'monthly';
+    const adCreative = body.adCreative ?? null;
 
-    const authToken = resolveAuthToken(req, body?.token);
+    const authToken = resolveAuthToken(req, body.token);
     const { data: { user: authedUser } } = await supabase.auth.getUser(authToken);
 
     if (!authedUser) {

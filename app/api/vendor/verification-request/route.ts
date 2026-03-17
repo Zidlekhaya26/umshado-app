@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
 
 async function getVendorId(userId: string) {
@@ -42,6 +44,10 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ request: data ?? null });
 }
 
+const VerificationRequestSchema = z.object({
+  notes: z.string().max(2000).optional().nullable(),
+});
+
 // POST — submit a verification request
 export async function POST(req: NextRequest) {
   const user = await getAuthUser(req);
@@ -50,7 +56,8 @@ export async function POST(req: NextRequest) {
   const vendorId = await getVendorId(user.id);
   if (!vendorId) return NextResponse.json({ error: 'Vendor profile not found' }, { status: 404 });
 
-  const body = await req.json().catch(() => ({}));
+  const { data: body, error: bodyError } = await validateBody(req, VerificationRequestSchema);
+  if (bodyError) return bodyError;
   const supabase = createServiceClient();
 
   // Upsert: allows re-submit if previously rejected
