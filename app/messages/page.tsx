@@ -146,7 +146,10 @@ export default function MessagesIndex() {
         if (iAmVendor) {
           const c = coupleMap[row.couple_id];
           const p = profileMap[row.couple_id];
-          return { id: row.id, otherName: c?.partner_name || p?.full_name || 'Couple', otherRole: 'couple' as const, logoUrl: c?.avatar_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
+          const coupleName = p?.full_name && c?.partner_name
+            ? `${p.full_name} & ${c.partner_name}`
+            : c?.partner_name || p?.full_name || 'Couple';
+          return { id: row.id, otherName: coupleName, otherRole: 'couple' as const, logoUrl: c?.avatar_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
         }
 
         const v = vendorMap[row.vendor_id];

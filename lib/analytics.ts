@@ -28,6 +28,15 @@ export async function trackVendorEvent(
       event_type: eventType,
       meta
     });
+
+    // Fire-and-forget notification for view and save events
+    if (eventType === 'profile_view' || eventType === 'save_vendor') {
+      fetch(`/api/vendor/${vendorId}/event-notify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventType, actorId: user.id }),
+      }).catch(() => {});
+    }
   } catch (err) {
     console.error('analytics: failed to track vendor event', err);
   }

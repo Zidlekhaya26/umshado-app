@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import ImageLightbox from '@/components/ui/ImageLightbox';
 import { useRouter } from 'next/navigation';
@@ -55,7 +55,7 @@ function Sparkline({ data, dataKey, color }: { data: any[]; dataKey: string; col
 
 /* ─── Stat card ─────────────────────────────────────────── */
 function StatCard({ icon, label, value, color, sparkData, sparkKey, note }: {
-  icon: string; label: string; value: number; color: string;
+  icon: React.ReactNode; label: string; value: number; color: string;
   sparkData: any[]; sparkKey: string; note?: string;
 }) {
   return (
@@ -68,8 +68,8 @@ function StatCard({ icon, label, value, color, sparkData, sparkKey, note }: {
         <div style={{
           width: 36, height: 36, borderRadius: 11,
           background: `${color}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-          flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, color,
         }}>{icon}</div>
         <div>
           <div style={{ fontSize: 26, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{value}</div>
@@ -277,10 +277,15 @@ export default function VendorDashboard() {
 
       const addNames = async (rows: any[]): Promise<Quote[]> =>
         Promise.all((rows || []).map(async (q: any) => {
-          const { data: c } = await supabase.from('couples').select('partner_name,avatar_url').eq('id', q.couple_id).maybeSingle();
-          if (c?.partner_name || c?.avatar_url) return { ...q, couple_name: c.partner_name || 'Couple', couple_avatar: c.avatar_url || null };
-          const { data: p } = await supabase.from('profiles').select('full_name').eq('id', q.couple_id).maybeSingle();
-          return { ...q, couple_name: p?.full_name || 'Couple', couple_avatar: null };
+          const [cRes, pRes] = await Promise.all([
+            supabase.from('couples').select('partner_name,avatar_url').eq('id', q.couple_id).maybeSingle(),
+            supabase.from('profiles').select('full_name').eq('id', q.couple_id).maybeSingle(),
+          ]);
+          const c = cRes.data, p = pRes.data;
+          const coupleName = p?.full_name && c?.partner_name
+            ? `${p.full_name} & ${c.partner_name}`
+            : c?.partner_name || p?.full_name || 'Couple';
+          return { ...q, couple_name: coupleName, couple_avatar: c?.avatar_url || null };
         }));
 
       const [reqWithNames, negWithNames] = await Promise.all([addNames(quotesReqRes.data || []), addNames(quotesNegRes.data || [])]);
@@ -340,18 +345,22 @@ export default function VendorDashboard() {
 
   if (loading) return <LoadingScreen />;
 
+  const EYE  = <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>;
+  const HEART = <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>;
+  const CHAT  = <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>;
+  const CLIP  = <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>;
   const statCards = [
-    { icon: '👁️', label: 'Profile Views', value: metrics.profileViews,   color: GD,        sparkKey: 'profile_views', note: metrics.profileViews   === 0 ? 'No views yet'   : undefined },
-    { icon: '❤️', label: 'Saves',         value: metrics.savedByCouples, color: CR,        sparkKey: 'saves',         note: metrics.savedByCouples === 0 ? 'Not saved yet'  : undefined },
-    { icon: '💬', label: 'Chats',         value: metrics.chatsStarted,   color: '#4A78A8', sparkKey: 'messages',      note: undefined },
-    { icon: '📋', label: 'Quotes',        value: metrics.quotesReceived, color: '#2d7a52', sparkKey: 'quotes',        note: undefined },
+    { icon: EYE,   label: 'Profile Views', value: metrics.profileViews,   color: GD,        sparkKey: 'profile_views', note: metrics.profileViews   === 0 ? 'No views yet'   : undefined },
+    { icon: HEART, label: 'Saves',         value: metrics.savedByCouples, color: CR,        sparkKey: 'saves',         note: metrics.savedByCouples === 0 ? 'Not saved yet'  : undefined },
+    { icon: CHAT,  label: 'Chats',         value: metrics.chatsStarted,   color: '#4A78A8', sparkKey: 'messages',      note: undefined },
+    { icon: CLIP,  label: 'Quotes',        value: metrics.quotesReceived, color: '#2d7a52', sparkKey: 'quotes',        note: undefined },
   ];
 
   const quickLinks = [
-    { href: '/vendor/profile/edit', icon: '✏️', label: 'Edit Profile' },
-    { href: '/vendor/packages',     icon: '📦', label: 'Packages' },
-    { href: '/vendor/services',     icon: '🛠️', label: 'Services' },
-    { href: '/vendor/media',        icon: '📷', label: 'Media' },
+    { href: '/vendor/profile/edit', icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>, label: 'Edit Profile' },
+    { href: '/vendor/packages',     icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>, label: 'Packages' },
+    { href: '/vendor/services',     icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>, label: 'Services' },
+    { href: '/vendor/media',        icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>, label: 'Media' },
   ];
 
   return (
@@ -407,21 +416,26 @@ export default function VendorDashboard() {
               {showMenu && (
                 <div style={{ position: 'absolute', right: 0, top: 44, background: '#fff', borderRadius: 16, boxShadow: '0 8px 40px rgba(26,13,18,0.18)', zIndex: 100, minWidth: 195, overflow: 'hidden', border: `1px solid ${BOR}` }}>
                   <Link href="/vendor/billing" className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, fontWeight: 600, color: DARK, textDecoration: 'none' }}>
-                    <span>💳</span> Billing & Plans
+                    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" style={{flexShrink:0,color:MUT}}><rect x="2" y="5" width="20" height="14" rx="3"/><path strokeLinecap="round" d="M2 10h20"/></svg>
+                    Billing & Plans
                   </Link>
                   <button onClick={handleShareProfile} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: DARK, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span>🔗</span> Share Profile
+                    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" style={{flexShrink:0,color:MUT}}><path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    Share Profile
                   </button>
                   {vendor?.is_published && (
                     <Link href={'/marketplace/vendor/' + vendor.id} className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 16px', fontSize: 13, fontWeight: 600, color: DARK, textDecoration: 'none', borderTop: `1px solid ${BOR}` }}>
-                      <span>🏪</span> View Public Profile
+                      <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" style={{flexShrink:0,color:MUT}}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                      View Public Profile
                     </Link>
                   )}
                   <button onClick={async () => { if (!confirm('Log out?')) return; await supabase.auth.signOut(); router.push('/auth/sign-in'); }} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span>🚪</span> Log out
+                    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Log out
                   </button>
                   <button onClick={handleDeleteAccount} className="vd-menu-item" style={{ width: '100%', padding: '13px 16px', textAlign: 'left', background: 'none', border: 'none', borderTop: `1px solid ${BOR}`, fontSize: 13, fontWeight: 600, color: '#c83232', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span>🗑️</span> Delete Account
+                    <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" style={{flexShrink:0}}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete Account
                   </button>
                 </div>
               )}
@@ -431,8 +445,8 @@ export default function VendorDashboard() {
           {/* Quick nav */}
           <div style={{ display: 'flex', gap: 8, position: 'relative' }}>
             {quickLinks.map(l => (
-              <Link key={l.href} href={l.href} className="vd-quick-link" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '11px 4px', borderRadius: 13, background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.15)', textDecoration: 'none', textAlign: 'center', transition: 'all .14s' }}>
-                <span style={{ fontSize: 18 }}>{l.icon}</span>
+              <Link key={l.href} href={l.href} className="vd-quick-link" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, padding: '11px 4px', borderRadius: 13, background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.15)', textDecoration: 'none', textAlign: 'center', transition: 'all .14s', color: 'rgba(255,255,255,0.85)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 28, height: 28 }}>{l.icon}</div>
                 <span style={{ fontSize: 9.5, fontWeight: 800, color: 'rgba(255,255,255,0.75)', letterSpacing: 0.4 }}>{l.label}</span>
               </Link>
             ))}
@@ -613,12 +627,12 @@ export default function VendorDashboard() {
             <h2 style={{ margin: '0 0 12px', fontSize: 15, fontWeight: 800, color: DARK, fontFamily: 'Georgia,serif' }}>Your Account</h2>
             <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}` }}>
               {[
-                { href: '/vendor/billing',              icon: '💳', label: 'Billing & Plans',      sub: 'Manage your subscription' },
-                { href: '/vendor/billing#featured',     icon: '⭐', label: 'Feature Your Listing', sub: 'Boost visibility & stand out' },
-                { href: '/vendor/billing#verification', icon: '✓',  label: 'Get Verified',         sub: 'Build trust with the badge' },
+                { href: '/vendor/billing',              icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><path strokeLinecap="round" d="M2 10h20"/></svg>, label: 'Billing & Plans',      sub: 'Manage your subscription' },
+                { href: '/vendor/billing#featured',     icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>, label: 'Feature Your Listing', sub: 'Boost visibility & stand out' },
+                { href: '/vendor/billing#verification', icon: <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>, label: 'Get Verified',         sub: 'Build trust with the badge' },
               ].map((item) => (
                 <Link key={item.href} href={item.href} className="vd-menu-item" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', textDecoration: 'none', borderBottom: `1px solid ${BOR}`, transition: 'background .12s' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: `rgba(154,33,67,0.07)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>{item.icon}</div>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: `rgba(154,33,67,0.07)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: CR }}>{item.icon}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: DARK }}>{item.label}</p>
                     <p style={{ margin: '2px 0 0', fontSize: 11.5, color: MUT }}>{item.sub}</p>
@@ -627,7 +641,7 @@ export default function VendorDashboard() {
                 </Link>
               ))}
               <button onClick={handleDeleteAccount} className="vd-menu-item" style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', transition: 'background .12s' }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(200,50,50,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🗑️</div>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(200,50,50,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, color: '#c83232' }}><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ margin: 0, fontSize: 13.5, fontWeight: 700, color: '#c83232' }}>Delete Account</p>
                   <p style={{ margin: '2px 0 0', fontSize: 11.5, color: '#a05050' }}>Permanently removes your account and all data</p>
