@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isDevOnly } from '@/lib/devOnly';
 
 /**
  * GET /api/push/test?userId=<uuid>
@@ -7,9 +8,10 @@ import { createClient } from '@supabase/supabase-js';
  * Diagnostic endpoint — tests the full push pipeline for a user.
  * Returns detailed info at each step so you can pinpoint the failure.
  *
- * REMOVE or gate behind auth in production.
+ * Gated to development only via lib/devOnly.ts.
  */
 export async function GET(req: NextRequest) {
+  if (!isDevOnly) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const { searchParams } = new URL(req.url);
   const userId = searchParams.get('userId');
 

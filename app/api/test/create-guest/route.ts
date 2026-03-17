@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
+import { isDevOnly } from '@/lib/devOnly';
 
 export async function POST(request: Request) {
+  if (!isDevOnly) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const supabase = createServiceClient();
   // Pick first profile as couple
   const { data: profile } = await supabase.from('profiles').select('id').limit(1).maybeSingle();

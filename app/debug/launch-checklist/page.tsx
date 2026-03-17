@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import { LOCKED_CATEGORIES, LOCKED_CATEGORY_SET } from '@/lib/marketplaceCategories';
+import { isDevOnly } from '@/lib/devOnly';
 
 type CheckResult = {
   id: string;
@@ -12,6 +14,8 @@ type CheckResult = {
 };
 
 export default function LaunchChecklist() {
+  if (!isDevOnly) notFound();
+
   const [checks, setChecks] = useState<CheckResult[]>([
     { id: 'env', label: 'Env vars loaded', status: 'pending' },
     { id: 'supabase', label: 'Supabase connected', status: 'pending' },
