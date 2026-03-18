@@ -84,7 +84,10 @@ export async function middleware(req: NextRequest) {
         cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
         response = NextResponse.next({ request: req });
         cookiesToSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
+          // Enforce SameSite=Lax on all Supabase session cookies for CSRF resistance.
+          // Note: httpOnly is intentionally NOT forced here — createBrowserClient needs
+          // to read auth token cookies from document.cookie on the client side.
+          response.cookies.set(name, value, { ...options, sameSite: 'lax' })
         );
       },
     },
