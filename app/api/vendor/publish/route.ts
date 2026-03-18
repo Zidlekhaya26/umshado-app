@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       .eq('id', vendorId);
 
     if (updateErr) {
-      console.error('[vendor/publish] update error:', updateErr);
+      console.error(JSON.stringify({ route: 'vendor/publish', event: 'update_error', vendorId, userId, err: updateErr.message }));
       return NextResponse.json({ error: 'Failed to publish' }, { status: 500 });
     }
 
@@ -82,9 +82,10 @@ export async function POST(req: NextRequest) {
       meta: { vendorId },
     });
 
+    console.log(JSON.stringify({ route: 'vendor/publish', event: 'vendor_published', vendorId, userId }));
     return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.error('[vendor/publish] unexpected error:', err);
+    console.error(JSON.stringify({ route: 'vendor/publish', event: 'unexpected_error', err: (err as Error).message }));
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
 }

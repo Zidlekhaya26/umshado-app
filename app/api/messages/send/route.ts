@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (msgErr) {
-      console.error('[messages/send] insert error:', msgErr);
+      console.error(JSON.stringify({ route: 'messages/send', event: 'insert_error', senderId, conversationId, err: msgErr.message }));
       return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
     }
 
@@ -160,13 +160,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    console.log(JSON.stringify({ route: 'messages/send', event: 'message_sent', senderId, conversationId, messageId: msgData.id }));
     return NextResponse.json({
       success: true,
       messageId: msgData.id,
       createdAt: msgData.created_at,
     });
   } catch (err: any) {
-    console.error('[messages/send] unexpected error:', err);
+    console.error(JSON.stringify({ route: 'messages/send', event: 'unexpected_error', err: (err as Error).message }));
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
   }
 }

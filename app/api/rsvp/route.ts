@@ -60,12 +60,13 @@ export async function POST(req: NextRequest) {
         created_at: new Date().toISOString(),
       });
     } catch (notifyErr) {
-      console.error('Failed to notify couple of RSVP:', notifyErr);
+      console.error(JSON.stringify({ route: 'rsvp', event: 'notify_error', guestId, coupleId: guest.couple_id, err: (notifyErr as Error).message }));
     }
 
+    console.log(JSON.stringify({ route: 'rsvp', event: 'rsvp_submitted', guestId, status, coupleId: guest.couple_id }));
     return NextResponse.json({ success: true, guest: data });
   } catch (err) {
-    console.error('RSVP route error', err);
+    console.error(JSON.stringify({ route: 'rsvp', event: 'unexpected_error', err: (err as Error).message }));
     return NextResponse.json({ success: false, error: 'Server error' }, { status: 500 });
   }
 }

@@ -50,9 +50,10 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    console.error('Error inserting moment:', error);
+    console.error(JSON.stringify({ route: 'live/moment', event: 'insert_error', coupleId: link.couple_id, err: error.message }));
     return NextResponse.json({ error: 'Failed to add moment' }, { status: 500 });
   }
 
+  console.log(JSON.stringify({ route: 'live/moment', event: 'moment_created', coupleId: link.couple_id, momentId: data.id }));
   return NextResponse.json({ moment: data }, { status: 201 });
 }

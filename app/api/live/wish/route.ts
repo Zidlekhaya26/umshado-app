@@ -63,9 +63,10 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    console.error('Error inserting well wish:', error);
+    console.error(JSON.stringify({ route: 'live/wish', event: 'insert_error', coupleId: couple_id, err: error.message }));
     return NextResponse.json({ error: 'Failed to send well wish' }, { status: 500 });
   }
 
+  console.log(JSON.stringify({ route: 'live/wish', event: 'wish_created', coupleId: couple_id, wishId: data.id, ip }));
   return NextResponse.json({ wish: data }, { status: 201 });
 }

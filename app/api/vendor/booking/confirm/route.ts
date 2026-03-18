@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (bookingErr || !booking) {
-    console.error('[POST /api/vendor/booking/confirm] booking insert error:', bookingErr)
+    console.error(JSON.stringify({ route: 'vendor/booking/confirm', event: 'booking_insert_error', vendorId: vendor.id, quoteId: quote_id, err: bookingErr?.message }))
     return NextResponse.json({ error: bookingErr?.message || 'Failed to create booking' }, { status: 500 })
   }
 
@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
     .eq('id', quote_id)
 
   if (updateErr) {
-    console.error('[POST /api/vendor/booking/confirm] quote update error:', updateErr)
+    console.error(JSON.stringify({ route: 'vendor/booking/confirm', event: 'quote_update_error', quoteId: quote_id, err: updateErr.message }))
   }
 
   // Send notification to couple
@@ -130,6 +130,7 @@ export async function POST(req: NextRequest) {
     meta: { bookingId: booking.id, bookingRef: booking.booking_ref },
   })
 
+  console.log(JSON.stringify({ route: 'vendor/booking/confirm', event: 'booking_confirmed', vendorId: vendor.id, quoteId: quote_id, bookingId: booking.id, coupleId: quote.couple_id }))
   return NextResponse.json({
     success: true,
     booking,

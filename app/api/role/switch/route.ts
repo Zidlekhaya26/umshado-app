@@ -85,9 +85,10 @@ export async function POST(req: NextRequest) {
 
     if (error) throw error;
 
+    console.log(JSON.stringify({ route: 'role/switch', event: 'role_switched', userId: user.id, role }));
     return NextResponse.json({ ok: true, active_role: role });
   } catch (err) {
-    console.error('[role/switch] Unexpected error:', err);
+    console.error(JSON.stringify({ route: 'role/switch', event: 'unexpected_error', err: (err as Error).message }));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
