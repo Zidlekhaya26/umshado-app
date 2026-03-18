@@ -84,6 +84,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ven
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  console.log(JSON.stringify({ route: 'vendor/review', event: 'review_upserted', vendorId, coupleId: user.id, rating: body.rating }));
   return NextResponse.json({ review: data });
 }
 
@@ -107,5 +108,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ v
     .eq('couple_id', user.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  console.log(JSON.stringify({ route: 'vendor/review', event: 'review_deleted', vendorId, coupleId: user.id }));
   return NextResponse.json({ success: true });
 }

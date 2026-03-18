@@ -9,6 +9,21 @@ const BlockDateSchema = z.object({
   note: z.string().max(500).optional().nullable(),
 })
 
+async function getAuthUser(req: NextRequest) {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return null
+  const token = authHeader.slice(7)
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    },
+  })
+  if (!res.ok) return null
+  const user = await res.json()
+  return user?.id ? user : null
+}
+
 /**
  * GET /api/vendor/availability?vendor_id=...
  * Public endpoint: returns array of blocked dates for a vendor
@@ -42,13 +57,12 @@ export async function GET(req: NextRequest) {
  * Body: { blocked_date: 'YYYY-MM-DD', reason: 'booked'|'unavailable'|'holiday', note?: string }
  */
 export async function POST(req: NextRequest) {
-  const supabase = createServiceClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser(req)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+
+  const supabase = createServiceClient()
 
   // Get vendor_id from auth user
   const { data: vendor, error: vendorErr } = await supabase
@@ -80,10 +94,11 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error('[POST /api/vendor/availability] error:', error)
+    console.error(JSON.stringify({ route: 'vendor/availability', event: 'upsert_error', vendorId: vendor.id, blocked_date, err: error.message }))
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  console.log(JSON.stringify({ route: 'vendor/availability', event: 'date_blocked', vendorId: vendor.id, blocked_date, reason: reason || 'unavailable' }))
   return NextResponse.json({ success: true, data })
 }
 
@@ -92,14 +107,12 @@ export async function POST(req: NextRequest) {
  * Vendor removes a blocked date
  */
 export async function DELETE(req: NextRequest) {
-  const supabase = createServiceClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const user = await getAuthUser(req)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const supabase = createServiceClient()
   const { searchParams } = new URL(req.url)
   const blocked_date = searchParams.get('blocked_date')
 
@@ -125,9 +138,10 @@ export async function DELETE(req: NextRequest) {
     .eq('blocked_date', blocked_date)
 
   if (error) {
-    console.error('[DELETE /api/vendor/availability] error:', error)
+    console.error(JSON.stringify({ route: 'vendor/availability', event: 'delete_error', vendorId: vendor.id, blocked_date, err: error.message }))
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  console.log(JSON.stringify({ route: 'vendor/availability', event: 'date_unblocked', vendorId: vendor.id, blocked_date }))
   return NextResponse.json({ success: true })
 }
