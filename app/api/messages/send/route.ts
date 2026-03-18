@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit: 30 messages per userId per 1 minute
-  const { allowed: msgAllowed } = checkRateLimit(`message:${senderId}`, 30, 60 * 1000);
+  const { allowed: msgAllowed } = await checkRateLimit(`message:${senderId}`, 30, 60 * 1000);
   if (!msgAllowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   // --- Body ---

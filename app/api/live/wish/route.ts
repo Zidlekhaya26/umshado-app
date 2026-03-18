@@ -24,7 +24,7 @@ const WishSchema = z.object({
 export async function POST(req: NextRequest) {
   // Rate limit: 10 wishes per IP per 10 minutes
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const { allowed } = checkRateLimit(`wish:${ip}`, 10, 10 * 60 * 1000);
+  const { allowed } = await checkRateLimit(`wish:${ip}`, 10, 10 * 60 * 1000);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const { data: body, error: bodyError } = await validateBody(req, WishSchema);

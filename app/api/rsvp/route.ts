@@ -17,7 +17,7 @@ const RsvpSchema = z.object({
 export async function POST(req: NextRequest) {
   // Rate limit: 8 RSVP submissions per IP per 10 minutes
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const { allowed } = checkRateLimit(`rsvp:${ip}`, 8, 10 * 60 * 1000);
+  const { allowed } = await checkRateLimit(`rsvp:${ip}`, 8, 10 * 60 * 1000);
   if (!allowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   const { data, error: bodyError } = await validateBody(req, RsvpSchema);

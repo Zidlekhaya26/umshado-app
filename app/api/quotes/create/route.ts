@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit: 5 quote requests per userId per 10 minutes
-  const { allowed: quoteAllowed } = checkRateLimit(`quote:${userId}`, 5, 10 * 60 * 1000);
+  const { allowed: quoteAllowed } = await checkRateLimit(`quote:${userId}`, 5, 10 * 60 * 1000);
   if (!quoteAllowed) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
   // --- Parse body ---
