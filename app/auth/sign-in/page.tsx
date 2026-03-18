@@ -74,6 +74,14 @@ function GoogleIcon() {
   );
 }
 
+function FacebookIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+      <path fill="#1877F2" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+    </svg>
+  );
+}
+
 /* ══════════════════════════════════════════════════════════ */
 function SignInContent() {
   const router = useRouter();
@@ -124,6 +132,17 @@ function SignInContent() {
       const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl } });
       if (error) alert('Google sign in error: ' + error.message);
     } catch { alert('Failed to sign in with Google'); }
+  };
+
+  const handleFacebookSignIn = async () => {
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.umshado-app.vercel.app';
+      const callbackUrl = redirectTo
+        ? `${origin}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`
+        : `${origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: callbackUrl } });
+      if (error) alert('Facebook sign in error: ' + error.message);
+    } catch { alert('Failed to sign in with Facebook'); }
   };
 
   const EyeIcon = ({ open }: { open: boolean }) => open
@@ -230,8 +249,8 @@ function SignInContent() {
             <h2 style={{ margin: 0, fontSize: 28, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif', letterSpacing: -.4 }}>Welcome back</h2>
           </div>
 
-          {/* Google */}
-          <div className="si2" style={{ marginBottom: 20 }}>
+          {/* Social buttons */}
+          <div className="si2" style={{ marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={handleGoogleSignIn} className="si-gbtn" style={{
               width: '100%', padding: '12px 16px', borderRadius: 13,
               border: `1.5px solid ${BOR}`, background: '#fff',
@@ -242,6 +261,17 @@ function SignInContent() {
             }}>
               <GoogleIcon />
               Continue with Google
+            </button>
+            <button onClick={handleFacebookSignIn} className="si-gbtn" style={{
+              width: '100%', padding: '12px 16px', borderRadius: 13,
+              border: `1.5px solid ${BOR}`, background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              fontSize: 14, fontWeight: 700, color: DK, cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(26,13,18,0.05)', transition: 'border-color .14s,background .14s',
+              fontFamily: 'inherit',
+            }}>
+              <FacebookIcon />
+              Continue with Facebook
             </button>
           </div>
 
