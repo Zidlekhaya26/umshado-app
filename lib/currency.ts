@@ -1,4 +1,4 @@
-export type Currency = 'ZAR' | 'USD' | 'BWP';
+export type Currency = 'ZAR' | 'USD' | 'BWP' | 'GBP' | 'EUR';
 
 export type ExchangeRates = {
   // rates relative to base currency (ZAR)
@@ -8,13 +8,17 @@ export type ExchangeRates = {
 const SYMBOL: Record<Currency, string> = {
   ZAR: 'R',
   USD: '$',
-  BWP: 'P'
+  BWP: 'P',
+  GBP: '£',
+  EUR: '€',
 };
 
 const LOCALE: Record<Currency, string> = {
   ZAR: 'en-ZA',
   USD: 'en-US',
-  BWP: 'en-BW'
+  BWP: 'en-BW',
+  GBP: 'en-GB',
+  EUR: 'de-DE',
 };
 
 export function convertAmount(amountInZar: number, to: Currency, rates?: ExchangeRates) {
@@ -42,17 +46,18 @@ export function formatPrice(amountInZar: number, currency: Currency, rates?: Exc
 
 /**
  * Format a budget amount WITHOUT currency conversion.
- * Budget items are entered by the user in ZAR and must always display in ZAR,
- * regardless of the user's marketplace currency preference.
+ * Budget items are stored in the user's chosen currency at time of entry.
+ * We only apply the symbol — no exchange rate math.
+ * Falls back to ZAR if no currency is provided.
  */
-export function formatBudget(amount: number): string {
+export function formatBudget(amount: number, currency: Currency = 'ZAR'): string {
   try {
-    return new Intl.NumberFormat('en-ZA', {
+    return new Intl.NumberFormat(LOCALE[currency], {
       style: 'currency',
-      currency: 'ZAR',
+      currency,
       maximumFractionDigits: 0,
-    }).format(amount).replace(/ZAR/, 'R');
+    }).format(amount).replace(/[A-Z]{3}/, SYMBOL[currency]);
   } catch {
-    return `R${Math.round(amount).toLocaleString('en-ZA')}`;
+    return `${SYMBOL[currency]}${Math.round(amount).toLocaleString()}`;
   }
 }

@@ -17,7 +17,8 @@ export const CurrencyProvider = ({ children }: { children: React.ReactNode }) =>
 
   useEffect(() => {
     const saved = typeof window !== 'undefined' ? window.localStorage.getItem('um_currency') : null;
-    if (saved && (saved === 'ZAR' || saved === 'USD' || saved === 'BWP')) setCurrencyState(saved as Currency);
+    const valid: Currency[] = ['ZAR', 'USD', 'BWP', 'GBP', 'EUR'];
+    if (saved && valid.includes(saved as Currency)) setCurrencyState(saved as Currency);
   }, []);
 
   useEffect(() => {

@@ -199,7 +199,8 @@ export default function CoupleDashboard() {
   const [savingDate, setSavingDate]       = useState(false);
   const [showAmi, setShowAmi]             = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { format } = useCurrency();
+  const { currency } = useCurrency();
+  const fb = (n: number) => formatBudget(n, currency);
 
   /* ── Load data ──────────────────────────────────────────── */
   useEffect(() => {
@@ -479,8 +480,8 @@ export default function CoupleDashboard() {
                     <span style={{ fontSize:8, color:LITE }}>paid</span>
                   </Donut>
                   <div style={{ textAlign:'center' }}>
-                    <p style={{ margin:'0 0 1px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{formatBudget(totalBudget)}</p>
-                    <p style={{ margin:0, fontSize:10, color:LITE }}>{formatBudget(totalBudget - totalPaid)} remaining</p>
+                    <p style={{ margin:'0 0 1px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{fb(totalBudget)}</p>
+                    <p style={{ margin:0, fontSize:10, color:LITE }}>{fb(totalBudget - totalPaid)} remaining</p>
                   </div>
                 </>
               ) : (
