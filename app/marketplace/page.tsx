@@ -500,6 +500,7 @@ export default function Marketplace() {
   const [logoSrc, setLogoSrc]               = useState<string | null>(null);
   const [logoAlt, setLogoAlt]               = useState<string | undefined>(undefined);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const [liveAds, setLiveAds] = useState<SponsoredAd[]>([]);
   const categories = Array.from(LOCKED_CATEGORIES);
 
   const handleLogoClick = useCallback((src: string, alt: string) => {
@@ -507,6 +508,12 @@ export default function Marketplace() {
   }, []);
 
   useEffect(() => { detect(); }, []);
+
+  useEffect(() => {
+    fetch('/api/ads/active').then(r => r.json()).then(j => {
+      if (j.ads?.length) setLiveAds(j.ads);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => { loadData(); }, [user, location]);
   useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, scope, allVendors, location]);
@@ -825,14 +832,15 @@ export default function Marketplace() {
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
               {vendors.slice(0, displayedCount).map((v, idx) => {
                 const showAdAfter = (idx + 1) % 5 === 0;
-                const adIndex = Math.floor(idx / 5) % DUMMY_ADS.length;
+                const adPool = liveAds.length > 0 ? liveAds : DUMMY_ADS;
+                const adIndex = Math.floor(idx / 5) % adPool.length;
                 return (
                   <Fragment key={v.id}>
                     <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
                       <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
                     </div>
                     {showAdAfter && (
-                      <SponsoredAdCard key={`ad-${idx}`} ad={DUMMY_ADS[adIndex]} isVendor={isVendor} />
+                      <SponsoredAdCard key={`ad-${idx}`} ad={adPool[adIndex]} isVendor={isVendor} />
                     )}
                   </Fragment>
                 );

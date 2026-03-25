@@ -35,6 +35,7 @@ interface DbBudgetItem {
   amount_paid: number;
   category: string | null;
   status: 'planned' | 'partial' | 'paid';
+  currency: string;
   created_at: string;
 }
 
@@ -326,13 +327,9 @@ function CouplePlannerContent() {
   const addBudgetItem = async () => {
     if (!newBudgetTitle.trim() || !newBudgetAmount || !userId) return;
     const amount = parseFloat(newBudgetAmount);
-    const base = { couple_id: userId, title: newBudgetTitle.trim(), amount, category: newBudgetCategory.trim() || null, status: 'planned' as const };
-    // Try with amount_paid; fall back without it if column doesn't exist yet
-    let result = await supabase.from('couple_budget_items').insert({ ...base, amount_paid: 0 }).select().single();
-    if (result.error && result.error.message?.includes('amount_paid')) {
-      result = await supabase.from('couple_budget_items').insert(base).select().single();
-    }
-    if (!result.error && result.data) setBudgetItems(prev => [...prev, { ...result.data, amount_paid: result.data.amount_paid ?? 0 }]);
+    const base = { couple_id: userId, title: newBudgetTitle.trim(), amount, category: newBudgetCategory.trim() || null, status: 'planned' as const, currency };
+    const result = await supabase.from('couple_budget_items').insert({ ...base, amount_paid: 0 }).select().single();
+    if (!result.error && result.data) setBudgetItems(prev => [...prev, { ...result.data, amount_paid: result.data.amount_paid ?? 0, currency: result.data.currency ?? currency }]);
     setNewBudgetTitle(''); setNewBudgetAmount(''); setNewBudgetCategory(''); setShowBudgetModal(false);
   };
 
@@ -700,9 +697,11 @@ function CouplePlannerContent() {
   const sideLabel = (s: string) => s === 'groom' ? '🤵 Groom' : s === 'bride' ? '👰 Bride' : '💑 Both';
   const sideColor = (s: string) => s === 'groom' ? 'text-blue-600' : s === 'bride' ? 'text-pink-600' : 'text-purple-600';
 
+  const fbi = (n: number, item: DbBudgetItem) => formatBudget(n, (item.currency as import('@/lib/currency').Currency) || 'ZAR');
+
   const budgetStatusLabel = (item: DbBudgetItem) => {
     if (item.status === 'paid' || item.amount_paid >= item.amount) return '✓ Fully Paid';
-    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — ${fb(Number(item.amount_paid))} of ${fb(Number(item.amount))}`;
+    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — ${fbi(Number(item.amount_paid), item)} of ${fbi(Number(item.amount), item)}`;
     return 'Planned';
   };
   const budgetStatusColor = (item: DbBudgetItem) => {
@@ -826,7 +825,7 @@ function CouplePlannerContent() {
                             <p className="text-sm font-bold text-gray-900">{item.title}</p>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                            <p className="text-sm font-semibold text-gray-700">{fb(Number(item.amount))}</p>
+                            <p className="text-sm font-semibold text-gray-700">{fbi(Number(item.amount), item)}</p>
                             <button onClick={() => startEditBudget(item)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit item">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
@@ -1077,7 +1076,7 @@ function CouplePlannerContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
-            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {fb(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
+            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {fbi(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0), paymentItem)}</p>
             <div className="space-y-3">
               <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Amount</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" autoFocus /></div>
             </div>
