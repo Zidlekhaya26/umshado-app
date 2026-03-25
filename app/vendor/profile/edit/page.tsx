@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: '/vendor/packages',   label: 'Packages & Pricing',  icon: '📦', desc: 'Your pricing tiers and packages' },
   { href: '/vendor/media',      label: 'Media & Contact',     icon: '📸', desc: 'Logo, portfolio, social links' },
   { href: '/vendor/promo',      label: 'Sponsored Promo',     icon: '⭐', desc: 'Set promo image and % discount for marketplace ads', noModeQuery: true },
+  { href: '/vendor/boost',      label: 'Boost Ad',            icon: '📣', desc: 'Build a custom sponsored ad with AMi (AI) — R199/mo', noModeQuery: true },
   { href: '/vendor/review',     label: 'Preview & Publish',   icon: '🚀', desc: 'Review and go live on the marketplace' },
 ] as const;
 

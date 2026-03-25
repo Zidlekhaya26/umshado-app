@@ -550,6 +550,44 @@ export default function VendorDashboard() {
             </Link>
           </div>
 
+          {/* ── Marketing & Community shortcuts ── */}
+          <div className="vd-section" style={{ animationDelay: '.21s', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {/* Community feed */}
+            <Link href="/vendor/community" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px', borderRadius: 18, background: '#fff', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}`, textDecoration: 'none' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(99,102,241,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" fill="none" stroke="#6366f1" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 800, color: DARK }}>Community</p>
+                <p style={{ margin: 0, fontSize: 11, color: MUT }}>Post tips & connect with couples</p>
+              </div>
+            </Link>
+            {/* Boost Ad */}
+            <Link href="/vendor/boost" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px', borderRadius: 18, background: `linear-gradient(135deg,${CR}0a,${CR}15)`, boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${CR}25`, textDecoration: 'none' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: `rgba(154,33,67,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="20" height="20" fill="none" stroke={CR} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+              </div>
+              <div>
+                <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 800, color: DARK }}>Boost Ad</p>
+                <p style={{ margin: 0, fontSize: 11, color: MUT }}>Custom ad with AMi — R199/mo</p>
+              </div>
+            </Link>
+          </div>
+
+          {/* ── Promo shortcut (Pro only) ── */}
+          {(vendor?.plan === 'pro' || vendor?.plan === 'trial') && (
+            <div className="vd-section" style={{ animationDelay: '.23s' }}>
+              <Link href="/vendor/promo" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 18, background: '#fff', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}`, textDecoration: 'none' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>⭐</div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: '0 0 1px', fontSize: 13, fontWeight: 800, color: DARK }}>Sponsored Promo</p>
+                  <p style={{ margin: 0, fontSize: 11, color: MUT }}>Set your promo image and % discount for marketplace ads</p>
+                </div>
+                <svg width="13" height="13" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </Link>
+            </div>
+          )}
+
           {/* ── Stats ── */}
           <div className="vd-section" style={{ animationDelay: '.2s' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
