@@ -392,9 +392,10 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
     <Link href={'/v/' + vendor.id} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div
         style={{
-          background: '#fff', borderRadius: 20, overflow: 'hidden',
-          border: isFeatured ? '1.5px solid rgba(184,151,62,0.4)' : '1px solid #efefef',
-          boxShadow: isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.05)',
+          background: isFeatured ? '#fff' : `${catCfg.color}09`,
+          borderRadius: 20, overflow: 'hidden',
+          border: isFeatured ? '1.5px solid rgba(184,151,62,0.4)' : `1px solid ${catCfg.color}22`,
+          boxShadow: isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.04)',
           transition: 'transform 0.15s, box-shadow 0.15s',
           display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer',
         }}
@@ -721,11 +722,9 @@ export default function Marketplace() {
             {/* Title + location pill */}
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18, gap: 10 }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(232,200,74,0.85)', letterSpacing: 2, textTransform: 'uppercase' }}>South Africa's Wedding Marketplace</span>
-                </div>
-                <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>Find Your Vendors</h1>
-                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
+                <h1 style={{ margin: '0 0 3px', fontSize: 28, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>uMshado Marketplace</h1>
+                <p style={{ margin: '0 0 5px', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}>Find your vendors</p>
+                <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.38)' }}>
                   {loading ? '…' : locationLabel || (location ? `Sorted by distance · ${allVendors.length} vendors` : `${allVendors.length} trusted vendors`)}
                 </p>
               </div>
@@ -832,17 +831,12 @@ export default function Marketplace() {
           </div>
         )}
 
-        {/* Count / clear bar + section label */}
-        <div style={{ padding: '12px 20px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Count / clear bar */}
+        <div style={{ padding: '10px 20px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {!loading && (
-            <div>
-              <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.2 }}>
-                {categoryFilter ? `${categoryFilter.split('&')[0].trim()} Vendors` : 'Featured on uMshado'}
-              </p>
-              <span style={{ fontSize: 11.5, color: '#9ca3af', fontWeight: 500 }}>
-                {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found
-              </span>
-            </div>
+            <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
+              {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found
+            </span>
           )}
           {activeCount() > 0 && (
             <button onClick={clearAll} style={{ fontSize: 12, color: '#b8973e', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear all</button>
@@ -887,7 +881,19 @@ export default function Marketplace() {
                       <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
                     </div>
                     {showAdAfter && (
-                      <SponsoredAdCard key={`ad-${idx}`} ad={adPool[adIndex]} isVendor={isVendor} />
+                      <>
+                        {idx === 4 && (
+                          <div style={{ gridColumn: '1 / -1', padding: '4px 2px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div>
+                              <p style={{ margin: '0 0 2px', fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.2 }}>
+                                {categoryFilter ? `${categoryFilter.split('&')[0].trim()} Vendors` : 'Featured on uMshado'}
+                              </p>
+                              <p style={{ margin: 0, fontSize: 11.5, color: '#9ca3af' }}>Sponsored · Pro vendors on uMshado</p>
+                            </div>
+                          </div>
+                        )}
+                        <SponsoredAdCard key={`ad-${idx}`} ad={adPool[adIndex]} isVendor={isVendor} />
+                      </>
                     )}
                   </Fragment>
                 );

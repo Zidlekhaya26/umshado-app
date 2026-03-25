@@ -7,11 +7,12 @@ import { CR, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 /* ─── Brand tokens ───────────────────────────────────────── */
 
 const SECTIONS = [
-  { href: '/vendor/onboarding', label: 'Business Profile', icon: '💼', desc: 'Name, category, location, description' },
-  { href: '/vendor/services',   label: 'Services',          icon: '🎯', desc: 'What services you offer to couples' },
-  { href: '/vendor/packages',   label: 'Packages & Pricing', icon: '📦', desc: 'Your pricing tiers and packages' },
-  { href: '/vendor/media',      label: 'Media & Contact',    icon: '📸', desc: 'Logo, portfolio, social links' },
-  { href: '/vendor/review',     label: 'Preview & Publish',  icon: '🚀', desc: 'Review and go live on the marketplace' },
+  { href: '/vendor/onboarding', label: 'Business Profile',   icon: '💼', desc: 'Name, category, location, description' },
+  { href: '/vendor/services',   label: 'Services',            icon: '🎯', desc: 'What services you offer to couples' },
+  { href: '/vendor/packages',   label: 'Packages & Pricing',  icon: '📦', desc: 'Your pricing tiers and packages' },
+  { href: '/vendor/media',      label: 'Media & Contact',     icon: '📸', desc: 'Logo, portfolio, social links' },
+  { href: '/vendor/promo',      label: 'Sponsored Promo',     icon: '⭐', desc: 'Set promo image and % discount for marketplace ads', noModeQuery: true },
+  { href: '/vendor/review',     label: 'Preview & Publish',   icon: '🚀', desc: 'Review and go live on the marketplace' },
 ] as const;
 
 export default function VendorProfileEditHub() {
@@ -22,7 +23,7 @@ export default function VendorProfileEditHub() {
         @keyframes ehUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         .eh1{animation:ehUp .35s ease .04s both}.eh2{animation:ehUp .35s ease .09s both}
         .eh3{animation:ehUp .35s ease .13s both}.eh4{animation:ehUp .35s ease .17s both}
-        .eh5{animation:ehUp .35s ease .21s both}.eh6{animation:ehUp .35s ease .25s both}
+        .eh5{animation:ehUp .35s ease .21s both}.eh6{animation:ehUp .35s ease .25s both}.eh7{animation:ehUp .35s ease .29s both}
         .eh-card:hover .eh-arrow{transform:translateX(3px)}
         .eh-arrow{transition:transform .15s}
       `}</style>
@@ -59,7 +60,7 @@ export default function VendorProfileEditHub() {
         {SECTIONS.map((section, i) => (
           <Link
             key={section.href}
-            href={section.href + modeQuery}
+            href={'noModeQuery' in section && section.noModeQuery ? section.href : section.href + modeQuery}
             className={`eh-card eh${i + 1}`}
             style={{
               display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px',
