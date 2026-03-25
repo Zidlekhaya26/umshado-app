@@ -53,7 +53,7 @@ export default function AdminVerificationsPage() {
       headers: { 'Content-Type': 'application/json', authorization: `Bearer ${token}` },
       body: JSON.stringify({ vendorId, action }),
     });
-    setDone(prev => ({ ...prev, [vendorId]: action }));
+    setDone(prev => ({ ...prev, [vendorId]: action === 'approve' ? 'approved' : 'rejected' }));
     setActing(null);
   };
 
