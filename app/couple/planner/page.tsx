@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { formatBudget } from '@/lib/currency';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BottomNav from '@/components/BottomNav';
 import { UmshadoIcon, LoadingPage } from '@/components/ui/UmshadoLogo';
@@ -700,7 +701,7 @@ function CouplePlannerContent() {
 
   const budgetStatusLabel = (item: DbBudgetItem) => {
     if (item.status === 'paid' || item.amount_paid >= item.amount) return '✓ Fully Paid';
-    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — ${format(Number(item.amount_paid))} of ${format(Number(item.amount))}`;
+    if (item.status === 'partial' || (item.amount_paid > 0 && item.amount_paid < item.amount)) return `Partial — ${formatBudget(Number(item.amount_paid))} of ${formatBudget(Number(item.amount))}`;
     return 'Planned';
   };
   const budgetStatusColor = (item: DbBudgetItem) => {
@@ -790,10 +791,10 @@ function CouplePlannerContent() {
                       <span className="text-2xl">💰</span>
                       <p className="text-sm font-semibold text-gray-600">Total Budget</p>
                     </div>
-                    <p className="text-3xl font-bold text-gray-900">{format(totalBudget)}</p>
+                    <p className="text-3xl font-bold text-gray-900">{formatBudget(totalBudget)}</p>
                     <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-200">
-                      <div><p className="text-xs font-medium text-gray-500">Paid</p><p className="text-lg font-bold text-green-600">{format(totalPaid)}</p></div>
-                      <div><p className="text-xs font-medium text-gray-500">Outstanding</p><p className="text-lg font-bold text-orange-600">{format(totalOutstanding)}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Paid</p><p className="text-lg font-bold text-green-600">{formatBudget(totalPaid)}</p></div>
+                      <div><p className="text-xs font-medium text-gray-500">Outstanding</p><p className="text-lg font-bold text-orange-600">{formatBudget(totalOutstanding)}</p></div>
                       <div><p className="text-xs font-medium text-gray-500">Progress</p><p className="text-lg font-bold text-purple-600">{totalBudget > 0 ? Math.round((totalPaid / totalBudget) * 100) : 0}%</p></div>
                     </div>
                     {/* Progress bar */}
@@ -824,7 +825,7 @@ function CouplePlannerContent() {
                             <p className="text-sm font-bold text-gray-900">{item.title}</p>
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                            <p className="text-sm font-semibold text-gray-700">{format(Number(item.amount))}</p>
+                            <p className="text-sm font-semibold text-gray-700">{formatBudget(Number(item.amount))}</p>
                             <button onClick={() => startEditBudget(item)} className="text-gray-400 hover:text-purple-600 transition-colors p-1" aria-label="Edit item">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
@@ -1075,7 +1076,7 @@ function CouplePlannerContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-1">Record Payment</h3>
-            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {format(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
+            <p className="text-sm text-gray-600 mb-4">{paymentItem.title} — Outstanding: {formatBudget(Number(paymentItem.amount) - Number(paymentItem.amount_paid || 0))}</p>
             <div className="space-y-3">
               <div><label className="block text-sm font-semibold text-gray-700 mb-1.5">Payment Amount</label><input type="number" value={paymentAmount} onChange={e => setPaymentAmount(e.target.value)} placeholder="e.g., 5000" className="w-full px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900" autoFocus /></div>
             </div>

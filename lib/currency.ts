@@ -39,3 +39,20 @@ export function formatPrice(amountInZar: number, currency: Currency, rates?: Exc
   const converted = convertAmount(amountInZar, currency, rates);
   return formatAmount(converted, currency);
 }
+
+/**
+ * Format a budget amount WITHOUT currency conversion.
+ * Budget items are entered by the user in ZAR and must always display in ZAR,
+ * regardless of the user's marketplace currency preference.
+ */
+export function formatBudget(amount: number): string {
+  try {
+    return new Intl.NumberFormat('en-ZA', {
+      style: 'currency',
+      currency: 'ZAR',
+      maximumFractionDigits: 0,
+    }).format(amount).replace(/ZAR/, 'R');
+  } catch {
+    return `R${Math.round(amount).toLocaleString('en-ZA')}`;
+  }
+}

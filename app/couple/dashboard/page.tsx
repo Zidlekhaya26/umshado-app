@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { formatBudget } from '@/lib/currency';
 import BottomNav from '@/components/BottomNav';
 import WeddingWebsiteSettings from '@/components/WeddingWebsiteSettings';
 import AmiChat from '@/components/AmiChat';
@@ -128,7 +129,7 @@ function MilestoneTimeline({ daysLeft }: { daysLeft:number }) {
         </Link>
       </div>
       <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
-        {upcoming.map((m, i) => {
+        {upcoming.map((m) => {
           const diff = m.days - daysLeft;
           const done = diff < -7;
           const now  = Math.abs(diff) <= 7;
@@ -478,8 +479,8 @@ export default function CoupleDashboard() {
                     <span style={{ fontSize:8, color:LITE }}>paid</span>
                   </Donut>
                   <div style={{ textAlign:'center' }}>
-                    <p style={{ margin:'0 0 1px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{format(totalBudget)}</p>
-                    <p style={{ margin:0, fontSize:10, color:LITE }}>{format(totalBudget - totalPaid)} remaining</p>
+                    <p style={{ margin:'0 0 1px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{formatBudget(totalBudget)}</p>
+                    <p style={{ margin:0, fontSize:10, color:LITE }}>{formatBudget(totalBudget - totalPaid)} remaining</p>
                   </div>
                 </>
               ) : (
