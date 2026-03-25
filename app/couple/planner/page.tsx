@@ -746,8 +746,47 @@ function CouplePlannerContent() {
               {tasks.length === 0 ? (
                 <EmptyState icon="📋" title="No tasks yet" description="Add your first wedding planning task to get started." actionLabel="+ Add Task" onAction={() => setShowTaskModal(true)} />
               ) : (
-                <div className="space-y-2">
-                  {tasks.map(task => {
+                /* ── Timeline grouped by month ── */
+                (() => {
+                  const today = new Date(); today.setHours(0,0,0,0);
+
+                  const overdue: DbTask[] = [];
+                  const monthMap = new Map<string, { sortKey: string; label: string; monthDate: Date; tasks: DbTask[] }>();
+                  const undated: DbTask[] = [];
+
+                  [...tasks].sort((a, b) => {
+                    if (!a.due_date && !b.due_date) return 0;
+                    if (!a.due_date) return 1;
+                    if (!b.due_date) return -1;
+                    return a.due_date.localeCompare(b.due_date);
+                  }).forEach(t => {
+                    if (!t.due_date) { undated.push(t); return; }
+                    const d = new Date(t.due_date + 'T00:00:00');
+                    if (d < today && !t.is_done) { overdue.push(t); return; }
+                    const sortKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                    if (!monthMap.has(sortKey)) {
+                      monthMap.set(sortKey, {
+                        sortKey,
+                        label: d.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' }),
+                        monthDate: new Date(d.getFullYear(), d.getMonth(), 1),
+                        tasks: [],
+                      });
+                    }
+                    monthMap.get(sortKey)!.tasks.push(t);
+                  });
+
+                  const sortedMonths = Array.from(monthMap.values()).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+                  const mtwLabel = (d: Date) => {
+                    if (!coupleDate) return null;
+                    const wedding = new Date(coupleDate + 'T00:00:00');
+                    const months = Math.round((wedding.getTime() - d.getTime()) / (1000*60*60*24*30.44));
+                    if (months < 0) return null;
+                    if (months === 0) return 'Wedding month';
+                    return `${months}mo to go`;
+                  };
+
+                  const TaskCard = ({ task }: { task: DbTask }) => {
                     const isOverdue = !task.is_done && task.due_date && new Date(task.due_date + 'T23:59:59') < new Date();
                     return (
                       <div key={task.id} className={`bg-white rounded-xl border-2 px-4 py-3.5 transition-colors ${task.is_done ? 'border-green-100 opacity-70' : isOverdue ? 'border-red-200' : 'border-gray-200'}`}>
@@ -772,8 +811,41 @@ function CouplePlannerContent() {
                         </div>
                       </div>
                     );
-                  })}
-                </div>
+                  };
+
+                  const SectionHeader = ({ label, count, accent, sub }: { label: string; count: number; accent: string; sub?: string | null }) => (
+                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 0 6px' }}>
+                      <div style={{ flex:1, height:1, background:`${accent}22` }} />
+                      <span style={{ fontSize:11, fontWeight:700, color:accent, letterSpacing:0.4, textTransform:'uppercase', whiteSpace:'nowrap' }}>{label}</span>
+                      {sub && <span style={{ fontSize:10, color:`${accent}99`, fontWeight:600, whiteSpace:'nowrap' }}>{sub}</span>}
+                      <span style={{ minWidth:20, height:20, borderRadius:10, background:`${accent}18`, color:accent, fontSize:10, fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', padding:'0 5px' }}>{count}</span>
+                      <div style={{ flex:1, height:1, background:`${accent}22` }} />
+                    </div>
+                  );
+
+                  return (
+                    <div className="space-y-4">
+                      {overdue.length > 0 && (
+                        <div>
+                          <SectionHeader label="Overdue" count={overdue.length} accent="#c83232" />
+                          <div className="space-y-2">{overdue.map(t => <TaskCard key={t.id} task={t} />)}</div>
+                        </div>
+                      )}
+                      {sortedMonths.map(({ sortKey, label, monthDate, tasks: mt }) => (
+                        <div key={sortKey}>
+                          <SectionHeader label={label} count={mt.length} accent="#5c3d28" sub={mtwLabel(monthDate)} />
+                          <div className="space-y-2">{mt.map(t => <TaskCard key={t.id} task={t} />)}</div>
+                        </div>
+                      ))}
+                      {undated.length > 0 && (
+                        <div>
+                          <SectionHeader label="No date" count={undated.length} accent="#7a5060" />
+                          <div className="space-y-2">{undated.map(t => <TaskCard key={t.id} task={t} />)}</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               )}
             </div>
           )}
