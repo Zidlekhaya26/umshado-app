@@ -559,7 +559,7 @@ export default function VendorDashboard() {
               </div>
               <div>
                 <p style={{ margin: '0 0 2px', fontSize: 13, fontWeight: 800, color: DARK }}>Community</p>
-                <p style={{ margin: 0, fontSize: 11, color: MUT }}>Post tips & connect with couples</p>
+                <p style={{ margin: 0, fontSize: 11, color: MUT }}>See what couples are planning</p>
               </div>
             </Link>
             {/* Boost Ad */}

@@ -23,6 +23,7 @@ interface CommunityPost {
 interface SponsoredAd {
   id: string;
   vendorId?: string | null;
+  vendorName?: string | null;
   headline: string;
   body: string;
   cta: string;
@@ -30,6 +31,8 @@ interface SponsoredAd {
   color: string;
   emoji: string;
   badge?: string;
+  imageUrl?: string | null;
+  discountPct?: number | null;
 }
 
 /* ── Helpers ─────────────────────────────────────────── */
@@ -124,30 +127,47 @@ function PostCard({ post }: { post: CommunityPost }) {
 
 /* ── Ad card ─────────────────────────────────────────── */
 function AdCard({ ad }: { ad: SponsoredAd }) {
+  const hasImage = Boolean(ad.imageUrl);
   return (
-    <Link href={ad.vendorId ? `/marketplace/vendor/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', display: 'block' }}>
-      <div style={{ borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${ad.color}28`, boxShadow: `0 4px 20px ${ad.color}12`, background: '#fff', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(0,0,0,0.08)' }}>
+    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', display: 'block' }}>
+      <div style={{ borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${ad.color}28`, boxShadow: `0 4px 20px ${ad.color}12`, background: `${ad.color}0a`, position: 'relative', display: 'flex', minHeight: 130 }}>
+        {/* SPONSORED badge */}
+        <div style={{ position: 'absolute', top: 10, right: hasImage ? 'calc(36% + 8px)' : 12, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.08)', zIndex: 2 }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>SPONSORED</span>
         </div>
-        <div style={{ height: 72, background: `linear-gradient(135deg,${ad.color}20,${ad.color}08)`, borderBottom: `1px solid ${ad.color}18`, display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12 }}>
-          <div style={{ width: 48, height: 48, borderRadius: 13, background: `linear-gradient(135deg,${ad.color}cc,${ad.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0, boxShadow: `0 3px 10px ${ad.color}28` }}>
-            {ad.emoji}
+        {/* Left content */}
+        <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center', minWidth: 0 }}>
+          <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: `${ad.color}15`, color: ad.color, border: `1px solid ${ad.color}22`, alignSelf: 'flex-start' }}>
+            {ad.category.split('&')[0].trim()}
+          </span>
+          {ad.vendorName && <p style={{ margin: 0, fontSize: 10, fontWeight: 800, color: ad.color, letterSpacing: 0.6, textTransform: 'uppercase' }}>{ad.vendorName}</p>}
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.25 }}>{ad.headline}</h3>
+          <p style={{ margin: 0, fontSize: 11.5, color: '#6b7280', lineHeight: 1.4 }}>{ad.body}</p>
+          <div style={{ alignSelf: 'flex-start', marginTop: 4, padding: '7px 14px', borderRadius: 20, background: ad.color, color: '#fff', fontSize: 11, fontWeight: 800, letterSpacing: 0.3 }}>
+            {ad.cta.toUpperCase()}
           </div>
-          <div>
-            {ad.badge && (
-              <span style={{ fontSize: 9.5, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: `${ad.color}15`, color: ad.color, border: `1px solid ${ad.color}22`, display: 'inline-block', marginBottom: 3 }}>{ad.badge}</span>
+        </div>
+        {/* Right: image or emoji */}
+        {hasImage ? (
+          <div style={{ width: '36%', flexShrink: 0, position: 'relative' }}>
+            <img src={ad.imageUrl!} alt={ad.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            {ad.discountPct && (
+              <div style={{ position: 'absolute', bottom: 10, left: 10, background: '#16a34a', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 10px', borderRadius: 20 }}>
+                {ad.discountPct}% OFF
+              </div>
             )}
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.25 }}>{ad.headline}</h3>
           </div>
-        </div>
-        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <p style={{ flex: 1, margin: 0, fontSize: 12.5, color: '#4b5563', lineHeight: 1.5 }}>{ad.body}</p>
-          <div style={{ flexShrink: 0, padding: '9px 14px', borderRadius: 11, background: `linear-gradient(135deg,${ad.color}cc,${ad.color})`, color: '#fff', fontSize: 11.5, fontWeight: 800, whiteSpace: 'nowrap', boxShadow: `0 3px 10px ${ad.color}30` }}>
-            {ad.cta}
+        ) : (
+          <div style={{ width: '26%', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: `${ad.color}10`, borderLeft: `1px solid ${ad.color}18` }}>
+            <span style={{ fontSize: 36 }}>{ad.emoji}</span>
+            {ad.discountPct && (
+              <div style={{ background: '#16a34a', color: '#fff', fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 20 }}>
+                {ad.discountPct}% OFF
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </Link>
   );
@@ -274,10 +294,13 @@ export default function VendorCommunityPage() {
   /* ── Build feed ───────────────────────────────────── */
   const filtered = activeTab === 'All' ? posts : posts.filter(p => p.tag === activeTab);
   const feed: Array<{ type: 'post'; data: CommunityPost } | { type: 'ad'; data: SponsoredAd }> = [];
+  // Always pin first sponsored ad at the top of the feed
+  if (ads.length > 0) feed.push({ type: 'ad', data: ads[0] });
   filtered.forEach((p, i) => {
     feed.push({ type: 'post', data: p });
-    if ((i + 1) % 4 === 0) {
-      feed.push({ type: 'ad', data: ads[Math.floor(i / 4) % ads.length] });
+    // Rotate additional ads after every 5th post
+    if ((i + 1) % 5 === 0 && ads.length > 0) {
+      feed.push({ type: 'ad', data: ads[(Math.floor(i / 5) + 1) % ads.length] });
     }
   });
 

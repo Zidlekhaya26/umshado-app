@@ -871,6 +871,8 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
+              {/* Always show the first sponsored ad pinned at the top */}
+              {(() => { const adPool = liveAds.length > 0 ? liveAds : DUMMY_ADS; return adPool.length > 0 ? <SponsoredAdCard ad={adPool[0]} isVendor={isVendor} /> : null; })()}
               {vendors.slice(0, displayedCount).map((v, idx) => {
                 const showAdAfter = (idx + 1) % 5 === 0;
                 const adPool = liveAds.length > 0 ? liveAds : DUMMY_ADS;
