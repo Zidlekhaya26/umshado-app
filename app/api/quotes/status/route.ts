@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { validateBody } from "@/lib/apiValidate";
 import { createServiceClient } from "@/lib/supabaseServer";
+import { notifyUsers } from "@/lib/server/notify";
 
 const QuoteStatusSchema = z.object({
   quoteId:    z.string().uuid().optional(),
@@ -182,6 +183,78 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(JSON.stringify({ event: 'quote_status_updated', userId, quoteId: existingQuote.id }));
+
+    // ── Send notifications based on who acted and what the new status is ──
+    try {
+      const effectiveStatus = normalizedStatus ?? result.data?.status;
+      const isCallerCouple = existingQuote.couple_id === userId;
+
+      // Resolve vendor user_id + business name + conversation for links
+      const [{ data: vendorData }, { data: convData }] = await Promise.all([
+        svc.from('vendors').select('user_id, business_name').eq('id', existingQuote.vendor_id).maybeSingle(),
+        svc.from('conversations').select('id')
+          .eq('couple_id', existingQuote.couple_id)
+          .eq('vendor_id', existingQuote.vendor_id)
+          .maybeSingle(),
+      ]);
+
+      const vendorUserId   = vendorData?.user_id ?? null;
+      const vendorName     = vendorData?.business_name || 'Your vendor';
+      const threadLink     = convData?.id ? `/messages/thread/${convData.id}` : '/messages';
+      const quoteRef       = result.data?.quote_ref ?? existingQuote.quote_ref;
+
+      if (isCallerCouple) {
+        // Couple acted → notify vendor
+        if (vendorUserId) {
+          if (effectiveStatus === 'accepted') {
+            await notifyUsers({
+              userIds: [vendorUserId],
+              type: 'quote_accepted',
+              title: 'Quote accepted!',
+              body: `A couple accepted your quote (Ref: ${quoteRef}). Confirm the booking when ready.`,
+              link: threadLink,
+              meta: { quoteId: existingQuote.id, quoteRef },
+            });
+          } else if (effectiveStatus === 'declined') {
+            await notifyUsers({
+              userIds: [vendorUserId],
+              type: 'quote_declined',
+              title: 'Quote declined',
+              body: `A couple declined your quote (Ref: ${quoteRef}).`,
+              link: threadLink,
+              meta: { quoteId: existingQuote.id, quoteRef },
+            });
+          }
+        }
+      } else {
+        // Vendor acted → notify couple
+        if (effectiveStatus === 'negotiating') {
+          // Vendor sent a final quote price
+          const priceText = finalPrice ? ` for R${finalPrice.toLocaleString()}` : '';
+          await notifyUsers({
+            userIds: [existingQuote.couple_id],
+            type: 'quote_received',
+            title: `Quote from ${vendorName}`,
+            body: `${vendorName} has sent you a final quote${priceText}. Tap to review and accept.`,
+            link: threadLink,
+            meta: { quoteId: existingQuote.id, quoteRef },
+          });
+        } else if (effectiveStatus === 'declined') {
+          await notifyUsers({
+            userIds: [existingQuote.couple_id],
+            type: 'quote_declined',
+            title: `${vendorName} is not available`,
+            body: `Unfortunately, ${vendorName} is unavailable for your quote (Ref: ${quoteRef}).`,
+            link: '/marketplace',
+            meta: { quoteId: existingQuote.id, quoteRef },
+          });
+        }
+      }
+    } catch (notifyErr) {
+      // Non-fatal — log but don't fail the response
+      console.error('[quotes/status] notification error:', notifyErr);
+    }
+
     return NextResponse.json({ success: true, quote: result.data });
   } catch (err: any) {
     console.error("quotes/status route fatal:", err);

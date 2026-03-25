@@ -123,26 +123,32 @@ export default function NotificationsPage() {
     return new Date(dateStr).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short' });
   };
 
-  /* ── Icon per notification type ──────────────────────────────── */
-  const typeIcon = (type: string) => {
+  /* ── Icon + accent per notification type ──────────────────────── */
+  const typeStyle = (type: string): { icon: string; accent: string } => {
     switch (type) {
       case 'quote_created':
       case 'quote_requested':
-        return '📝';
+        return { icon: '📝', accent: '#3b82f6' };
+      case 'quote_received':
+        return { icon: '💰', accent: '#f59e0b' };
+      case 'quote_accepted':
+        return { icon: '✅', accent: '#22c55e' };
+      case 'quote_declined':
+        return { icon: '❌', accent: '#ef4444' };
       case 'quote_status_updated':
       case 'quote_updated':
-        return '💰';
+        return { icon: '💰', accent: '#f59e0b' };
       case 'booking_confirmed':
-        return '📅';
+        return { icon: '📅', accent: '#22c55e' };
       case 'message_received':
       case 'message':
-        return '💬';
+        return { icon: '💬', accent: '#9A2143' };
       case 'vendor_published':
-        return '🎉';
+        return { icon: '🎉', accent: '#BD983F' };
       case 'invite_approved':
-        return '🎊';
+        return { icon: '🎊', accent: '#BD983F' };
       default:
-        return '🔔';
+        return { icon: '🔔', accent: '#9A2143' };
     }
   };
 
@@ -207,14 +213,16 @@ export default function NotificationsPage() {
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = item.is_read ? '#fff' : 'rgba(154,33,67,0.04)'; }}
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: item.is_read ? 'rgba(0,0,0,0.04)' : 'rgba(154,33,67,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                  {typeIcon(item.type)}
-                </div>
+                {(() => { const { icon, accent } = typeStyle(item.type); return (
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: item.is_read ? 'rgba(0,0,0,0.04)' : `${accent}15`, border: item.is_read ? 'none' : `1px solid ${accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                    {icon}
+                  </div>
+                ); })()}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
                     <p style={{ margin: 0, fontSize: 13, fontWeight: item.is_read ? 600 : 700, color: DARK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
                     {!item.is_read && (
-                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: CR, flexShrink: 0, marginTop: 3 }} />
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: typeStyle(item.type).accent, flexShrink: 0, marginTop: 3 }} />
                     )}
                   </div>
                   <p style={{ margin: '0 0 5px', fontSize: 11, color: MUT, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' } as React.CSSProperties}>{item.body}</p>
