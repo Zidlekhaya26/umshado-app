@@ -18,10 +18,24 @@ interface Conversation {
   couple_avatar: string | null;
   unread: number;
   last_message: string | null;
+  has_pending_quote: boolean;
 }
 interface NotifItem {
   id: string; type: string; title: string; body: string;
   link: string | null; is_read: boolean; created_at: string;
+}
+interface QuoteItem {
+  id: string;
+  quote_ref: string;
+  status: 'requested' | 'negotiating' | 'accepted' | 'declined' | 'expired' | 'booked';
+  package_name: string | null;
+  base_from_price: number | null;
+  vendor_final_price: number | null;
+  created_at: string;
+  couple_id: string;
+  couple_name: string;
+  couple_avatar: string | null;
+  conversation_id: string | null;
 }
 
 /* ─── Tokens ─────────────────────────────────────────────── */
@@ -53,7 +67,7 @@ function notifIcon(type: string) {
 export default function VendorInboxPage() {
   const router = useRouter();
   const { user } = useAuthRole();
-  const [tab, setTab] = useState<'chats' | 'alerts'>('chats');
+  const [tab, setTab] = useState<'chats' | 'quotes' | 'alerts'>('chats');
 
   const [convs, setConvs] = useState<Conversation[]>([]);
   const [convLoading, setConvLoading] = useState(true);
@@ -63,6 +77,8 @@ export default function VendorInboxPage() {
   const [notifsLoading, setNotifsLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
   const [unreadAlerts, setUnreadAlerts] = useState(0);
+  const [quotes, setQuotes] = useState<QuoteItem[]>([]);
+  const [quotesLoading, setQuotesLoading] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -73,7 +89,7 @@ export default function VendorInboxPage() {
     const { data: v } = await supabase.from('vendors').select('id').eq('user_id', uid).limit(1).maybeSingle();
     const vid = v?.id || uid;
     setVendorId(vid);
-    await Promise.all([loadConvs(vid, uid), loadNotifs(uid)]);
+    await Promise.all([loadConvs(vid, uid), loadNotifs(uid), loadQuotes(vid)]);
   };
 
   const loadConvs = async (vid: string, uid: string) => {
@@ -90,14 +106,16 @@ export default function VendorInboxPage() {
       const convIds = convData.map((c: any) => c.id);
       const coupleIds = [...new Set(convData.map((c: any) => c.couple_id))];
 
-      const [{ data: msgs }, { data: couplesData }] = await Promise.all([
+      const [{ data: msgs }, { data: couplesData }, { data: pendingQuotes }] = await Promise.all([
         supabase.from('messages')
           .select('conversation_id, message_text, read, sender_id, created_at')
           .in('conversation_id', convIds)
           .order('created_at', { ascending: false }),
         supabase.from('couples').select('id, partner_name, avatar_url').in('id', coupleIds),
+        supabase.from('quotes').select('couple_id').eq('vendor_id', vid).eq('status', 'requested'),
       ]);
 
+      const pendingCoupleIds = new Set((pendingQuotes || []).map((q: any) => q.couple_id));
       const coupleMap = new Map((couplesData || []).map((c: any) => [c.id, c]));
       const msgsByConv = new Map<string, any[]>();
       (msgs || []).forEach((m: any) => {
@@ -116,10 +134,44 @@ export default function VendorInboxPage() {
           couple_avatar: couple?.avatar_url || null,
           unread: cMsgs.filter((m: any) => !m.read && m.sender_id !== uid).length,
           last_message: cMsgs[0]?.message_text || null,
+          has_pending_quote: pendingCoupleIds.has(c.couple_id),
         };
       }));
     } catch (err) { console.error('loadConvs:', err); }
     finally { setConvLoading(false); }
+  };
+
+  const loadQuotes = async (vid: string) => {
+    setQuotesLoading(true);
+    try {
+      const { data: quoteData } = await supabase
+        .from('quotes')
+        .select('id, quote_ref, status, package_name, base_from_price, vendor_final_price, created_at, couple_id')
+        .eq('vendor_id', vid)
+        .order('created_at', { ascending: false });
+
+      if (!quoteData?.length) { setQuotes([]); return; }
+
+      const coupleIds = [...new Set(quoteData.map((q: any) => q.couple_id))];
+      const [{ data: couplesData }, { data: convData }] = await Promise.all([
+        supabase.from('couples').select('id, partner_name, avatar_url').in('id', coupleIds),
+        supabase.from('conversations').select('id, couple_id').eq('vendor_id', vid).in('couple_id', coupleIds),
+      ]);
+
+      const coupleMap = new Map((couplesData || []).map((c: any) => [c.id, c]));
+      const convMap = new Map((convData || []).map((c: any) => [c.couple_id, c.id]));
+
+      setQuotes(quoteData.map((q: any) => {
+        const couple = coupleMap.get(q.couple_id);
+        return {
+          ...q,
+          couple_name: couple?.partner_name || 'Couple',
+          couple_avatar: couple?.avatar_url || null,
+          conversation_id: convMap.get(q.couple_id) || null,
+        };
+      }));
+    } catch (err) { console.error('loadQuotes:', err); }
+    finally { setQuotesLoading(false); }
   };
 
   const loadNotifs = async (uid: string) => {
@@ -153,6 +205,7 @@ export default function VendorInboxPage() {
   };
 
   const unreadChats = convs.reduce((s, c) => s + c.unread, 0);
+  const pendingQuoteCount = quotes.filter(q => q.status === 'requested').length;
 
   return (
     <div style={{ minHeight: '100svh', background: BG, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
@@ -173,12 +226,14 @@ export default function VendorInboxPage() {
           <div style={{ padding: '20px 20px 0', position: 'relative' }}>
             <h1 style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif', letterSpacing: -0.3 }}>Inbox</h1>
             <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.55)' }}>
-              {unreadChats + unreadAlerts > 0 ? `${unreadChats + unreadAlerts} unread` : 'All caught up'}
+              {pendingQuoteCount > 0
+                ? `${pendingQuoteCount} quote${pendingQuoteCount !== 1 ? 's' : ''} awaiting reply`
+                : unreadChats + unreadAlerts > 0 ? `${unreadChats + unreadAlerts} unread` : 'All caught up'}
             </p>
           </div>
           <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.12)', marginTop: 16, position: 'relative' }}>
-            {([['chats', 'Chats', unreadChats], ['alerts', 'Alerts', unreadAlerts]] as const).map(([t, label, badge]) => (
-              <button key={t} onClick={() => setTab(t)} style={{
+            {([['chats', 'Chats', unreadChats, CR2, '#fff'], ['quotes', 'Quotes', pendingQuoteCount, '#2563eb', '#fff'], ['alerts', 'Alerts', unreadAlerts, GD, 'var(--um-dark)']] as const).map(([t, label, badge, badgeBg, badgeColor]) => (
+              <button key={t} onClick={() => setTab(t as any)} style={{
                 flex: 1, padding: '10px 4px 12px', border: 'none', background: 'none', cursor: 'pointer',
                 fontSize: 13, fontWeight: 700, letterSpacing: 0.3,
                 color: tab === t ? '#fff' : 'rgba(255,255,255,0.45)',
@@ -187,7 +242,7 @@ export default function VendorInboxPage() {
               }}>
                 {label}
                 {badge > 0 && (
-                  <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 10, background: t === 'chats' ? CR2 : GD, color: t === 'chats' ? '#fff' : 'var(--um-dark)', lineHeight: 1.4 }}>{badge}</span>
+                  <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 10, background: badgeBg, color: badgeColor, lineHeight: 1.4 }}>{badge}</span>
                 )}
               </button>
             ))}
@@ -225,7 +280,12 @@ export default function VendorInboxPage() {
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                          <p style={{ margin: 0, fontSize: 14, fontWeight: conv.unread > 0 ? 800 : 600, color: DK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.couple_name}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: 14, fontWeight: conv.unread > 0 ? 800 : 600, color: DK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{conv.couple_name}</p>
+                            {conv.has_pending_quote && (
+                              <span style={{ flexShrink: 0, fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 8, background: 'rgba(37,99,235,0.1)', color: '#2563eb', border: '1px solid rgba(37,99,235,0.2)', whiteSpace: 'nowrap' }}>Quote</span>
+                            )}
+                          </div>
                           <span style={{ fontSize: 10.5, color: MUT, flexShrink: 0, marginLeft: 8, fontWeight: 500 }}>{conv.last_message_at ? timeAgo(conv.last_message_at) : ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
@@ -239,6 +299,76 @@ export default function VendorInboxPage() {
                       </div>
                     </Link>
                   ))}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Quotes tab ── */}
+          {tab === 'quotes' && (
+            <>
+              {quotesLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '52px 0' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', border: `3px solid rgba(154,33,67,0.12)`, borderTopColor: CR, animation: 'ibSpin .8s linear infinite' }} />
+                </div>
+              )}
+              {!quotesLoading && quotes.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 18, border: `1.5px solid ${BOR}` }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(37,99,235,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <svg width="24" height="24" fill="none" stroke="#2563eb" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  </div>
+                  <p style={{ margin: '0 0 5px', fontSize: 15, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif' }}>No quote requests yet</p>
+                  <p style={{ margin: 0, fontSize: 12.5, color: MUT }}>When couples request quotes, they&apos;ll appear here</p>
+                </div>
+              )}
+              {!quotesLoading && quotes.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {quotes.map((q, i) => {
+                    const statusColor = q.status === 'requested' ? '#2563eb' : q.status === 'negotiating' ? '#f59e0b' : q.status === 'accepted' || q.status === 'booked' ? '#22c55e' : q.status === 'declined' ? '#ef4444' : MUT;
+                    const statusLabel = q.status === 'requested' ? 'Awaiting Reply' : q.status === 'negotiating' ? 'Quote Sent' : q.status === 'accepted' ? 'Accepted' : q.status === 'booked' ? 'Booked' : q.status === 'declined' ? 'Declined' : q.status;
+                    const initials = (q.couple_name || 'C')[0].toUpperCase();
+                    return (
+                      <div key={q.id} style={{ background: '#fff', borderRadius: 16, border: `1.5px solid ${q.status === 'requested' ? 'rgba(37,99,235,0.25)' : BOR}`, overflow: 'hidden', boxShadow: q.status === 'requested' ? '0 2px 12px rgba(37,99,235,0.08)' : '0 2px 8px rgba(26,13,18,0.04)', animation: `ibFade .3s ease ${i * 0.04}s both` }}>
+                        <div style={{ height: 3, background: statusColor }} />
+                        <div style={{ padding: '14px 16px' }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 10 }}>
+                            {q.couple_avatar ? (
+                              <Image src={q.couple_avatar} alt="" width={40} height={40} style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                            ) : (
+                              <div style={{ width: 40, height: 40, borderRadius: '50%', background: `linear-gradient(135deg,${CR},${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, flexShrink: 0 }}>{initials}</div>
+                            )}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{q.couple_name}</p>
+                                <span style={{ fontSize: 10.5, color: MUT, flexShrink: 0, fontWeight: 500 }}>{timeAgo(q.created_at)}</span>
+                              </div>
+                              <p style={{ margin: '2px 0 0', fontSize: 12.5, color: MUT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {q.package_name || `Quote #${q.quote_ref}`}
+                              </p>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 8, background: `${statusColor}18`, color: statusColor, border: `1px solid ${statusColor}30` }}>{statusLabel}</span>
+                              {q.vendor_final_price && (
+                                <span style={{ fontSize: 12, fontWeight: 700, color: CR }}>R{q.vendor_final_price.toLocaleString()}</span>
+                              )}
+                              {!q.vendor_final_price && q.base_from_price && (
+                                <span style={{ fontSize: 11, color: MUT }}>Est. R{q.base_from_price.toLocaleString()}</span>
+                              )}
+                            </div>
+                            {q.conversation_id ? (
+                              <Link href={`/messages/thread/${q.conversation_id}`} style={{ padding: '8px 16px', borderRadius: 10, background: q.status === 'requested' ? `linear-gradient(135deg,${CR},${CR2})` : 'rgba(0,0,0,0.05)', color: q.status === 'requested' ? '#fff' : MUT, fontSize: 12, fontWeight: 700, textDecoration: 'none', flexShrink: 0 }}>
+                                {q.status === 'requested' ? 'Reply' : 'View'}
+                              </Link>
+                            ) : (
+                              <span style={{ fontSize: 11, color: MUT, fontStyle: 'italic' }}>No thread</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

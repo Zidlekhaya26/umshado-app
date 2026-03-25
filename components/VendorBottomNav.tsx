@@ -9,6 +9,7 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 export default function VendorBottomNav() {
   const pathname = usePathname();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [pendingQuotes, setPendingQuotes] = useState(0);
   const [hasCouple, setHasCouple]     = useState(false);
   const { user } = useAuthRole();
 
@@ -43,13 +44,22 @@ export default function VendorBottomNav() {
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user) { setHasCouple(false); return; }
+    if (!user) { setHasCouple(false); setPendingQuotes(0); return; }
     let mounted = true;
     (async () => {
       try {
-        const { data } = await supabase.from('profiles')
-          .select('has_couple').eq('id', user.id).maybeSingle();
-        if (mounted) setHasCouple(Boolean(data?.has_couple));
+        const [profileRes, vendorRes] = await Promise.all([
+          supabase.from('profiles').select('has_couple').eq('id', user.id).maybeSingle(),
+          supabase.from('vendors').select('id').eq('user_id', user.id).maybeSingle(),
+        ]);
+        if (!mounted) return;
+        setHasCouple(Boolean(profileRes.data?.has_couple));
+        if (vendorRes.data?.id) {
+          const { count } = await supabase.from('quotes')
+            .select('*', { count: 'exact', head: true })
+            .eq('vendor_id', vendorRes.data.id).eq('status', 'requested');
+          if (mounted) setPendingQuotes(count || 0);
+        }
       } catch {}
     })();
     return () => { mounted = false; };
@@ -87,12 +97,12 @@ export default function VendorBottomNav() {
           <svg width="22" height="22" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
-          {unreadCount > 0 && (
+          {(unreadCount + pendingQuotes) > 0 && (
             <span
-              aria-label={`${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}`}
-              style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: 'var(--um-gold)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}
+              aria-label={`${unreadCount + pendingQuotes} unread`}
+              style={{ position: 'absolute', top: -5, right: -6, minWidth: 16, height: 16, borderRadius: 8, background: pendingQuotes > 0 ? '#2563eb' : 'var(--um-gold)', color: '#fff', fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', lineHeight: 1 }}
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {(unreadCount + pendingQuotes) > 99 ? '99+' : unreadCount + pendingQuotes}
             </span>
           )}
         </div>
