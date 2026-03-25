@@ -11,6 +11,7 @@ import BottomNav from '@/components/BottomNav';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import { formatBudget, type Currency } from '@/lib/currency';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { useLocation, distanceKm, type UserLocation } from '@/hooks/useLocation';
 
@@ -447,7 +448,11 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
               {vendor.fromPrice > 0 ? (
                 <>
                   <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500, marginBottom: 1 }}>From</div>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.5 }}>{format(vendor.fromPrice)}</div>
+                  <div style={{ fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.5 }}>
+                    {vendor.preferredCurrency && vendor.preferredCurrency !== 'ZAR'
+                      ? formatBudget(vendor.fromPrice, vendor.preferredCurrency as Currency)
+                      : format(vendor.fromPrice)}
+                  </div>
                 </>
               ) : (
                 <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Contact for pricing</div>

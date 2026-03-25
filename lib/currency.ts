@@ -40,6 +40,11 @@ export function formatAmount(amount: number, currency: Currency) {
 }
 
 export function formatPrice(amountInZar: number, currency: Currency, rates?: ExchangeRates) {
+  // If rates aren't loaded and conversion is needed, fall back to ZAR to avoid
+  // showing R5,000 as "$5,000" — a misleading price the vendor never intended.
+  if (currency !== 'ZAR' && (!rates || !rates[currency])) {
+    return formatAmount(amountInZar, 'ZAR');
+  }
   const converted = convertAmount(amountInZar, currency, rates);
   return formatAmount(converted, currency);
 }
