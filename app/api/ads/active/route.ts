@@ -83,7 +83,8 @@ export async function GET() {
   if (boostErr) console.error('[ads/active] boosts query:', boostErr.message);
 
   const boostedVendorIds = new Set<string>();
-  let boostAds: ReturnType<typeof autoAd>[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let boostAds: any[] = [];
 
   if (boosts && boosts.length > 0) {
     const vendorIds = [...new Set(boosts.map(b => b.vendor_id).filter(Boolean))];
