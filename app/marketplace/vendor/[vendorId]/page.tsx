@@ -67,8 +67,11 @@ export default function VendorProfile() {
   const [isSaved, setIsSaved] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [isVendorRole, setIsVendorRole] = useState(false);
-  const [myReview, setMyReview] = useState<{ rating: number; review_text: string | null; reviewer_name: string | null } | null>(null);
-  const [allReviews, setAllReviews] = useState<{ id: string; rating: number; review_text: string | null; reviewer_name: string | null; created_at: string }[]>([]);
+  const [myReview, setMyReview] = useState<{ rating: number; review_text: string | null; reviewer_name: string | null; vendor_reply: string | null } | null>(null);
+  const [allReviews, setAllReviews] = useState<{ id: string; rating: number; review_text: string | null; reviewer_name: string | null; created_at: string; vendor_reply: string | null }[]>([]);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
   const { user, role } = useAuthRole();
   const { format } = useCurrency();
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -346,6 +349,7 @@ export default function VendorProfile() {
           review_text: r.review_text,
           reviewer_name: (r.profiles as any)?.full_name || (r.couples as any)?.partner_name || 'Anonymous',
           created_at: r.created_at,
+          vendor_reply: r.vendor_reply ?? null,
         }));
         setAllReviews(resolvedReviews);
         if (json.myReview) {
@@ -354,6 +358,7 @@ export default function VendorProfile() {
             rating: mr.rating,
             review_text: mr.review_text,
             reviewer_name: (mr.profiles as any)?.full_name || (mr.couples as any)?.partner_name || null,
+            vendor_reply: mr.vendor_reply ?? null,
           });
         }
       } catch {
@@ -823,6 +828,63 @@ export default function VendorProfile() {
                         <span className="text-amber-500 text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
                       </div>
                       {r.review_text && <p className="text-sm text-gray-700 leading-relaxed">{r.review_text}</p>}
+                      {/* Existing reply */}
+                      {r.vendor_reply && replyingTo !== r.id && (
+                        <div className="mt-2 pl-3 border-l-2 border-[#9A2143]">
+                          <p className="text-xs font-semibold text-[#9A2143] mb-0.5">Your reply</p>
+                          <p className="text-sm text-gray-700 leading-relaxed">{r.vendor_reply}</p>
+                          <button
+                            className="text-xs text-[#9A2143] mt-1 font-medium underline"
+                            onClick={() => { setReplyingTo(r.id); setReplyDraft(r.vendor_reply!); }}
+                          >Edit reply</button>
+                        </div>
+                      )}
+                      {/* Reply form */}
+                      {replyingTo === r.id ? (
+                        <div className="mt-2">
+                          <textarea
+                            value={replyDraft}
+                            onChange={e => setReplyDraft(e.target.value)}
+                            placeholder="Write your reply…"
+                            rows={3}
+                            style={{ width: '100%', borderRadius: 8, border: '1.5px solid rgba(154,33,67,0.25)', padding: '8px 10px', fontSize: 13, resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
+                          />
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                            <button
+                              disabled={replySubmitting || !replyDraft.trim()}
+                              onClick={async () => {
+                                if (!replyDraft.trim()) return;
+                                setReplySubmitting(true);
+                                try {
+                                  const { data: { session } } = await supabase.auth.getSession();
+                                  const res = await fetch(`/api/vendor/${vendorId}/review`, {
+                                    method: 'PATCH',
+                                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
+                                    body: JSON.stringify({ reviewId: r.id, reply: replyDraft.trim() }),
+                                  });
+                                  if (res.ok) {
+                                    setAllReviews(prev => prev.map(rv => rv.id === r.id ? { ...rv, vendor_reply: replyDraft.trim() } : rv));
+                                    setReplyingTo(null);
+                                    setReplyDraft('');
+                                  }
+                                } finally {
+                                  setReplySubmitting(false);
+                                }
+                              }}
+                              style={{ flex: 1, padding: '7px 0', borderRadius: 8, background: '#9A2143', color: '#fff', border: 'none', fontSize: 13, fontWeight: 700, cursor: replySubmitting || !replyDraft.trim() ? 'default' : 'pointer', opacity: replySubmitting || !replyDraft.trim() ? 0.5 : 1 }}
+                            >{replySubmitting ? 'Saving…' : 'Post reply'}</button>
+                            <button
+                              onClick={() => { setReplyingTo(null); setReplyDraft(''); }}
+                              style={{ padding: '7px 16px', borderRadius: 8, background: 'transparent', border: '1.5px solid #e0d0d5', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#7a5060' }}
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      ) : !r.vendor_reply && (
+                        <button
+                          className="text-xs text-[#9A2143] mt-2 font-semibold"
+                          onClick={() => { setReplyingTo(r.id); setReplyDraft(''); }}
+                        >+ Reply</button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -833,6 +895,12 @@ export default function VendorProfile() {
                     <span className="text-amber-500 text-sm">{'★'.repeat(myReview.rating)}{'☆'.repeat(5 - myReview.rating)}</span>
                   </div>
                   {myReview.review_text && <p className="text-sm text-gray-700 leading-relaxed">{myReview.review_text}</p>}
+                  {myReview.vendor_reply && (
+                    <div className="mt-2 pl-3 border-l-2 border-[#9A2143]">
+                      <p className="text-xs font-semibold text-[#9A2143] mb-0.5">Vendor reply</p>
+                      <p className="text-sm text-gray-700 leading-relaxed">{myReview.vendor_reply}</p>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>

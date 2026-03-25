@@ -43,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ vend
   // Fetch all reviews for vendor
   const { data: reviews, error } = await supabase
     .from('vendor_reviews')
-    .select('id, rating, review_text, created_at, couple_id, profiles:couple_id(full_name), couples:couple_id(partner_name)')
+    .select('id, rating, review_text, vendor_reply, vendor_replied_at, created_at, couple_id, profiles:couple_id(full_name), couples:couple_id(partner_name)')
     .eq('vendor_id', vendorId)
     .order('created_at', { ascending: false });
 
@@ -86,6 +86,42 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ven
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   console.log(JSON.stringify({ route: 'vendor/review', event: 'review_upserted', vendorId, coupleId: user.id, rating: body.rating }));
   return NextResponse.json({ review: data });
+}
+
+// PATCH — vendor replies to a review
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ vendorId: string }> }) {
+  const { vendorId } = await params;
+  const user = await getAuthUser(req);
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const supabase = createServiceClient();
+
+  // Verify caller owns this vendor
+  const { data: vendorRow } = await supabase
+    .from('vendors')
+    .select('id')
+    .eq('id', vendorId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!vendorRow) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const ReplySchema = z.object({
+    reviewId: z.string().uuid(),
+    reply: z.string().min(1).max(2000),
+  });
+  const { data: body, error: bodyError } = await validateBody(req, ReplySchema);
+  if (bodyError) return bodyError;
+
+  const { error } = await supabase
+    .from('vendor_reviews')
+    .update({ vendor_reply: body.reply.trim(), vendor_replied_at: new Date().toISOString() })
+    .eq('id', body.reviewId)
+    .eq('vendor_id', vendorId);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  console.log(JSON.stringify({ route: 'vendor/review', event: 'reply_submitted', vendorId, reviewId: body.reviewId }));
+  return NextResponse.json({ success: true });
 }
 
 // DELETE — remove own review
