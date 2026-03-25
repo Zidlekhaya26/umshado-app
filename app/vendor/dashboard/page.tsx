@@ -527,7 +527,7 @@ export default function VendorDashboard() {
             <div className="vd-section" style={{ animationDelay: '.15s', background: `linear-gradient(135deg,${CRX},${CR2},${CR})`, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 4px 20px rgba(154,33,67,0.28)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: 15, fontWeight: 800, fontFamily: 'Georgia,serif' }}>Unlock Premium Features</p>
+                  <p style={{ margin: 0, fontSize: 15, fontWeight: 800, fontFamily: 'Georgia,serif', color: '#fff' }}>Unlock Premium Features</p>
                   <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>Get featured, verified &amp; more visibility</p>
                 </div>
                 <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={1.5} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
