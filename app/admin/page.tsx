@@ -4,6 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
+async function getToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? '';
+}
+
 interface Stats {
   totalVendors: number;
   pendingVerifications: number;
@@ -29,29 +34,12 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     (async () => {
-      const [
-        { count: totalVendors },
-        { count: pendingVerifications },
-        { count: totalCouples },
-        { count: totalPosts },
-        { count: proVendors },
-        { count: publishedVendors },
-      ] = await Promise.all([
-        supabase.from('vendors').select('*', { count: 'exact', head: true }),
-        supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('verification_status', 'paid_pending_review'),
-        supabase.from('couples').select('*', { count: 'exact', head: true }),
-        supabase.from('community_posts').select('*', { count: 'exact', head: true }),
-        supabase.from('vendors').select('*', { count: 'exact', head: true }).in('subscription_tier', ['pro', 'trial']),
-        supabase.from('vendors').select('*', { count: 'exact', head: true }).eq('is_published', true),
-      ]);
-      setStats({
-        totalVendors: totalVendors ?? 0,
-        pendingVerifications: pendingVerifications ?? 0,
-        totalCouples: totalCouples ?? 0,
-        totalPosts: totalPosts ?? 0,
-        proVendors: proVendors ?? 0,
-        publishedVendors: publishedVendors ?? 0,
+      const token = await getToken();
+      const res = await fetch('/api/admin/stats', {
+        headers: { authorization: `Bearer ${token}` },
       });
+      const data = await res.json();
+      setStats(data);
       setLoading(false);
     })();
   }, []);
