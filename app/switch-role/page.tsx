@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 /* ─── Brand tokens ───────────────────────────────────────── */
 
@@ -128,6 +129,7 @@ function RoleCard({
 function SwitchRoleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshRole } = useAuthRole();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading]   = useState(true);
   const [switching, setSwitching] = useState<'couple' | 'vendor' | null>(null);
@@ -203,7 +205,8 @@ function SwitchRoleContent() {
     }
   };
 
-  const handleGoHome = (role: 'couple' | 'vendor') => {
+  const handleGoHome = async (role: 'couple' | 'vendor') => {
+    await refreshRole();
     const target = searchParams?.get('target');
     if (target) { router.replace(decodeURIComponent(target)); return; }
     router.replace(role === 'vendor' ? '/vendor/dashboard' : '/couple/dashboard');
