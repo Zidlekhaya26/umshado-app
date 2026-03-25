@@ -524,13 +524,15 @@ export default function VendorDashboard() {
 
           {/* ── Upgrade banner (free plan) — gold to distinguish from crimson CTAs ── */}
           {(!vendor?.plan || vendor.plan === 'free') && (
-            <div className="vd-section" style={{ animationDelay: '.15s', background: `linear-gradient(135deg,${GD},${GD2})`, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 4px 20px rgba(189,152,63,0.28)' }}>
+            <div className="vd-section" style={{ animationDelay: '.15s', background: `linear-gradient(135deg,${CRX},${CR2},${CR})`, borderRadius: 18, padding: '18px 20px', color: '#fff', boxShadow: '0 4px 20px rgba(154,33,67,0.28)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <div>
                   <p style={{ margin: 0, fontSize: 15, fontWeight: 800, fontFamily: 'Georgia,serif' }}>Unlock Premium Features</p>
                   <p style={{ margin: '3px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.72)' }}>Get featured, verified &amp; more visibility</p>
                 </div>
-                <div style={{ fontSize: 26, flexShrink: 0 }}>✨</div>
+                <svg width="26" height="26" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth={1.5} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
               </div>
               <Link href="/vendor/billing" style={{ display: 'inline-block', padding: '9px 18px', borderRadius: 11, background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.25)', color: '#fff', fontSize: 12.5, fontWeight: 800, textDecoration: 'none' }}>View Plans →</Link>
             </div>

@@ -219,24 +219,25 @@ export default function VendorBilling() {
 
         {/* ── Verification ──────────────────────── */}
         <div id="verification" style={{ borderRadius: 16, border: isVerified ? '1.5px solid #86efac' : `1.5px solid ${BOR}`, background: isVerified ? '#f0fdf4' : '#fff', overflow: 'hidden' }}>
-          <div style={{ padding: '14px 18px', background: isVerified ? '#dcfce7' : 'linear-gradient(135deg,#0f0c29,#302b63)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '14px 18px', background: isVerified ? '#dcfce7' : 'linear-gradient(135deg,#dbeafe,#bfdbfe)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 34, height: 34, borderRadius: '50%', background: isVerified ? '#16a34a' : 'rgba(189,152,63,0.2)', border: `1.5px solid ${isVerified ? '#16a34a' : 'rgba(189,152,63,0.4)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="16" height="16" fill="none" stroke={isVerified ? '#fff' : '#BD983F'} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              <div style={{ width: 34, height: 34, borderRadius: '50%', background: isVerified ? '#16a34a' : 'rgba(37,99,235,0.12)', border: `1.5px solid ${isVerified ? '#16a34a' : 'rgba(37,99,235,0.3)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" fill="none" stroke={isVerified ? '#fff' : '#2563eb'} strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               </div>
               <div>
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isVerified ? '#15803d' : '#fff' }}>{isVerified ? 'Verified Business' : 'Get Verified'}</p>
-                <p style={{ margin: '1px 0 0', fontSize: 11, color: isVerified ? '#16a34a' : 'rgba(255,255,255,0.5)' }}>{isVerified ? 'Your badge is live on your profile' : 'R99 one-time fee · No renewals ever'}</p>
+                <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isVerified ? '#15803d' : '#1e3a8a' }}>{isVerified ? 'Verified Business' : 'Get Verified'}</p>
+                <p style={{ margin: '1px 0 0', fontSize: 11, color: isVerified ? '#16a34a' : '#3b82f6' }}>{isVerified ? 'Your badge is live on your profile' : 'One-time application · R99 · No renewals'}</p>
               </div>
             </div>
             {isVerified && <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: '#16a34a', color: '#fff' }}>VERIFIED</span>}
+            {!isVerified && <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: 'rgba(37,99,235,0.12)', color: '#1d4ed8', border: '1px solid rgba(37,99,235,0.2)' }}>BADGE</span>}
           </div>
 
           {!isVerified && (
             <div style={{ padding: '14px 18px' }}>
               {['Manual review by the uMshado team', 'Blue ✓ Verified badge on your profile', 'Higher trust & conversion from couples', 'Priority placement in search results', 'One-time payment — badge is permanent'].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
-                  <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#302b63" /></div>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#2563eb" /></div>
                   <span style={{ fontSize: 12.5, color: DK }}>{f}</span>
                 </div>
               ))}
@@ -248,7 +249,7 @@ export default function VendorBilling() {
               ) : (
                 <div style={{ marginTop: 12 }}>
                   <button onClick={() => initiatePayment('verification')} disabled={submitting !== null}
-                    style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: submitting ? 'default' : 'pointer', background: 'linear-gradient(135deg,#0f0c29,#302b63)', color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 3px 12px rgba(15,12,41,0.22)', opacity: submitting && submitting !== 'verification' ? .5 : 1, transition: 'all .15s' }}>
+                    style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: submitting ? 'default' : 'pointer', background: 'linear-gradient(135deg,#1e3a8a,#2563eb)', color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 3px 12px rgba(37,99,235,0.28)', opacity: submitting && submitting !== 'verification' ? .5 : 1, transition: 'all .15s' }}>
                     {submitting === 'verification' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
                     {submitting === 'verification' ? 'Redirecting…' : 'Apply for Verification — R99'}
                   </button>
