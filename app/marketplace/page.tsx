@@ -19,59 +19,77 @@ import { useLocation, distanceKm, type UserLocation } from '@/hooks/useLocation'
 interface SponsoredAd {
   id: string;
   vendorId?: string;
+  vendorName?: string | null;
   headline: string;
   body: string;
   cta: string;
   category: string;
   color: string;
   emoji: string;
+  imageUrl?: string | null;
+  discountPct?: number | null;
 }
 
 const DUMMY_ADS: SponsoredAd[] = [
   {
     id: 'ad-noxa',
-    headline: 'Noxa — Full-Service Wedding Planning & Tech',
-    body: 'From intimate ceremonies to grand celebrations — Noxa handles coordination, vendor management, and everything in between. Verified Pro partner on uMshado.',
-    cta: 'View Services',
-    category: 'Planning & Coordination',
-    color: '#9A2143',
-    emoji: '🌟',
+    vendorName: 'NOXA',
+    headline: 'Award winning Photography across South Africa',
+    body: 'From intimate ceremonies to grand celebrations. Verified Pro partner on uMshado.',
+    cta: 'View Portfolio',
+    category: 'Photography & Video',
+    color: '#3a7bec',
+    emoji: '📸',
+    imageUrl: null,
+    discountPct: 20,
   },
   {
     id: 'ad-1',
-    headline: 'Luminary Photography — Now Booking 2026 Dates',
-    body: 'Award-winning wedding photography across South Africa. Over 300 love stories captured. Limited dates available.',
+    vendorName: 'LUMINARY',
+    headline: 'Now Booking 2026 Dates',
+    body: 'Award-winning wedding photography across South Africa. Over 300 love stories captured.',
     cta: 'View Packages',
     category: 'Photography & Video',
     color: '#3a7bec',
     emoji: '📸',
+    imageUrl: null,
+    discountPct: null,
   },
   {
     id: 'ad-2',
-    headline: 'The Grand Botanical — SA\'s Most Sought-After Venue',
-    body: 'Iconic gardens, world-class catering, and accommodation for up to 350 guests. Cape Town & Joburg.',
+    vendorName: 'THE GRAND BOTANICAL',
+    headline: "SA's Most Sought-After Venue",
+    body: 'Iconic gardens, world-class catering, accommodation for up to 350 guests.',
     cta: 'Check Availability',
     category: 'Wedding Venues',
     color: '#10b981',
     emoji: '🌿',
+    imageUrl: null,
+    discountPct: null,
   },
   {
     id: 'ad-3',
-    headline: 'Velvet Touch Hair & Makeup — For Your Perfect Day',
-    body: 'Bridal packages from R2 500. Destination weddings welcome. 5-star rated by over 180 brides.',
-    cta: 'Book a Trial',
+    vendorName: 'ES MANGENA',
+    headline: 'Get an amazing wedding make-up promo for December',
+    body: 'Bridal packages from R2 500. Destination weddings welcome.',
+    cta: 'View Promo',
     category: 'Makeup & Hair',
     color: '#ec4899',
     emoji: '💄',
+    imageUrl: null,
+    discountPct: 25,
   },
   {
     id: 'ad-4',
-    headline: 'Bliss Events Catering — From Intimate to Grand',
-    body: 'Traditional & fusion menus tailored to your culture. Halaal, kosher & vegan options available.',
+    vendorName: 'BLISS EVENTS',
+    headline: 'Catering from Intimate to Grand',
+    body: 'Traditional & fusion menus tailored to your culture. Halaal, kosher & vegan options.',
     cta: 'Get a Quote',
     category: 'Catering & Food',
     color: '#e8523a',
     emoji: '🍽️',
+    imageUrl: null,
+    discountPct: null,
   },
 ];
 
@@ -295,37 +313,58 @@ function ScopeSheet({
 /* ─── Sponsored Ad Card ─────────────────────────────────── */
 function SponsoredAdCard({ ad, isVendor }: { ad: SponsoredAd; isVendor: boolean }) {
   const router = useRouter();
+  const hasImage = Boolean(ad.imageUrl);
   return (
-    <div style={{ gridColumn: '1 / -1', borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${ad.color}30`, boxShadow: `0 4px 20px ${ad.color}14`, background: '#fff', position: 'relative' }}>
-      {/* Sponsored label */}
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 2, display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(4px)' }}>
-        <svg width="9" height="9" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-        <span style={{ fontSize: 9.5, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>SPONSORED</span>
-      </div>
-
-      {/* Top band */}
-      <div style={{ height: 80, background: `linear-gradient(135deg, ${ad.color}22, ${ad.color}08)`, borderBottom: `1px solid ${ad.color}18`, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 14 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 14, background: `linear-gradient(135deg, ${ad.color}cc, ${ad.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0, boxShadow: `0 4px 12px ${ad.color}30` }}>
-          {ad.emoji}
+    <div style={{ gridColumn: '1 / -1', borderRadius: 20, overflow: 'hidden', background: `${ad.color}0c`, border: `1.5px solid ${ad.color}22`, boxShadow: `0 4px 20px ${ad.color}12`, position: 'relative', display: 'flex', minHeight: 156 }}>
+      {/* Left content */}
+      <div style={{ flex: 1, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center', minWidth: 0 }}>
+        {/* Category chip */}
+        <div>
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: `${ad.color}18`, color: ad.color, border: `1px solid ${ad.color}28` }}>
+            {ad.category.split('&')[0].trim()}
+          </span>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 20, background: `${ad.color}15`, color: ad.color, border: `1px solid ${ad.color}25`, fontWeight: 600 }}>{ad.category}</span>
-          </div>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.3 }}>{ad.headline}</h3>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-        <p style={{ flex: 1, margin: 0, fontSize: 13, color: '#4b5563', lineHeight: 1.55 }}>{ad.body}</p>
+        {/* Vendor name */}
+        {ad.vendorName && (
+          <p style={{ margin: 0, fontSize: 11, fontWeight: 800, color: ad.color, letterSpacing: 0.8, textTransform: 'uppercase' }}>{ad.vendorName}</p>
+        )}
+        {/* Headline */}
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.25 }}>{ad.headline}</h3>
+        {/* CTA */}
         {!isVendor && (
           <button
             onClick={() => ad.vendorId ? router.push(`/v/${ad.vendorId}`) : undefined}
-            style={{ flexShrink: 0, padding: '10px 18px', borderRadius: 12, border: 'none', background: `linear-gradient(135deg, ${ad.color}cc, ${ad.color})`, color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: `0 3px 12px ${ad.color}35`, fontFamily: 'inherit' }}>
-            {ad.cta}
+            style={{ alignSelf: 'flex-start', marginTop: 2, padding: '8px 18px', borderRadius: 24, border: 'none', background: ad.color, color: '#fff', fontSize: 11.5, fontWeight: 800, cursor: ad.vendorId ? 'pointer' : 'default', letterSpacing: 0.4, boxShadow: `0 3px 10px ${ad.color}35`, fontFamily: 'inherit' }}>
+            {ad.cta.toUpperCase()}
           </button>
         )}
+      </div>
+
+      {/* Right: image or emoji placeholder */}
+      {hasImage ? (
+        <div style={{ width: '38%', flexShrink: 0, position: 'relative' }}>
+          <img src={ad.imageUrl!} alt={ad.headline} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          {ad.discountPct && (
+            <div style={{ position: 'absolute', bottom: 12, left: 12, background: '#16a34a', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 11px', borderRadius: 20, letterSpacing: 0.3 }}>
+              {ad.discountPct}% OFF
+            </div>
+          )}
+        </div>
+      ) : (
+        <div style={{ width: '28%', flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, background: `${ad.color}10`, borderLeft: `1px solid ${ad.color}18` }}>
+          <span style={{ fontSize: 42 }}>{ad.emoji}</span>
+          {ad.discountPct && (
+            <div style={{ background: '#16a34a', color: '#fff', fontSize: 11, fontWeight: 800, padding: '4px 11px', borderRadius: 20, letterSpacing: 0.3 }}>
+              {ad.discountPct}% OFF
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SPONSORED badge */}
+      <div style={{ position: 'absolute', top: 12, right: hasImage ? 'calc(38% + 10px)' : 12, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.07)', backdropFilter: 'blur(4px)', zIndex: 2 }}>
+        <svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+        <span style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>SPONSORED</span>
       </div>
     </div>
   );
@@ -354,122 +393,110 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
       <div
         style={{
           background: '#fff', borderRadius: 20, overflow: 'hidden',
-          border: isFeatured ? '1.5px solid rgba(184,151,62,0.45)' : '1px solid #f1f0ee',
-          boxShadow: isFeatured
-            ? '0 8px 30px rgba(184,151,62,0.14), 0 2px 8px rgba(0,0,0,0.06)'
-            : '0 2px 12px rgba(0,0,0,0.05)',
-          transition: 'transform 0.18s, box-shadow 0.18s',
-          position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer',
+          border: isFeatured ? '1.5px solid rgba(184,151,62,0.4)' : '1px solid #efefef',
+          boxShadow: isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.05)',
+          transition: 'transform 0.15s, box-shadow 0.15s',
+          display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer',
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
-          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured
-            ? '0 16px 40px rgba(184,151,62,0.2), 0 4px 12px rgba(0,0,0,0.08)'
-            : '0 8px 24px rgba(0,0,0,0.10)';
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured ? '0 14px 36px rgba(184,151,62,0.18)' : '0 8px 22px rgba(0,0,0,0.09)';
         }}
         onMouseLeave={e => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured
-            ? '0 8px 30px rgba(184,151,62,0.14), 0 2px 8px rgba(0,0,0,0.06)'
-            : '0 2px 12px rgba(0,0,0,0.05)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.05)';
         }}
       >
-        {/* Coloured top band */}
-        <div style={{
-          height: 72,
-          background: `linear-gradient(135deg, ${catCfg.color}22, ${catCfg.color}10)`,
-          borderBottom: `1px solid ${catCfg.color}20`,
-          position: 'relative', display: 'flex', alignItems: 'flex-start',
-          justifyContent: 'space-between', padding: '12px 14px 0',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(4px)', fontSize: 11, fontWeight: 600, color: '#374151', border: `1px solid ${catCfg.color}30` }}>
+        {/* ── Top bar: category + badges ── */}
+        <div style={{ padding: '13px 14px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `${catCfg.color}12`, fontSize: 11, fontWeight: 700, color: catCfg.color }}>
             <span style={{ fontSize: 13 }}>{catCfg.icon}</span>
-            <span>{vendor.category.split(' ')[0]}</span>
+            <span>{vendor.category.split('&')[0].trim()}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {vendor.verified && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 20, background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.35)' }}>
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="#3b82f6"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
-                <span style={{ fontSize: 9, fontWeight: 700, color: '#2563eb' }}>Verified</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 20, background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#2563eb"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
+                <span style={{ fontSize: 9, fontWeight: 800, color: '#2563eb', letterSpacing: 0.3 }}>Verified</span>
               </div>
             )}
             {isFeatured && (
-              <div style={{ padding: '3px 9px', borderRadius: 20, background: 'linear-gradient(135deg,#b8973e,#e8c84a)', color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8 }}>★ FEATURED</div>
+              <div style={{ padding: '3px 9px', borderRadius: 20, background: 'linear-gradient(135deg,#b8973e,#e8c84a)', color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8 }}>★ Featured</div>
             )}
           </div>
         </div>
 
-        {/* Avatar + name — avatar floats up out of band */}
-        <div style={{ padding: '0 16px', position: 'relative' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: -22 }}>
-            {vendor.logoUrl ? (
-              <button type="button"
-                onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
-                style={{ width: 50, height: 50, borderRadius: '50%', overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 10px rgba(0,0,0,0.12)', position: 'relative' }}>
-                <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'contain', padding: 4 }} />
-              </button>
-            ) : (
-              <div style={{ width: 50, height: 50, borderRadius: '50%', flexShrink: 0, background: `linear-gradient(135deg, ${catCfg.color}cc, ${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 17, fontFamily: 'Georgia,serif', border: '2.5px solid #fff', boxShadow: '0 2px 10px rgba(0,0,0,0.12)' }}>
-                {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
-              </div>
-            )}
-            <div style={{ flex: 1, minWidth: 0, marginTop: -8 }}>
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.name}</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-                </svg>
-                <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{vendor.location}</span>
-                {distLabel && (
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#7a5c30', background: 'rgba(184,151,62,0.1)', padding: '1px 6px', borderRadius: 20, border: '1px solid rgba(184,151,62,0.22)' }}>
-                    {distLabel}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div style={{ padding: '10px 18px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {vendor.rating > 0 && <StarRating rating={vendor.rating} count={vendor.reviewCount} />}
-          {vendor.services.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {vendor.services.slice(0, 3).map((s, i) => (
-                <span key={i} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 20, background: `${catCfg.color}0f`, color: '#4b5563', border: `1px solid ${catCfg.color}20`, fontWeight: 500 }}>{s}</span>
-              ))}
-              {vendor.services.length > 3 && (
-                <span style={{ fontSize: 10, padding: '3px 8px', borderRadius: 20, background: '#f9fafb', color: '#9ca3af', border: '1px solid #f1f0ee' }}>+{vendor.services.length - 3} more</span>
-              )}
+        {/* ── Logo + Name + Location ── */}
+        <div style={{ padding: '12px 14px 10px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          {vendor.logoUrl ? (
+            <button type="button"
+              onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
+              style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden', border: '1.5px solid #f1f0ee', background: '#fafafa', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', position: 'relative' }}>
+              <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'contain', padding: 6 }} />
+            </button>
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0, background: `linear-gradient(135deg,${catCfg.color}cc,${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, fontFamily: 'Georgia,serif', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid #f1f0ee', marginTop: 'auto' }}>
-            <div>
-              {vendor.fromPrice > 0 ? (
-                <>
-                  <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500, marginBottom: 1 }}>From</div>
-                  <div style={{ fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.5 }}>
-                    {vendor.preferredCurrency && vendor.preferredCurrency !== 'ZAR'
-                      ? formatBudget(vendor.fromPrice, vendor.preferredCurrency as Currency)
-                      : format(vendor.fromPrice)}
-                  </div>
-                </>
-              ) : (
-                <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Contact for pricing</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: '0 0 3px', fontSize: 15, fontWeight: 800, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: -0.2 }}>{vendor.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.location}</span>
+              {distLabel && (
+                <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#7a5c30', background: 'rgba(184,151,62,0.1)', padding: '1px 6px', borderRadius: 20, border: '1px solid rgba(184,151,62,0.2)' }}>{distLabel}</span>
               )}
             </div>
-            <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-              {!isVendor && (
-                <button type="button"
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); router.push('/messages/new?vendorId=' + vendor.id); }}
-                  style={{ width: 34, height: 34, borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280' }}>
-                  <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                </button>
-              )}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 14px', borderRadius: 10, background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.2 }}>
-                View
-                <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            {vendor.rating > 0 && (
+              <div style={{ marginTop: 4 }}>
+                <StarRating rating={vendor.rating} count={vendor.reviewCount} />
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Service tags ── */}
+        {vendor.services.length > 0 && (
+          <div style={{ padding: '0 14px 12px', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {vendor.services.slice(0, 3).map((s, i) => (
+              <span key={i} style={{ fontSize: 10.5, padding: '4px 10px', borderRadius: 20, background: '#f7f6f3', color: '#4b5563', border: '1px solid #edecea', fontWeight: 500 }}>{s}</span>
+            ))}
+            {vendor.services.length > 3 && (
+              <span style={{ fontSize: 10.5, padding: '4px 10px', borderRadius: 20, background: '#f7f6f3', color: '#9ca3af', border: '1px solid #edecea', fontWeight: 500 }}>+{vendor.services.length - 3} more</span>
+            )}
+          </div>
+        )}
+
+        {/* ── Price + CTA ── */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px 14px', borderTop: '1px solid #f5f4f1', marginTop: 'auto' }}>
+          <div>
+            {vendor.fromPrice > 0 ? (
+              <>
+                <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500, marginBottom: 1 }}>From</div>
+                <div style={{ fontSize: 16, fontWeight: 800, color: '#111827', letterSpacing: -0.4 }}>
+                  {vendor.preferredCurrency && vendor.preferredCurrency !== 'ZAR'
+                    ? formatBudget(vendor.fromPrice, vendor.preferredCurrency as Currency)
+                    : format(vendor.fromPrice)}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Contact for pricing</div>
+            )}
+          </div>
+          <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+            {!isVendor && (
+              <button type="button"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); router.push('/messages/new?vendorId=' + vendor.id); }}
+                style={{ width: 36, height: 36, borderRadius: 10, border: '1.5px solid #ebebeb', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280' }}>
+                <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+              </button>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '9px 16px', borderRadius: 12, background: 'linear-gradient(135deg,#6b1a2e,#9A2143)', color: '#fff', fontSize: 12.5, fontWeight: 800, letterSpacing: 0.2 }}>
+              View
+              <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </div>
           </div>
         </div>
@@ -682,31 +709,35 @@ export default function Marketplace() {
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100svh', paddingBottom: 90 }}>
 
         {/* ── Header ── */}
-        <div style={{ background: 'linear-gradient(160deg, #6b1a2e 0%, #8b2040 55%, #a8305a 100%)', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: -60, right: -60, width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,180,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', top: 40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', bottom: 0, right: 100, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,150,150,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+        <div style={{ background: 'linear-gradient(160deg, #4d0f21 0%, #6b1a2e 40%, #8b2040 80%, #a8305a 100%)', position: 'relative', overflow: 'hidden' }}>
+          {/* Decorative orbs */}
+          <div style={{ position: 'absolute', top: -80, right: -60, width: 260, height: 260, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,180,180,0.1) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: 20, left: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(184,151,62,0.12) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', bottom: -20, right: 80, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,100,120,0.07) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          {/* Gold shimmer line */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent 0%, rgba(184,151,62,0.6) 40%, rgba(232,200,74,0.8) 60%, transparent 100%)', pointerEvents: 'none' }} />
 
-          <div style={{ padding: '20px 20px 16px', position: 'relative' }}>
+          <div style={{ padding: '22px 20px 16px', position: 'relative' }}>
             {/* Title + location pill */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20, gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 18, gap: 10 }}>
               <div>
-                <div style={{ marginBottom: 6 }}>
-                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>uMshado Marketplace</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 10, fontWeight: 800, color: 'rgba(232,200,74,0.85)', letterSpacing: 2, textTransform: 'uppercase' }}>South Africa's Wedding Marketplace</span>
                 </div>
-                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+                <h1 style={{ margin: '0 0 5px', fontSize: 26, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>Find Your Vendors</h1>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>
                   {loading ? '…' : locationLabel || (location ? `Sorted by distance · ${allVendors.length} vendors` : `${allVendors.length} trusted vendors`)}
                 </p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                {!loading && featuredCount > 0 && (
-                  <div style={{ padding: '5px 11px', borderRadius: 20, background: 'rgba(184,151,62,0.15)', border: '1px solid rgba(184,151,62,0.3)', fontSize: 11, color: '#e8c84a', fontWeight: 600 }}>
-                    ★ {featuredCount} Featured
-                  </div>
-                )}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7, flexShrink: 0 }}>
                 <button onClick={() => setScopeOpen(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
                   <LocationPill location={location} loading={locLoading} permission={permission} scope={scope} onDetect={() => detect(true)} />
                 </button>
+                {!loading && featuredCount > 0 && (
+                  <div style={{ padding: '4px 10px', borderRadius: 20, background: 'rgba(184,151,62,0.18)', border: '1px solid rgba(184,151,62,0.35)', fontSize: 10.5, color: '#e8c84a', fontWeight: 700, letterSpacing: 0.3 }}>
+                    ★ {featuredCount} Featured
+                  </div>
+                )}
               </div>
             </div>
 
@@ -759,7 +790,7 @@ export default function Marketplace() {
           {/* Category pills */}
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '0 16px 20px', scrollbarWidth: 'none' }}>
             <button className="cat-pill" onClick={() => setCategoryFilter('')}
-              style={{ flexShrink: 0, padding: '8px 18px', borderRadius: 24, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: categoryFilter === '' ? '#fff' : 'rgba(255,255,255,0.1)', color: categoryFilter === '' ? '#3d0a17' : 'rgba(255,255,255,0.7)', boxShadow: categoryFilter === '' ? '0 4px 14px rgba(0,0,0,0.2)' : 'none' }}>
+              style={{ flexShrink: 0, padding: '8px 18px', borderRadius: 24, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: categoryFilter === '' ? 'none' : '1px solid rgba(255,255,255,0.2)', background: categoryFilter === '' ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.1)', color: categoryFilter === '' ? '#9A2143' : 'rgba(255,255,255,0.75)', boxShadow: categoryFilter === '' ? '0 4px 14px rgba(0,0,0,0.25)' : 'none' }}>
               All
             </button>
             {categories.map(cat => {
@@ -767,7 +798,7 @@ export default function Marketplace() {
               const active = categoryFilter === cat;
               return (
                 <button key={cat} className="cat-pill" onClick={() => setCategoryFilter(cat)}
-                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 24, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: 'none', background: active ? '#fff' : 'rgba(255,255,255,0.1)', color: active ? '#3d0a17' : 'rgba(255,255,255,0.7)', boxShadow: active ? '0 4px 14px rgba(0,0,0,0.2)' : 'none', whiteSpace: 'nowrap' }}>
+                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 24, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: active ? 'none' : '1px solid rgba(255,255,255,0.2)', background: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.1)', color: active ? cfg.color : 'rgba(255,255,255,0.75)', boxShadow: active ? '0 4px 14px rgba(0,0,0,0.25)' : 'none', whiteSpace: 'nowrap' }}>
                   <span style={{ fontSize: 14 }}>{cfg.icon}</span>
                   <span>{cat.split('&')[0].trim()}</span>
                 </button>
@@ -801,12 +832,17 @@ export default function Marketplace() {
           </div>
         )}
 
-        {/* Count / clear bar */}
-        <div style={{ padding: '10px 20px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        {/* Count / clear bar + section label */}
+        <div style={{ padding: '12px 20px 4px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           {!loading && (
-            <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
-              {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found
-            </span>
+            <div>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.2 }}>
+                {categoryFilter ? `${categoryFilter.split('&')[0].trim()} Vendors` : 'Featured on uMshado'}
+              </p>
+              <span style={{ fontSize: 11.5, color: '#9ca3af', fontWeight: 500 }}>
+                {vendors.length} vendor{vendors.length !== 1 ? 's' : ''} found
+              </span>
+            </div>
           )}
           {activeCount() > 0 && (
             <button onClick={clearAll} style={{ fontSize: 12, color: '#b8973e', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Clear all</button>

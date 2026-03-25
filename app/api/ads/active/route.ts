@@ -41,6 +41,8 @@ type VendorRow = {
   city: string | null;
   verified: boolean;
   subscription_tier: string | null;
+  promo_image_url: string | null;
+  promo_discount_pct: number | null;
 };
 
 function autoAd(v: VendorRow) {
@@ -53,6 +55,7 @@ function autoAd(v: VendorRow) {
   return {
     id: `pro-${v.id}`,
     vendorId: v.id,
+    vendorName: v.business_name.trim(),
     headline: `${v.business_name.trim()} — ${category}`,
     body,
     cta: 'View Profile',
@@ -60,6 +63,8 @@ function autoAd(v: VendorRow) {
     color: CAT_COLOR[category] ?? '#9A2143',
     emoji: CAT_EMOJI[category] ?? '🌟',
     badge: v.verified ? 'Verified Pro' : 'Pro Vendor',
+    imageUrl: v.promo_image_url ?? null,
+    discountPct: v.promo_discount_pct ?? null,
   };
 }
 
@@ -71,7 +76,7 @@ export async function GET() {
     // 1. Paid boost campaigns (vendor_boosts table — R199/mo)
     const { data: boosts } = await supabase
       .from('vendor_boosts')
-      .select('id, ad_headline, ad_body, ad_cta, vendor:vendor_id ( id, business_name, category, description, city, verified, subscription_tier )')
+      .select('id, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct, vendor:vendor_id ( id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct )')
       .eq('status', 'active')
       .gt('ends_at', now)
       .order('created_at');
@@ -84,6 +89,7 @@ export async function GET() {
       return {
         id: b.id,
         vendorId: v?.id ?? null,
+        vendorName: v?.business_name?.trim() ?? null,
         headline: b.ad_headline ?? v?.business_name ?? 'Featured Vendor',
         body: b.ad_body ?? (v ? autoAd(v).body : ''),
         cta: b.ad_cta ?? 'View Profile',
@@ -91,13 +97,15 @@ export async function GET() {
         color: CAT_COLOR[category] ?? '#9A2143',
         emoji: CAT_EMOJI[category] ?? '🌟',
         badge: v?.verified ? 'Verified Pro' : 'Sponsored',
+        imageUrl: (b as any).ad_image_url ?? v?.promo_image_url ?? null,
+        discountPct: (b as any).discount_pct ?? v?.promo_discount_pct ?? null,
       };
     });
 
     // 2. Pro/trial subscribers without a paid boost — auto-generate ad from profile
     const { data: proVendors } = await supabase
       .from('vendors')
-      .select('id, business_name, category, description, city, verified, subscription_tier')
+      .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
       .in('subscription_tier', ['pro', 'trial'])
       .eq('is_published', true)
       .order('business_name');
