@@ -38,6 +38,7 @@ export default async function RSVPPathTokenPage({ params }: Props) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(guestId)) return notFound();
 
+  // eslint-disable-next-line prefer-const
   let { data: guest, error: guestErr } = await supabase.from('couple_guests').select('*').eq('id', guestId).maybeSingle();
   if (!guest) {
     // Debug: log guest lookup failure to server logs to aid e2e troubleshooting

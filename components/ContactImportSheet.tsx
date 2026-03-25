@@ -291,7 +291,7 @@ export default function ContactImportSheet({ onImport, onClose }: Props) {
                         <li>Upload the file here</li>
                       </ol>
                       <p className="mt-2 text-amber-700 font-medium">
-                        💚 Or use the "Pick from Phonebook" button above (no export needed!)
+                        💚 Or use the &quot;Pick from Phonebook&quot; button above (no export needed!)
                       </p>
                     </div>
 

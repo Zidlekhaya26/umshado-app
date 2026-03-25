@@ -851,7 +851,7 @@ function LivePageContent() {
                 <div style={{ background: '#fff', borderRadius: 20, border: '2px dashed rgba(154,33,67,0.3)', padding: '36px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 36, marginBottom: 8 }}>🗓️</div>
                   <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--um-dark)', fontFamily: 'Georgia,serif' }}>No schedule yet</p>
-                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: 'var(--um-muted)' }}>Add your wedding day timeline so guests know what's happening.</p>
+                  <p style={{ margin: '6px 0 16px', fontSize: 13, color: 'var(--um-muted)' }}>Add your wedding day timeline so guests know what&apos;s happening.</p>
                   <button onClick={() => setShowScheduleModal(true)}
                     style={{ padding: '10px 22px', borderRadius: 20, background: `linear-gradient(135deg,${G},${G2})`, color: '#fff', fontSize: 13, fontWeight: 700, border: 'none', cursor: 'pointer' }}>
                     + Add Event

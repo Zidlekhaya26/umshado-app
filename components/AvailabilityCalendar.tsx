@@ -26,10 +26,6 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<BlockedDate | null>(null)
 
-  useEffect(() => {
-    loadAvailability()
-  }, [vendorId])
-
   async function loadAvailability() {
     setLoading(true)
     const res = await fetch(`/api/vendor/availability?vendor_id=${vendorId}`)
@@ -39,6 +35,10 @@ export default function AvailabilityCalendar({ vendorId }: Props) {
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadAvailability()
+  }, [vendorId])
 
   const daysInMonth = new Date(
     currentMonth.getFullYear(),

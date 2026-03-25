@@ -207,7 +207,7 @@ function GuestPageContent() {
           <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.12)', border:'1.5px solid rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
             <svg width="26" height="26" fill="none" stroke="#fff" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
           </div>
-          <p style={{ margin:'0 0 6px', fontSize:11, color:'rgba(255,255,255,0.55)', letterSpacing:3, textTransform:'uppercase' }}>You're invited</p>
+          <p style={{ margin:'0 0 6px', fontSize:11, color:'rgba(255,255,255,0.55)', letterSpacing:3, textTransform:'uppercase' }}>You&apos;re invited</p>
           <h1 style={{ margin:0, fontSize:24, fontWeight:700, color:'#fff', fontFamily:'Georgia,serif', lineHeight:1.25 }}>{coupleNames}</h1>
           <p style={{ margin:'8px 0 0', fontSize:13, color:'rgba(255,255,255,0.7)' }}>Welcome to the celebration</p>
         </div>
@@ -215,7 +215,7 @@ function GuestPageContent() {
         {/* Name form */}
         <div style={{ background:'#fff', borderRadius:'0 0 24px 24px', padding:'28px 28px 32px', boxShadow:'0 12px 40px rgba(26,13,18,0.1)', border:`1.5px solid ${BOR}`, borderTop:'none' }}>
           <p style={{ margin:'0 0 20px', fontSize:14, color:MUT, lineHeight:1.6, textAlign:'center' }}>
-            Let the couple know you're here. Enter your name to view the schedule, send wishes, and share moments.
+            Let the couple know you&apos;re here. Enter your name to view the schedule, send wishes, and share moments.
           </p>
           <label style={{ display:'block', fontSize:11, fontWeight:700, color:MUT, letterSpacing:1, marginBottom:8 }}>YOUR NAME</label>
           <input

@@ -108,7 +108,7 @@ function MoveSongSheet({ song, onClose, onMove }: {
       <div style={{ position:'fixed',bottom:0,left:0,right:0,zIndex:70,background:'#fff',borderRadius:'22px 22px 0 0',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto',animation:'plSlideUp .22s ease',maxHeight:'80vh',overflow:'auto' }}>
         <div style={{ width:38,height:4,background:BOR,borderRadius:2,margin:'12px auto 0' }} />
         <div style={{ padding:'18px 20px 28px' }}>
-          <p style={{ margin:'0 0 4px',fontSize:15,fontWeight:800,color:DK,fontFamily:'Georgia,serif' }}>Move "{song.title}"</p>
+          <p style={{ margin:'0 0 4px',fontSize:15,fontWeight:800,color:DK,fontFamily:'Georgia,serif' }}>Move &quot;{song.title}&quot;</p>
           <p style={{ margin:'0 0 18px',fontSize:11,color:MUT }}>Choose a different moment</p>
           <div style={{ display:'flex',flexDirection:'column',gap:8 }}>
             {MOMENTS.filter(m => m.id !== song.moment_id).map(m => (
@@ -264,16 +264,6 @@ export default function DJPlaylistPage() {
 
   const showOk = (m: string) => { setSuccessMsg(m); setTimeout(() => setSuccessMsg(null), 3000); };
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/auth/sign-in'); return; }
-      setCoupleId(user.id);
-      await Promise.all([loadSongs(user.id), loadRequests(user.id)]);
-      setLoading(false);
-    })();
-  }, [router]);
-
   const loadSongs = async (uid: string) => {
     const { data } = await supabase
       .from('playlist_songs')
@@ -291,6 +281,16 @@ export default function DJPlaylistPage() {
       .order('created_at', { ascending: false });
     setRequests(data || []);
   };
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/auth/sign-in'); return; }
+      setCoupleId(user.id);
+      await Promise.all([loadSongs(user.id), loadRequests(user.id)]);
+      setLoading(false);
+    })();
+  }, [router]);
 
   const addSong = async (draft: { title: string; artist: string; notes: string }) => {
     if (!coupleId) return;
@@ -519,7 +519,7 @@ export default function DJPlaylistPage() {
                               <p style={{ margin:'0 0 1px',fontSize:14,fontWeight:700,color:DK }}>{r.title}</p>
                               {r.artist && <p style={{ margin:'0 0 3px',fontSize:12,color:MUT }}>{r.artist}</p>}
                               {r.guest_name && <p style={{ margin:'0 0 3px',fontSize:11,color:GD2,fontWeight:600 }}>Requested by {r.guest_name}</p>}
-                              {r.message && <p style={{ margin:0,fontSize:11,color:MUT,fontStyle:'italic' }}>"{r.message}"</p>}
+                              {r.message && <p style={{ margin:0,fontSize:11,color:MUT,fontStyle:'italic' }}>&quot;{r.message}&quot;</p>}
                             </div>
                           </div>
                           <div style={{ display:'flex',gap:8,marginTop:12 }}>

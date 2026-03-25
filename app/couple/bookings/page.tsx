@@ -260,15 +260,6 @@ export default function CoupleBookingsPage() {
 
   const showOk = (m: string) => { setSuccessMsg(m); setTimeout(() => setSuccessMsg(null), 3000); };
 
-  useEffect(() => {
-    (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push('/auth/sign-in'); return; }
-      await loadBookings(user.id);
-      setLoading(false);
-    })();
-  }, [router]);
-
   const loadBookings = async (uid: string) => {
     const { data } = await supabase
       .from('bookings')
@@ -300,6 +291,15 @@ export default function CoupleBookingsPage() {
     }));
     setBookings(enriched);
   };
+
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push('/auth/sign-in'); return; }
+      await loadBookings(user.id);
+      setLoading(false);
+    })();
+  }, [router]);
 
   const upcomingList = useMemo(() =>
     bookings.filter(b =>

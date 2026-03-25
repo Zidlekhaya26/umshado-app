@@ -88,7 +88,7 @@ function RoleCard({
             <svg width="14" height="14" fill="none" stroke={accentColor} strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
             </svg>
-            <span style={{ fontSize: 13, fontWeight: 700, color: accentColor }}>Currently active — you're in this view</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: accentColor }}>Currently active — you&apos;re in this view</span>
           </div>
         ) : hasRole ? (
           <button onClick={onSwitch} disabled={switching} style={{

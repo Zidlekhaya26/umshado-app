@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
@@ -922,7 +923,7 @@ export default function WeddingWebsite({
                             </div>
                           </div>
                           <p style={{ color: t.textMid, fontStyle: 'italic', fontFamily: t.bodyFont, lineHeight: 1.75, fontSize: '0.92rem' }}>
-                            "{w.message}"
+                            &quot;{w.message}&quot;
                           </p>
                         </div>
                       </FadeIn>
@@ -996,9 +997,9 @@ export default function WeddingWebsite({
           )}
           <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: `1px solid ${t.cardBorder}` }}>
             <p style={{ fontSize: '9px', letterSpacing: '0.4em', textTransform: 'uppercase', color: t.textFaint, marginBottom: '10px' }}>Created with</p>
-            <a href="/" style={{ color: t.accent, fontSize: '0.85rem', fontFamily: t.font, fontStyle: 'italic', textDecoration: 'none' }}>
+            <Link href="/" style={{ color: t.accent, fontSize: '0.85rem', fontFamily: t.font, fontStyle: 'italic', textDecoration: 'none' }}>
               uMshado Wedding Platform
-            </a>
+            </Link>
             <p style={{ color: t.textFaint, fontSize: '0.8rem', marginTop: '6px', opacity: 0.6 }}>
               Beautiful wedding websites for modern couples
             </p>

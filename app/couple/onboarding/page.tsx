@@ -38,7 +38,7 @@ function OnboardingHeader() {
 
         {/* Hero text */}
         <div style={{ padding: '14px 16px', background: 'rgba(255,255,255,0.08)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)' }}>
-          <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Let's plan your dream wedding 🎊</p>
+          <p style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Let&apos;s plan your dream wedding 🎊</p>
           <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.5 }}>
             Tell us about your big day so we can connect you with the perfect vendors and tools.
           </p>

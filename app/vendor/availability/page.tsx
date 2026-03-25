@@ -33,10 +33,6 @@ export default function VendorAvailabilityPage() {
 
   const router = useRouter()
 
-  useEffect(() => {
-    loadData()
-  }, [])
-
   async function loadData() {
     setLoading(true)
     const {
@@ -70,6 +66,10 @@ export default function VendorAvailabilityPage() {
     setBlockedDates(blocked || [])
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadData()
+  }, [])
 
   async function blockDate() {
     if (!selectedDate || !vendor) return

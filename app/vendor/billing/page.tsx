@@ -321,7 +321,7 @@ export default function VendorBilling() {
           <svg width="22" height="22" fill="none" stroke={MUT} strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
           <div>
             <p style={{ margin: 0, fontSize: 12.5, fontWeight: 700, color: DK }}>Secured by PayFast</p>
-            <p style={{ margin: '1px 0 0', fontSize: 11, color: MUT }}>SA's leading payment gateway. EFT, cards & instant EFT supported.</p>
+            <p style={{ margin: '1px 0 0', fontSize: 11, color: MUT }}>SA&apos;s leading payment gateway. EFT, cards &amp; instant EFT supported.</p>
           </div>
         </div>
       </div>

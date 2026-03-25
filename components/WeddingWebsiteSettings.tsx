@@ -326,7 +326,7 @@ export default function WeddingWebsiteSettings({
                   {items.length === 0 && (
                     <div className="text-center py-8 border border-dashed border-gray-300 rounded-xl">
                       <p className="text-sm text-gray-400">No gift items yet</p>
-                      <p className="text-xs text-gray-400 mt-1">Click "Add Item" to create one</p>
+                      <p className="text-xs text-gray-400 mt-1">Click &quot;Add Item&quot; to create one</p>
                     </div>
                   )}
 

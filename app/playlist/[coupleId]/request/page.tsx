@@ -80,7 +80,7 @@ export default function PlaylistRequestPage() {
           {/* Previous submissions */}
           {submitted.length > 0 && (
             <div style={{ marginBottom:18,background:'rgba(30,124,74,0.06)',borderRadius:14,padding:'12px 16px',border:'1px solid rgba(30,124,74,0.2)',animation:'fadeUp .3s ease' }}>
-              <p style={{ margin:'0 0 6px',fontSize:12,fontWeight:700,color:'#1e7c4a' }}>✓ You've requested:</p>
+              <p style={{ margin:'0 0 6px',fontSize:12,fontWeight:700,color:'#1e7c4a' }}>✓ You&apos;ve requested:</p>
               {submitted.map((s,i) => (
                 <p key={i} style={{ margin:'0',fontSize:12,color:'#1a4a2a' }}>• {s.title}{s.artist?` – ${s.artist}`:''}</p>
               ))}
@@ -134,7 +134,7 @@ export default function PlaylistRequestPage() {
               </div>
 
               <p style={{ textAlign:'center',fontSize:11,color:'#c0b0a0',marginTop:20,lineHeight:1.6 }}>
-                Your request will be reviewed by the couple before it's added to the playlist.
+                Your request will be reviewed by the couple before it&apos;s added to the playlist.
               </p>
             </div>
           )}

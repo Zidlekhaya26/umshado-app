@@ -187,7 +187,7 @@ function SignInContent() {
             Your wedding,<br />beautifully planned
           </h1>
           <p style={{ margin: '0 0 40px', fontSize: 14.5, color: 'rgba(255,255,255,0.52)', lineHeight: 1.7, maxWidth: 268 }}>
-            South Africa's premium wedding platform — connecting couples with extraordinary vendors
+            South Africa&apos;s premium wedding platform — connecting couples with extraordinary vendors
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: 285 }}>
             {[['💍','2 400+ couples planning'],['🏪','800+ verified vendors'],['⭐','Across South Africa']].map(([icon, text]) => (

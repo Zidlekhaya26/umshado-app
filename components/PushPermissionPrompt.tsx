@@ -72,7 +72,7 @@ export default function PushPermissionPrompt() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-white">Notifications enabled!</p>
-                <p className="text-xs text-gray-400 mt-0.5">You'll get alerts for messages, quotes & RSVPs.</p>
+                <p className="text-xs text-gray-400 mt-0.5">You&apos;ll get alerts for messages, quotes &amp; RSVPs.</p>
               </div>
             </div>
           ) : (

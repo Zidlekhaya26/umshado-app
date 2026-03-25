@@ -168,7 +168,7 @@ export default function VendorOnboarding(){
           <span style={{fontSize:18,flexShrink:0}}>💡</span>
           <div>
             <p style={{margin:'0 0 2px',fontSize:13,fontWeight:700,color:CR}}>Next up: Services</p>
-            <p style={{margin:0,fontSize:12.5,color:MUT,lineHeight:1.55}}>After this you'll select services, build packages, add photos, and publish — about 5 minutes total.</p>
+            <p style={{margin:0,fontSize:12.5,color:MUT,lineHeight:1.55}}>After this you&apos;ll select services, build packages, add photos, and publish — about 5 minutes total.</p>
           </div>
         </div>
 

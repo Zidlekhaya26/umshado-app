@@ -7,7 +7,7 @@ export type SharePayload = {
 export async function shareLink(payload: SharePayload): Promise<{ ok: boolean; usedNative: boolean }> {
   try {
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
-      // @ts-ignore
+      // @ts-expect-error — share() is not yet in all TS lib typings
       await (navigator as any).share(payload);
       return { ok: true, usedNative: true };
     }
