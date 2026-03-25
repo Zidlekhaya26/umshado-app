@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient();
   const { data, error } = await supabase
     .from('community_posts')
-    .select('id, user_id, author, category, content, likes_count, comments_count, created_at')
+    .select('id, user_id, author, category, content, image_url, likes_count, comments_count, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

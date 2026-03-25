@@ -9,6 +9,7 @@ interface Post {
   author: string;
   category: string;
   content: string;
+  image_url: string | null;
   likes_count: number;
   comments_count: number;
   created_at: string;
@@ -114,6 +115,12 @@ export default function AdminPostsPage() {
                 </button>
               </div>
               <p style={{ margin: '0 0 10px', fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6 }}>{p.content}</p>
+              {p.image_url && (
+                <div style={{ marginBottom: 10, borderRadius: 10, overflow: 'hidden', maxWidth: 400 }}>
+                  <img src={p.image_url} alt="Post" style={{ width: '100%', maxHeight: 220, objectFit: 'cover', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                </div>
+              )}
               <div style={{ display: 'flex', gap: 16 }}>
                 <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)' }}>{p.likes_count} likes</span>
                 <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.3)' }}>{p.comments_count} comments</span>
