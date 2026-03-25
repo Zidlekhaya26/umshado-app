@@ -9,7 +9,7 @@ const BETA_INVITE_ONLY = process.env.NEXT_PUBLIC_BETA_INVITE_ONLY === 'true';
 async function fetchProfileState(userId: string, accessToken: string) {
   if (!SUPABASE_URL) return null;
   try {
-    const url = `${SUPABASE_URL}/rest/v1/profiles?select=role,active_role,has_couple,has_vendor&id=eq.${userId}`;
+    const url = `${SUPABASE_URL}/rest/v1/profiles?select=role,active_role,has_couple,has_vendor,is_admin&id=eq.${userId}`;
     const res = await fetch(url, {
       headers: { apikey: SUPABASE_ANON, Authorization: `Bearer ${accessToken}` },
     });
@@ -110,7 +110,7 @@ export async function proxy(req: NextRequest) {
 
   // ── ADMIN GATE ─────────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    if (!profile || profile.role !== 'admin') {
+    if (!profile || !profile.is_admin) {
       return NextResponse.redirect(new URL('/', req.url));
     }
     return response;

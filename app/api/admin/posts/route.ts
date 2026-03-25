@@ -18,26 +18,21 @@ export async function GET(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const supabase = createServiceClient();
   const { data, error } = await supabase
-    .from('vendors')
-    .select('id, business_name, category, location, about, contact, verification_status, verification_paid_at, created_at, is_published, subscription_tier, user_id')
-    .eq('verification_status', 'paid_pending_review')
-    .order('verification_paid_at', { ascending: true });
+    .from('community_posts')
+    .select('id, user_id, author, category, content, likes_count, comments_count, created_at')
+    .order('created_at', { ascending: false })
+    .limit(100);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ vendors: data ?? [] });
+  return NextResponse.json({ posts: data ?? [] });
 }
 
-export async function PATCH(req: NextRequest) {
+export async function DELETE(req: NextRequest) {
   const admin = await assertAdmin(req);
   if (!admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  const { vendorId, action } = await req.json() as { vendorId: string; action: 'approve' | 'reject' };
-  if (!vendorId || !['approve', 'reject'].includes(action)) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
-  }
+  const { postId } = await req.json() as { postId: string };
+  if (!postId) return NextResponse.json({ error: 'Missing postId' }, { status: 400 });
   const supabase = createServiceClient();
-  const update = action === 'approve'
-    ? { verified: true, verification_status: 'approved' }
-    : { verified: false, verification_status: 'rejected' };
-  const { error } = await supabase.from('vendors').update(update).eq('id', vendorId);
+  const { error } = await supabase.from('community_posts').delete().eq('id', postId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

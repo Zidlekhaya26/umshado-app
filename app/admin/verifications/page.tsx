@@ -1,290 +1,140 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { supabase } from '@/lib/supabaseClient';
 
-const ADMIN_EMAILS_RAW = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? '';
-const ADMIN_EMAILS = ADMIN_EMAILS_RAW.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-
-type VerStatus = 'payment_pending' | 'paid_pending_review' | 'approved' | 'rejected' | 'payment_failed';
-
-interface VerRequest {
+interface PendingVendor {
   id: string;
-  vendor_id: string;
-  status: VerStatus;
-  paid_at: string | null;
-  created_at: string;
-  admin_notes: string | null;
-  payfast_payment_id: string | null;
-  vendor: {
-    business_name: string;
-    category: string;
-    city: string;
-    verified: boolean;
-    verification_status: string;
-  } | null;
+  business_name: string;
+  category: string;
+  location: string | null;
+  about: string | null;
+  contact: Record<string, string> | null;
+  verification_paid_at: string | null;
+  subscription_tier: string | null;
+  is_published: boolean;
 }
 
-const STATUS_STYLES: Record<VerStatus, string> = {
-  payment_pending:    'bg-gray-100 text-gray-600',
-  paid_pending_review:'bg-amber-100 text-amber-800',
-  approved:           'bg-green-100 text-green-800',
-  rejected:           'bg-red-100 text-red-800',
-  payment_failed:     'bg-red-50 text-red-500',
-};
+function timeAgo(ts: string) {
+  const diff = Date.now() - new Date(ts).getTime();
+  const h = Math.floor(diff / 3600000);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
 
-const STATUS_LABELS: Record<VerStatus, string> = {
-  payment_pending:    'Payment Pending',
-  paid_pending_review:'Paid — Awaiting Review',
-  approved:           'Approved ✓',
-  rejected:           'Rejected',
-  payment_failed:     'Payment Failed',
-};
+async function getToken() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ?? '';
+}
 
 export default function AdminVerificationsPage() {
-  const router = useRouter();
-  const [authed, setAuthed] = useState(false);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [requests, setRequests] = useState<VerRequest[]>([]);
+  const [vendors, setVendors] = useState<PendingVendor[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [filter, setFilter] = useState<'all' | VerStatus>('all');
+  const [acting, setActing] = useState<string | null>(null);
+  const [done, setDone] = useState<Record<string, 'approved' | 'rejected'>>({});
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.email || !ADMIN_EMAILS.includes(user.email.toLowerCase())) {
-        setAuthChecked(true);
-        return;
-      }
-      setAuthed(true);
-      setAuthChecked(true);
+      const token = await getToken();
+      const res = await fetch('/api/admin/verifications', {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const j = await res.json();
+      setVendors(j.vendors ?? []);
+      setLoading(false);
     })();
   }, []);
 
-  useEffect(() => {
-    if (!authed) return;
-    loadRequests();
-  }, [authed]);
-
-  const loadRequests = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/admin/verifications', {
-        headers: { Authorization: `Bearer ${session?.access_token || ''}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to load');
-      setRequests(data.requests || []);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load');
-    } finally {
-      setLoading(false);
-    }
+  const act = async (vendorId: string, action: 'approve' | 'reject') => {
+    setActing(vendorId);
+    const token = await getToken();
+    await fetch('/api/admin/verifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ vendorId, action }),
+    });
+    setDone(prev => ({ ...prev, [vendorId]: action }));
+    setActing(null);
   };
 
-  const handleAction = async (id: string, action: 'approve' | 'reject') => {
-    setActionLoading(id + action);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/admin/verifications', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.access_token || ''}`,
-        },
-        body: JSON.stringify({ action, id, admin_notes: notes[id] || null }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Action failed');
-      await loadRequests();
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
-      </div>
-    );
-  }
-
-  if (!authed) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center max-w-sm">
-          <p className="text-2xl mb-3">🔒</p>
-          <p className="font-bold text-gray-900 mb-1">Admin only</p>
-          <p className="text-sm text-gray-500 mb-4">You do not have permission to view this page.</p>
-          <Link href="/" className="text-purple-600 text-sm font-medium">← Back to home</Link>
-        </div>
-      </div>
-    );
-  }
-
-  const filtered = filter === 'all' ? requests : requests.filter(r => r.status === filter);
-  const pendingCount = requests.filter(r => r.status === 'paid_pending_review').length;
+  const pending = vendors.filter(v => !done[v.id]);
+  const resolved = vendors.filter(v => !!done[v.id]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-8 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Link href="/admin/beta-requests" className="text-sm text-gray-500 hover:text-gray-700">← Admin</Link>
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900">Business Verifications</h1>
-            <p className="text-sm text-gray-500 mt-0.5">Review vendor verification requests and award the ✓ badge</p>
-          </div>
-          {pendingCount > 0 && (
-            <span className="bg-amber-500 text-white text-sm font-bold px-3 py-1.5 rounded-full">
-              {pendingCount} pending
-            </span>
-          )}
+    <div style={{ padding: '32px 36px', color: '#fff', maxWidth: 900 }}>
+      <div style={{ marginBottom: 28 }}>
+        <p style={{ margin: '0 0 4px', fontSize: 11, fontWeight: 700, color: '#9A2143', letterSpacing: 1.5, textTransform: 'uppercase' }}>Admin</p>
+        <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800, fontFamily: 'Georgia,serif' }}>Verification Queue</h1>
+        <p style={{ margin: '6px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>Review vendors who paid the R99 badge fee</p>
+      </div>
+
+      {loading && <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Loading...</p>}
+
+      {!loading && pending.length === 0 && resolved.length === 0 && (
+        <div style={{ padding: '48px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14 }}>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14, margin: 0 }}>No pending verifications</p>
         </div>
+      )}
 
-        {/* Filter tabs */}
-        <div className="flex gap-2 mb-5 flex-wrap">
-          {(['all', 'paid_pending_review', 'approved', 'rejected'] as const).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                filter === f
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
-              }`}
-            >
-              {f === 'all' ? 'All' : STATUS_LABELS[f as VerStatus]}
-              {f === 'paid_pending_review' && pendingCount > 0 && ` (${pendingCount})`}
-            </button>
-          ))}
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 mb-4">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-600" />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-xl border border-dashed border-gray-300 p-12 text-center">
-            <p className="text-3xl mb-3">🔵</p>
-            <p className="font-semibold text-gray-700">No verification requests yet</p>
-            <p className="text-sm text-gray-400 mt-1">They will appear here once vendors pay the fee.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {filtered.map(req => (
-              <div
-                key={req.id}
-                className={`bg-white rounded-xl border-2 p-5 ${
-                  req.status === 'paid_pending_review'
-                    ? 'border-amber-300'
-                    : req.status === 'approved'
-                    ? 'border-green-300'
-                    : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[req.status]}`}>
-                        {STATUS_LABELS[req.status]}
-                      </span>
-                      <p className="font-bold text-gray-900">{req.vendor?.business_name || 'Unknown Vendor'}</p>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      {req.vendor?.category} · {req.vendor?.city}
-                    </p>
-                    <div className="flex items-center gap-3 mt-2 flex-wrap">
-                      <span className="text-xs text-gray-400">
-                        Submitted {new Date(req.created_at).toLocaleDateString('en-ZA')}
-                      </span>
-                      {req.paid_at && (
-                        <span className="text-xs text-gray-400">
-                          Paid {new Date(req.paid_at).toLocaleDateString('en-ZA')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* View vendor link */}
-                  <a
-                    href={`/v/${req.vendor_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-purple-600 font-medium hover:text-purple-800 whitespace-nowrap"
-                  >
-                    View Profile ↗
-                  </a>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {pending.map(v => (
+          <div key={v.id} style={{ background: '#1a1a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{v.business_name}</h3>
+                  {v.subscription_tier && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: v.subscription_tier === 'pro' ? 'rgba(189,152,63,0.2)' : 'rgba(255,255,255,0.08)', color: v.subscription_tier === 'pro' ? '#BD983F' : '#9ca3af' }}>
+                      {v.subscription_tier.toUpperCase()}
+                    </span>
+                  )}
+                  {!v.is_published && (
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', color: '#f87171' }}>UNPUBLISHED</span>
+                  )}
                 </div>
+                <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                  {v.category}{v.location ? ` · ${v.location}` : ''}{v.verification_paid_at ? ` · Paid ${timeAgo(v.verification_paid_at)}` : ''}
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button onClick={() => act(v.id, 'reject')} disabled={acting === v.id}
+                  style={{ padding: '9px 18px', borderRadius: 10, border: '1.5px solid rgba(239,68,68,0.5)', background: 'transparent', color: '#f87171', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                  Reject
+                </button>
+                <button onClick={() => act(v.id, 'approve')} disabled={acting === v.id}
+                  style={{ padding: '9px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#1e3a8a,#2563eb)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', opacity: acting === v.id ? 0.6 : 1 }}>
+                  {acting === v.id ? 'Saving...' : 'Approve Badge'}
+                </button>
+              </div>
+            </div>
+            <div style={{ padding: '14px 20px' }}>
+              {v.about && (
+                <p style={{ margin: '0 0 8px', fontSize: 12.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>
+                  {v.about.slice(0, 300)}{v.about.length > 300 ? '...' : ''}
+                </p>
+              )}
+              {v.contact?.whatsapp && (
+                <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.3)' }}>WhatsApp: {v.contact.whatsapp}</p>
+              )}
+            </div>
+          </div>
+        ))}
 
-                {/* Admin notes */}
-                {req.status === 'paid_pending_review' && (
-                  <div className="mt-4 space-y-3">
-                    <textarea
-                      value={notes[req.id] || ''}
-                      onChange={e => setNotes(prev => ({ ...prev, [req.id]: e.target.value }))}
-                      placeholder="Add notes (optional — shown to vendor if rejected)"
-                      rows={2}
-                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-purple-300"
-                    />
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleAction(req.id, 'approve')}
-                        disabled={actionLoading !== null}
-                        className="flex-1 bg-green-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-green-700 disabled:opacity-50 transition-colors"
-                      >
-                        {actionLoading === req.id + 'approve' ? 'Approving...' : '✓ Approve'}
-                      </button>
-                      <button
-                        onClick={() => handleAction(req.id, 'reject')}
-                        disabled={actionLoading !== null}
-                        className="flex-1 bg-red-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:bg-red-700 disabled:opacity-50 transition-colors"
-                      >
-                        {actionLoading === req.id + 'reject' ? 'Rejecting...' : '✕ Reject'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {req.status === 'approved' && req.admin_notes && (
-                  <p className="mt-3 text-xs text-gray-400 italic">Notes: {req.admin_notes}</p>
-                )}
-
-                {req.status === 'rejected' && (
-                  <div className="mt-3 flex items-center justify-between">
-                    {req.admin_notes && (
-                      <p className="text-xs text-red-500 italic">Reason: {req.admin_notes}</p>
-                    )}
-                    <button
-                      onClick={() => handleAction(req.id, 'approve')}
-                      disabled={actionLoading !== null}
-                      className="text-xs text-purple-600 font-medium hover:underline"
-                    >
-                      Approve anyway
-                    </button>
-                  </div>
-                )}
+        {resolved.length > 0 && (
+          <>
+            <p style={{ margin: '8px 0 4px', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: 1 }}>Actioned this session</p>
+            {resolved.map(v => (
+              <div key={v.id} style={{ background: '#141414', border: `1px solid ${done[v.id] === 'approved' ? 'rgba(37,99,235,0.3)' : 'rgba(239,68,68,0.2)'}`, borderRadius: 14, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', opacity: 0.7 }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{v.business_name}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: 11.5, color: 'rgba(255,255,255,0.4)' }}>{v.category}</p>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20, background: done[v.id] === 'approved' ? 'rgba(37,99,235,0.2)' : 'rgba(239,68,68,0.15)', color: done[v.id] === 'approved' ? '#60a5fa' : '#f87171' }}>
+                  {done[v.id] === 'approved' ? 'APPROVED' : 'REJECTED'}
+                </span>
               </div>
             ))}
-          </div>
+          </>
         )}
       </div>
     </div>
