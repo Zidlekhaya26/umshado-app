@@ -22,12 +22,12 @@ interface ProfileData {
 /* ─── Role card ──────────────────────────────────────────── */
 function RoleCard({
   role, title, subtitle, icon, emoji, isActive, hasRole,
-  onSwitch, onSetup, switching,
+  onSwitch, onSetup, onGoHome, switching,
 }: {
   role: 'couple' | 'vendor';
   title: string; subtitle: string; icon: string; emoji: string;
   isActive: boolean; hasRole: boolean;
-  onSwitch: () => void; onSetup: () => void; switching: boolean;
+  onSwitch: () => void; onSetup: () => void; onGoHome: () => void; switching: boolean;
 }) {
   const accentColor = role === 'couple' ? CR : '#1d6fa8';
   const accentBg    = role === 'couple' ? 'rgba(154,33,67,0.07)' : 'rgba(29,111,168,0.07)';
@@ -84,12 +84,18 @@ function RoleCard({
       {/* Footer CTA */}
       <div style={{ padding: '12px 20px 18px' }}>
         {isActive ? (
-          <div style={{ padding: '10px 14px', borderRadius: 12, background: accentBg, border: `1px solid ${accentBorder}`, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="14" height="14" fill="none" stroke={accentColor} strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+          <button onClick={onGoHome} style={{
+            width: '100%', padding: '12px 16px', borderRadius: 12, border: 'none', cursor: 'pointer',
+            background: `linear-gradient(135deg,${accentColor},${role === 'couple' ? CR2 : '#155a8a'})`,
+            color: '#fff', fontSize: 14, fontWeight: 800, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: `0 3px 14px ${role === 'couple' ? 'rgba(154,33,67,0.25)' : 'rgba(29,111,168,0.25)'}`,
+          }}>
+            <svg width="15" height="15" fill="none" stroke="#fff" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
             </svg>
-            <span style={{ fontSize: 13, fontWeight: 700, color: accentColor }}>Currently active — you&apos;re in this view</span>
-          </div>
+            Go to {role === 'couple' ? 'Couple' : 'Vendor'} Dashboard
+          </button>
         ) : hasRole ? (
           <button onClick={onSwitch} disabled={switching} style={{
             width: '100%', padding: '12px', borderRadius: 12, border: 'none',
@@ -175,8 +181,6 @@ function SwitchRoleContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { router.push('/auth/sign-in'); return; }
 
-      // Use server-side API route so the update runs with service-role
-      // and is never blocked by RLS policies on the profiles table.
       const res = await fetch('/api/role/switch', {
         method: 'POST',
         headers: {
@@ -190,16 +194,19 @@ function SwitchRoleContent() {
         throw new Error(body.error || `Server error ${res.status}`);
       }
 
-      // Small delay so user sees the animation
-      await new Promise(r => setTimeout(r, 500));
-
-      const target = searchParams?.get('target');
-      if (target) { router.replace(decodeURIComponent(target)); return; }
-      router.replace(targetRole === 'vendor' ? '/vendor/dashboard' : '/couple/dashboard');
+      // Update local state so the active card flips — user then presses Go to Dashboard
+      setProfile(prev => prev ? { ...prev, active_role: targetRole } : prev);
     } catch (err: any) {
       setError(err.message || 'Failed to switch. Please try again.');
+    } finally {
       setSwitching(null);
     }
+  };
+
+  const handleGoHome = (role: 'couple' | 'vendor') => {
+    const target = searchParams?.get('target');
+    if (target) { router.replace(decodeURIComponent(target)); return; }
+    router.replace(role === 'vendor' ? '/vendor/dashboard' : '/couple/dashboard');
   };
 
   const handleSetup = (role: 'couple' | 'vendor') => {
@@ -286,6 +293,7 @@ function SwitchRoleContent() {
             hasRole={Boolean(profile?.has_couple)}
             onSwitch={() => handleSwitch('couple')}
             onSetup={() => handleSetup('couple')}
+            onGoHome={() => handleGoHome('couple')}
             switching={switching === 'couple'}
           />
         </div>
@@ -300,6 +308,7 @@ function SwitchRoleContent() {
             hasRole={Boolean(profile?.has_vendor)}
             onSwitch={() => handleSwitch('vendor')}
             onSetup={() => handleSetup('vendor')}
+            onGoHome={() => handleGoHome('vendor')}
             switching={switching === 'vendor'}
           />
         </div>
