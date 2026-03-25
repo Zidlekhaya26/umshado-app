@@ -15,6 +15,7 @@ interface CommunityPost {
   tag: string;
   tagColor: string;
   content: string;
+  image_url: string | null;
   likes: number;
   comments: number;
 }
@@ -62,16 +63,16 @@ function timeAgo(ts: string): string {
 
 /* ── Seed posts (shown when DB is empty) ─────────────── */
 const SEED_POSTS: CommunityPost[] = [
-  { id: 'p1', author: 'Lerato & Tebogo', avatar: 'LT', avatarColor: '#9A2143', timeAgo: '2h ago', tag: 'Milestone', tagColor: '#10b981', content: 'We just confirmed our venue — The Botanical Gardens in Joburg! 8 months to go and it\'s finally feeling real. Anyone else booked here before? Would love tips!', likes: 47, comments: 12 },
-  { id: 'p2', author: 'Amahle & Sipho', avatar: 'AS', avatarColor: '#3a7bec', timeAgo: '4h ago', tag: 'Question', tagColor: '#f59e0b', content: 'Brides who\'ve done a traditional Zulu wedding AND a church ceremony — how did you handle the two-day schedule? We\'re planning for April and feeling overwhelmed with logistics.', likes: 83, comments: 29 },
-  { id: 'p3', author: 'Priya & Kiran', avatar: 'PK', avatarColor: '#8b5cf6', timeAgo: '6h ago', tag: 'Inspo', tagColor: '#ec4899', content: 'Our cake tasting was yesterday and WOW. We went with a 4-tier naked cake with fresh flowers. The baker suggested hibiscus and it looked absolutely stunning. Highly recommend exploring unconventional florals!', likes: 134, comments: 18 },
-  { id: 'p4', author: 'Nomsa & Bongani', avatar: 'NB', avatarColor: '#e8523a', timeAgo: '9h ago', tag: 'Tip', tagColor: '#06b6d4', content: 'PSA for couples on a budget: book your vendors on a Tuesday or Wednesday — we got 20% off our photographer just by being flexible on the day.', likes: 211, comments: 44 },
-  { id: 'p5', author: 'Candice & Mark', avatar: 'CM', avatarColor: '#BD983F', timeAgo: '12h ago', tag: 'Question', tagColor: '#f59e0b', content: 'Cape Town brides — what\'s realistic for a 120-person seated dinner with full catering? We\'ve had quotes ranging from R60k to R180k and don\'t know what\'s fair.', likes: 67, comments: 37 },
-  { id: 'p6', author: 'Zanele & Lungelo', avatar: 'ZL', avatarColor: '#14b8a6', timeAgo: '1d ago', tag: 'Milestone', tagColor: '#10b981', content: 'ENGAGED! After 6 years together, he proposed at Kruger with a sunrise bush breakfast. Now the planning begins... any advice for a first-time bride?', likes: 342, comments: 91 },
-  { id: 'p7', author: 'Fatima & Yusuf', avatar: 'FY', avatarColor: '#6366f1', timeAgo: '1d ago', tag: 'Inspo', tagColor: '#ec4899', content: 'We wanted a fusion of modern and Malay culture for our nikah and reception. Our decorator sourced handwoven Cape Malay textiles for the centrepieces — it was beyond anything we imagined.', likes: 189, comments: 22 },
-  { id: 'p8', author: 'Bianca & Danie', avatar: 'BD', avatarColor: '#f97316', timeAgo: '2d ago', tag: 'Tip', tagColor: '#06b6d4', content: 'Tip from someone who just survived their wedding week: have a "day-of coordinator" even if you planned everything yourself. Ours cost R3k and saved us from at least 5 disasters. Non-negotiable.', likes: 276, comments: 53 },
-  { id: 'p9', author: 'Nokwanda & Sifiso', avatar: 'NS', avatarColor: '#9A2143', timeAgo: '2d ago', tag: 'Question', tagColor: '#f59e0b', content: 'How many of you did a first look? We\'re torn — my fiancé wants the traditional aisle reveal but I love the idea of a private moment before the ceremony.', likes: 94, comments: 61 },
-  { id: 'p10', author: 'Thandi & Mpho', avatar: 'TM', avatarColor: '#BD983F', timeAgo: '3d ago', tag: 'Milestone', tagColor: '#10b981', content: 'Just crossed the 100-day mark! Sent out our invitations, confirmed our DJ, and our dress alterations are done. Feeling terrifyingly excited.', likes: 158, comments: 14 },
+  { id: 'p1', author: 'Lerato & Tebogo', avatar: 'LT', avatarColor: '#9A2143', timeAgo: '2h ago', tag: 'Milestone', tagColor: '#10b981', content: 'We just confirmed our venue — The Botanical Gardens in Joburg! 8 months to go and it\'s finally feeling real. Anyone else booked here before? Would love tips!', image_url: null, likes: 47, comments: 12 },
+  { id: 'p2', author: 'Amahle & Sipho', avatar: 'AS', avatarColor: '#3a7bec', timeAgo: '4h ago', tag: 'Question', tagColor: '#f59e0b', content: 'Brides who\'ve done a traditional Zulu wedding AND a church ceremony — how did you handle the two-day schedule? We\'re planning for April and feeling overwhelmed with logistics.', image_url: null, likes: 83, comments: 29 },
+  { id: 'p3', author: 'Priya & Kiran', avatar: 'PK', avatarColor: '#8b5cf6', timeAgo: '6h ago', tag: 'Inspo', tagColor: '#ec4899', content: 'Our cake tasting was yesterday and WOW. We went with a 4-tier naked cake with fresh flowers. The baker suggested hibiscus and it looked absolutely stunning. Highly recommend exploring unconventional florals!', image_url: null, likes: 134, comments: 18 },
+  { id: 'p4', author: 'Nomsa & Bongani', avatar: 'NB', avatarColor: '#e8523a', timeAgo: '9h ago', tag: 'Tip', tagColor: '#06b6d4', content: 'PSA for couples on a budget: book your vendors on a Tuesday or Wednesday — we got 20% off our photographer just by being flexible on the day.', image_url: null, likes: 211, comments: 44 },
+  { id: 'p5', author: 'Candice & Mark', avatar: 'CM', avatarColor: '#BD983F', timeAgo: '12h ago', tag: 'Question', tagColor: '#f59e0b', content: 'Cape Town brides — what\'s realistic for a 120-person seated dinner with full catering? We\'ve had quotes ranging from R60k to R180k and don\'t know what\'s fair.', image_url: null, likes: 67, comments: 37 },
+  { id: 'p6', author: 'Zanele & Lungelo', avatar: 'ZL', avatarColor: '#14b8a6', timeAgo: '1d ago', tag: 'Milestone', tagColor: '#10b981', content: 'ENGAGED! After 6 years together, he proposed at Kruger with a sunrise bush breakfast. Now the planning begins... any advice for a first-time bride?', image_url: null, likes: 342, comments: 91 },
+  { id: 'p7', author: 'Fatima & Yusuf', avatar: 'FY', avatarColor: '#6366f1', timeAgo: '1d ago', tag: 'Inspo', tagColor: '#ec4899', content: 'We wanted a fusion of modern and Malay culture for our nikah and reception. Our decorator sourced handwoven Cape Malay textiles for the centrepieces — it was beyond anything we imagined.', image_url: null, likes: 189, comments: 22 },
+  { id: 'p8', author: 'Bianca & Danie', avatar: 'BD', avatarColor: '#f97316', timeAgo: '2d ago', tag: 'Tip', tagColor: '#06b6d4', content: 'Tip from someone who just survived their wedding week: have a "day-of coordinator" even if you planned everything yourself. Ours cost R3k and saved us from at least 5 disasters. Non-negotiable.', image_url: null, likes: 276, comments: 53 },
+  { id: 'p9', author: 'Nokwanda & Sifiso', avatar: 'NS', avatarColor: '#9A2143', timeAgo: '2d ago', tag: 'Question', tagColor: '#f59e0b', content: 'How many of you did a first look? We\'re torn — my fiancé wants the traditional aisle reveal but I love the idea of a private moment before the ceremony.', image_url: null, likes: 94, comments: 61 },
+  { id: 'p10', author: 'Thandi & Mpho', avatar: 'TM', avatarColor: '#BD983F', timeAgo: '3d ago', tag: 'Milestone', tagColor: '#10b981', content: 'Just crossed the 100-day mark! Sent out our invitations, confirmed our DJ, and our dress alterations are done. Feeling terrifyingly excited.', image_url: null, likes: 158, comments: 14 },
 ];
 
 const FALLBACK_ADS: SponsoredAd[] = [
@@ -94,7 +95,13 @@ function PostCard({ post }: { post: CommunityPost }) {
           {TAG_ICONS[post.tag]} {post.tag}
         </span>
       </div>
-      <p style={{ margin: '10px 16px 14px', fontSize: 13.5, color: '#374151', lineHeight: 1.6 }}>{post.content}</p>
+      <p style={{ margin: '10px 16px', fontSize: 13.5, color: '#374151', lineHeight: 1.6 }}>{post.content}</p>
+      {post.image_url && (
+        <div style={{ margin: '0 16px 12px', borderRadius: 12, overflow: 'hidden', background: 'rgba(154,33,67,0.05)' }}>
+          <img src={post.image_url} alt="Post" style={{ width: '100%', maxHeight: 260, objectFit: 'cover', display: 'block' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        </div>
+      )}
       {/* Read-only stats — no interactive buttons */}
       <div style={{ padding: '10px 16px 12px', borderTop: '1px solid #f5f3f0', display: 'flex', alignItems: 'center', gap: 16 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#d1d5db', fontSize: 12.5 }}>
@@ -215,7 +222,7 @@ export default function VendorCommunityPage() {
   const loadPosts = useCallback(async () => {
     const { data } = await supabase
       .from('community_posts')
-      .select('id, user_id, author, category, content, likes_count, comments_count, created_at')
+      .select('id, user_id, author, category, content, image_url, likes_count, comments_count, created_at')
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -230,6 +237,7 @@ export default function VendorCommunityPage() {
       tag: p.category || 'Milestone',
       tagColor: TAG_COLORS[p.category] || '#10b981',
       content: p.content,
+      image_url: p.image_url ?? null,
       likes: p.likes_count,
       comments: p.comments_count,
     }));
