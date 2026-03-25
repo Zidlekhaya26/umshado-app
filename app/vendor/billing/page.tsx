@@ -54,15 +54,16 @@ function FreeBanner() {
   );
 }
 
-function ProBanner({ expiresAt }: { expiresAt: string | null }) {
+function ProBanner({ planName, expiresAt }: { planName: string; expiresAt: string | null }) {
   const exp = expiresAt ? new Date(expiresAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+  const name = planName.charAt(0).toUpperCase() + planName.slice(1);
   return (
     <div style={{ borderRadius: 16, padding: '14px 18px', background: `linear-gradient(135deg,${CRX},${CR})`, display: 'flex', alignItems: 'center', gap: 12 }}>
       <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
         <svg width="18" height="18" fill="none" stroke="#fff" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 3l14 9-14 9V3z" /></svg>
       </div>
       <div>
-        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>Pro plan — active</p>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>{name} plan — active</p>
         {exp && <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>Renews {exp}</p>}
       </div>
     </div>
@@ -74,13 +75,13 @@ type AdCreative = { headline: string; body: string; cta: string };
 
 export default function VendorBilling() {
   const router = useRouter();
-  const [loading, setLoading]     = useState(true);
-  const [vendor, setVendor]       = useState<BillingVendor | null>(null);
-  const [billingCycle, setCycle]  = useState<'monthly' | 'yearly'>('monthly');
-  const [submitting, setSubmitting] = useState<string | null>(null);
-  const [ad, setAd]               = useState<AdCreative>({ headline: '', body: '', cta: 'View Profile' });
-  const [adFocused, setAdFocused] = useState('');
-  const [errorMsg, setErrorMsg]   = useState<string | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [vendor, setVendor]         = useState<BillingVendor | null>(null);
+  const [submitting, setSubmitting]  = useState<string | null>(null);
+  const [billingCycle, setCycle]    = useState<'monthly' | 'yearly'>('monthly');
+  const [ad, setAd]                 = useState<AdCreative>({ headline: '', body: '', cta: 'View Profile' });
+  const [adFocused, setAdFocused]   = useState('');
+  const [errorMsg, setErrorMsg]     = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -103,7 +104,7 @@ export default function VendorBilling() {
       const res = await fetch('/api/vendor/billing/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ type, billingCycle, adCreative: type === 'boost' ? ad : undefined }),
+        body: JSON.stringify({ type }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Payment failed');
@@ -118,18 +119,9 @@ export default function VendorBilling() {
 
   const tier               = getEffectiveTier(vendor || {});
   const daysLeft           = getTrialDaysLeft(vendor || {});
-  const isPro              = tier === 'pro';
+  const activeTier         = vendor?.subscription_status === 'active' ? (vendor?.subscription_tier ?? null) : null;
   const isVerified         = vendor?.verified;
   const verificationStatus = vendor?.verification_status;
-
-  const IS = (f: string): React.CSSProperties => ({
-    width: '100%', padding: '11px 14px', borderRadius: 10,
-    border: `1.5px solid ${adFocused === f ? CR : BOR}`,
-    outline: 'none', fontSize: 13, color: DK, background: '#fff',
-    fontFamily: 'inherit', boxSizing: 'border-box',
-    boxShadow: adFocused === f ? `0 0 0 3px rgba(154,33,67,0.08)` : 'none',
-    transition: 'border-color .14s,box-shadow .14s',
-  });
 
   return (
     <div style={{ minHeight: '100svh', background: BG, fontFamily: "'DM Sans',system-ui,sans-serif" }}>
@@ -150,13 +142,13 @@ export default function VendorBilling() {
 
         {/* Status */}
         {tier === 'trial' && <TrialBanner daysLeft={daysLeft} />}
-        {tier === 'free'  && <FreeBanner />}
-        {tier === 'pro'   && <ProBanner expiresAt={vendor?.subscription_expires_at || null} />}
+        {tier === 'free' && !activeTier && <FreeBanner />}
+        {activeTier && <ProBanner planName={activeTier} expiresAt={vendor?.subscription_expires_at || null} />}
 
         {errorMsg && <div style={{ padding: '12px 16px', borderRadius: 12, background: '#fef2f2', border: '1.5px solid #fca5a5', color: '#dc2626', fontSize: 13 }}>{errorMsg}</div>}
 
         {/* ── Pro upgrade card ───────────────────── */}
-        {!isPro && (
+        {!activeTier && (
           <div style={{ borderRadius: 20, overflow: 'hidden', border: `2px solid ${CR}`, boxShadow: `0 8px 32px rgba(154,33,67,0.14)` }}>
             <div style={{ background: `linear-gradient(135deg,${CRX},${CR})`, padding: '18px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -169,7 +161,7 @@ export default function VendorBilling() {
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: 'rgba(255,255,255,0.6)' }}>{billingCycle === 'monthly' ? 'per month' : 'per year · save R101'}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 0, marginTop: 14, background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 3 }}>
+              <div style={{ display: 'flex', marginTop: 14, background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 3 }}>
                 {(['monthly', 'yearly'] as const).map(c => (
                   <button key={c} onClick={() => setCycle(c)} style={{ flex: 1, padding: '7px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'inherit', transition: 'all .14s', background: billingCycle === c ? '#fff' : 'transparent', color: billingCycle === c ? CR : 'rgba(255,255,255,0.65)' }}>
                     {c === 'monthly' ? 'Monthly' : 'Yearly · save R101'}
@@ -179,7 +171,7 @@ export default function VendorBilling() {
             </div>
             <div style={{ background: '#fff', padding: '18px 20px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px', marginBottom: 16 }}>
-                {['Unlimited packages','Unlimited photos','WhatsApp button on profile','90-day analytics','Verification eligible','Featured placement eligible','Priority in marketplace','Full quote management'].map(f => (
+                {['Unlimited packages','Unlimited photos','WhatsApp button on profile','90-day analytics','Verification eligible (R99)','Boost & Ads eligible (R199)','Priority in marketplace','Full quote management'].map(f => (
                   <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
                     <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon /></div>
                     <span style={{ fontSize: 12.5, color: DK, lineHeight: 1.4 }}>{f}</span>
@@ -196,8 +188,8 @@ export default function VendorBilling() {
           </div>
         )}
 
-        {/* ── Free vs Pro comparison ─────────────── */}
-        {!isPro && (
+        {/* Free vs Pro comparison */}
+        {!activeTier && (
           <div style={{ borderRadius: 16, border: `1.5px solid ${BOR}`, background: '#fff', overflow: 'hidden' }}>
             <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BOR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: DK }}>Free vs Pro</p>
@@ -207,12 +199,12 @@ export default function VendorBilling() {
               </div>
             </div>
             {[
-              { label: 'Packages',       free: 'Up to 2',  pro: 'Unlimited' },
-              { label: 'Photos',         free: 'Up to 6',  pro: 'Unlimited' },
-              { label: 'Analytics',      free: '7 days',   pro: '90 days' },
-              { label: 'WhatsApp button',free: 'No',       pro: 'Yes' },
-              { label: 'Verification',   free: 'No',       pro: 'Eligible (R99)' },
-              { label: 'Boost & Ads',    free: 'No',       pro: 'Eligible (R199)' },
+              { label: 'Packages',        free: 'Up to 2',  pro: 'Unlimited' },
+              { label: 'Photos',          free: 'Up to 6',  pro: 'Unlimited' },
+              { label: 'Analytics',       free: '7 days',   pro: '90 days' },
+              { label: 'WhatsApp button', free: 'No',       pro: 'Yes' },
+              { label: 'Verification',    free: 'No',       pro: 'R99 eligible' },
+              { label: 'Boost & Ads',     free: 'No',       pro: 'R199 eligible' },
             ].map((row, i, arr) => (
               <div key={row.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12.5, padding: '11px 18px', borderBottom: i < arr.length - 1 ? `1px solid ${BOR}` : 'none' }}>
                 <span style={{ color: MUT, fontWeight: 500 }}>{row.label}</span>
@@ -234,7 +226,7 @@ export default function VendorBilling() {
               </div>
               <div>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isVerified ? '#15803d' : '#fff' }}>{isVerified ? 'Verified Business' : 'Get Verified'}</p>
-                <p style={{ margin: '1px 0 0', fontSize: 11, color: isVerified ? '#16a34a' : 'rgba(255,255,255,0.5)' }}>{isVerified ? 'Your badge is live on your profile' : 'One-time fee · R99 · No renewals ever'}</p>
+                <p style={{ margin: '1px 0 0', fontSize: 11, color: isVerified ? '#16a34a' : 'rgba(255,255,255,0.5)' }}>{isVerified ? 'Your badge is live on your profile' : 'R99 one-time fee · No renewals ever'}</p>
               </div>
             </div>
             {isVerified && <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: '#16a34a', color: '#fff' }}>VERIFIED</span>}
@@ -242,7 +234,7 @@ export default function VendorBilling() {
 
           {!isVerified && (
             <div style={{ padding: '14px 18px' }}>
-              {['Verified shield badge on your profile','Higher placement in marketplace search','Build instant trust with couples','One-time payment — badge is permanent','Full refund if your business cannot be verified'].map(f => (
+              {['Manual review by the uMshado team', 'Blue ✓ Verified badge on your profile', 'Higher trust & conversion from couples', 'Priority placement in search results', 'One-time payment — badge is permanent'].map(f => (
                 <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                   <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#302b63" /></div>
                   <span style={{ fontSize: 12.5, color: DK }}>{f}</span>
@@ -255,9 +247,8 @@ export default function VendorBilling() {
                 </div>
               ) : (
                 <div style={{ marginTop: 12 }}>
-                  {!isPro && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', marginBottom: 10, fontSize: 12, color: '#9a3412' }}>Verification is available on Pro plan only. Upgrade first.</div>}
-                  <button onClick={() => isPro && initiatePayment('verification')} disabled={!isPro || submitting !== null}
-                    style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: isPro && !submitting ? 'pointer' : 'default', background: isPro ? 'linear-gradient(135deg,#0f0c29,#302b63)' : '#e5e7eb', color: isPro ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: isPro ? '0 3px 12px rgba(15,12,41,0.22)' : 'none', opacity: submitting && submitting !== 'verification' ? .5 : 1, transition: 'all .15s' }}>
+                  <button onClick={() => initiatePayment('verification')} disabled={submitting !== null}
+                    style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: submitting ? 'default' : 'pointer', background: 'linear-gradient(135deg,#0f0c29,#302b63)', color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 3px 12px rgba(15,12,41,0.22)', opacity: submitting && submitting !== 'verification' ? .5 : 1, transition: 'all .15s' }}>
                     {submitting === 'verification' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
                     {submitting === 'verification' ? 'Redirecting…' : 'Apply for Verification — R99'}
                   </button>
@@ -279,9 +270,8 @@ export default function VendorBilling() {
               <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.65)' }}>per month</p>
             </div>
           </div>
-
           <div style={{ padding: '16px 20px' }}>
-            {['Featured at top of marketplace','Sponsored ad cards in marketplace scroll','Your ads appear in the Couples Community feed','Star badge and "Sponsored" label on your profile card','Custom headline, message, and call-to-action','30-day campaign · renew anytime'].map(f => (
+            {['Featured at top of marketplace','Sponsored ad cards injected into marketplace scroll','Your ads appear in the Couples Community feed','Star badge and "Sponsored" label on your profile card','Custom headline, message, and call-to-action','30-day campaign · renew anytime'].map(f => (
               <div key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
                 <div style={{ flexShrink: 0, marginTop: 1 }}><CheckIcon color="#BD983F" /></div>
                 <span style={{ fontSize: 12.5, color: DK }}>{f}</span>
@@ -289,33 +279,36 @@ export default function VendorBilling() {
             ))}
 
             {/* Ad creative form */}
-            <div style={{ padding: '14px 16px', borderRadius: 12, background: '#fdfaf4', border: '1.5px solid rgba(189,152,63,0.25)', margin: '16px 0' }}>
+            <div style={{ padding: '14px 16px', borderRadius: 12, background: '#fdfaf4', border: '1.5px solid rgba(189,152,63,0.25)', margin: '14px 0' }}>
               <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 800, color: '#7c5c0a', letterSpacing: 0.5, textTransform: 'uppercase' }}>Your Ad Creative</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Headline</label>
                   <input type="text" value={ad.headline} placeholder="e.g. Book Luminary Photography for your big day" maxLength={60}
                     onFocus={() => setAdFocused('h')} onBlur={() => setAdFocused('')}
-                    onChange={e => setAd({ ...ad, headline: e.target.value })} style={IS('h')} />
+                    onChange={e => setAd({ ...ad, headline: e.target.value })}
+                    style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1.5px solid ${adFocused === 'h' ? CR : BOR}`, outline: 'none', fontSize: 13, color: DK, background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box' as const }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Short description</label>
                   <textarea value={ad.body} placeholder="Capturing memories across South Africa — 5-star rated, over 200 weddings shot." rows={2} maxLength={120}
                     onFocus={() => setAdFocused('b')} onBlur={() => setAdFocused('')}
-                    onChange={e => setAd({ ...ad, body: e.target.value })} style={{ ...IS('b'), resize: 'none' }} />
+                    onChange={e => setAd({ ...ad, body: e.target.value })}
+                    style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1.5px solid ${adFocused === 'b' ? CR : BOR}`, outline: 'none', fontSize: 13, color: DK, background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box' as const, resize: 'none' }} />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 10.5, fontWeight: 700, color: MUT, marginBottom: 5, letterSpacing: 0.8, textTransform: 'uppercase' }}>Button label</label>
                   <input type="text" value={ad.cta} placeholder="View Profile" maxLength={24}
                     onFocus={() => setAdFocused('c')} onBlur={() => setAdFocused('')}
-                    onChange={e => setAd({ ...ad, cta: e.target.value })} style={IS('c')} />
+                    onChange={e => setAd({ ...ad, cta: e.target.value })}
+                    style={{ width: '100%', padding: '11px 14px', borderRadius: 10, border: `1.5px solid ${adFocused === 'c' ? CR : BOR}`, outline: 'none', fontSize: 13, color: DK, background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box' as const }} />
                 </div>
               </div>
             </div>
 
-            {!isPro && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', marginBottom: 10, fontSize: 12, color: '#9a3412' }}>Boost is available on Pro plan only. Upgrade first.</div>}
-            <button onClick={() => isPro && initiatePayment('boost')} disabled={!isPro || submitting !== null}
-              style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: isPro && !submitting ? 'pointer' : 'default', background: isPro ? 'linear-gradient(135deg,#7c5c0a,#BD983F)' : '#e5e7eb', color: isPro ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: isPro ? '0 4px 16px rgba(189,152,63,0.3)' : 'none', opacity: submitting && submitting !== 'boost' ? .5 : 1, transition: 'all .15s' }}>
+            {!activeTier && <div style={{ padding: '10px 14px', borderRadius: 10, background: '#fff7ed', border: '1px solid #fed7aa', marginBottom: 10, fontSize: 12, color: '#9a3412' }}>Boost is available on Pro plan only. Upgrade first.</div>}
+            <button onClick={() => activeTier && initiatePayment('boost')} disabled={!activeTier || submitting !== null}
+              style={{ width: '100%', padding: '13px', borderRadius: 12, border: 'none', cursor: activeTier && !submitting ? 'pointer' : 'default', background: activeTier ? 'linear-gradient(135deg,#7c5c0a,#BD983F)' : '#e5e7eb', color: activeTier ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: activeTier ? '0 4px 16px rgba(189,152,63,0.3)' : 'none', opacity: submitting && submitting !== 'boost' ? .5 : 1, transition: 'all .15s' }}>
               {submitting === 'boost' && <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin .8s linear infinite' }} />}
               {submitting === 'boost' ? 'Redirecting…' : 'Start 30-day Boost Campaign — R199'}
             </button>
