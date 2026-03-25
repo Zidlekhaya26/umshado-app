@@ -137,16 +137,33 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
     });
   }, [activeSection, vendorId, packages]);
 
-  // Restore saved state
+  // Restore saved state from DB
   useEffect(() => {
-    try { setIsSaved(localStorage.getItem(`saved_vendor_${vendorId}`) === '1'); } catch {}
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('saved_vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('vendor_id', vendorId)
+        .maybeSingle();
+      setIsSaved(!!data);
+    })();
   }, [vendorId]);
 
-  const toggleSave = () => {
+  const toggleSave = async () => {
     const next = !isSaved;
     setIsSaved(next);
-    try { localStorage.setItem(`saved_vendor_${vendorId}`, next ? '1' : '0'); } catch {}
-    if (next) trackVendorEvent(vendorId, 'save_vendor', { source: 'public_profile' }).catch(() => {});
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      if (next) {
+        await supabase.from('saved_vendors').upsert({ user_id: user.id, vendor_id: vendorId });
+        trackVendorEvent(vendorId, 'save_vendor', { source: 'public_profile' }).catch(() => {});
+      } else {
+        await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendorId);
+      }
+    }
   };
 
   const shareProfile = async () => {

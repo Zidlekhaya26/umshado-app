@@ -158,12 +158,17 @@ export default function VendorProfile() {
 
   useEffect(() => {
     if (!vendorId) return;
-    const key = `saved_vendor_${vendorId}`;
-    try {
-      setIsSaved(localStorage.getItem(key) === '1');
-    } catch {
-      setIsSaved(false);
-    }
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('saved_vendors')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('vendor_id', vendorId)
+        .maybeSingle();
+      setIsSaved(!!data);
+    })();
   }, [vendorId]);
 
   useEffect(() => {
@@ -363,14 +368,14 @@ export default function VendorProfile() {
     if (!vendor?.id) return;
     const next = !isSaved;
     setIsSaved(next);
-    const key = `saved_vendor_${vendor.id}`;
-    try {
-      localStorage.setItem(key, next ? '1' : '0');
-    } catch {
-      // ignore storage errors
-    }
-    if (next) {
-      trackVendorEvent(vendor.id, 'save_vendor', { source: 'vendor_profile' });
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      if (next) {
+        await supabase.from('saved_vendors').upsert({ user_id: user.id, vendor_id: vendor.id });
+        trackVendorEvent(vendor.id, 'save_vendor', { source: 'vendor_profile' });
+      } else {
+        await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendor.id);
+      }
     }
   };
   // Loading state
