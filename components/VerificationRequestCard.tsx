@@ -36,21 +36,21 @@ export default function VerificationRequestCard({ vendorVerified }: { vendorVeri
       {/* Header */}
       <div style={{
         padding: '14px 18px',
-        background: 'linear-gradient(135deg, #0f0c29, #302b63)',
+        background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(189,152,63,0.2)', border: '1.5px solid rgba(189,152,63,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="16" height="16" fill="none" stroke="#BD983F" strokeWidth={1.8} viewBox="0 0 24 24">
+          <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(37,99,235,0.12)', border: '1.5px solid rgba(37,99,235,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="16" height="16" fill="none" stroke="#2563eb" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
             </svg>
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#fff' }}>Get Verified</p>
-            <p style={{ margin: '1px 0 0', fontSize: 10.5, color: 'rgba(255,255,255,0.5)' }}>One-time application · R99 · No renewals</p>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#1e3a8a' }}>Get Verified</p>
+            <p style={{ margin: '1px 0 0', fontSize: 10.5, color: '#3b82f6' }}>One-time application · R99 · No renewals</p>
           </div>
         </div>
-        <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20, background: 'rgba(189,152,63,0.2)', color: '#BD983F', letterSpacing: 0.5 }}>BADGE</span>
+        <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 20, background: 'rgba(37,99,235,0.12)', color: '#1d4ed8', border: '1px solid rgba(37,99,235,0.2)', letterSpacing: 0.5 }}>BADGE</span>
       </div>
 
       {/* Body */}
@@ -67,8 +67,8 @@ export default function VerificationRequestCard({ vendorVerified }: { vendorVeri
             { icon: '✓', text: 'Build instant trust with couples' },
           ].map(b => (
             <div key={b.text} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(15,12,41,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontSize: 10, fontWeight: 800, color: '#302b63' }}>{b.icon}</span>
+              <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: '#2563eb' }}>{b.icon}</span>
               </div>
               <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>{b.text}</span>
             </div>
@@ -80,9 +80,9 @@ export default function VerificationRequestCard({ vendorVerified }: { vendorVeri
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
             padding: '11px 18px', borderRadius: 12, textDecoration: 'none',
-            background: 'linear-gradient(135deg, #0f0c29, #302b63)',
+            background: 'linear-gradient(135deg, #1e3a8a, #2563eb)',
             color: '#fff', fontSize: 13, fontWeight: 700,
-            boxShadow: '0 3px 12px rgba(15,12,41,0.22)',
+            boxShadow: '0 3px 12px rgba(37,99,235,0.28)',
           }}
         >
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
