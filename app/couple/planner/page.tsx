@@ -126,6 +126,7 @@ function CouplePlannerContent() {
   // Task edit
   const [editingTask, setEditingTask] = useState<DbTask | null>(null);
   const [editTaskTitle, setEditTaskTitle] = useState('');
+  const [hideDone, setHideDone] = useState(true);
   const [editTaskDate, setEditTaskDate] = useState('');
 
   // Budget form (add + edit)
@@ -741,7 +742,16 @@ function CouplePlannerContent() {
             <div className="p-4 space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-gray-600">{tasks.length > 0 ? `${tasks.filter(t => t.is_done).length} of ${tasks.length} completed` : 'No tasks yet'}</p>
-                <button onClick={() => setShowTaskModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Task</button>
+                <div className="flex items-center gap-2">
+                  {tasks.some(t => t.is_done) && (
+                    <button onClick={() => setHideDone(h => !h)}
+                      className="px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors"
+                      style={{ borderColor: 'rgba(124,58,237,0.3)', color: hideDone ? '#7c3aed' : '#6b7280', background: hideDone ? 'rgba(124,58,237,0.08)' : 'transparent' }}>
+                      {hideDone ? 'Show done' : 'Hide done'}
+                    </button>
+                  )}
+                  <button onClick={() => setShowTaskModal(true)} className="px-4 py-2 bg-purple-600 text-white rounded-full text-sm font-semibold hover:bg-purple-700 transition-colors shadow-md">+ Add Task</button>
+                </div>
               </div>
               {tasks.length === 0 ? (
                 <EmptyState icon="📋" title="No tasks yet" description="Add your first wedding planning task to get started." actionLabel="+ Add Task" onAction={() => setShowTaskModal(true)} />
@@ -749,12 +759,13 @@ function CouplePlannerContent() {
                 /* ── Timeline grouped by month ── */
                 (() => {
                   const today = new Date(); today.setHours(0,0,0,0);
+                  const visibleTasks = hideDone ? tasks.filter(t => !t.is_done) : tasks;
 
                   const overdue: DbTask[] = [];
                   const monthMap = new Map<string, { sortKey: string; label: string; monthDate: Date; tasks: DbTask[] }>();
                   const undated: DbTask[] = [];
 
-                  [...tasks].sort((a, b) => {
+                  [...visibleTasks].sort((a, b) => {
                     if (!a.due_date && !b.due_date) return 0;
                     if (!a.due_date) return 1;
                     if (!b.due_date) return -1;
