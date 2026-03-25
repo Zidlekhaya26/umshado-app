@@ -499,6 +499,8 @@ export default function Marketplace() {
   const [catalogServices, setCatalogServices] = useState<CatalogService[]>([]);
   const [displayedCount, setDisplayedCount] = useState(12);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [verifiedOnly, setVerifiedOnly]     = useState(false);
+  const [budgetMax, setBudgetMax]           = useState<number | null>(null);
   const [filterOpen, setFilterOpen]         = useState(false);
   const [scopeOpen, setScopeOpen]           = useState(false);
   const [logoOpen, setLogoOpen]             = useState(false);
@@ -521,7 +523,7 @@ export default function Marketplace() {
   }, []);
 
   useEffect(() => { loadData(); }, [user, location]);
-  useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, scope, allVendors, location]);
+  useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, scope, allVendors, location, verifiedOnly, budgetMax]);
   useEffect(() => { setServiceFilter([]); }, [categoryFilter]);
   useEffect(() => { if (scope === 'nearby' && sortBy === 'recommended') setSortBy('nearest'); }, [scope]);
 
@@ -549,10 +551,12 @@ export default function Marketplace() {
     c += serviceFilter.length;
     if (sortBy !== 'recommended') c++;
     if (scope !== 'country') c++;
+    if (verifiedOnly) c++;
+    if (budgetMax) c++;
     return c;
   };
 
-  const clearAll = () => { setSearchQuery(''); setCategoryFilter(''); setServiceFilter([]); setSortBy('recommended'); setScope('country'); };
+  const clearAll = () => { setSearchQuery(''); setCategoryFilter(''); setServiceFilter([]); setSortBy('recommended'); setScope('country'); setVerifiedOnly(false); setBudgetMax(null); };
   const toggleService = (s: string) => setServiceFilter(p => p.includes(s) ? p.filter(x => x !== s) : [...p, s]);
 
   const loadData = async () => {
@@ -638,6 +642,8 @@ export default function Marketplace() {
     );
     if (categoryFilter) f = f.filter(v => v.category === categoryFilter);
     if (serviceFilter.length) f = f.filter(v => serviceFilter.every(s => v.services.includes(s)));
+    if (verifiedOnly) f = f.filter(v => v.verified);
+    if (budgetMax) f = f.filter(v => v.fromPrice === 0 || v.fromPrice <= budgetMax);
 
     switch (effectiveSortBy) {
       case 'recommended': f.sort((a, b) => b.score - a.score); break;
@@ -876,10 +882,58 @@ export default function Marketplace() {
               </div>
               <button onClick={() => setFilterOpen(false)} style={{ padding: '7px 16px', borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#374151' }}>Done</button>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+              {/* Verified only toggle */}
+              <div>
+                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>Verification</p>
+                <button
+                  onClick={() => setVerifiedOnly(p => !p)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', borderRadius: 12, border: `1.5px solid ${verifiedOnly ? '#2563eb' : '#e5e7eb'}`, background: verifiedOnly ? 'rgba(37,99,235,0.07)' : '#fff', cursor: 'pointer', width: '100%' }}
+                >
+                  <div style={{ width: 38, height: 22, borderRadius: 11, background: verifiedOnly ? '#2563eb' : '#d1d5db', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+                    <div style={{ position: 'absolute', top: 3, left: verifiedOnly ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: verifiedOnly ? '#1d4ed8' : '#111827' }}>Verified vendors only</p>
+                    <p style={{ margin: 0, fontSize: 11, color: '#9ca3af', marginTop: 1 }}>Show only uMshado-verified businesses</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Budget max */}
+              <div>
+                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Max budget{budgetMax ? ` · R${budgetMax.toLocaleString()}` : ''}
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    type="number"
+                    min={0}
+                    step={500}
+                    placeholder="e.g. 20000"
+                    value={budgetMax ?? ''}
+                    onChange={e => setBudgetMax(e.target.value ? Number(e.target.value) : null)}
+                    style={{ flex: 1, height: 44, borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '0 14px', fontSize: 14, color: '#111827', outline: 'none', background: '#fafafa' }}
+                  />
+                  {budgetMax && (
+                    <button onClick={() => setBudgetMax(null)} style={{ padding: '0 14px', height: 44, borderRadius: 10, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 12, fontWeight: 600, color: '#6b7280', cursor: 'pointer', flexShrink: 0 }}>Clear</button>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  {[5000, 10000, 20000, 50000].map(val => (
+                    <button key={val} onClick={() => setBudgetMax(budgetMax === val ? null : val)}
+                      style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', background: budgetMax === val ? 'linear-gradient(135deg,#6b1a2e,#8b2040)' : '#f3f4f6', color: budgetMax === val ? '#fff' : '#6b7280' }}>
+                      R{(val/1000).toFixed(0)}k
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Services */}
               {displayedServices.length > 0 ? (
-                <>
-                  <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                <div>
+                  <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     Services{categoryFilter ? ` · ${categoryFilter}` : ''}
                   </p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -893,15 +947,15 @@ export default function Marketplace() {
                       );
                     })}
                   </div>
-                </>
+                </div>
               ) : (
-                <p style={{ color: '#9ca3af', fontSize: 13 }}>Select a category above to filter services.</p>
+                <p style={{ color: '#9ca3af', fontSize: 13, margin: 0 }}>Select a category above to filter services.</p>
               )}
             </div>
             <div style={{ padding: '12px 20px 24px', display: 'flex', gap: 10, borderTop: '1px solid #f1f0ee' }}>
-              <button onClick={() => setServiceFilter([])} style={{ flex: 1, height: 46, borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Clear</button>
+              <button onClick={() => { setServiceFilter([]); setVerifiedOnly(false); setBudgetMax(null); }} style={{ flex: 1, height: 46, borderRadius: 12, border: '1.5px solid #e5e7eb', background: '#fff', fontSize: 13, fontWeight: 600, color: '#374151', cursor: 'pointer' }}>Clear</button>
               <button onClick={() => setFilterOpen(false)} style={{ flex: 2, height: 46, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(107,26,46,0.3)' }}>
-                Apply{serviceFilter.length > 0 ? ` (${serviceFilter.length})` : ''}
+                Apply{(serviceFilter.length + (verifiedOnly ? 1 : 0) + (budgetMax ? 1 : 0)) > 0 ? ` (${serviceFilter.length + (verifiedOnly ? 1 : 0) + (budgetMax ? 1 : 0)})` : ''}
               </button>
             </div>
           </div>
