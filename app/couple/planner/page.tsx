@@ -803,6 +803,61 @@ function CouplePlannerContent() {
                     </div>
                   </div>
 
+                  {/* ── Category breakdown chart ── */}
+                  {(() => {
+                    const catMap = new Map<string, { planned: number; paid: number; color: ReturnType<typeof categoryColor> }>();
+                    budgetItems.forEach(item => {
+                      const key = item.category || 'Uncategorised';
+                      const existing = catMap.get(key) || { planned: 0, paid: 0, color: categoryColor(item.category) };
+                      catMap.set(key, { planned: existing.planned + Number(item.amount), paid: existing.paid + Number(item.amount_paid || 0), color: existing.color });
+                    });
+                    const cats = Array.from(catMap.entries()).sort((a, b) => b[1].planned - a[1].planned);
+                    if (cats.length < 2) return null;
+
+                    return (
+                      <div style={{ background: '#fff', borderRadius: 16, padding: '18px', border: '2px solid #f1f0ee', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
+                        <p style={{ margin: '0 0 14px', fontSize: 13, fontWeight: 700, color: '#111827', fontFamily: 'Georgia,serif' }}>Spend by Category</p>
+
+                        {/* Stacked proportional bar */}
+                        <div style={{ display: 'flex', height: 12, borderRadius: 8, overflow: 'hidden', marginBottom: 18, gap: 1.5 }}>
+                          {cats.map(([cat, data]) => {
+                            const pct = totalBudget > 0 ? (data.planned / totalBudget) * 100 : 0;
+                            return (
+                              <div key={cat} title={`${cat}: ${Math.round(pct)}%`}
+                                style={{ flex: data.planned, minWidth: pct > 2 ? undefined : 0, background: data.color.border, borderRadius: 4, transition: 'flex 0.5s ease' }} />
+                            );
+                          })}
+                        </div>
+
+                        {/* Per-category rows */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {cats.map(([cat, data]) => {
+                            const pct = totalBudget > 0 ? Math.round((data.planned / totalBudget) * 100) : 0;
+                            const paidPct = data.planned > 0 ? Math.min((data.paid / data.planned) * 100, 100) : 0;
+                            return (
+                              <div key={cat}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                    <div style={{ width: 10, height: 10, borderRadius: 3, background: data.color.border, flexShrink: 0 }} />
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{cat}</span>
+                                    <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500 }}>{pct}%</span>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: '#111827' }}>{fb(data.planned)}</span>
+                                    {data.paid > 0 && <span style={{ fontSize: 10, color: '#22c55e', marginLeft: 6, fontWeight: 600 }}>{fb(data.paid)} paid</span>}
+                                  </div>
+                                </div>
+                                <div style={{ height: 5, background: '#f3f4f6', borderRadius: 4, overflow: 'hidden' }}>
+                                  <div style={{ height: '100%', width: `${paidPct}%`, background: paidPct >= 100 ? '#22c55e' : data.color.border, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-gray-900">Budget Items</p>
                     <div className="flex items-center gap-2">

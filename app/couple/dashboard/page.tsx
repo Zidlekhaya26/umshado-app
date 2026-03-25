@@ -480,9 +480,24 @@ export default function CoupleDashboard() {
                     <span style={{ fontSize:15, fontWeight:700, color:GRN, lineHeight:1 }}>{budgetPct}%</span>
                     <span style={{ fontSize:8, color:LITE }}>paid</span>
                   </Donut>
-                  <div style={{ textAlign:'center' }}>
-                    <p style={{ margin:'0 0 1px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{fb(totalBudget)}</p>
-                    <p style={{ margin:0, fontSize:10, color:LITE }}>{fb(totalBudget - totalPaid)} remaining</p>
+                  <div style={{ textAlign:'center', width:'100%' }}>
+                    <p style={{ margin:'0 0 4px', fontSize:16, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{fb(totalBudget)}</p>
+                    <p style={{ margin:'0 0 8px', fontSize:10, color:LITE }}>{fb(totalBudget - totalPaid)} remaining</p>
+                    {/* Mini category stacked bar */}
+                    {(() => {
+                      const cats = new Map<string, number>();
+                      budgetItems.forEach(b => { const k = b.category || 'Other'; cats.set(k, (cats.get(k)||0) + Number(b.amount)); });
+                      if (cats.size < 2) return null;
+                      const palette = ['#9A2143','#BD983F','#2563eb','#22c55e','#f59e0b','#8b5cf6','#ec4899','#14b8a6'];
+                      const entries = Array.from(cats.entries()).sort((a,b) => b[1]-a[1]);
+                      return (
+                        <div style={{ display:'flex', height:6, borderRadius:4, overflow:'hidden', width:'100%', gap:1 }}>
+                          {entries.map(([cat, amt], i) => (
+                            <div key={cat} title={cat} style={{ flex:amt, minWidth:2, background:palette[i % palette.length], borderRadius:3 }}/>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </div>
                 </>
               ) : (
