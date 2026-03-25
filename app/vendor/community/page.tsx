@@ -291,13 +291,11 @@ export default function VendorCommunityPage() {
   /* ── Build feed ───────────────────────────────────── */
   const filtered = activeTab === 'All' ? posts : posts.filter(p => p.tag === activeTab);
   const feed: Array<{ type: 'post'; data: CommunityPost } | { type: 'ad'; data: SponsoredAd }> = [];
-  // Always pin first sponsored ad at the top of the feed
-  if (ads.length > 0) feed.push({ type: 'ad', data: ads[0] });
   filtered.forEach((p, i) => {
     feed.push({ type: 'post', data: p });
-    // Rotate additional ads after every 5th post
-    if ((i + 1) % 5 === 0 && ads.length > 0) {
-      feed.push({ type: 'ad', data: ads[(Math.floor(i / 5) + 1) % ads.length] });
+    // Rotate ads after every 8th post
+    if ((i + 1) % 8 === 0 && ads.length > 0) {
+      feed.push({ type: 'ad', data: ads[Math.floor(i / 8) % ads.length] });
     }
   });
 

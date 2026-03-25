@@ -809,11 +809,9 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
-              {/* Pinned first sponsored ad — only if real live ads exist */}
-              {liveAds.length > 0 && <SponsoredAdCard ad={liveAds[0]} isVendor={isVendor} />}
               {vendors.slice(0, displayedCount).map((v, idx) => {
-                const showAdAfter = (idx + 1) % 5 === 0;
-                const adIndex = Math.floor(idx / 5) % liveAds.length;
+                const showAdAfter = (idx + 1) % 8 === 0;
+                const adIndex = Math.floor(idx / 8) % liveAds.length;
                 return (
                   <Fragment key={v.id}>
                     <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
