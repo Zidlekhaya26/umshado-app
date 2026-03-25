@@ -69,54 +69,67 @@ function autoAd(v: VendorRow) {
 }
 
 export async function GET() {
-  try {
-    const supabase = createServiceClient();
-    const now = new Date().toISOString();
+  const supabase = createServiceClient();
+  const now = new Date().toISOString();
 
-    // 1. Paid boost campaigns (vendor_boosts table — R199/mo)
-    const { data: boosts } = await supabase
-      .from('vendor_boosts')
-      .select('id, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct, vendor:vendor_id ( id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct )')
-      .eq('status', 'active')
-      .gt('ends_at', now)
-      .order('created_at');
+  // 1. Active boost campaigns — two queries to avoid FK-join failures
+  const { data: boosts, error: boostErr } = await supabase
+    .from('vendor_boosts')
+    .select('id, vendor_id, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct')
+    .eq('status', 'active')
+    .gt('ends_at', now)
+    .order('created_at');
 
-    const boostedVendorIds = new Set<string>();
-    const boostAds = (boosts ?? []).map(b => {
-      const v = b.vendor as unknown as VendorRow | null;
+  if (boostErr) console.error('[ads/active] boosts query:', boostErr.message);
+
+  const boostedVendorIds = new Set<string>();
+  let boostAds: ReturnType<typeof autoAd>[] = [];
+
+  if (boosts && boosts.length > 0) {
+    const vendorIds = [...new Set(boosts.map(b => b.vendor_id).filter(Boolean))];
+    const { data: vendorRows, error: vErr } = await supabase
+      .from('vendors')
+      .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
+      .in('id', vendorIds);
+
+    if (vErr) console.error('[ads/active] vendor lookup:', vErr.message);
+
+    const vendorMap = new Map<string, VendorRow>((vendorRows ?? []).map(v => [v.id, v]));
+
+    boostAds = boosts.map(b => {
+      const v = vendorMap.get(b.vendor_id) ?? null;
       if (v?.id) boostedVendorIds.add(v.id);
       const category = v?.category ?? 'Planning & Coordination';
       return {
         id: b.id,
         vendorId: v?.id ?? null,
         vendorName: v?.business_name?.trim() ?? null,
-        headline: b.ad_headline ?? v?.business_name ?? 'Featured Vendor',
+        headline: b.ad_headline ?? v?.business_name?.trim() ?? 'Featured Vendor',
         body: b.ad_body ?? (v ? autoAd(v).body : ''),
         cta: b.ad_cta ?? 'View Profile',
         category,
         color: CAT_COLOR[category] ?? '#9A2143',
         emoji: CAT_EMOJI[category] ?? '🌟',
         badge: v?.verified ? 'Verified Pro' : 'Sponsored',
-        imageUrl: (b as any).ad_image_url ?? v?.promo_image_url ?? null,
-        discountPct: (b as any).discount_pct ?? v?.promo_discount_pct ?? null,
+        imageUrl: b.ad_image_url ?? v?.promo_image_url ?? null,
+        discountPct: b.discount_pct ?? v?.promo_discount_pct ?? null,
       };
     });
-
-    // 2. Pro/trial subscribers without a paid boost — auto-generate ad from profile
-    const { data: proVendors } = await supabase
-      .from('vendors')
-      .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
-      .in('subscription_tier', ['pro', 'trial'])
-      .eq('is_published', true)
-      .order('business_name');
-
-    const proAds = (proVendors ?? [])
-      .filter((v: VendorRow) => !boostedVendorIds.has(v.id))
-      .map((v: VendorRow) => autoAd(v));
-
-    const ads = [...boostAds, ...proAds];
-    return NextResponse.json({ ads });
-  } catch {
-    return NextResponse.json({ ads: [] });
   }
+
+  // 2. Pro/trial vendors without a paid boost — auto-generate ad
+  const { data: proVendors, error: proErr } = await supabase
+    .from('vendors')
+    .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
+    .in('subscription_tier', ['pro', 'trial'])
+    .eq('is_published', true)
+    .order('business_name');
+
+  if (proErr) console.error('[ads/active] pro vendors:', proErr.message);
+
+  const proAds = (proVendors ?? [])
+    .filter((v: VendorRow) => !boostedVendorIds.has(v.id))
+    .map((v: VendorRow) => autoAd(v));
+
+  return NextResponse.json({ ads: [...boostAds, ...proAds] });
 }

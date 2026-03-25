@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
+import VendorBottomNav from '@/components/VendorBottomNav';
 
 type VendorRow = {
   id: string;
@@ -93,16 +94,17 @@ export default function VendorPromoPage() {
       <div style={{ background: `linear-gradient(160deg, ${CRX} 0%, ${CR} 52%, #c03050 100%)`, padding: '22px 20px 26px', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg,transparent,${GD},transparent)`, pointerEvents: 'none' }} />
         <div style={{ position: 'relative' }}>
+          <Link href="/vendor/dashboard" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11.5, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textDecoration: 'none', marginBottom: 10 }}>
+            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            Dashboard
+          </Link>
           <p style={{ margin: '0 0 2px', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 1.3, textTransform: 'uppercase', fontWeight: 700 }}>Vendor Studio</p>
           <h1 style={{ margin: '0 0 4px', fontSize: 22, fontWeight: 800, color: '#fff', fontFamily: 'Georgia,serif' }}>Sponsored Promo</h1>
           <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>Set your promo image and discount to appear in the marketplace spotlight</p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px 16px 40px' }}>
-        <Link href="/vendor/profile/edit" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 700, color: MUT, textDecoration: 'none', padding: '6px 12px', borderRadius: 20, background: 'rgba(122,80,96,0.07)', border: `1px solid ${BOR}`, marginBottom: 20 }}>
-          &larr; Back to profile
-        </Link>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '16px 16px 100px' }}>
 
         {!isPro && (
           <div style={{ background: 'rgba(154,33,67,0.06)', border: `1.5px solid ${CR}30`, borderRadius: 16, padding: '20px', marginBottom: 20, textAlign: 'center' }}>
@@ -222,6 +224,7 @@ export default function VendorPromoPage() {
           <p style={{ margin: '10px 0 0', textAlign: 'center', fontSize: 12, color: '#16a34a', fontWeight: 600 }}>Your promo will appear in sponsored ads within minutes.</p>
         )}
       </div>
+      <VendorBottomNav />
     </div>
   );
 }
