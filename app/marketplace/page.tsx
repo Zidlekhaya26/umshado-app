@@ -30,68 +30,6 @@ interface SponsoredAd {
   discountPct?: number | null;
 }
 
-const DUMMY_ADS: SponsoredAd[] = [
-  {
-    id: 'ad-noxa',
-    vendorName: 'NOXA',
-    headline: 'Award winning Photography across South Africa',
-    body: 'From intimate ceremonies to grand celebrations. Verified Pro partner on uMshado.',
-    cta: 'View Portfolio',
-    category: 'Photography & Video',
-    color: '#3a7bec',
-    emoji: '📸',
-    imageUrl: null,
-    discountPct: 20,
-  },
-  {
-    id: 'ad-1',
-    vendorName: 'LUMINARY',
-    headline: 'Now Booking 2026 Dates',
-    body: 'Award-winning wedding photography across South Africa. Over 300 love stories captured.',
-    cta: 'View Packages',
-    category: 'Photography & Video',
-    color: '#3a7bec',
-    emoji: '📸',
-    imageUrl: null,
-    discountPct: null,
-  },
-  {
-    id: 'ad-2',
-    vendorName: 'THE GRAND BOTANICAL',
-    headline: "SA's Most Sought-After Venue",
-    body: 'Iconic gardens, world-class catering, accommodation for up to 350 guests.',
-    cta: 'Check Availability',
-    category: 'Wedding Venues',
-    color: '#10b981',
-    emoji: '🌿',
-    imageUrl: null,
-    discountPct: null,
-  },
-  {
-    id: 'ad-3',
-    vendorName: 'ES MANGENA',
-    headline: 'Get an amazing wedding make-up promo for December',
-    body: 'Bridal packages from R2 500. Destination weddings welcome.',
-    cta: 'View Promo',
-    category: 'Makeup & Hair',
-    color: '#ec4899',
-    emoji: '💄',
-    imageUrl: null,
-    discountPct: 25,
-  },
-  {
-    id: 'ad-4',
-    vendorName: 'BLISS EVENTS',
-    headline: 'Catering from Intimate to Grand',
-    body: 'Traditional & fusion menus tailored to your culture. Halaal, kosher & vegan options.',
-    cta: 'Get a Quote',
-    category: 'Catering & Food',
-    color: '#e8523a',
-    emoji: '🍽️',
-    imageUrl: null,
-    discountPct: null,
-  },
-];
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface MarketplaceVendor {
@@ -871,31 +809,18 @@ export default function Marketplace() {
             </div>
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
-              {/* Always show the first sponsored ad pinned at the top */}
-              {(() => { const adPool = liveAds.length > 0 ? liveAds : DUMMY_ADS; return adPool.length > 0 ? <SponsoredAdCard ad={adPool[0]} isVendor={isVendor} /> : null; })()}
+              {/* Pinned first sponsored ad — only if real live ads exist */}
+              {liveAds.length > 0 && <SponsoredAdCard ad={liveAds[0]} isVendor={isVendor} />}
               {vendors.slice(0, displayedCount).map((v, idx) => {
                 const showAdAfter = (idx + 1) % 5 === 0;
-                const adPool = liveAds.length > 0 ? liveAds : DUMMY_ADS;
-                const adIndex = Math.floor(idx / 5) % adPool.length;
+                const adIndex = Math.floor(idx / 5) % liveAds.length;
                 return (
                   <Fragment key={v.id}>
                     <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
                       <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
                     </div>
-                    {showAdAfter && (
-                      <>
-                        {idx === 4 && (
-                          <div style={{ gridColumn: '1 / -1', padding: '4px 2px 2px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div>
-                              <p style={{ margin: '0 0 2px', fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', letterSpacing: -0.2 }}>
-                                {categoryFilter ? `${categoryFilter.split('&')[0].trim()} Vendors` : 'Featured on uMshado'}
-                              </p>
-                              <p style={{ margin: 0, fontSize: 11.5, color: '#9ca3af' }}>Sponsored · Pro vendors on uMshado</p>
-                            </div>
-                          </div>
-                        )}
-                        <SponsoredAdCard key={`ad-${idx}`} ad={adPool[adIndex]} isVendor={isVendor} />
-                      </>
+                    {showAdAfter && liveAds.length > 0 && (
+                      <SponsoredAdCard key={`ad-${idx}`} ad={liveAds[adIndex]} isVendor={isVendor} />
                     )}
                   </Fragment>
                 );

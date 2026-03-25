@@ -78,9 +78,6 @@ const SEED_POSTS: CommunityPost[] = [
   { id: 'p10', author: 'Thandi & Mpho', avatar: 'TM', avatarColor: '#BD983F', timeAgo: '3d ago', tag: 'Milestone', tagColor: '#10b981', content: 'Just crossed the 100-day mark! Sent out our invitations, confirmed our DJ, and our dress alterations are done. Feeling terrifyingly excited.', image_url: null, likes: 158, comments: 14 },
 ];
 
-const FALLBACK_ADS: SponsoredAd[] = [
-  { id: 'ca-noxa', headline: 'Noxa — Wedding Photography Across SA', body: 'Capturing every moment from engagement to last dance. Award-winning photography and coordination.', cta: 'View Portfolio', category: 'Photography & Video', color: '#9A2143', emoji: '📸', badge: 'Verified Pro' },
-];
 
 /* ── Read-only post card ──────────────────────────────── */
 function PostCard({ post }: { post: CommunityPost }) {
@@ -220,7 +217,7 @@ type Tab = typeof TABS[number];
 export default function VendorCommunityPage() {
   const [activeTab, setActiveTab] = useState<Tab>('All');
   const [posts, setPosts]         = useState<CommunityPost[]>([]);
-  const [ads, setAds]             = useState<SponsoredAd[]>(FALLBACK_ADS);
+  const [ads, setAds]             = useState<SponsoredAd[]>([]);
   const [postsLoaded, setPostsLoaded] = useState(false);
   const [tier, setTier]           = useState<string | null | undefined>(undefined); // undefined = loading
 
