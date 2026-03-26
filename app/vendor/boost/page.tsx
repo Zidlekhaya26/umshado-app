@@ -38,10 +38,6 @@ type BoostRow = {
   ends_at: string | null;
 };
 
-function wordCount(s: string) {
-  return s.trim().split(/\s+/).filter(Boolean).length;
-}
-
 function CharCount({ val, limit }: { val: string; limit: number }) {
   const over = val.length > limit;
   return (
@@ -76,6 +72,7 @@ export default function VendorBoostPage() {
   // Save state
   const [saving, setSaving] = useState(false);
   const [saved, setSaved]   = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -153,6 +150,7 @@ export default function VendorBoostPage() {
     if (!vendorId) return;
     setSaving(true);
     setSaved(false);
+    setSaveError('');
 
     const payload = {
       vendor_id: vendorId,
@@ -169,15 +167,24 @@ export default function VendorBoostPage() {
       } : {}),
     };
 
+    let err = null;
     if (existingBoost) {
-      await supabase.from('vendor_boosts').update(payload).eq('id', existingBoost.id);
+      const { error } = await supabase.from('vendor_boosts').update(payload).eq('id', existingBoost.id);
+      err = error;
     } else {
-      const { data } = await supabase.from('vendor_boosts').insert(payload).select('id, status, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct, ends_at').single();
+      const { data, error } = await supabase.from('vendor_boosts').insert(payload).select('id, status, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct, ends_at').single();
+      err = error;
       if (data) setExistingBoost(data);
     }
+
     setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+    if (err) {
+      console.error('[boost save]', err.message);
+      setSaveError('Save failed — ' + err.message);
+    } else {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    }
   };
 
   if (loading) return (
@@ -462,7 +469,12 @@ export default function VendorBoostPage() {
         </div>
         {saved && (
           <p style={{ textAlign: 'center', fontSize: 12, color: '#16a34a', fontWeight: 600, margin: 0 }}>
-            {isActive ? 'Ad updated and live in the marketplace.' : 'Draft saved. Activate when ready.'}
+            {isActive ? 'Ad updated — live in marketplace and community feed.' : 'Draft saved. Activate when ready.'}
+          </p>
+        )}
+        {saveError && (
+          <p style={{ textAlign: 'center', fontSize: 12, color: '#dc2626', fontWeight: 600, margin: 0, padding: '10px 14px', background: 'rgba(220,38,38,0.06)', borderRadius: 10, border: '1px solid rgba(220,38,38,0.15)' }}>
+            {saveError}
           </p>
         )}
 
