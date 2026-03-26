@@ -584,6 +584,20 @@ export default function VendorDashboard() {
             </Link>
           </div>
 
+          {/* ── Reviews shortcut ── */}
+          <div className="vd-section" style={{ animationDelay: '.22s' }}>
+            <Link href="/vendor/reviews" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 18, background: '#fff', boxShadow: '0 2px 12px rgba(26,13,18,0.07)', border: `1.5px solid ${BOR}`, textDecoration: 'none' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: 'rgba(245,158,11,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" fill="none" stroke="#f59e0b" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: '0 0 2px', fontSize: 14, fontWeight: 800, color: DARK }}>Client Reviews</p>
+                <p style={{ margin: 0, fontSize: 12, color: MUT }}>See feedback and reply to reviews</p>
+              </div>
+              <svg width="14" height="14" fill="none" stroke={MUT} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </Link>
+          </div>
+
           {/* ── Promo shortcut (Pro only) ── */}
           {(vendor?.plan === 'pro' || vendor?.plan === 'trial') && (
             <div className="vd-section" style={{ animationDelay: '.23s' }}>
