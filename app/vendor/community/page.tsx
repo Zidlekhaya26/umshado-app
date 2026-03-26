@@ -293,11 +293,18 @@ export default function VendorCommunityPage() {
   const feed: Array<{ type: 'post'; data: CommunityPost } | { type: 'ad'; data: SponsoredAd }> = [];
   filtered.forEach((p, i) => {
     feed.push({ type: 'post', data: p });
-    // Rotate ads after every 8th post
-    if ((i + 1) % 8 === 0 && ads.length > 0) {
-      feed.push({ type: 'ad', data: ads[Math.floor(i / 8) % ads.length] });
+    // Show one ad after every 4 posts, each ad shown once (no recycling)
+    if ((i + 1) % 4 === 0 && ads.length > 0) {
+      const adSlot = Math.floor(i / 4);
+      if (adSlot < ads.length) {
+        feed.push({ type: 'ad', data: ads[adSlot] });
+      }
     }
   });
+  // If feed has posts but no ad was injected yet, append one ad at the end
+  if (filtered.length > 0 && ads.length > 0 && !feed.some(f => f.type === 'ad')) {
+    feed.push({ type: 'ad', data: ads[0] });
+  }
 
   return (
     <div style={{ minHeight: '100svh', background: '#faf8f5', fontFamily: "'DM Sans',system-ui,sans-serif" }}>

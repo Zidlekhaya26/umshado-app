@@ -69,68 +69,81 @@ function autoAd(v: VendorRow) {
 }
 
 export async function GET() {
-  const supabase = createServiceClient();
-  const now = new Date().toISOString();
+  try {
+    const supabase = createServiceClient();
+    const now = new Date().toISOString();
 
-  // 1. Active boost campaigns — two queries to avoid FK-join failures
-  const { data: boosts, error: boostErr } = await supabase
-    .from('vendor_boosts')
-    .select('id, vendor_id, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct')
-    .eq('status', 'active')
-    .gt('ends_at', now)
-    .order('created_at');
+    // 1. Active boost campaigns — two explicit queries (no FK join)
+    const { data: rawBoosts, error: boostErr } = await supabase
+      .from('vendor_boosts')
+      .select('id, vendor_id, ad_headline, ad_body, ad_cta, ad_image_url, discount_pct')
+      .eq('status', 'active')
+      .gt('ends_at', now)
+      .order('created_at', { ascending: false }); // newest first
 
-  if (boostErr) console.error('[ads/active] boosts query:', boostErr.message);
+    if (boostErr) console.error('[ads/active] boosts:', boostErr.message);
 
-  const boostedVendorIds = new Set<string>();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let boostAds: any[] = [];
+    // Deduplicate: keep only the most recent boost per vendor
+    const seenVendors = new Set<string>();
+    const boosts = (rawBoosts ?? []).filter((b: any) => {
+      if (!b.vendor_id || seenVendors.has(b.vendor_id)) return false;
+      seenVendors.add(b.vendor_id);
+      return true;
+    });
 
-  if (boosts && boosts.length > 0) {
-    const vendorIds = [...new Set(boosts.map(b => b.vendor_id).filter(Boolean))];
-    const { data: vendorRows, error: vErr } = await supabase
+    const boostedVendorIds = new Set<string>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const boostAds: any[] = [];
+
+    if (boosts.length > 0) {
+      const vendorIds = [...new Set(boosts.map((b: any) => b.vendor_id).filter(Boolean))];
+      const { data: vendorRows } = await supabase
+        .from('vendors')
+        .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
+        .in('id', vendorIds);
+
+      const vendorMap = new Map<string, VendorRow>(
+        (vendorRows ?? []).map((v: VendorRow) => [v.id, v])
+      );
+
+      for (const b of boosts as any[]) {
+        const v: VendorRow | null = vendorMap.get(b.vendor_id) ?? null;
+        if (v?.id) boostedVendorIds.add(v.id);
+        const category = v?.category ?? 'Planning & Coordination';
+        boostAds.push({
+          id: b.id,
+          vendorId: v?.id ?? b.vendor_id,
+          vendorName: v?.business_name?.trim() ?? null,
+          headline: b.ad_headline ?? v?.business_name?.trim() ?? 'Featured Vendor',
+          body: b.ad_body ?? (v ? autoAd(v).body : ''),
+          cta: b.ad_cta ?? 'View Profile',
+          category,
+          color: CAT_COLOR[category] ?? '#9A2143',
+          emoji: CAT_EMOJI[category] ?? '🌟',
+          badge: v?.verified ? 'Verified Pro' : 'Sponsored',
+          imageUrl: b.ad_image_url ?? v?.promo_image_url ?? null,
+          discountPct: b.discount_pct ?? v?.promo_discount_pct ?? null,
+        });
+      }
+    }
+
+    // 2. Pro/trial vendors without a paid boost — auto-generate ad
+    const { data: proVendors, error: proErr } = await supabase
       .from('vendors')
       .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
-      .in('id', vendorIds);
+      .in('subscription_tier', ['pro', 'trial'])
+      .eq('is_published', true)
+      .order('business_name');
 
-    if (vErr) console.error('[ads/active] vendor lookup:', vErr.message);
+    if (proErr) console.error('[ads/active] pro vendors:', proErr.message);
 
-    const vendorMap = new Map<string, VendorRow>((vendorRows ?? []).map(v => [v.id, v]));
+    const proAds = (proVendors ?? [])
+      .filter((v: VendorRow) => !boostedVendorIds.has(v.id))
+      .map((v: VendorRow) => autoAd(v));
 
-    boostAds = boosts.map(b => {
-      const v = vendorMap.get(b.vendor_id) ?? null;
-      if (v?.id) boostedVendorIds.add(v.id);
-      const category = v?.category ?? 'Planning & Coordination';
-      return {
-        id: b.id,
-        vendorId: v?.id ?? null,
-        vendorName: v?.business_name?.trim() ?? null,
-        headline: b.ad_headline ?? v?.business_name?.trim() ?? 'Featured Vendor',
-        body: b.ad_body ?? (v ? autoAd(v).body : ''),
-        cta: b.ad_cta ?? 'View Profile',
-        category,
-        color: CAT_COLOR[category] ?? '#9A2143',
-        emoji: CAT_EMOJI[category] ?? '🌟',
-        badge: v?.verified ? 'Verified Pro' : 'Sponsored',
-        imageUrl: b.ad_image_url ?? v?.promo_image_url ?? null,
-        discountPct: b.discount_pct ?? v?.promo_discount_pct ?? null,
-      };
-    });
+    return NextResponse.json({ ads: [...boostAds, ...proAds] });
+  } catch (err) {
+    console.error('[ads/active] unexpected error:', err);
+    return NextResponse.json({ ads: [] });
   }
-
-  // 2. Pro/trial vendors without a paid boost — auto-generate ad
-  const { data: proVendors, error: proErr } = await supabase
-    .from('vendors')
-    .select('id, business_name, category, description, city, verified, subscription_tier, promo_image_url, promo_discount_pct')
-    .in('subscription_tier', ['pro', 'trial'])
-    .eq('is_published', true)
-    .order('business_name');
-
-  if (proErr) console.error('[ads/active] pro vendors:', proErr.message);
-
-  const proAds = (proVendors ?? [])
-    .filter((v: VendorRow) => !boostedVendorIds.has(v.id))
-    .map((v: VendorRow) => autoAd(v));
-
-  return NextResponse.json({ ads: [...boostAds, ...proAds] });
 }

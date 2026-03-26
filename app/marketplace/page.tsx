@@ -249,11 +249,11 @@ function ScopeSheet({
 }
 
 /* ─── Sponsored Ad Card ─────────────────────────────────── */
-function SponsoredAdCard({ ad, isVendor }: { ad: SponsoredAd; isVendor: boolean }) {
-  const router = useRouter();
+function SponsoredAdCard({ ad }: { ad: SponsoredAd }) {
   const hasImage = Boolean(ad.imageUrl);
   return (
-    <div style={{ gridColumn: '1 / -1', borderRadius: 20, overflow: 'hidden', background: `${ad.color}0c`, border: `1.5px solid ${ad.color}22`, boxShadow: `0 4px 20px ${ad.color}12`, position: 'relative', display: 'flex', minHeight: 156 }}>
+    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', gridColumn: '1 / -1', display: 'block' }}>
+    <div style={{ borderRadius: 20, overflow: 'hidden', background: `${ad.color}0c`, border: `1.5px solid ${ad.color}22`, boxShadow: `0 4px 20px ${ad.color}12`, position: 'relative', display: 'flex', minHeight: 156, cursor: 'pointer' }}>
       {/* Left content */}
       <div style={{ flex: 1, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center', minWidth: 0 }}>
         {/* Category chip */}
@@ -269,13 +269,9 @@ function SponsoredAdCard({ ad, isVendor }: { ad: SponsoredAd; isVendor: boolean 
         {/* Headline */}
         <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif', lineHeight: 1.25 }}>{ad.headline}</h3>
         {/* CTA */}
-        {!isVendor && (
-          <button
-            onClick={() => ad.vendorId ? router.push(`/v/${ad.vendorId}`) : undefined}
-            style={{ alignSelf: 'flex-start', marginTop: 2, padding: '8px 18px', borderRadius: 24, border: 'none', background: ad.color, color: '#fff', fontSize: 11.5, fontWeight: 800, cursor: ad.vendorId ? 'pointer' : 'default', letterSpacing: 0.4, boxShadow: `0 3px 10px ${ad.color}35`, fontFamily: 'inherit' }}>
-            {ad.cta.toUpperCase()}
-          </button>
-        )}
+        <div style={{ alignSelf: 'flex-start', marginTop: 2, padding: '8px 18px', borderRadius: 24, background: ad.color, color: '#fff', fontSize: 11.5, fontWeight: 800, letterSpacing: 0.4, boxShadow: `0 3px 10px ${ad.color}35` }}>
+          {ad.cta.toUpperCase()}
+        </div>
       </div>
 
       {/* Right: image or emoji placeholder */}
@@ -305,6 +301,7 @@ function SponsoredAdCard({ ad, isVendor }: { ad: SponsoredAd; isVendor: boolean 
         <span style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>SPONSORED</span>
       </div>
     </div>
+    </Link>
   );
 }
 
@@ -810,15 +807,15 @@ export default function Marketplace() {
           ) : (
             <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
               {vendors.slice(0, displayedCount).map((v, idx) => {
-                const showAdAfter = (idx + 1) % 8 === 0;
-                const adIndex = Math.floor(idx / 8) % liveAds.length;
+                const adIndex = Math.floor(idx / 8);
+                const showAdAfter = (idx + 1) % 8 === 0 && adIndex < liveAds.length;
                 return (
                   <Fragment key={v.id}>
                     <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
                       <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
                     </div>
-                    {showAdAfter && liveAds.length > 0 && (
-                      <SponsoredAdCard key={`ad-${idx}`} ad={liveAds[adIndex]} isVendor={isVendor} />
+                    {showAdAfter && (
+                      <SponsoredAdCard key={`ad-${idx}`} ad={liveAds[adIndex]} />
                     )}
                   </Fragment>
                 );
