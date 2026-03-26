@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import VendorBottomNav from '@/components/VendorBottomNav';
 import { supabase } from '@/lib/supabaseClient';
@@ -126,8 +126,26 @@ function PostCard({ post }: { post: CommunityPost }) {
 /* ── Ad card ─────────────────────────────────────────── */
 function AdCard({ ad }: { ad: SponsoredAd }) {
   const hasImage = Boolean(ad.imageUrl);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const impressionFired = useRef(false);
+
+  useEffect(() => {
+    if (!ad.vendorId || impressionFired.current) return;
+    const el = linkRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !impressionFired.current) {
+        impressionFired.current = true;
+        trackVendorEvent(ad.vendorId as string, 'ad_impression', { boost_id: ad.id, source: 'community' }).catch(() => {});
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ad.vendorId, ad.id]);
+
   return (
-    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', display: 'block' }} onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId as string, 'ad_click', { boost_id: ad.id, source: 'community' }).catch(() => {}); }}>
+    <Link ref={linkRef} href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', display: 'block' }} onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId as string, 'ad_click', { boost_id: ad.id, source: 'community' }).catch(() => {}); }}>
       <div style={{ borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${ad.color}28`, boxShadow: `0 4px 20px ${ad.color}12`, background: `${ad.color}0a`, position: 'relative', display: 'flex', minHeight: 130 }}>
         {/* SPONSORED badge */}
         <div style={{ position: 'absolute', top: 10, right: hasImage ? 'calc(36% + 8px)' : 12, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(0,0,0,0.08)', zIndex: 2 }}>

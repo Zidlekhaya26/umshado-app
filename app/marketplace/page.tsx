@@ -252,8 +252,26 @@ function ScopeSheet({
 /* ─── Sponsored Ad Card ─────────────────────────────────── */
 function SponsoredAdCard({ ad }: { ad: SponsoredAd }) {
   const hasImage = Boolean(ad.imageUrl);
+  const linkRef = useRef<HTMLAnchorElement>(null);
+  const impressionFired = useRef(false);
+
+  useEffect(() => {
+    if (!ad.vendorId || impressionFired.current) return;
+    const el = linkRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !impressionFired.current) {
+        impressionFired.current = true;
+        trackVendorEvent(ad.vendorId!, 'ad_impression', { boost_id: ad.id, source: 'marketplace' }).catch(() => {});
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ad.vendorId, ad.id]);
+
   return (
-    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', gridColumn: '1 / -1', display: 'block' }} onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId, 'ad_click', { boost_id: ad.id, source: 'marketplace' }).catch(() => {}); }}>
+    <Link ref={linkRef} href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', gridColumn: '1 / -1', display: 'block' }} onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId, 'ad_click', { boost_id: ad.id, source: 'marketplace' }).catch(() => {}); }}>
     <div style={{ borderRadius: 20, overflow: 'hidden', background: `${ad.color}0c`, border: `1.5px solid ${ad.color}22`, boxShadow: `0 4px 20px ${ad.color}12`, position: 'relative', display: 'flex', minHeight: 156, cursor: 'pointer' }}>
       {/* Left content */}
       <div style={{ flex: 1, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center', minWidth: 0 }}>

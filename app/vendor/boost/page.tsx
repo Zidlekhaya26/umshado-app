@@ -8,6 +8,118 @@ import { supabase } from '@/lib/supabaseClient';
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
 import VendorBottomNav from '@/components/VendorBottomNav';
 
+/* ─── Boost Analytics Panel ──────────────────────────────── */
+type DailyCount = { day: string; count: number };
+type AnalyticsData = {
+  impressions: { total: number; daily: DailyCount[] };
+  clicks:      { total: number; daily: DailyCount[] };
+  ctr: number;
+  bySource: { source: string; impressions: number; clicks: number }[];
+};
+
+function BoostAnalyticsPanel({ boostId, vendorId }: { boostId: string; vendorId: string }) {
+  const [data, setData]       = useState<AnalyticsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/vendor/boost-analytics?boostId=${boostId}&vendorId=${vendorId}`)
+      .then(r => r.json())
+      .then(j => { if (!j.error) setData(j); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [boostId, vendorId]);
+
+  if (loading) return (
+    <div style={{ background: '#fff', borderRadius: 16, border: `1.5px solid ${BOR}`, padding: '20px', textAlign: 'center' }}>
+      <div style={{ width: 24, height: 24, border: `2px solid ${BOR}`, borderTopColor: CR, borderRadius: '50%', animation: 'spin .7s linear infinite', margin: '0 auto' }} />
+    </div>
+  );
+
+  if (!data) return null;
+
+  const maxImp = Math.max(...data.impressions.daily.map(d => d.count), 1);
+  const maxClk = Math.max(...data.clicks.daily.map(d => d.count), 1);
+  const combined = data.impressions.daily.map((d, i) => ({
+    day: d.day,
+    imp: d.count,
+    clk: data.clicks.daily[i]?.count ?? 0,
+  }));
+  const maxBar = Math.max(maxImp, 1);
+
+  const tiles = [
+    { label: 'Impressions', value: data.impressions.total, note: 'times your ad was seen', color: '#3a7bec' },
+    { label: 'Clicks',      value: data.clicks.total,      note: 'times CTA was tapped',   color: '#16a34a' },
+    { label: 'CTR',         value: `${data.ctr}%`,         note: 'click-through rate',      color: CR },
+  ];
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 16, border: `1.5px solid ${BOR}`, overflow: 'hidden' }}>
+      <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${BOR}` }}>
+        <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif' }}>Ad Performance</p>
+        <p style={{ margin: '2px 0 0', fontSize: 11.5, color: MUT }}>Last 14 days · updates in real time</p>
+      </div>
+
+      {/* Metric tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: BOR }}>
+        {tiles.map(t => (
+          <div key={t.label} style={{ background: '#fff', padding: '14px 12px', textAlign: 'center' }}>
+            <div style={{ fontSize: 22, fontWeight: 800, color: t.color, fontFamily: 'Georgia,serif' }}>{t.value}</div>
+            <div style={{ fontSize: 10, fontWeight: 800, color: DK, letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 }}>{t.label}</div>
+            <div style={{ fontSize: 9.5, color: MUT, marginTop: 1 }}>{t.note}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bar chart */}
+      <div style={{ padding: '16px 18px 14px' }}>
+        <p style={{ margin: '0 0 10px', fontSize: 10, fontWeight: 800, color: MUT, letterSpacing: 0.7, textTransform: 'uppercase' }}>Daily impressions (14 days)</p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 56 }}>
+          {combined.map((d, i) => (
+            <div key={i} title={`${d.day}: ${d.imp} views, ${d.clk} clicks`}
+              style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, height: '100%', justifyContent: 'flex-end' }}>
+              {d.clk > 0 && (
+                <div style={{ width: '100%', background: '#16a34a', borderRadius: '2px 2px 0 0',
+                  height: `${Math.max((d.clk / maxBar) * 56, 3)}px`, minHeight: 3 }} />
+              )}
+              <div style={{ width: '100%', background: d.imp > 0 ? '#3a7bec' : BOR, borderRadius: d.clk > 0 ? '0' : '2px 2px 0 0',
+                height: `${Math.max(((d.imp - d.clk) / maxBar) * 56, d.imp > 0 ? 4 : 2)}px`, minHeight: 2 }} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+          <span style={{ fontSize: 9, color: MUT }}>{combined[0]?.day.slice(5)}</span>
+          <span style={{ fontSize: 9, color: MUT }}>{combined[13]?.day.slice(5)}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 14, marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: '#3a7bec' }} />
+            <span style={{ fontSize: 10.5, color: MUT }}>Impressions</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: '#16a34a' }} />
+            <span style={{ fontSize: 10.5, color: MUT }}>Clicks</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Source breakdown */}
+      {data.bySource.some(s => s.impressions > 0) && (
+        <div style={{ padding: '0 18px 16px', display: 'flex', gap: 10 }}>
+          {data.bySource.filter(s => s.impressions > 0).map(s => (
+            <div key={s.source} style={{ flex: 1, padding: '10px 12px', borderRadius: 12, background: '#faf8f5', border: `1px solid ${BOR}` }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: MUT, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>
+                {s.source === 'marketplace' ? 'Marketplace' : 'Community Feed'}
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: DK }}>{s.impressions} <span style={{ fontSize: 10, color: MUT, fontWeight: 600 }}>views</span></div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#16a34a' }}>{s.clicks} <span style={{ fontSize: 10, color: MUT, fontWeight: 600 }}>clicks</span></div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ─── Limits ─────────────────────────────────────────────── */
 const HEADLINE_LIMIT = 60;   // ~8–10 words
 const BODY_LIMIT     = 120;  // ~15–20 words
@@ -227,6 +339,11 @@ export default function VendorBoostPage() {
             </div>
             <span style={{ fontSize: 10, fontWeight: 800, padding: '4px 10px', borderRadius: 20, background: 'rgba(30,180,90,0.2)', color: '#7effa8', border: '1px solid rgba(30,180,90,0.3)', letterSpacing: 0.5 }}>ACTIVE</span>
           </div>
+        )}
+
+        {/* ── Analytics (only when boost is live) ── */}
+        {isActive && existingBoost && vendorId && (
+          <BoostAnalyticsPanel boostId={existingBoost.id} vendorId={vendorId} />
         )}
 
         {!isPro && (
