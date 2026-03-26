@@ -42,7 +42,7 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: "zidlekhaya26s-project",
+  org: "umshado",
   project: "javascript-nextjs",
   silent: !process.env.CI,
   widenClientFileUpload: true,
