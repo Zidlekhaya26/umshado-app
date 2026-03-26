@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { validateBody } from '@/lib/apiValidate';
 import { createServiceClient } from '@/lib/supabaseServer';
+import * as Sentry from '@sentry/nextjs';
 
 const SubscribeSchema = z.object({
   endpoint:  z.string().url().max(2000),

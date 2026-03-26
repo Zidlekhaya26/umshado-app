@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Generate WhatsApp deep-link
-  const vendorUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://umshado.app'}/v/${vendor.id}?review=true`
+  const vendorUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://umshado.app'}/v/${vendor.id}?review=true`
   const message = `Hi ${couple?.full_name || 'there'}! 👋\n\nThank you for choosing ${vendor.business_name} for your special day! We hope everything went perfectly.\n\nWe'd love to hear your feedback. Could you take a moment to leave us a review?\n\n${vendorUrl}\n\nThank you! 🙏`
 
   const phone = couple?.phone?.replace(/[^\d+]/g, '') || ''

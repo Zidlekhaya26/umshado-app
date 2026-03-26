@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import * as Sentry from '@sentry/nextjs';
 
 function verifySignature(data: Record<string, string>, passphrase: string, signature: string): boolean {
   const filtered = { ...data };
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
     // Verify signature
     if (!verifySignature(params, passphrase, signature)) {
-      console.error(JSON.stringify({ route: 'webhook', event: 'signature_invalid' }));
+      Sentry.captureMessage('PayFast webhook: invalid signature', { level: 'warning', extra: { route: 'webhook' } });
       return new NextResponse('Invalid signature', { status: 400 });
     }
 
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
         .eq('id', vendorId);
 
       if (vendorError) {
+        Sentry.captureException(vendorError, { extra: { context: 'webhook: update vendor pro subscription' } });
         console.error('Failed to update vendor pro subscription:', vendorError);
         return new NextResponse('DB error', { status: 500 });
       }
@@ -188,6 +190,7 @@ export async function POST(req: NextRequest) {
     }));
     return new NextResponse('OK', { status: 200 });
   } catch (err) {
+    Sentry.captureException(err, { extra: { route: 'payfast-webhook' } });
     console.error(JSON.stringify({ route: 'webhook', event: 'unexpected_error', error: err instanceof Error ? err.message : String(err) }));
     return new NextResponse('Internal error', { status: 500 });
   }
