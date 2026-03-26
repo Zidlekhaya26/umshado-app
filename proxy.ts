@@ -127,6 +127,15 @@ export async function proxy(req: NextRequest) {
     if (pathname.startsWith('/couple')) return NextResponse.redirect(new URL('/couple/onboarding', req.url));
   }
 
+  // Shared routes (/messages, /notifications, /settings, /switch-role) are
+  // role-agnostic — skip role mismatch checks entirely for these paths.
+  const isSharedRoute =
+    pathname.startsWith('/messages') ||
+    pathname.startsWith('/notifications') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/switch-role');
+  if (isSharedRoute) return response;
+
   const activeRole  = profile?.active_role || profile?.role || null;
   const hasCouple   = !!profile?.has_couple;
   const hasVendor   = !!profile?.has_vendor;
