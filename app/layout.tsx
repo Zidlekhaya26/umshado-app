@@ -4,8 +4,6 @@ import "./globals.css";
 import { AuthRoleProvider } from "./providers/AuthRoleProvider";
 import { CurrencyProvider } from "./providers/CurrencyProvider";
 import { ToastProvider } from '@/components/ui/ToastProvider';
-import CurrencySelector from '@/components/CurrencySelector';
-import FullscreenPrompt from '@/components/FullscreenPrompt';
 import RoleGate from "@/components/RoleGate";
 import PushPermissionPrompt from '@/components/PushPermissionPrompt';
 import ErrorBoundary from '@/components/ErrorBoundary';
@@ -58,26 +56,19 @@ export default function RootLayout({
         <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''} />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
-        {/* ✅ No centering, no max-width here */}
         <ErrorBoundary>
         <AuthRoleProvider>
           <CurrencyProvider>
             <ToastProvider>
             <div id="um-main" className="w-full">
-              <header className="bg-white border-b border-gray-100 px-4 py-3 flex justify-end items-center">
-                <div className="flex items-center gap-3">
-                  <CurrencySelector />
-                  <FullscreenPrompt />
-                </div>
-              </header>
               <RoleGate>
                 <div id="um-page-wrap" className="min-h-screen w-full">{children}</div>
                 <PushPermissionPrompt />
               </RoleGate>
             </div>
             </ToastProvider>
-            </CurrencyProvider>
-          </AuthRoleProvider>
+          </CurrencyProvider>
+        </AuthRoleProvider>
         </ErrorBoundary>
       </body>
     </html>

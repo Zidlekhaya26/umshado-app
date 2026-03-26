@@ -104,7 +104,7 @@ export default function VendorBilling() {
       const res = await fetch('/api/vendor/billing/create-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, billingCycle: type === 'pro' ? billingCycle : undefined }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Payment failed');
