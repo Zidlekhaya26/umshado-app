@@ -249,6 +249,77 @@ function ScopeSheet({
   );
 }
 
+/* ─── Featured Hero Banner (top slot — first boost ad) ──── */
+function FeaturedHeroBanner({ ad }: { ad: SponsoredAd }) {
+  const bannerRef = useRef<HTMLAnchorElement>(null);
+  const impressionFired = useRef(false);
+
+  useEffect(() => {
+    if (!ad.vendorId || impressionFired.current) return;
+    const el = bannerRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !impressionFired.current) {
+        impressionFired.current = true;
+        trackVendorEvent(ad.vendorId!, 'ad_impression', { boost_id: ad.id, source: 'marketplace_hero' }).catch(() => {});
+        obs.disconnect();
+      }
+    }, { threshold: 0.4 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [ad.vendorId, ad.id]);
+
+  return (
+    <div style={{ padding: '0 16px 14px' }}>
+      <p style={{ margin: '0 0 8px', fontSize: 10.5, fontWeight: 700, color: '#9ca3af', letterSpacing: 1, textTransform: 'uppercase' }}>Featured on uMshado</p>
+      <Link
+        ref={bannerRef}
+        href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'}
+        style={{ textDecoration: 'none', display: 'block' }}
+        onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId, 'ad_click', { boost_id: ad.id, source: 'marketplace_hero' }).catch(() => {}); }}
+      >
+        <div style={{ borderRadius: 20, overflow: 'hidden', background: ad.imageUrl ? 'transparent' : `linear-gradient(135deg,${ad.color}15,${ad.color}28)`, border: `1.5px solid ${ad.color}33`, boxShadow: `0 6px 28px ${ad.color}22`, position: 'relative', minHeight: 130, display: 'flex', cursor: 'pointer' }}>
+          {ad.imageUrl && (
+            <div style={{ position: 'absolute', inset: 0 }}>
+              <img src={ad.imageUrl} alt={ad.headline} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(0,0,0,0.65) 50%, transparent)' }} />
+            </div>
+          )}
+          <div style={{ position: 'relative', zIndex: 1, flex: 1, padding: '18px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
+            {ad.vendorName && (
+              <p style={{ margin: 0, fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: 'uppercase', color: ad.imageUrl ? 'rgba(255,255,255,0.75)' : ad.color }}>{ad.vendorName}</p>
+            )}
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, fontFamily: 'Georgia,serif', lineHeight: 1.2, color: ad.imageUrl ? '#fff' : '#111827' }}>{ad.headline}</h2>
+            {ad.body && (
+              <p style={{ margin: 0, fontSize: 12.5, color: ad.imageUrl ? 'rgba(255,255,255,0.8)' : '#4b5563', lineHeight: 1.4 }}>{ad.body.slice(0, 90)}{ad.body.length > 90 ? '…' : ''}</p>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+              <div style={{ padding: '7px 18px', borderRadius: 24, background: ad.color, color: '#fff', fontSize: 12, fontWeight: 800, letterSpacing: 0.4, boxShadow: `0 3px 12px ${ad.color}44` }}>
+                {ad.cta.toUpperCase()}
+              </div>
+              {ad.discountPct && (
+                <div style={{ padding: '7px 14px', borderRadius: 24, background: '#16a34a', color: '#fff', fontSize: 12, fontWeight: 800 }}>
+                  {ad.discountPct}% OFF
+                </div>
+              )}
+            </div>
+          </div>
+          {!ad.imageUrl && (
+            <div style={{ width: '22%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 54 }}>
+              {ad.emoji}
+            </div>
+          )}
+          {/* SPONSORED badge */}
+          <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', alignItems: 'center', gap: 4, padding: '3px 8px', borderRadius: 20, background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(0,0,0,0.07)', zIndex: 2 }}>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="#f59e0b"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#6b7280', letterSpacing: 0.5 }}>FEATURED</span>
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 /* ─── Sponsored Ad Card ─────────────────────────────────── */
 function SponsoredAdCard({ ad }: { ad: SponsoredAd }) {
   const hasImage = Boolean(ad.imageUrl);
@@ -824,22 +895,30 @@ export default function Marketplace() {
               </div>
             </div>
           ) : (
-            <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
-              {vendors.slice(0, displayedCount).map((v, idx) => {
-                const adIndex = Math.floor(idx / 8);
-                const showAdAfter = (idx + 1) % 8 === 0 && adIndex < liveAds.length;
-                return (
-                  <Fragment key={v.id}>
-                    <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
-                      <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
-                    </div>
-                    {showAdAfter && (
-                      <SponsoredAdCard key={`ad-${idx}`} ad={liveAds[adIndex]} />
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
+            <>
+              {/* Hero banner — first boost ad gets the top featured slot */}
+              {liveAds.length > 0 && liveAds[0].vendorId && (
+                <FeaturedHeroBanner ad={liveAds[0]} />
+              )}
+              <div className="vendor-grid" style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fill,minmax(290px,1fr))' }}>
+                {vendors.slice(0, displayedCount).map((v, idx) => {
+                  // In-feed slots start from liveAds[1] onwards (liveAds[0] is the hero)
+                  const inFeedAds = liveAds.length > 1 ? liveAds.slice(1) : liveAds;
+                  const adIndex = Math.floor(idx / 8);
+                  const showAdAfter = (idx + 1) % 8 === 0 && adIndex < inFeedAds.length;
+                  return (
+                    <Fragment key={v.id}>
+                      <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
+                        <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
+                      </div>
+                      {showAdAfter && (
+                        <SponsoredAdCard key={`ad-${idx}`} ad={inFeedAds[adIndex]} />
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </div>
+            </>
           )}
           <div ref={loadMoreRef} style={{ height: 40 }} />
           {isFetchingMore && (
