@@ -55,11 +55,15 @@ export async function proxy(req: NextRequest) {
     }
   }
 
-  // ── Only enforce auth + role for /vendor/*, /couple/*, /admin/* ──────────
+  // ── Only enforce auth + role for protected routes ──────────────────────
   const needsAuth =
     pathname.startsWith('/vendor') ||
     pathname.startsWith('/couple') ||
-    pathname.startsWith('/admin');
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/messages') ||
+    pathname.startsWith('/notifications') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/switch-role');
   if (!needsAuth) return NextResponse.next();
 
   // Onboarding pages: no auth check (avoid redirect loops)
@@ -98,8 +102,10 @@ export async function proxy(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // No valid session — pass through; client-side will handle redirect if needed.
-    return response;
+    // No valid session — redirect to sign-in for protected routes
+    const loginUrl = new URL('/auth/sign-in', req.url);
+    loginUrl.searchParams.set('next', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // ── ROLE-BASED ROUTING ─────────────────────────────────────────────────────
@@ -145,5 +151,15 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/vendor/:path*', '/couple/:path*', '/auth/sign-up', '/auth/register', '/admin/:path*'],
+  matcher: [
+    '/vendor/:path*',
+    '/couple/:path*',
+    '/admin/:path*',
+    '/messages/:path*',
+    '/notifications/:path*',
+    '/settings/:path*',
+    '/switch-role',
+    '/auth/sign-up',
+    '/auth/register',
+  ],
 };
