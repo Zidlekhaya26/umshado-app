@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabaseClient';
 
-export type VendorEventType = 'profile_view' | 'save_vendor' | 'quote_requested' | 'message_started' | 'package_view' | 'contact_click' | 'quote_accepted' | 'quote_declined';
+export type VendorEventType = 'profile_view' | 'save_vendor' | 'quote_requested' | 'message_started' | 'package_view' | 'contact_click' | 'quote_accepted' | 'quote_declined' | 'ad_click';
 
 export async function trackVendorEvent(
   vendorId?: string | null,

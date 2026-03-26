@@ -547,8 +547,8 @@ export default function CoupleDashboard() {
           <div className="dc">
             <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
               <h2 style={{ margin:0, fontSize:15, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>Recent Quotes</h2>
-              <Link href="/messages" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
-                View all <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <Link href="/couple/quotes" style={{ fontSize:12, fontWeight:600, color:G, textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
+                My Enquiries <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
               </Link>
             </div>
             {loadingQuotes ? (
@@ -589,6 +589,19 @@ export default function CoupleDashboard() {
               <p style={{ margin:0, fontSize:11, color:'rgba(255,255,255,0.65)' }}>Photography · Catering · Décor · and more</p>
             </div>
             <Link href="/marketplace" style={{ padding:'10px 16px', borderRadius:12, background:'rgba(255,255,255,0.14)', border:'1.5px solid rgba(255,255,255,0.22)', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0 }}>Browse →</Link>
+          </div>
+
+          {/* ── My Enquiries CTA ───────────────────────────── */}
+          <div className="dc" style={{ background:'linear-gradient(160deg,#faf5f7 0%,#f5e8ed 100%)', borderRadius:20, padding:'20px', display:'flex', alignItems:'center', gap:14, overflow:'hidden', position:'relative', border:'1.5px solid rgba(154,33,67,0.18)' }}>
+            <div style={{ position:'absolute', top:-20, right:-20, width:90, height:90, borderRadius:'50%', background:'rgba(154,33,67,0.05)', pointerEvents:'none' }}/>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(154,33,67,0.08)', border:'1.5px solid rgba(154,33,67,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <svg width="22" height="22" fill="none" stroke="var(--um-crimson)" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            </div>
+            <div style={{ flex:1 }}>
+              <p style={{ margin:'0 0 3px', fontSize:14, fontWeight:700, color:DARK, fontFamily:'var(--font-display,Georgia,serif)' }}>My Enquiries</p>
+              <p style={{ margin:0, fontSize:11, color:MID }}>Track all quotes sent to vendors</p>
+            </div>
+            <Link href="/couple/quotes" style={{ padding:'10px 16px', borderRadius:12, background:'linear-gradient(135deg,var(--um-crimson),var(--um-crimson-dark))', color:'#fff', fontSize:12, fontWeight:700, textDecoration:'none', flexShrink:0, boxShadow:'0 3px 10px rgba(154,33,67,0.2)' }}>View →</Link>
           </div>
 
           {/* ── My Bookings CTA ────────────────────────────── */}

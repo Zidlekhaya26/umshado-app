@@ -14,6 +14,7 @@ import { useCurrency } from '@/app/providers/CurrencyProvider';
 import { formatBudget, type Currency } from '@/lib/currency';
 import { getServicesCatalog, type Service as CatalogService } from '@/lib/vendorServices';
 import { useLocation, distanceKm, type UserLocation } from '@/hooks/useLocation';
+import { trackVendorEvent } from '@/lib/analytics';
 
 /* ─── Sponsored Ad Types & Dummy Data ───────────────────── */
 interface SponsoredAd {
@@ -252,7 +253,7 @@ function ScopeSheet({
 function SponsoredAdCard({ ad }: { ad: SponsoredAd }) {
   const hasImage = Boolean(ad.imageUrl);
   return (
-    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', gridColumn: '1 / -1', display: 'block' }}>
+    <Link href={ad.vendorId ? `/v/${ad.vendorId}` : '/marketplace'} style={{ textDecoration: 'none', gridColumn: '1 / -1', display: 'block' }} onClick={() => { if (ad.vendorId) trackVendorEvent(ad.vendorId, 'ad_click', { boost_id: ad.id, source: 'marketplace' }).catch(() => {}); }}>
     <div style={{ borderRadius: 20, overflow: 'hidden', background: `${ad.color}0c`, border: `1.5px solid ${ad.color}22`, boxShadow: `0 4px 20px ${ad.color}12`, position: 'relative', display: 'flex', minHeight: 156, cursor: 'pointer' }}>
       {/* Left content */}
       <div style={{ flex: 1, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 7, justifyContent: 'center', minWidth: 0 }}>
