@@ -146,9 +146,8 @@ export default function MessagesIndex() {
         if (iAmVendor) {
           const c = coupleMap[row.couple_id];
           const p = profileMap[row.couple_id];
-          const coupleName = p?.full_name && c?.partner_name
-            ? `${p.full_name} & ${c.partner_name}`
-            : c?.partner_name || p?.full_name || 'Couple';
+          const parts = [p?.full_name, c?.partner_name].filter(Boolean);
+          const coupleName = parts.length > 0 ? parts.join(' & ') : 'Couple';
           return { id: row.id, otherName: coupleName, otherRole: 'couple' as const, logoUrl: c?.avatar_url || null, lastMessageAt: row.last_message_at || row.created_at, lastMessagePreview: lastMsg?.message_text || null, unread };
         }
 
