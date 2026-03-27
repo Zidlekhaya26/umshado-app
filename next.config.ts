@@ -46,10 +46,12 @@ export default withSentryConfig(nextConfig, {
   project: "javascript-nextjs",
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  // Automatically instrument server components, route handlers, etc.
-  autoInstrumentServerFunctions: true,
-  // Tree-shake Sentry debug code in production
-  disableLogger: true,
+  webpack: {
+    // Automatically instrument server components, route handlers, etc.
+    autoInstrumentServerFunctions: true,
+    // Tree-shake Sentry debug code in production
+    treeshake: { removeDebugLogging: true },
+  },
   // Don't affect bundle size with source map uploads in local dev
   sourcemaps: {
     disable: process.env.NODE_ENV !== 'production',
