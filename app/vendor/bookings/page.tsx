@@ -53,6 +53,8 @@ export default function VendorBookingsPage(){
   const [savingBlock,setSavingBlock]=useState(false);
   const [error,setError]=useState<string|null>(null);
   const [successMsg,setSuccessMsg]=useState<string|null>(null);
+  const [editDateSheet,setEditDateSheet]=useState<Booking|null>(null);
+  const [editDateValue,setEditDateValue]=useState('');
 
   const showOk=(m:string)=>{setSuccessMsg(m);setTimeout(()=>setSuccessMsg(null),3000);};
 
@@ -73,12 +75,25 @@ export default function VendorBookingsPage(){
       .select('id,booking_ref,package_name,event_date,event_location,confirmed_price,status,vendor_notes,confirmed_at,couple_id')
       .eq('vendor_id',vid).order('event_date',{ascending:true,nullsFirst:false});
     if(!data)return;
-    const {data:rr}=await supabase.from('review_requests').select('booking_id').eq('vendor_id',vid);
-    const reqIds=new Set((rr||[]).map((r:any)=>r.booking_id));
-    const enriched=await Promise.all(data.map(async(b:any)=>{
-      const {data:c}=await supabase.from('couples').select('partner_name,avatar_url').eq('id',b.couple_id).maybeSingle();
-      return{...b,couple_name:c?.partner_name||'Unknown Couple',couple_avatar:c?.avatar_url||null,review_requested:reqIds.has(b.id)};
-    }));
+    type CoupleRow={id:string;partner_name:string|null;avatar_url:string|null};
+    type ProfileRow={id:string;full_name:string|null};
+    type RRRow={booking_id:string};
+    type BookingRow={couple_id:string;[k:string]:unknown};
+    const coupleIds=[...new Set((data as BookingRow[]).map(b=>b.couple_id))];
+    const [{data:rr},{data:couplesData},{data:profilesData}]=await Promise.all([
+      supabase.from('review_requests').select('booking_id').eq('vendor_id',vid),
+      supabase.from('couples').select('id,partner_name,avatar_url').in('id',coupleIds),
+      supabase.from('profiles').select('id,full_name').in('id',coupleIds),
+    ]);
+    const reqIds=new Set(((rr||[]) as RRRow[]).map(r=>r.booking_id));
+    const coupleMap=new Map(((couplesData||[]) as CoupleRow[]).map(c=>[c.id,c]));
+    const profileMap=new Map(((profilesData||[]) as ProfileRow[]).map(p=>[p.id,p]));
+    const enriched=(data as BookingRow[]).map(b=>{
+      const c=coupleMap.get(b.couple_id);
+      const p=profileMap.get(b.couple_id);
+      const parts=[p?.full_name,c?.partner_name].filter(Boolean);
+      return{...b,couple_name:parts.length>0?parts.join(' & '):'Unknown Couple',couple_avatar:c?.avatar_url||null,review_requested:reqIds.has(b.id)};
+    });
     setBookings(enriched as Booking[]);
   };
 
@@ -110,6 +125,16 @@ export default function VendorBookingsPage(){
       setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,review_requested:false}:bk));
       setError(e.message||'Failed');
     }
+  };
+
+  const handleSaveEventDate=async()=>{
+    if(!editDateSheet||!editDateValue)return;
+    const prev=editDateSheet.event_date;
+    setBookings(bs=>bs.map(b=>b.id===editDateSheet.id?{...b,event_date:editDateValue}:b));
+    setEditDateSheet(null);
+    const{error:e}=await supabase.from('bookings').update({event_date:editDateValue}).eq('id',editDateSheet.id);
+    if(e){setBookings(bs=>bs.map(b=>b.id===editDateSheet.id?{...b,event_date:prev}:b));setError(e.message);}
+    else showOk('Event date saved');
   };
 
   const handleSaveNote=async()=>{
@@ -379,6 +404,10 @@ export default function VendorBookingsPage(){
                   <div style={{width:38,height:38,borderRadius:10,background:'rgba(189,152,63,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📝</div>
                   <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:GD2}}>Add / edit note</p><p style={{margin:'2px 0 0',fontSize:11,color:'#a08040'}}>Private — only you see this</p></div>
                 </button>
+                <button onClick={()=>{setEditDateValue(actionSheet.event_date||'');setEditDateSheet(actionSheet);setActionSheet(null);}} style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid ${BOR}`,background:BG,cursor:'pointer'}}>
+                  <div style={{width:38,height:38,borderRadius:10,background:'rgba(0,0,0,0.05)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>📅</div>
+                  <div style={{textAlign:'left'}}><p style={{margin:0,fontSize:14,fontWeight:700,color:DK}}>{actionSheet.event_date?'Change event date':'Set event date'}</p><p style={{margin:'2px 0 0',fontSize:11,color:MUT}}>{actionSheet.event_date||'Currently TBD'}</p></div>
+                </button>
                 <Link href="/messages" style={{display:'flex',alignItems:'center',gap:12,padding:'14px 16px',borderRadius:14,border:`1.5px solid rgba(29,111,168,0.25)`,background:'rgba(29,111,168,0.06)',textDecoration:'none'}}>
                   <div style={{width:38,height:38,borderRadius:10,background:'rgba(29,111,168,0.12)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:20}}>💬</div>
                   <div><p style={{margin:0,fontSize:14,fontWeight:700,color:BL}}>Message Couple</p></div>
@@ -434,6 +463,25 @@ export default function VendorBookingsPage(){
               <button onClick={handleSaveBlock} disabled={savingBlock} style={{width:'100%',height:50,borderRadius:14,border:'none',cursor:savingBlock?'default':'pointer',fontSize:14,fontWeight:800,background:`linear-gradient(135deg,${CR},${CR2})`,color:'#fff',boxShadow:'0 4px 16px rgba(154,33,67,0.28)',opacity:savingBlock?.7:1}}>
                 {savingBlock?'Saving…':blocked.has(blockSheet.date)?'Update date':'Block date'}
               </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {editDateSheet&&(
+        <>
+          <div onClick={()=>setEditDateSheet(null)} style={{position:'fixed',inset:0,background:'rgba(26,13,18,0.5)',zIndex:60,animation:'fadeIn .2s ease'}}/>
+          <div style={{position:'fixed',bottom:0,left:0,right:0,background:'#fff',borderRadius:'24px 24px 0 0',zIndex:70,animation:'slideUp .25s ease',padding:'0 0 env(safe-area-inset-bottom)',maxWidth:560,margin:'0 auto'}}>
+            <div style={{width:40,height:4,background:'rgba(154,33,67,0.15)',borderRadius:2,margin:'12px auto 0'}}/>
+            <div style={{padding:'20px 20px 24px'}}>
+              <p style={{margin:'0 0 2px',fontSize:16,fontWeight:800,color:DK,fontFamily:'Georgia,serif'}}>Event Date</p>
+              <p style={{margin:'0 0 18px',fontSize:12,color:MUT}}>{editDateSheet.couple_name} · {editDateSheet.booking_ref}</p>
+              <input type="date" value={editDateValue} onChange={e=>setEditDateValue(e.target.value)}
+                style={{width:'100%',padding:'13px 14px',borderRadius:12,border:`1.5px solid ${BOR}`,fontSize:15,color:DK,fontFamily:'inherit',outline:'none',boxSizing:'border-box',marginBottom:18}}/>
+              <div style={{display:'flex',gap:10}}>
+                <button onClick={()=>setEditDateSheet(null)} style={{flex:1,padding:'13px',borderRadius:13,border:`1.5px solid ${BOR}`,background:'#fff',color:MUT,fontSize:13,fontWeight:700,cursor:'pointer'}}>Cancel</button>
+                <button onClick={handleSaveEventDate} disabled={!editDateValue} style={{flex:2,padding:'13px',borderRadius:13,border:'none',background:`linear-gradient(135deg,${CR},${CR2})`,color:'#fff',fontSize:14,fontWeight:800,cursor:editDateValue?'pointer':'default',opacity:editDateValue?1:0.5}}>Save date</button>
+              </div>
             </div>
           </div>
         </>

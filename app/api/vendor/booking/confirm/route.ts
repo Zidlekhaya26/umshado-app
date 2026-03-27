@@ -89,6 +89,17 @@ export async function POST(req: NextRequest) {
     ((quote.vendor_final_price ?? quote.base_from_price ?? 0) as number) * 100
   );
 
+  // event_date: prefer quote field (if it exists), fall back to couple's wedding_date
+  let eventDate: string | null = (quote as { event_date?: string | null }).event_date ?? null;
+  if (!eventDate) {
+    const { data: coupleRow } = await supabase
+      .from('couples')
+      .select('wedding_date')
+      .eq('id', quote.couple_id)
+      .maybeSingle();
+    eventDate = coupleRow?.wedding_date ?? null;
+  }
+
   const { data: booking, error: bookingErr } = await supabase
     .from('bookings')
     .insert({
@@ -96,7 +107,7 @@ export async function POST(req: NextRequest) {
       vendor_id: vendor.id,
       couple_id: quote.couple_id,
       package_name: quote.package_name || quote.vendor_packages?.name || 'Custom Package',
-      event_date: (quote as any).event_date ?? null,
+      event_date: eventDate,
       event_location: (quote as any).event_location ?? null,
       confirmed_price: finalPriceCents,
       status: 'confirmed',
