@@ -80,14 +80,16 @@ export default function VendorBookingsPage(){
     type RRRow={booking_id:string};
     type BookingRow={id:string;couple_id:string;[k:string]:unknown};
     const coupleIds=[...new Set((data as BookingRow[]).map(b=>b.couple_id))];
-    const [{data:rr},{data:couplesData},{data:profilesData}]=await Promise.all([
+    const {data:{session}}=await supabase.auth.getSession();
+    const token=session?.access_token||'';
+    const [{data:rr},namesRes]=await Promise.all([
       supabase.from('review_requests').select('booking_id').eq('vendor_id',vid),
-      supabase.from('couples').select('id,partner_name,avatar_url').in('id',coupleIds),
-      supabase.from('profiles').select('id,full_name').in('id',coupleIds),
+      fetch('/api/vendor/couple-names',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},body:JSON.stringify({coupleIds})}),
     ]);
+    const namesJson=namesRes.ok?await namesRes.json():{couples:[],profiles:[]};
     const reqIds=new Set(((rr||[]) as RRRow[]).map(r=>r.booking_id));
-    const coupleMap=new Map(((couplesData||[]) as CoupleRow[]).map(c=>[c.id,c]));
-    const profileMap=new Map(((profilesData||[]) as ProfileRow[]).map(p=>[p.id,p]));
+    const coupleMap=new Map(((namesJson.couples||[]) as CoupleRow[]).map((c:CoupleRow)=>[c.id,c]));
+    const profileMap=new Map(((namesJson.profiles||[]) as ProfileRow[]).map((p:ProfileRow)=>[p.id,p]));
     const enriched=(data as BookingRow[]).map(b=>{
       const c=coupleMap.get(b.couple_id);
       const p=profileMap.get(b.couple_id);

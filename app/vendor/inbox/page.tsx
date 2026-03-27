@@ -106,19 +106,21 @@ export default function VendorInboxPage() {
       const convIds = convData.map((c: any) => c.id);
       const coupleIds = [...new Set(convData.map((c: any) => c.couple_id))];
 
-      const [{ data: msgs }, { data: couplesData }, { data: pendingQuotes }, { data: profilesData }] = await Promise.all([
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      const [{ data: msgs }, { data: pendingQuotes }, namesRes] = await Promise.all([
         supabase.from('messages')
           .select('conversation_id, message_text, read, sender_id, created_at')
           .in('conversation_id', convIds)
           .order('created_at', { ascending: false }),
-        supabase.from('couples').select('id, partner_name, avatar_url').in('id', coupleIds),
         supabase.from('quotes').select('couple_id').eq('vendor_id', vid).eq('status', 'requested'),
-        supabase.from('profiles').select('id, full_name').in('id', coupleIds),
+        fetch('/api/vendor/couple-names', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ coupleIds }) }),
       ]);
+      const namesJson = namesRes.ok ? await namesRes.json() : { couples: [], profiles: [] };
 
       const pendingCoupleIds = new Set((pendingQuotes || []).map((q: any) => q.couple_id));
-      const coupleMap = new Map((couplesData || []).map((c: any) => [c.id, c]));
-      const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+      const coupleMap = new Map<string,{id:string;partner_name:string|null;avatar_url:string|null}>((namesJson.couples || []).map((c: any) => [c.id, c]));
+      const profileMap = new Map<string,{id:string;full_name:string|null}>((namesJson.profiles || []).map((p: any) => [p.id, p]));
       const msgsByConv = new Map<string, any[]>();
       (msgs || []).forEach((m: any) => {
         if (!msgsByConv.has(m.conversation_id)) msgsByConv.set(m.conversation_id, []);
@@ -155,15 +157,17 @@ export default function VendorInboxPage() {
       if (!quoteData?.length) { setQuotes([]); return; }
 
       const coupleIds = [...new Set(quoteData.map((q: any) => q.couple_id))];
-      const [{ data: couplesData }, { data: convData }, { data: profilesData }] = await Promise.all([
-        supabase.from('couples').select('id, partner_name, avatar_url').in('id', coupleIds),
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || '';
+      const [{ data: convData }, namesRes] = await Promise.all([
         supabase.from('conversations').select('id, couple_id').eq('vendor_id', vid).in('couple_id', coupleIds),
-        supabase.from('profiles').select('id, full_name').in('id', coupleIds),
+        fetch('/api/vendor/couple-names', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ coupleIds }) }),
       ]);
+      const namesJson = namesRes.ok ? await namesRes.json() : { couples: [], profiles: [] };
 
-      const coupleMap = new Map((couplesData || []).map((c: any) => [c.id, c]));
+      const coupleMap = new Map<string,{id:string;partner_name:string|null;avatar_url:string|null}>((namesJson.couples || []).map((c: any) => [c.id, c]));
       const convMap = new Map((convData || []).map((c: any) => [c.couple_id, c.id]));
-      const profileMap = new Map((profilesData || []).map((p: any) => [p.id, p]));
+      const profileMap = new Map<string,{id:string;full_name:string|null}>((namesJson.profiles || []).map((p: any) => [p.id, p]));
 
       setQuotes(quoteData.map((q: any) => {
         const couple = coupleMap.get(q.couple_id);
