@@ -78,7 +78,7 @@ export default function VendorBookingsPage(){
     type CoupleRow={id:string;partner_name:string|null;avatar_url:string|null};
     type ProfileRow={id:string;full_name:string|null};
     type RRRow={booking_id:string};
-    type BookingRow={couple_id:string;[k:string]:unknown};
+    type BookingRow={id:string;couple_id:string;[k:string]:unknown};
     const coupleIds=[...new Set((data as BookingRow[]).map(b=>b.couple_id))];
     const [{data:rr},{data:couplesData},{data:profilesData}]=await Promise.all([
       supabase.from('review_requests').select('booking_id').eq('vendor_id',vid),
@@ -91,7 +91,7 @@ export default function VendorBookingsPage(){
     const enriched=(data as BookingRow[]).map(b=>{
       const c=coupleMap.get(b.couple_id);
       const p=profileMap.get(b.couple_id);
-      const parts=[p?.full_name,c?.partner_name].filter(Boolean);
+      const parts=[p?.full_name,c?.partner_name].filter((x): x is string => Boolean(x));
       return{...b,couple_name:parts.length>0?parts.join(' & '):'Unknown Couple',couple_avatar:c?.avatar_url||null,review_requested:reqIds.has(b.id)};
     });
     setBookings(enriched as Booking[]);
