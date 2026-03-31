@@ -482,7 +482,7 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc, saved, onS
               <button type="button"
                 onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
                 style={{ width: '100%', height: '100%', border: 'none', padding: 0, cursor: 'zoom-in', background: 'transparent', position: 'relative', display: 'block' }}>
-                <Image src={vendor.logoUrl} alt={vendor.name} fill style={{ objectFit: 'contain', padding: 5 }} />
+                <Image src={vendor.logoUrl} alt={vendor.name} fill sizes="52px" style={{ objectFit: 'contain', padding: 5 }} />
               </button>
             ) : (
               <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg,${catCfg.color}dd,${catCfg.color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, fontFamily: 'Georgia,serif' }}>
@@ -844,9 +844,9 @@ export default function Marketplace() {
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7, flexShrink: 0 }}>
-                <button onClick={() => setScopeOpen(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                <div onClick={() => setScopeOpen(true)} style={{ cursor: 'pointer' }}>
                   <LocationPill location={location} loading={locLoading} permission={permission} scope={scope} onDetect={() => detect(true)} />
-                </button>
+                </div>
                 {!loading && featuredCount > 0 && (
                   <div style={{ padding: '4px 10px', borderRadius: 20, background: 'rgba(184,151,62,0.18)', border: '1px solid rgba(184,151,62,0.35)', fontSize: 10.5, color: '#e8c84a', fontWeight: 700, letterSpacing: 0.3 }}>
                     ★ {featuredCount} Featured
