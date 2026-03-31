@@ -173,19 +173,33 @@ export default function ChatThread() {
       setIsVendorInThread(iAmVendor);
 
       if (iAmVendor) {
-        // Prefer the public `couples` table (partner1/partner2, partner_name, avatar) via helper
-          try {
-            const { getCoupleDisplayName } = await import('@/lib/coupleHelpers');
-            const d = await getCoupleDisplayName(conv.couple_id);
-            setOtherPartyName(d.displayName || 'Couple (unknown)');
-            setOtherPartyLogo(d.avatarUrl || null);
-            setOtherPartyLocation(d.location || null);
-          } catch (err) {
-            console.warn('Failed to resolve couple display name', err);
-            setOtherPartyName('Couple (unknown)');
+        // Use the service-role API to bypass RLS — anon client cannot read couple rows
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          const token = session?.access_token || '';
+          const res = await fetch('/api/vendor/couple-names', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ coupleIds: [conv.couple_id] }),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const couple = (json.couples || []).find((c: any) => c.id === conv.couple_id);
+            const profile = (json.profiles || []).find((p: any) => p.id === conv.couple_id);
+            setOtherPartyName(couple?.partner_name || profile?.full_name || 'Couple');
+            setOtherPartyLogo(couple?.avatar_url || null);
+            setOtherPartyLocation(null);
+          } else {
+            setOtherPartyName('Couple');
             setOtherPartyLogo(null);
             setOtherPartyLocation(null);
           }
+        } catch (err) {
+          console.warn('Failed to resolve couple display name', err);
+          setOtherPartyName('Couple');
+          setOtherPartyLogo(null);
+          setOtherPartyLocation(null);
+        }
       } else {
         // Show vendor's business name + logo
         const { data: vendorData } = await supabase
@@ -266,9 +280,18 @@ export default function ChatThread() {
     };
 
     loadInitial().then(() => {
-      // Mark conversation as read when thread opens
+      // Mark conversation as read when thread opens (updates the timestamp used for unread badge)
       supabase.from('conversations').update({ last_read_at: new Date().toISOString() }).eq('id', conversationId);
     });
+
+    // Also mark individual message rows as read so any future read-based queries are consistent
+    if (currentUserId) {
+      supabase.from('messages')
+        .update({ read: true })
+        .eq('conversation_id', conversationId)
+        .neq('sender_id', currentUserId)
+        .eq('read', false);
+    }
 
     // Realtime: append new messages only (skip if _optimistic flag is set to avoid duplicates)
     const channel = supabase
@@ -839,7 +862,7 @@ export default function ChatThread() {
 
       {/* ── Header ── */}
       <div style={{ background: `linear-gradient(135deg, ${C.crimson}, ${C.crimsonDark})`, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, boxShadow: '0 2px 8px rgba(154,33,67,0.1)' }}>
-        <button onClick={() => router.push('/messages')} style={{ padding: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 10, border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <button onClick={() => router.push(isVendorInThread ? '/vendor/inbox' : '/messages')} style={{ padding: 6, background: 'rgba(255,255,255,0.15)', borderRadius: 10, border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
 

@@ -83,6 +83,11 @@ export default function VendorInboxPage() {
   useEffect(() => {
     if (!user) return;
     loadAll(user.id);
+
+    // Reload when the tab regains focus (e.g. user returns from a chat thread)
+    const onFocus = () => loadAll(user.id);
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [user?.id]);
 
   const loadAll = async (uid: string) => {
@@ -97,7 +102,7 @@ export default function VendorInboxPage() {
     try {
       const { data: convData } = await supabase
         .from('conversations')
-        .select('id, last_message_at, couple_id')
+        .select('id, last_message_at, last_read_at, couple_id')
         .eq('vendor_id', vid)
         .order('last_message_at', { ascending: false, nullsFirst: false });
 
@@ -136,7 +141,10 @@ export default function VendorInboxPage() {
           couple_id: c.couple_id,
           couple_name: couple?.partner_name || profileMap.get(c.couple_id)?.full_name || 'Couple',
           couple_avatar: couple?.avatar_url || null,
-          unread: cMsgs.filter((m: any) => !m.read && m.sender_id !== uid).length,
+          unread: cMsgs.filter((m: any) =>
+            m.sender_id !== uid &&
+            (!c.last_read_at || new Date(m.created_at) > new Date(c.last_read_at))
+          ).length,
           last_message: cMsgs[0]?.message_text || null,
           has_pending_quote: pendingCoupleIds.has(c.couple_id),
         };
