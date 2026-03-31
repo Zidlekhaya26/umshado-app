@@ -225,9 +225,8 @@ export async function POST(req: NextRequest) {
         const betaReq = Array.isArray(updated) ? updated[0] : updated;
         const email = betaReq?.email?.toLowerCase();
         if (email) {
-          // Check if user exists in auth
-          const usersRes = await fetch(
-            `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1`,
+          const searchRes = await fetch(
+            `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=100`,
             {
               headers: {
                 apikey: SERVICE_ROLE_KEY,
@@ -235,32 +234,20 @@ export async function POST(req: NextRequest) {
               },
             },
           );
-          if (usersRes.ok) {
-            // Search for user by email using the admin API
-            const searchRes = await fetch(
-              `${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=100`,
-              {
-                headers: {
-                  apikey: SERVICE_ROLE_KEY,
-                  Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
-                },
-              },
+          if (searchRes.ok) {
+            const searchBody = await searchRes.json();
+            const matchedUser = (searchBody?.users ?? []).find(
+              (u: any) => u.email?.toLowerCase() === email,
             );
-            if (searchRes.ok) {
-              const searchBody = await searchRes.json();
-              const matchedUser = (searchBody?.users ?? []).find(
-                (u: any) => u.email?.toLowerCase() === email,
-              );
-              if (matchedUser?.id) {
-                await notifyUsers({
-                  userIds: [matchedUser.id],
-                  type: 'invite_approved',
-                  title: 'Welcome to uMshado! 🎉',
-                  body: 'Your beta access has been approved. Start exploring!',
-                  link: '/',
-                  meta: { betaRequestId: id },
-                });
-              }
+            if (matchedUser?.id) {
+              await notifyUsers({
+                userIds: [matchedUser.id],
+                type: 'invite_approved',
+                title: 'Welcome to uMshado! 🎉',
+                body: 'Your beta access has been approved. Start exploring!',
+                link: '/',
+                meta: { betaRequestId: id },
+              });
             }
           }
         }

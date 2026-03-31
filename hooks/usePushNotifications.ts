@@ -38,7 +38,10 @@ function getVapidPublicKey(): string | null {
 
 async function getAuthToken(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || null;
+  if (session?.access_token) return session.access_token;
+  // Session may be expired — attempt a refresh before giving up
+  const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+  return refreshed?.access_token || null;
 }
 
 /**
@@ -87,7 +90,7 @@ async function clearStaleSubscription(
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ endpoint }),
-  }).catch(() => {});
+  }).catch((err) => console.warn('[push] Failed to delete stale subscription from DB:', err));
 
   console.log('[push] Stale subscription cleared');
 }

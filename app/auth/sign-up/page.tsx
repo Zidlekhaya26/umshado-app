@@ -177,11 +177,12 @@ function SignUpContent() {
     return !Object.keys(e).length;
   };
 
-  const redeemInvite = async () => {
+  const redeemInvite = async (accessToken: string) => {
     if (!inviteToken) return;
     try {
       await fetch('/api/invite/validate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ token: inviteToken }),
       });
     } catch { /* non-fatal */ }
@@ -200,7 +201,8 @@ function SignUpContent() {
       if (error) { setErrors({ password: error.message }); setIsLoading(false); return; }
       if (data.user) {
         setAuthCookies((data as any).session);
-        await redeemInvite();
+        const accessToken = (data as any).session?.access_token;
+        if (accessToken) await redeemInvite(accessToken);
         if (data.user.identities && data.user.identities.length === 0) {
           alert('Please check your email to confirm your account before signing in.');
           router.push('/auth/sign-in'); return;
@@ -213,11 +215,13 @@ function SignUpContent() {
 
   const handleGoogleSignUp = async () => {
     try {
-      await redeemInvite();
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.umshado-app.vercel.app';
+      // Pass the invite token through the redirect URL so the callback can redeem it
+      // after the user has a session (can't redeem before OAuth completes).
+      const inviteParam = inviteToken ? `&invite_token=${encodeURIComponent(inviteToken)}` : '';
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${origin}/auth/callback?role=${effectiveRole}` },
+        options: { redirectTo: `${origin}/auth/callback?role=${effectiveRole}${inviteParam}` },
       });
       if (error) alert('Google sign up error: ' + error.message);
     } catch { alert('Failed to sign up with Google'); }

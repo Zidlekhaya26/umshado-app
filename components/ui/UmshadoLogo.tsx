@@ -57,7 +57,7 @@ export function UmshadoLogo({ iconSize = 56, className = '' }: LogoProps) {
         alt="uMshado"
         width={Math.round(height * 0.85)}
         height={height}
-        style={{ width: 'auto', height: 'auto', maxHeight: height }}
+        style={{ height: 'auto' }}
         className="object-contain"
         priority
       />

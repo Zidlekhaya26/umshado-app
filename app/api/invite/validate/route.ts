@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
  * GET /api/invite/validate?token=<uuid>
@@ -79,8 +80,28 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/invite/validate
  * Marks an invite token as redeemed after successful sign-up.
+ * Requires the newly-signed-up user's auth token to prevent token replay attacks.
  */
 export async function POST(req: NextRequest) {
+  // Require authentication — the user must have just signed up
+  const authHeader = req.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ success: false, error: 'Authentication required' }, { status: 401 });
+  }
+
+  if (!SUPABASE_URL || !SUPABASE_ANON || !SERVICE_ROLE_KEY) {
+    return NextResponse.json({ success: false, error: 'Server misconfigured' }, { status: 500 });
+  }
+
+  // Validate the caller's auth token
+  const callerToken = authHeader.slice(7);
+  const userRes = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${callerToken}`, apikey: SUPABASE_ANON },
+  });
+  if (!userRes.ok) {
+    return NextResponse.json({ success: false, error: 'Invalid auth token' }, { status: 401 });
+  }
+
   const body = await req.json().catch(() => null);
   const token = body?.token;
 
@@ -88,17 +109,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'No token provided' }, { status: 400 });
   }
 
-  if (!SUPABASE_URL || !SUPABASE_ANON) {
-    return NextResponse.json({ success: false, error: 'Server misconfigured' }, { status: 500 });
-  }
-
   try {
     const url = `${SUPABASE_URL}/rest/v1/beta_requests?invite_token=eq.${token}`;
     const res = await fetch(url, {
       method: 'PATCH',
       headers: {
-        apikey: SUPABASE_ANON,
-        Authorization: `Bearer ${SUPABASE_ANON}`,
+        // Use service role key so the PATCH bypasses RLS
+        apikey: SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SERVICE_ROLE_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
       },

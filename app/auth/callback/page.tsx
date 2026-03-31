@@ -24,6 +24,18 @@ function CallbackHandler() {
 
       setAuthCookies(session);
 
+      // Redeem invite token if present (Google OAuth flow passes it via redirect URL)
+      const inviteToken = searchParams?.get('invite_token');
+      if (inviteToken && session.access_token) {
+        try {
+          await fetch('/api/invite/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ token: inviteToken }),
+          });
+        } catch { /* non-fatal */ }
+      }
+
       const role = searchParams?.get('role');
       const intendedRole = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
 
