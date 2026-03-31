@@ -1,6 +1,10 @@
 import { type Metadata } from 'next';
 import { createServiceClient } from '@/lib/supabaseServer';
 
+// Cache vendor profile metadata for 5 minutes — covers the server-rendered
+// <head> (OG tags, title) without blocking real-time client-side data.
+export const revalidate = 300;
+
 type Props = {
   params: Promise<{ vendorId: string }>;
   children: React.ReactNode;

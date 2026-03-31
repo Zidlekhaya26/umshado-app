@@ -98,7 +98,7 @@ export default function MessagesIndex() {
         : `couple_id.eq.${u.id}`;
 
       const { data } = await supabase.from('conversations')
-        .select('id,couple_id,vendor_id,last_message_at,created_at')
+        .select('id,couple_id,vendor_id,last_message_at,last_read_at,created_at')
         .or(roleFilter).order('last_message_at', { ascending: false });
 
       const rows = (data || []) as ConversationRow[];
@@ -141,7 +141,8 @@ export default function MessagesIndex() {
 
       const resolved = rows.map(row => {
         const lastMsg = lastMsgMap[row.id] as any;
-        const unread  = !!(lastMsg && lastMsg.read === false && lastMsg.sender_id !== u.id);
+        const unread  = !!(lastMsg && lastMsg.sender_id !== u.id &&
+          (!row.last_read_at || new Date(lastMsg.created_at) > new Date(row.last_read_at)));
 
         if (iAmVendor) {
           const c = coupleMap[row.couple_id];
@@ -160,11 +161,12 @@ export default function MessagesIndex() {
     finally { setLoading(false); }
   };
 
-  // Realtime subscription — subscribe to couple_id and vendor_id so both roles get live updates
+  // Realtime: conversations (new messages, last_read_at updates) + messages (read flag)
   useEffect(() => {
     if (!user) return;
     let ch = supabase.channel(`conv_user_${user.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => loadConversations());
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `couple_id=eq.${user.id}` }, () => loadConversations())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => loadConversations());
     if (vendorId) {
       ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `vendor_id=eq.${vendorId}` }, () => loadConversations());
     }

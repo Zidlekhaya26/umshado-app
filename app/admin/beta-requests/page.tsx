@@ -26,20 +26,8 @@ interface BetaRequest {
 
 type FilterTab = 'all' | StatusValue;
 
-const ADMIN_EMAILS_RAW = process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? '';
-const ADMIN_EMAILS = ADMIN_EMAILS_RAW
-  .split(',')
-  .map(e => e.trim().toLowerCase())
-  .filter(Boolean);
-
-function checkIsAdmin(email: string | undefined | null): boolean {
-  if (!email) return false;
-  const lower = email.toLowerCase();
-  // Primary: check the env-based list
-  if (ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(lower)) return true;
-  // Fallback: if env was empty (bundler issue), fetch from API and let server decide
-  return false;
-}
+// Admin check is done server-side via /api/admin/is-admin
+// so admin email addresses are never exposed in the client bundle.
 
 // ─── Status helpers ──────────────────────────────────────
 
@@ -97,28 +85,19 @@ export default function AdminBetaRequestsPage() {
         return;
       }
 
-      // First try client-side check
-      if (checkIsAdmin(user.email)) {
-        setAuthed(true);
-        setAuthChecked(true);
-        return;
-      }
-
-      // Fallback: always try the server API check.
-      // The API route has its own admin email check with server-side env vars
-      // and reliably reads the access token via the Authorization header.
+      // Check admin status server-side (keeps admin emails out of the client bundle)
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        const headers: Record<string, string> = {};
-        if (session?.access_token) {
-          headers['Authorization'] = `Bearer ${session.access_token}`;
-        }
-        const res = await fetch('/api/admin/beta-requests', { headers });
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+        const res = await fetch('/api/admin/is-admin', { headers });
         if (res.ok) {
-          // Server accepted us — we are admin
-          setAuthed(true);
-          setAuthChecked(true);
-          return;
+          const { isAdmin } = await res.json();
+          if (isAdmin) {
+            setAuthed(true);
+            setAuthChecked(true);
+            return;
+          }
         }
       } catch {}
 

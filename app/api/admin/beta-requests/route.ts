@@ -1,54 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { notifyUsers } from '@/lib/server/notify';
+import { getCallerUser } from '@/lib/server/getCallerUser';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const ADMIN_EMAILS = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
+// ADMIN_EMAILS is intentionally server-only (no NEXT_PUBLIC_ prefix) so
+// admin email addresses are never exposed in the client bundle.
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.NEXT_PUBLIC_ADMIN_EMAILS || '')
   .split(',')
   .map(e => e.trim().toLowerCase())
   .filter(Boolean);
 
-// ─── helpers ─────────────────────────────────────────────
-
-/**
- * Resolve the authenticated user's email from the request.
- * Reads the access token from:
- *   1. Authorization: Bearer <token> header (sent by the client page)
- *   2. Fallback: common Supabase cookie names
- */
 async function getCallerEmail(req: NextRequest): Promise<string | null> {
-  let token: string | null = null;
-
-  // 1. Authorization header (preferred — client sends this)
-  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    token = authHeader.slice(7);
-  }
-
-  // 2. Fallback: try common cookie names
-  if (!token) {
-    const cookieNames = ['sb-access-token', 'sb:token', 'supabase-auth-token', 'sb-session'];
-    for (const name of cookieNames) {
-      const c = req.cookies.get(name);
-      if (c?.value) { token = c.value; break; }
-    }
-  }
-
-  if (!token) return null;
-
-  try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON },
-    });
-    if (!res.ok) {
-      return null;
-    }
-    const user = await res.json();
-    return user?.email?.toLowerCase() ?? null;
-  } catch (err) {
-    return null;
-  }
+  const caller = await getCallerUser(req);
+  return caller?.email ?? null;
 }
 
 function isAdmin(email: string | null): boolean {
