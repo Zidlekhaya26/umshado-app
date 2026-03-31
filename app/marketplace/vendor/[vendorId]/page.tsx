@@ -76,6 +76,7 @@ export default function VendorProfile() {
   const { format } = useCurrency();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [ytPlaying, setYtPlaying] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const hasTrackedProfileView = useRef(false);
   const [zoomScale, setZoomScale] = useState(1);
@@ -397,143 +398,124 @@ export default function VendorProfile() {
     );
   }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#faf8f5' }}>
       {/* Mobile-first container wrapper */}
-      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)] px-4">
-        {/* Header with Back Button and Hero */}
-        <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 -ml-1"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      <div className="w-full max-w-none md:max-w-screen-xl md:mx-auto min-h-[100svh] flex flex-col pb-[calc(env(safe-area-inset-bottom)+80px)]">
+        {/* ── Full-bleed Hero ── */}
+        <div className="relative w-full flex-shrink-0" style={{ height: 'clamp(280px,55vw,440px)' }}>
+          {/* Cover image */}
+          {(() => {
+            const hero = vendor.coverUrl || vendor.portfolioUrls?.[0] || null;
+            return hero ? (
+              <img src={hero} alt={`${vendor.name} cover`} className="w-full h-full object-cover" loading="eager" />
+            ) : (
+              <div className="w-full h-full" style={{ background: 'linear-gradient(135deg,#4d0f21 0%,#9A2143 50%,#c97a8e 100%)' }} />
+            );
+          })()}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0) 38%, rgba(0,0,0,0.05) 58%, rgba(0,0,0,0.82) 100%)' }} />
+
+          {/* Top bar: back + save */}
+          <div className="absolute top-0 left-0 right-0 flex items-start justify-between p-4" style={{ paddingTop: 'max(16px, env(safe-area-inset-top))' }}>
+            <button onClick={() => router.back()} className="p-2 rounded-full" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+              <svg className="w-5 h-5" style={{ color: '#1a0d12' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            {!hideCTAs && (
+              <button onClick={handleToggleSave} className="p-2.5 rounded-full" style={{ background: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>
+                <svg className="w-5 h-5" style={{ color: isSaved ? '#9A2143' : '#1a0d12' }} fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                 </svg>
               </button>
-
-              <div className="flex items-center gap-3">
-                {/* Avatar / Logo */}
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center text-gray-600 font-semibold">
-                  {(() => {
-                    const logo = (vendor as any).logo_url || vendor.portfolioUrls[0] || null;
-                    return logo ? (
-                      <button
-                        type="button"
-                        onClick={() => { (window as any).__vendorLogoPreview = logo; /* noop for SSR */ }}
-                        className="relative w-full h-full flex items-center justify-center"
-                        aria-label="View vendor logo"
-                      >
-                        <Image src={logo} alt="vendor" fill className="object-contain p-2" />
-                      </button>
-                    ) : (
-                      <span>{vendor.name.split(' ').map(s => s[0]).slice(0,2).join('').toUpperCase()}</span>
-                    );
-                  })()}
-                </div>
-
-                <div className="min-w-0">
-                  <h1 className="text-lg font-bold text-gray-900 truncate">{vendor.name}</h1>
-                  <p className="text-xs text-gray-600 truncate mt-0.5">{vendor.category}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <VerifiedBadge verified={vendor.verified} />
-                    {vendor.topRated && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md border border-amber-200">
-                        Top Rated
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right-side header actions removed (rating/reviews + save moved below location) */}
+            )}
           </div>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto pb-28">
-          {/* Hero Cover */}
-          <div className="px-4 pt-4">
-            <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-gray-200 bg-gray-100">
+          {/* Bottom overlay: logo + name + meta */}
+          <div className="absolute bottom-0 left-0 right-0 p-5">
+            <div className="flex items-end gap-3">
               {(() => {
-                const hero = vendor.coverUrl || vendor.portfolioUrls?.[0] || null;
-                if (!hero) {
-                  return (
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200" />
-                  );
-                }
-                return (
-                  <img
-                    src={hero}
-                    alt={`${vendor.name} cover`}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
-                );
+                const logo = (vendor as any).logo_url || null;
+                return logo ? (
+                  <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border-2" style={{ borderColor: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)' }}>
+                    <Image src={logo} alt="logo" width={64} height={64} className="object-cover w-full h-full" />
+                  </div>
+                ) : null;
               })()}
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/10 to-transparent" />
-            </div>
-          </div>
-
-          {/* Vendor Info Card */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <div className="flex items-start justify-between gap-3 mb-3">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
                   {vendor.verified && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-md border border-blue-200">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-white text-xs font-semibold rounded-md" style={{ background: 'rgba(59,130,246,0.85)', backdropFilter: 'blur(4px)' }}>
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                       Verified
                     </span>
                   )}
                   {vendor.topRated && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-700 text-xs font-semibold rounded-md border border-amber-200">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                      Top Rated
-                    </span>
+                    <span className="px-2 py-0.5 text-white text-xs font-semibold rounded-md" style={{ background: 'rgba(245,158,11,0.9)' }}>Top Rated</span>
                   )}
                 </div>
-                
-                <div className="flex items-center gap-1.5 mb-2">
-                  <svg className="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="text-lg font-bold text-gray-900">{vendor.rating}</span>
-                  <span className="text-sm text-gray-600">({vendor.reviewCount} reviews)</span>
+                <h1 className="text-2xl font-bold mb-0.5" style={{ color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.55)', fontFamily: 'var(--font-display,Georgia,serif)', lineHeight: 1.15 }}>{vendor.name}</h1>
+                <p className="text-sm mb-2" style={{ color: 'rgba(255,255,255,0.8)', textShadow: '0 1px 3px rgba(0,0,0,0.45)' }}>{vendor.category}</p>
+                <div className="flex items-center gap-3 flex-wrap">
+                  {vendor.rating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="#fbbf24" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                      <span className="text-sm font-bold" style={{ color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{vendor.rating.toFixed(1)}</span>
+                      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>({vendor.reviewCount})</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span className="text-sm" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)' }}>{vendor.location}</span>
+                  </div>
                 </div>
-                
-                <div className="flex items-center gap-1.5 text-sm text-gray-600">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>{vendor.location}</span>
-                </div>
-                {!hideCTAs && (
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleToggleSave}
-                    className="px-4 py-2 rounded-xl border border-amber-300 text-amber-900 font-semibold text-sm bg-white hover:bg-amber-50 active:scale-[0.98] transition"
-                  >
-                    {isSaved ? 'Saved' : 'Save'}
-                  </button>
-                </div>
-                )}
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ── CTA Strip ── */}
+        {hideCTAs ? (
+          <div className="px-4 py-3 border-b" style={{ background: '#fff', borderColor: '#e8d5d0' }}>
+            {(isPreview || isOwner) ? (
+              <div className="rounded-xl px-4 py-2.5 text-center" style={{ background: '#fef3e2', border: '1px solid #e8d5d0' }}>
+                <p className="text-sm font-semibold" style={{ color: '#9A2143' }}>Preview mode</p>
+                <p className="text-xs mt-0.5" style={{ color: '#7a5060' }}>This is how couples see your profile.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl px-4 py-2.5 text-center" style={{ background: '#fef3e2', border: '1px solid #e8d5d0' }}>
+                <p className="text-sm font-semibold" style={{ color: '#9A2143' }}>View only</p>
+                <p className="text-xs mt-0.5" style={{ color: '#7a5060' }}>You&apos;re browsing as a vendor.</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="px-4 py-3 flex items-center gap-2.5 border-b" style={{ background: '#fff', borderColor: '#e8d5d0' }}>
+            <Link href={`/messages/new?vendorId=${vendor.id}`} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition active:scale-[0.98]" style={{ background: '#9A2143', boxShadow: '0 2px 8px rgba(154,33,67,0.25)' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+              Chat
+            </Link>
+            {(() => {
+              try {
+                const href = formatWhatsappLink(vendor.contact.whatsapp);
+                if (href) return (
+                  <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => trackVendorEvent(vendor.id, 'contact_click', { method: 'whatsapp', source: 'vendor_profile' }).catch(() => {})} className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm text-white transition active:scale-[0.98]" style={{ background: '#25D366' }}>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                    WhatsApp
+                  </a>
+                );
+              } catch {}
+              return null;
+            })()}
+          </div>
+        )}
+
+        {/* ── Content ── */}
+        <div className="flex-1 pb-28">
 
           {/* Portfolio Section */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <h2 className="text-base font-bold text-gray-900 mb-3">Portfolio</h2>
+          <div className="px-4 py-5 border-b" style={{ borderColor: '#e8d5d0' }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: '#9A2143' }}>Portfolio</h2>
             {/* Video showreel (if provided) */}
             {(() => {
               const videoUrl = vendor.socialLinks?.youtube || vendor.socialLinks?.video || '';
@@ -546,9 +528,20 @@ export default function VendorProfile() {
               const ytId = extractYouTubeId(videoUrl.trim());
               if (ytId) {
                 return (
-                  <div className="mb-4 rounded-xl overflow-hidden border-2 border-gray-200">
+                  <div className="mb-4 rounded-xl overflow-hidden border-2" style={{ borderColor: '#e8d5d0' }}>
                     <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                      <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${ytId}`} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                      {ytPlaying ? (
+                        <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`} title="Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                      ) : (
+                        <button onClick={() => setYtPlaying(true)} className="absolute inset-0 w-full h-full" style={{ padding: 0, border: 'none', cursor: 'pointer', background: 'none' }}>
+                          <img src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`} alt="Video thumbnail" className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.22)' }}>
+                            <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(220,0,0,0.92)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                              <svg className="w-7 h-7" style={{ marginLeft: 4 }} fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            </div>
+                          </div>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -651,27 +644,28 @@ export default function VendorProfile() {
           )}
 
           {/* About Section */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <h2 className="text-base font-bold text-gray-900 mb-3">About</h2>
-            <p className="text-sm text-gray-700 leading-relaxed break-words">{vendor.about}</p>
+          <div className="px-4 py-5 border-b" style={{ borderColor: '#e8d5d0' }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: '#9A2143' }}>About</h2>
+            <p className="text-sm leading-relaxed break-words" style={{ color: '#4a3728' }}>{vendor.about}</p>
           </div>
 
           {/* Services Section */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <h2 className="text-base font-bold text-gray-900 mb-3">Services Offered</h2>
+          <div className="px-4 py-5 border-b" style={{ borderColor: '#e8d5d0' }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: '#9A2143' }}>Services Offered</h2>
             {vendor.services.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {vendor.services.map((service) => (
                   <span
                     key={service}
-                    className="px-3 py-1.5 bg-purple-50 text-purple-700 text-xs font-medium rounded-lg border border-purple-100 break-words max-w-full"
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg break-words max-w-full"
+                    style={{ background: '#fef3e2', color: '#9A2143', border: '1px solid #e8d5d0' }}
                   >
                     {service}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 italic">No services listed yet</p>
+              <p className="text-sm italic" style={{ color: '#7a5060' }}>No services listed yet</p>
             )}
           </div>
 
@@ -694,15 +688,15 @@ export default function VendorProfile() {
             };
 
             return (
-              <div className="px-4 py-4 border-b border-gray-200">
-                <h2 className="text-base font-bold text-gray-900 mb-3">Connect</h2>
+              <div className="px-4 py-4 border-b" style={{ borderColor: '#e8d5d0' }}>
+                <h2 className="text-base font-bold mb-3" style={{ color: '#9A2143' }}>Connect</h2>
                 <div className="flex flex-wrap gap-2">
                   {present.map(k => {
                     const label = k === 'whatsapp' ? 'WhatsApp' : k.charAt(0).toUpperCase() + k.slice(1);
                     const href = normalize(k, links[k]);
                     if (!href) return null;
                     return (
-                      <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="px-3 py-2 bg-white border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                      <a key={k} href={href} target="_blank" rel="noopener noreferrer" className="px-3 py-2 rounded-xl text-sm font-semibold transition" style={{ background: '#fff', border: '1.5px solid #e8d5d0', color: '#9A2143' }}>
                         {label}
                       </a>
                     );
@@ -713,8 +707,8 @@ export default function VendorProfile() {
           })()}
 
           {/* Packages Section */}
-          <div className="px-4 py-5 border-b border-gray-200">
-            <h2 className="text-base font-bold text-gray-900 mb-3">Packages & Pricing</h2>
+          <div className="px-4 py-5 border-b" style={{ borderColor: '#e8d5d0' }}>
+            <h2 className="text-base font-bold mb-3" style={{ color: '#9A2143' }}>Packages & Pricing</h2>
             {vendor.packages.length === 0 ? (
               <p className="text-sm text-gray-500 italic">No packages available yet. Contact vendor for pricing.</p>
             ) : (
@@ -722,7 +716,8 @@ export default function VendorProfile() {
               {vendor.packages.map((pkg) => (
                 <div
                   key={pkg.id}
-                  className="bg-white rounded-xl border-2 border-gray-200 p-4 space-y-3"
+                  className="rounded-2xl p-4 space-y-3"
+                  style={{ background: '#fff', border: '1.5px solid #e8d5d0' }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
@@ -751,7 +746,7 @@ export default function VendorProfile() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 text-sm rounded-lg px-3 py-2" style={{ background: '#fef3e2', color: '#4a3728' }}>
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -771,7 +766,8 @@ export default function VendorProfile() {
                       {pkg.includedServices.map((service) => (
                         <span
                           key={service}
-                          className="px-2 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded border border-gray-200 break-words max-w-full"
+                          className="px-2 py-1 text-xs font-medium rounded break-words max-w-full"
+                          style={{ background: '#fef3e2', color: '#7a5060', border: '1px solid #e8d5d0' }}
                         >
                           {service}
                         </span>
@@ -804,7 +800,7 @@ export default function VendorProfile() {
 
           {/* Reviews Section */}
           {(vendor?.reviewCount > 0 || myReview || (isOwner && allReviews.length > 0)) && (
-            <div className="px-4 py-5 border-b border-gray-200">
+            <div className="px-4 py-5 border-b" style={{ borderColor: '#e8d5d0' }}>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-base font-bold text-gray-900">Reviews</h2>
                 <div className="flex items-center gap-1">
@@ -906,81 +902,15 @@ export default function VendorProfile() {
             </div>
           )}
 
-          {/* Contact Section */}
-          <div className="px-4 py-5">
-            {hideCTAs ? (
-              <div className="space-y-3">
-                {(isPreview || isOwner) ? (
-                  <>
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center">
-                      <p className="text-sm font-semibold text-amber-800">Preview mode</p>
-                      <p className="text-xs text-amber-700 mt-1">This is how couples see your profile. Couple actions are hidden.</p>
-                    </div>
-                    <Link
-                      href="/vendor/dashboard"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-(--um-gold) text-white rounded-xl font-semibold text-base hover:bg-(--um-gold-dark) active:scale-95 transition-all shadow-lg shadow-amber-200"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
-                      Back to Dashboard
-                    </Link>
-                  </>
-                ) : (
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-center">
-                    <p className="text-sm font-semibold text-amber-800">View only</p>
-                    <p className="text-xs text-amber-700 mt-1">You&apos;re browsing as a vendor. Couple actions are hidden.</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <h2 className="text-base font-bold text-gray-900 mb-3">Get in Touch</h2>
-                <div className="space-y-2.5">
-                  <Link
-                    href={`/messages/new?vendorId=${vendor.id}`}
-                    className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-(--um-gold) text-white rounded-xl font-semibold text-base hover:bg-(--um-gold-dark) active:scale-95 transition-all shadow-lg shadow-amber-200"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
-                    Start Chat
-                  </Link>
-
-                  {(() => {
-                    try {
-                      const href = formatWhatsappLink(vendor.contact.whatsapp);
-                      if (href) {
-                        return (
-                          <a href={href} target="_blank" rel="noopener noreferrer" onClick={() => trackVendorEvent(vendor.id, 'contact_click', { method: 'whatsapp', source: 'vendor_profile' }).catch(() => {})} className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-green-500 text-white rounded-xl font-semibold text-base hover:bg-green-600 transition-colors">
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                            </svg>
-                            WhatsApp: {vendor.contact.whatsapp}
-                          </a>
-                        );
-                      }
-                    } catch {
-                      // fallback below
-                    }
-                    return (
-                      <button
-                        disabled
-                        className="flex items-center justify-center gap-2 w-full px-4 py-3.5 bg-green-500 text-white rounded-xl font-semibold text-base opacity-80 cursor-not-allowed"
-                      >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                        </svg>
-                        WhatsApp: {vendor.contact.whatsapp}
-                      </button>
-                    );
-                  })()}
-                </div>
-
-                <p className="text-xs text-gray-500 text-center mt-4">
-                  Preferred contact method: <span className="font-medium capitalize">{vendor.contact.preferredContact}</span>
-                </p>
-              </>
-            )}
-          </div>
+          {/* Back to Dashboard (owner/preview only) */}
+          {(isPreview || isOwner) && (
+            <div className="px-4 py-4">
+              <Link href="/vendor/dashboard" className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl font-semibold text-sm text-white transition active:scale-[0.98]" style={{ background: '#BD983F', boxShadow: '0 2px 8px rgba(189,152,63,0.3)' }}>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
+                Back to Dashboard
+              </Link>
+            </div>
+          )}
         </div>
 
         {hideCTAs ? <VendorBottomNav /> : <BottomNav />}

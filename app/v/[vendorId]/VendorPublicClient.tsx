@@ -95,6 +95,7 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
   const [activeSection, setActiveSection] = useState<'about' | 'portfolio' | 'packages' | 'availability'>('about');
   const [showRating, setShowRating] = useState(false);
   const [isCouple, setIsCouple] = useState(false);
+  const [ytPlaying, setYtPlaying] = useState(false);
   const hasTracked = useRef(false);
   const trackedPackages = useRef<Set<string>>(new Set());
 
@@ -392,7 +393,18 @@ export default function VendorPublicClient({ vendorId, vendor, services, package
               {videoId && (
                 <div className="mb-4 rounded-xl overflow-hidden border-2" style={{ borderColor: 'var(--border,#eadfd6)' }}>
                   <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-                    <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0&modestbranding=1&playsinline=1`} title="Vendor Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    {ytPlaying ? (
+                      <iframe className="absolute inset-0 w-full h-full" src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`} title="Vendor Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                    ) : (
+                      <button onClick={() => setYtPlaying(true)} className="absolute inset-0 w-full h-full" style={{ padding: 0, border: 'none', cursor: 'pointer', background: 'none' }}>
+                        <img src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} alt="Video thumbnail" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.22)' }}>
+                          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: 'rgba(220,0,0,0.92)', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                            <svg className="w-7 h-7" style={{ marginLeft: 4 }} fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                          </div>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

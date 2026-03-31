@@ -31,7 +31,7 @@ interface CoupleProfile {
 }
 
 /* ─── Helpers ─────────────────────────────────────────────── */
-const daysUntil = (d: string) => { const t = new Date(); t.setHours(0,0,0,0); return Math.max(0, Math.ceil((new Date(d+'T00:00:00').getTime() - t.getTime()) / 86400000)); };
+const daysUntil = (d: string) => { const t = new Date(); t.setHours(0,0,0,0); return Math.ceil((new Date(d+'T00:00:00').getTime() - t.getTime()) / 86400000); };
 const fmtDate   = (d: string) => new Date(d+'T00:00:00').toLocaleDateString('en-ZA', { day:'numeric', month:'long', year:'numeric' });
 const fmtShort  = (d: string) => new Date(d+'T00:00:00').toLocaleDateString('en-ZA', { day:'numeric', month:'short' });
 
@@ -351,15 +351,20 @@ export default function CoupleDashboard() {
                 >
                   {daysLeft === 0
                     ? <span style={{ fontSize:30 }}>🎉</span>
-                    : <>
-                        <span style={{ fontSize:28, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{daysLeft}</span>
-                        <span style={{ fontSize:9, color:'rgba(255,255,255,0.55)', letterSpacing:1.5, marginTop:1 }}>DAYS</span>
-                      </>
+                    : daysLeft! < 0
+                      ? <>
+                          <span style={{ fontSize:28, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{Math.abs(daysLeft!)}</span>
+                          <span style={{ fontSize:9, color:'rgba(255,255,255,0.55)', letterSpacing:1.5, marginTop:1 }}>DAYS AGO</span>
+                        </>
+                      : <>
+                          <span style={{ fontSize:28, fontWeight:700, color:'#fff', fontFamily:'var(--font-display,Georgia,serif)', lineHeight:1 }}>{daysLeft}</span>
+                          <span style={{ fontSize:9, color:'rgba(255,255,255,0.55)', letterSpacing:1.5, marginTop:1 }}>DAYS</span>
+                        </>
                   }
                 </Donut>
                 <div>
                   <p style={{ margin:'0 0 1px', fontSize:10, color:'rgba(255,255,255,0.42)', letterSpacing:1, textTransform:'uppercase' }}>
-                    {daysLeft === 0 ? 'Today is the day!' : 'Until your wedding'}
+                    {daysLeft === 0 ? 'Today is the day!' : daysLeft! < 0 ? 'Your wedding was' : 'Until your wedding'}
                   </p>
                   <p style={{ margin:'0 0 4px', fontSize:15, fontWeight:600, color:'#fff', lineHeight:1.3 }}>{fmtDate(weddingDate)}</p>
                   {coupleProfile?.location && <p style={{ margin:'0 0 8px', fontSize:11, color:'rgba(255,255,255,0.45)' }}>📍 {coupleProfile.location}</p>}
