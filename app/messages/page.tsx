@@ -13,6 +13,7 @@ import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 interface ConversationRow {
   id: string; couple_id: string; vendor_id: string;
   last_message_at: string | null; created_at: string;
+  last_read_at: string | null;
 }
 interface ConversationItem {
   id: string; otherName: string; otherRole: 'vendor' | 'couple';
