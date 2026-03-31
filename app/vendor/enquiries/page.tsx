@@ -244,24 +244,20 @@ export default function VendorEnquiriesPage() {
 
       if (!rawQuotes) { setLoading(false); return; }
 
-      /* Enrich each quote with couple info */
-      const enriched = await Promise.all(rawQuotes.map(async (q) => {
-        const [couplesRes, profilesRes] = await Promise.all([
-          supabase.from('couples').select('partner_name,avatar_url').eq('id', q.couple_id).maybeSingle(),
-          supabase.from('profiles').select('full_name').eq('id', q.couple_id).maybeSingle(),
-        ]);
-        const full_name = profilesRes.data?.full_name ?? '';
-        const partner_name = couplesRes.data?.partner_name ?? '';
-        let couple_name = '';
-        if (full_name && partner_name) couple_name = `${full_name} & ${partner_name}`;
-        else couple_name = full_name || partner_name || 'Couple';
-
-        return {
-          ...q,
-          couple_name,
-          couple_avatar: couplesRes.data?.avatar_url ?? null,
-        } as EnrichedQuote;
-      }));
+      /* Enrich quotes with couple info via service-client API (bypasses RLS) */
+      const coupleIds = [...new Set(rawQuotes.map(q => q.couple_id))];
+      const { data: { session: enqSession } } = await supabase.auth.getSession();
+      const enqToken = enqSession?.access_token || '';
+      const namesRes = await fetch('/api/vendor/couple-names', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${enqToken}` }, body: JSON.stringify({ coupleIds }) });
+      const namesJson = namesRes.ok ? await namesRes.json() : { couples: [], profiles: [] };
+      const cMap = new Map<string, { partner_name: string | null; avatar_url: string | null }>((namesJson.couples || []).map((c: any) => [c.id, c]));
+      const pMap = new Map<string, { full_name: string | null }>((namesJson.profiles || []).map((p: any) => [p.id, p]));
+      const enriched: EnrichedQuote[] = rawQuotes.map(q => {
+        const full_name = pMap.get(q.couple_id)?.full_name ?? '';
+        const partner_name = cMap.get(q.couple_id)?.partner_name ?? '';
+        const couple_name = full_name && partner_name ? `${full_name} & ${partner_name}` : full_name || partner_name || 'Couple';
+        return { ...q, couple_name, couple_avatar: cMap.get(q.couple_id)?.avatar_url ?? null } as EnrichedQuote;
+      });
 
       setQuotes(enriched);
       setLoading(false);

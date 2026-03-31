@@ -275,20 +275,27 @@ export default function VendorDashboard() {
 
       setMetrics({ profileViews: totalViews, savedByCouples: totalSaves, chatsStarted: convRes.count ?? 0, quotesReceived: quotesAllRes.count ?? 0 });
 
-      const addNames = async (rows: any[]): Promise<Quote[]> =>
-        Promise.all((rows || []).map(async (q: any) => {
-          const [cRes, pRes] = await Promise.all([
-            supabase.from('couples').select('partner_name,avatar_url').eq('id', q.couple_id).maybeSingle(),
-            supabase.from('profiles').select('full_name').eq('id', q.couple_id).maybeSingle(),
-          ]);
-          const c = cRes.data, p = pRes.data;
-          const coupleName = p?.full_name && c?.partner_name
-            ? `${p.full_name} & ${c.partner_name}`
-            : c?.partner_name || p?.full_name || 'Couple';
-          return { ...q, couple_name: coupleName, couple_avatar: c?.avatar_url || null };
-        }));
+      const allQuoteRows = [...(quotesReqRes.data || []), ...(quotesNegRes.data || [])];
+      const allCoupleIds = [...new Set(allQuoteRows.map((q: any) => q.couple_id))];
+      const { data: { session: dashSession } } = await supabase.auth.getSession();
+      const dashToken = dashSession?.access_token || '';
+      let coupleNameMap = new Map<string, { partner_name: string | null; avatar_url: string | null; full_name: string | null }>();
+      if (allCoupleIds.length) {
+        const namesRes = await fetch('/api/vendor/couple-names', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${dashToken}` }, body: JSON.stringify({ coupleIds: allCoupleIds }) });
+        if (namesRes.ok) {
+          const namesJson = await namesRes.json();
+          const cMap = new Map((namesJson.couples || []).map((c: any) => [c.id, c]));
+          const pMap = new Map((namesJson.profiles || []).map((p: any) => [p.id, p]));
+          allCoupleIds.forEach(id => coupleNameMap.set(id, { partner_name: (cMap.get(id) as any)?.partner_name ?? null, avatar_url: (cMap.get(id) as any)?.avatar_url ?? null, full_name: (pMap.get(id) as any)?.full_name ?? null }));
+        }
+      }
+      const addNames = (rows: any[]): Quote[] => (rows || []).map((q: any) => {
+        const info = coupleNameMap.get(q.couple_id);
+        const coupleName = info?.full_name && info?.partner_name ? `${info.full_name} & ${info.partner_name}` : info?.partner_name || info?.full_name || 'Couple';
+        return { ...q, couple_name: coupleName, couple_avatar: info?.avatar_url || null };
+      });
 
-      const [reqWithNames, negWithNames] = await Promise.all([addNames(quotesReqRes.data || []), addNames(quotesNegRes.data || [])]);
+      const [reqWithNames, negWithNames] = [addNames(quotesReqRes.data || []), addNames(quotesNegRes.data || [])];
       setQuoteRequests(reqWithNames);
       setNegotiations(negWithNames);
       setRecentNotifications((notifsRes.data as any[]) || []);
