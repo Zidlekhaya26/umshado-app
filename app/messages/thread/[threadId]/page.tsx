@@ -279,19 +279,18 @@ export default function ChatThread() {
       }
     };
 
-    loadInitial().then(() => {
-      // Mark conversation as read when thread opens (updates the timestamp used for unread badge)
-      supabase.from('conversations').update({ last_read_at: new Date().toISOString() }).eq('id', conversationId);
+    loadInitial().then(async () => {
+      // Mark conversation + messages as read via API (service role bypasses RLS)
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (token) {
+        fetch('/api/messages/mark-read', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ conversationId }),
+        }).catch(() => {});
+      }
     });
-
-    // Also mark individual message rows as read so any future read-based queries are consistent
-    if (currentUserId) {
-      supabase.from('messages')
-        .update({ read: true })
-        .eq('conversation_id', conversationId)
-        .neq('sender_id', currentUserId)
-        .eq('read', false);
-    }
 
     // Realtime: append new messages only (skip if _optimistic flag is set to avoid duplicates)
     const channel = supabase

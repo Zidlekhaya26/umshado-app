@@ -87,7 +87,19 @@ export default function VendorInboxPage() {
     // Reload when the tab regains focus (e.g. user returns from a chat thread)
     const onFocus = () => loadAll(user.id);
     window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
+
+    // Realtime: reload conversations whenever a message is inserted or updated
+    // (handles new messages arriving and mark-as-read updates in real time)
+    const msgChannel = supabase
+      .channel(`vendor-inbox-msgs:${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' },
+        () => { loadAll(user.id); })
+      .subscribe();
+
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      supabase.removeChannel(msgChannel);
+    };
   }, [user?.id]);
 
   const loadAll = async (uid: string) => {
