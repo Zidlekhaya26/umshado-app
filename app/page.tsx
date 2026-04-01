@@ -100,6 +100,9 @@ export default function Home() {
   const { user, role, loading } = useAuthRole();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     if (loading) return;
@@ -112,6 +115,38 @@ export default function Home() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    // Already running as installed PWA — hide the install section
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsStandalone(true);
+      return;
+    }
+    // Capture the browser's native install prompt (Android/Chrome)
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler as EventListener);
+    return () => window.removeEventListener('beforeinstallprompt', handler as EventListener);
+  }, []);
+
+  const handleAndroidInstall = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      const result = await installPrompt.userChoice;
+      if (result.outcome === 'accepted') setInstallPrompt(null);
+    } else {
+      // Fallback: direct APK download
+      const a = document.createElement('a');
+      a.href = '/umshado.apk';
+      a.download = 'uMshado.apk';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
 
   /* Redirect flash — show nothing while redirecting authenticated users */
   if (!loading && user) return null;
@@ -347,68 +382,139 @@ export default function Home() {
       </section>
 
       {/* ── Install section ───────────────────────────────────── */}
+      {!isStandalone && (
       <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: '#fff' }}>
-        <div style={{ maxWidth: 860, margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: CR, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>Install the App</p>
-          <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: DK, fontFamily: 'Georgia, serif', margin: '0 0 14px', lineHeight: 1.2 }}>Take uMshado everywhere</h2>
-          <p style={{ fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 52px' }}>
-            Add uMshado to your home screen in seconds — no app store download needed. Works on Android and iPhone.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, textAlign: 'left' }}>
-            {/* Android */}
-            <div style={{ padding: '32px 28px', borderRadius: 24, background: BG, border: `1.5px solid ${BOR}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #34a853, #0f9d58)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M6.18 15.64a2.18 2.18 0 002.18 2.18C9.28 17.82 10 17.1 10 16.27v-4.09h2.08v4.09c0 1.56-1.28 2.82-2.86 2.82A2.9 2.9 0 016.22 16l-.04-.36zM3 8.18C3 7.1 3.88 6.22 5 6.22S7 7.1 7 8.18v6.46c0 1.08-.88 1.96-2 1.96S3 15.72 3 14.64V8.18zM12 8.18c0-1.08.88-1.96 2-1.96s2 .88 2 1.96v6.46c0 1.08-.88 1.96-2 1.96s-2-.88-2-1.96V8.18zM17 8.18c0-1.08.88-1.96 2-1.96s2 .88 2 1.96v4.09c0 1.56-1.28 2.82-2.86 2.82A2.9 2.9 0 0115.22 16v-.36A2.18 2.18 0 0017.4 17.82c1.2 0 1.78-.72 1.78-1.55V8.18z"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: DK }}>Android</div>
-                  <div style={{ fontSize: 12, color: '#7a5060' }}>Chrome browser</div>
-                </div>
-              </div>
-              {[
-                'Open umshadohub.co.za in Chrome',
-                'Tap the 3-dot menu in the top right',
-                'Tap "Add to Home screen"',
-                'Tap "Add" to confirm',
-              ].map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 3 ? 14 : 0 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: `rgba(154,33,67,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: CR }}>{i + 1}</span>
-                  </div>
-                  <p style={{ margin: 0, fontSize: 13.5, color: '#4a3728', lineHeight: 1.5 }}>{step}</p>
-                </div>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 44 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: CR, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>Get the App</p>
+            <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: DK, fontFamily: 'Georgia, serif', margin: '0 0 14px', lineHeight: 1.2 }}>Take uMshado everywhere</h2>
+            <p style={{ fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 500, margin: '0 auto 20px' }}>
+              Install the app for the best experience — fast, works offline, and supports push notifications for messages and bookings.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              {['Works offline', 'Push notifications', 'No App Store needed', 'Free forever'].map(f => (
+                <span key={f} style={{ fontSize: 12, fontWeight: 600, color: CR, background: 'rgba(154,33,67,0.07)', border: '1px solid rgba(154,33,67,0.15)', borderRadius: 20, padding: '4px 14px' }}>{f}</span>
               ))}
             </div>
+          </div>
+          {/* Platform cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: 20 }}>
 
-            {/* iPhone */}
-            <div style={{ padding: '32px 28px', borderRadius: 24, background: BG, border: `1.5px solid ${BOR}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #555, #000)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="22" height="22" fill="white" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: DK }}>iPhone</div>
-                  <div style={{ fontSize: 12, color: '#7a5060' }}>Safari browser</div>
-                </div>
-              </div>
-              {[
-                'Open umshadohub.co.za in Safari',
-                'Tap the Share button at the bottom',
-                'Scroll down and tap "Add to Home Screen"',
-                'Tap "Add" in the top right',
-              ].map((step, i) => (
-                <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 3 ? 14 : 0 }}>
-                  <div style={{ width: 24, height: 24, borderRadius: '50%', background: `rgba(154,33,67,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: CR }}>{i + 1}</span>
+            {/* ── Android card ── */}
+            <div style={{ borderRadius: 28, overflow: 'hidden', background: '#fff', border: `1.5px solid ${BOR}`, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+              <div style={{ padding: '28px 28px 24px', background: 'linear-gradient(135deg, #0a2e1a, #1a5c32)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+                      <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5S11 23.33 11 22.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zm-2.5-1C2.67 17 2 16.33 2 15.5v-7C2 7.67 2.67 7 3.5 7S5 7.67 5 8.5v7c0 .83-.67 1.5-1.5 1.5zm17 0c-.83 0-1.5-.67-1.5-1.5v-7c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5zM15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0012 1c-.96 0-1.86.23-2.66.63L7.88.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 006 7h12a5.96 5.96 0 00-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+                    </svg>
                   </div>
-                  <p style={{ margin: 0, fontSize: 13.5, color: '#4a3728', lineHeight: 1.5 }}>{step}</p>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>Android</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>One-tap install</div>
+                  </div>
                 </div>
-              ))}
+                <button
+                  onClick={handleAndroidInstall}
+                  style={{
+                    width: '100%', padding: '14px 20px', borderRadius: 18, fontSize: 15, fontWeight: 700,
+                    background: installPrompt ? '#4ade80' : 'rgba(255,255,255,0.12)',
+                    color: installPrompt ? '#0a2e1a' : '#fff',
+                    border: installPrompt ? 'none' : '1.5px solid rgba(255,255,255,0.25)',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    boxShadow: installPrompt ? '0 4px 16px rgba(74,222,128,0.4)' : 'none',
+                  }}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  {installPrompt ? 'Tap to Install Now' : 'Install on Android'}
+                </button>
+                {!installPrompt && (
+                  <p style={{ margin: '10px 0 0', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>
+                    or{' '}
+                    <a href="/umshado.apk" download="uMshado.apk" style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'underline' }}>
+                      download APK directly
+                    </a>
+                  </p>
+                )}
+              </div>
+              <div style={{ padding: '22px 28px' }}>
+                <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1.2, textTransform: 'uppercase' }}>Manual steps via Chrome</p>
+                {[
+                  { icon: '🌐', text: 'Open umshadohub.co.za in Chrome' },
+                  { icon: '⋮', text: 'Tap the 3-dot menu (top right)' },
+                  { icon: '📲', text: 'Tap "Add to Home screen"' },
+                  { icon: '✓', text: 'Tap "Add" to confirm' },
+                ].map(({ icon, text }, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 3 ? 11 : 0, alignItems: 'center' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(52,168,83,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13 }}>{icon}</div>
+                    <p style={{ margin: 0, fontSize: 13.5, color: '#4a3728', lineHeight: 1.45 }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── iPhone card ── */}
+            <div style={{ borderRadius: 28, overflow: 'hidden', background: '#fff', border: `1.5px solid ${BOR}`, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+              <div style={{ padding: '28px 28px 24px', background: 'linear-gradient(135deg, #1c1c1e, #3a3a3c)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 16, background: 'rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="26" height="26" fill="white" viewBox="0 0 24 24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 18, fontWeight: 800, color: '#fff' }}>iPhone</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>Add to Home Screen</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowIOSModal(true)}
+                  style={{
+                    width: '100%', padding: '14px 20px', borderRadius: 18, fontSize: 15, fontWeight: 700,
+                    background: CR, color: '#fff', border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    boxShadow: '0 4px 16px rgba(154,33,67,0.45)',
+                  }}
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                  </svg>
+                  How to Install on iPhone
+                </button>
+                <p style={{ margin: '10px 0 0', textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>Takes 30 seconds in Safari</p>
+              </div>
+              <div style={{ padding: '22px 28px' }}>
+                <p style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, color: '#7a5060', letterSpacing: 1.2, textTransform: 'uppercase' }}>Quick steps via Safari</p>
+                {[
+                  { icon: '🧭', text: 'Open in Safari (not Chrome)' },
+                  { icon: '⬆️', text: 'Tap the Share button at the bottom' },
+                  { icon: '＋', text: 'Tap "Add to Home Screen"' },
+                  { icon: '✓', text: 'Tap "Add" — done!' },
+                ].map(({ icon, text }, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 3 ? 11 : 0, alignItems: 'center' }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13 }}>{icon}</div>
+                    <p style={{ margin: 0, fontSize: 13.5, color: '#4a3728', lineHeight: 1.45 }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Push notification callout */}
+          <div style={{ padding: '18px 22px', borderRadius: 18, background: 'rgba(154,33,67,0.06)', border: '1px solid rgba(154,33,67,0.15)', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ width: 44, height: 44, borderRadius: 13, background: CR, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(154,33,67,0.3)' }}>
+              <svg width="22" height="22" fill="none" stroke="white" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+            </div>
+            <div>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: DK }}>Get instant notifications after installing</p>
+              <p style={{ margin: '3px 0 0', fontSize: 13, color: '#7a5060', lineHeight: 1.45 }}>Once installed, open the app and tap "Enable notifications" to receive instant alerts for new messages, quote replies and bookings — even when the app is closed.</p>
             </div>
           </div>
         </div>
       </section>
+      )}
 
       {/* ── Final CTA ─────────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: `linear-gradient(135deg, ${DK}, ${CRX} 60%, ${CR})`, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
@@ -429,6 +535,56 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ── iOS Install Modal ─────────────────────────────────── */}
+      {showIOSModal && (
+        <div
+          onClick={() => setShowIOSModal(false)}
+          style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ width: '100%', maxWidth: 500, background: '#fff', borderRadius: '28px 28px 0 0', padding: '12px 28px 48px', boxShadow: '0 -8px 50px rgba(0,0,0,0.25)' }}
+          >
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: '#e0d0d4', margin: '8px auto 28px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: DK, fontFamily: 'Georgia, serif' }}>Add to iPhone</h3>
+                <p style={{ margin: '4px 0 0', fontSize: 13, color: '#7a5060' }}>Follow these steps in Safari</p>
+              </div>
+              <button onClick={() => setShowIOSModal(false)} style={{ width: 36, height: 36, borderRadius: '50%', background: '#f5edf0', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="16" height="16" fill="none" stroke={CR} strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginBottom: 24 }}>
+              {[
+                { color: '#0077ff', title: 'Open Safari', desc: 'Must be Safari — Chrome cannot install the app on iPhone.', icon: <svg width="22" height="22" fill="none" stroke="white" strokeWidth={1.8} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg> },
+                { color: '#34a853', title: 'Tap the Share button', desc: 'The square with an arrow — at the bottom centre of Safari.', icon: <svg width="22" height="22" fill="none" stroke="white" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> },
+                { color: CR, title: 'Tap "Add to Home Screen"', desc: 'Scroll down in the share sheet — it\'s listed with a + icon.', icon: <svg width="22" height="22" fill="none" stroke="white" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg> },
+                { color: '#16a34a', title: 'Tap "Add" to confirm', desc: 'uMshado is now on your home screen. Open it and enable notifications!', icon: <svg width="22" height="22" fill="none" stroke="white" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg> },
+              ].map(({ color, title, desc, icon }, i) => (
+                <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+                  <div style={{ width: 46, height: 46, borderRadius: 14, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 12px ${color}55` }}>
+                    {icon}
+                  </div>
+                  <div style={{ paddingTop: 3 }}>
+                    <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: DK }}>{title}</p>
+                    <p style={{ margin: '3px 0 0', fontSize: 13, color: '#7a5060', lineHeight: 1.45 }}>{desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '14px 16px', borderRadius: 14, background: 'rgba(154,33,67,0.07)', border: '1px solid rgba(154,33,67,0.15)', display: 'flex', gap: 10, alignItems: 'center' }}>
+              <svg width="18" height="18" fill="none" stroke={CR} strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V4a2 2 0 10-4 0v1.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+              </svg>
+              <p style={{ margin: 0, fontSize: 12.5, color: '#5a3040', lineHeight: 1.45 }}>
+                After installing, open the app and tap <strong>Enable notifications</strong> to get instant alerts for messages and bookings.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Footer ────────────────────────────────────────────── */}
       <footer style={{ background: '#100810', padding: '40px 24px 32px' }}>
