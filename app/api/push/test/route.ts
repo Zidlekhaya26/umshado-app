@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
     try {
       const webpush = (await import('web-push')).default;
       webpush.setVapidDetails(
-        process.env.VAPID_SUBJECT || 'mailto:support@umshado.co.za',
+        process.env.VAPID_SUBJECT || 'mailto:support@umshadohub.co.za',
         process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
         process.env.VAPID_PRIVATE_KEY!
       );

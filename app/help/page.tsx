@@ -39,7 +39,7 @@ const FAQ_DATA: FaqItem[] = [
   {
     id: 'acct-4',
     question: 'How do I delete my account?',
-    answer: 'During the MVP, please contact support at support@umshado.co.za to request account deletion. We\'ll remove your data within 7 business days. Self-service account deletion is on the roadmap.',
+    answer: 'During the MVP, please contact support at support@umshadohub.co.za to request account deletion. We\'ll remove your data within 7 business days. Self-service account deletion is on the roadmap.',
     category: 'Account',
   },
 

@@ -166,7 +166,7 @@ export async function sendWebPush(
 ): Promise<{ ok: boolean; status?: number; error?: string }> {
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@umshado.co.za';
+  const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@umshadohub.co.za';
 
   if (!vapidPublicKey || !vapidPrivateKey) {
     return { ok: false, error: 'VAPID keys not configured' };

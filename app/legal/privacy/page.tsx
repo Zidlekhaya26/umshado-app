@@ -119,7 +119,7 @@ export default function PrivacyPolicyPage() {
             <a href="mailto:privacy@umshado.co.za" className="text-purple-600 font-semibold hover:underline">privacy@umshado.co.za</a>.
             <br />
             For general support, contact{' '}
-            <a href="mailto:support@umshado.co.za" className="text-purple-600 font-semibold hover:underline">support@umshado.co.za</a>.
+            <a href="mailto:support@umshadohub.co.za" className="text-purple-600 font-semibold hover:underline">support@umshadohub.co.za</a>.
           </p>
 
           <div className="border-t border-gray-200 pt-4 mt-6">

@@ -42,7 +42,7 @@ export async function notifyUsers(payload: NotifyPayload): Promise<void> {
 
       const vapidPublic = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
-      const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@umshado.co.za';
+      const vapidSubject = process.env.VAPID_SUBJECT || 'mailto:support@umshadohub.co.za';
 
       if (!vapidPublic || !vapidPrivate) {
         console.warn('[notify] VAPID keys not configured — skipping push');
