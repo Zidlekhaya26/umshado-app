@@ -291,9 +291,14 @@ export default function CoupleDashboard() {
   /* ── Loading ────────────────────────────────────────────── */
   if (!loaded) return <LoadingPage />;
 
-  const coupleTitle = coupleProfile?.partner_name
-    ? `Hi, ${coupleProfile.partner_name} 👋`
-    : userName ? `Hi, ${userName} 👋` : 'Your Wedding';
+  const coupleTitle = (() => {
+    const n1 = userName;
+    const n2 = coupleProfile?.partner_name;
+    if (n1 && n2) return `Hi, ${n1} & ${n2} 👋`;
+    if (n1) return `Hi, ${n1} 👋`;
+    if (n2) return `Hi, ${n2} 👋`;
+    return 'Your Wedding';
+  })();
 
   const quickNav = [
     { icon:'📋', label:'Planner',  href:'/couple/planner' },
