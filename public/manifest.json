@@ -1,10 +1,11 @@
 {
-  "name": "uMshado",
+  "name": "uMshado — SA Wedding Platform",
   "short_name": "uMshado",
-  "display": "fullscreen",
+  "description": "Plan your dream wedding or grow your wedding business. South Africa's #1 wedding platform.",
+  "display": "standalone",
   "start_url": "/",
-  "background_color": "#F7F0EA",
-  "theme_color": "#F7F0EA",
+  "background_color": "#faf8f5",
+  "theme_color": "#9A2143",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
