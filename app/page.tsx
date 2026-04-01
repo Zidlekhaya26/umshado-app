@@ -20,7 +20,16 @@ const COUPLE_FEATURES = [
       </svg>
     ),
     title: 'Find Vendors',
-    desc: 'Browse photographers, venues, caterers, florists and more — all vetted and local.',
+    desc: 'Browse photographers, venues, caterers, florists and more — all vetted, local and ready to quote.',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    ),
+    title: 'Wedding Website',
+    desc: 'Create a beautiful wedding website for your guests — RSVP, event details, countdown and your love story in one link.',
   },
   {
     icon: (
@@ -29,16 +38,25 @@ const COUPLE_FEATURES = [
       </svg>
     ),
     title: 'Wedding Planner',
-    desc: 'Tasks, checklists, and timelines so nothing gets missed on your big day.',
+    desc: 'Tasks, checklists, and timelines so nothing gets missed — from first deposit to the last dance.',
   },
   {
     icon: (
       <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
       </svg>
     ),
-    title: 'Countdown',
-    desc: 'A live countdown to your wedding day, always on your dashboard.',
+    title: 'Guest List & RSVPs',
+    desc: 'Manage your guest list, track RSVPs, meal choices and seating — no more endless spreadsheets.',
+  },
+  {
+    icon: (
+      <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    ),
+    title: 'Budget Tracker',
+    desc: 'Set your total budget, log every expense and always know exactly where your money is going.',
   },
   {
     icon: (
@@ -47,7 +65,7 @@ const COUPLE_FEATURES = [
       </svg>
     ),
     title: 'Direct Messaging',
-    desc: 'Chat directly with vendors — no middlemen, no hidden fees.',
+    desc: 'Chat directly with vendors, share documents and get quotes — no middlemen, no hidden fees.',
   },
 ];
 
@@ -68,7 +86,7 @@ const VENDOR_FEATURES = [
       </svg>
     ),
     title: 'Reach More Couples',
-    desc: 'Get discovered by couples actively planning their wedding across South Africa.',
+    desc: 'Get discovered by couples actively planning their wedding across Africa.',
   },
   {
     icon: (
@@ -165,7 +183,7 @@ export default function Home() {
         boxShadow: scrolled ? '0 1px 0 rgba(255,255,255,0.08)' : 'none',
       }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
-          <Image src="/logo-full.png" alt="uMshado" width={130} height={42} style={{ height: 36, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
+          <Image src="/logo-full.png" alt="uMshado" width={180} height={58} style={{ height: 52, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
         </Link>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Link href="/auth/sign-in" style={{ padding: '8px 18px', borderRadius: 20, fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)', transition: 'border-color 0.2s' }}>
@@ -201,7 +219,7 @@ export default function Home() {
           {/* Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 16px', borderRadius: 20, background: 'rgba(189,152,63,0.15)', border: '1px solid rgba(189,152,63,0.3)', marginBottom: 28 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: GD, display: 'inline-block' }} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>South Africa&apos;s Wedding Platform</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>Africa&apos;s Wedding Platform</span>
           </div>
 
           {/* Headline */}
@@ -210,7 +228,7 @@ export default function Home() {
             <span style={{ color: GD }}>perfectly planned.</span>
           </h1>
           <p style={{ margin: '0 0 44px', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.80)', lineHeight: 1.65, maxWidth: 560, textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}>
-            Discover trusted vendors, manage every detail, and celebrate your love story — all in one place. Built for South African couples and wedding businesses.
+            Discover trusted vendors, manage every detail, and celebrate your love story — all in one place. Built for African couples and wedding businesses.
           </p>
 
           {/* CTAs */}
@@ -239,7 +257,7 @@ export default function Home() {
           {[
             { num: '500+', label: 'Vendors listed' },
             { num: '50+', label: 'Service categories' },
-            { num: '9', label: 'Provinces covered' },
+            { num: '5+', label: 'Countries growing' },
             { num: '100%', label: 'Free for couples' },
           ].map(({ num, label }) => (
             <div key={label} style={{ textAlign: 'center' }}>
@@ -339,7 +357,7 @@ export default function Home() {
             <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>For Vendors</span>
           </div>
           <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', margin: '0 0 8px', lineHeight: 1.2 }}>Grow your wedding business</h2>
-          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>List your business for free and get in front of couples actively planning their weddings right now.</p>
+          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>List your business for free and get in front of couples across Africa who are actively planning their weddings right now.</p>
 
           {/* Vendor category grid */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 36, borderRadius: 24, overflow: 'hidden' }}>
@@ -524,7 +542,7 @@ export default function Home() {
             Ready to start your<br />
             <span style={{ color: GD }}>wedding journey?</span>
           </h2>
-          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', lineHeight: 1.65, margin: '0 0 40px' }}>Join thousands of South African couples and vendors already using uMshado.</p>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', lineHeight: 1.65, margin: '0 0 40px' }}>Join thousands of African couples and wedding vendors already using uMshado.</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
             <Link href="/auth/sign-up?role=couple" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 30px', borderRadius: 30, background: '#fff', color: CR, fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
               I&apos;m planning a wedding
@@ -605,7 +623,7 @@ export default function Home() {
           <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 20 }} />
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>
-              &copy; {new Date().getFullYear()} uMshado. Built with love for South African weddings.
+              &copy; {new Date().getFullYear()} uMshado. Built with love for African weddings.
             </p>
             <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
               <Link href="/privacy" style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', textDecoration: 'none' }}>Privacy</Link>
