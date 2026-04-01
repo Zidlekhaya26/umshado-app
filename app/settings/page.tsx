@@ -151,6 +151,7 @@ function SettingsContent() {
 
   const [showEditProfile, setShowEditProfile]     = useState(false);
   const [editYourName, setEditYourName]           = useState('');
+  const [editPartnerName, setEditPartnerName]     = useState('');
   const [editWeddingDate, setEditWeddingDate]     = useState('');
   const [editLocation, setEditLocation]           = useState('');
   const [editCountry, setEditCountry]             = useState('');
@@ -209,9 +210,9 @@ function SettingsContent() {
             .select('partner_name,wedding_date,location,country,avatar_url')
             .eq('id', user.id).maybeSingle();
           if (cd) {
-            const name = cd.partner_name ?? data?.full_name ?? null;
-            setCouplePartnerName(name);
-            if (name) setEditYourName(name);
+            setCouplePartnerName(cd.partner_name ?? null);
+            if (data?.full_name) setEditYourName(data.full_name);
+            if (cd.partner_name) setEditPartnerName(cd.partner_name);
             setCoupleWeddingDate(cd.wedding_date ?? null);
             setEditWeddingDate(cd.wedding_date ?? '');
             setEditLocation(cd.location ?? '');
@@ -273,7 +274,7 @@ function SettingsContent() {
     await supabase.from('profiles').update({ full_name: editYourName.trim() || null }).eq('id', authUserId);
     const { error } = await supabase.from('couples').upsert({
       id: authUserId,
-      partner_name: editYourName.trim() || null,
+      partner_name: editPartnerName.trim() || null,
       wedding_date: editWeddingDate || null,
       location:     editLocation.trim() || null,
       country:      editCountry.trim() || null,
@@ -281,7 +282,7 @@ function SettingsContent() {
     if (error) {
       setProfileSaveMsg({ type: 'error', text: 'Failed to save. Please try again.' });
     } else {
-      setCouplePartnerName(editYourName.trim() || null);
+      setCouplePartnerName(editPartnerName.trim() || null);
       setCoupleWeddingDate(editWeddingDate || null);
       if (editWeddingDate) {
         const diff = Math.ceil((new Date(editWeddingDate + 'T00:00:00').getTime() - Date.now()) / 86400000);
@@ -689,7 +690,14 @@ function SettingsContent() {
 
                 <Field label="Your Name">
                   <input value={editYourName} onChange={e => setEditYourName(e.target.value)}
-                    placeholder="e.g., Mthabisi & Zanele"
+                    placeholder="e.g., Thabi"
+                    className="settings-input"
+                    style={inputStyle} />
+                </Field>
+
+                <Field label="Partner's Name">
+                  <input value={editPartnerName} onChange={e => setEditPartnerName(e.target.value)}
+                    placeholder="e.g., Mthabi"
                     className="settings-input"
                     style={inputStyle} />
                 </Field>

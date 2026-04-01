@@ -464,8 +464,8 @@ export default function WeddingWebsite({
   const prettyDate = formatPrettyDate(weddingDate);
   const countdown = useCountdown(weddingDate);
 
-  const name1 = coupleName ?? 'The Happy';
-  const name2 = partnerName ?? 'Couple';
+  const name1 = coupleName ?? 'Partner 1';
+  const name2 = partnerName ?? 'Partner 2';
   const coupleDisplay = `${name1} & ${name2}`;
 
   const hasStoryContent = howWeMet || proposalStory || coupleMessage;
