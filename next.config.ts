@@ -17,7 +17,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      `img-src 'self' ${supabaseHostname ? `https://${supabaseHostname}` : ''} https://img.youtube.com https://i.ytimg.com data: blob:`,
+      `img-src 'self' ${supabaseHostname ? `https://${supabaseHostname}` : ''} https://img.youtube.com https://i.ytimg.com https://images.pexels.com data: blob:`,
       "font-src 'self'",
       "frame-src 'self' https://www.youtube.com https://youtube.com",
       // Added Sentry ingest endpoints to connect-src

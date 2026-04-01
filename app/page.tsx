@@ -145,10 +145,18 @@ export default function Home() {
       {/* ── Hero ──────────────────────────────────────────────── */}
       <section style={{
         minHeight: '100svh', position: 'relative',
-        background: `linear-gradient(135deg, ${DK} 0%, ${CRX} 45%, ${CR} 100%)`,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        padding: '100px 24px 80px', textAlign: 'center',
+        padding: '100px 24px 80px', textAlign: 'center', overflow: 'hidden',
       }}>
+        {/* Background photo */}
+        <img
+          src="https://images.pexels.com/photos/33737505/pexels-photo-33737505.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1280&fit=crop"
+          alt=""
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', pointerEvents: 'none' }}
+        />
+        {/* Gradient overlay — brand colours on top of photo */}
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, rgba(26,13,18,0.88) 0%, rgba(77,15,33,0.80) 50%, rgba(154,33,67,0.70) 100%)`, pointerEvents: 'none' }} />
         {/* Abstract decorative rings */}
         <div style={{ position: 'absolute', top: '10%', left: '-10%', width: '50vw', height: '50vw', maxWidth: 500, maxHeight: 500, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: '5%', right: '-15%', width: '60vw', height: '60vw', maxWidth: 600, maxHeight: 600, borderRadius: '50%', border: '1px solid rgba(189,152,63,0.08)', pointerEvents: 'none' }} />
@@ -205,6 +213,27 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Photo strip ───────────────────────────────────────── */}
+      <section style={{ overflow: 'hidden', lineHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.9fr', height: 'clamp(160px, 26vw, 320px)' }}>
+          <img
+            src="https://images.pexels.com/photos/31733150/pexels-photo-31733150.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Traditional Nigerian wedding ceremony"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+          <img
+            src="https://images.pexels.com/photos/31563146/pexels-photo-31563146.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Nigerian couple in traditional attire"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
+          />
+          <img
+            src="https://images.pexels.com/photos/34597461/pexels-photo-34597461.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Elegant wedding reception table"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+        </div>
+      </section>
+
       {/* ── How it works ──────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: '#fff' }}>
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
@@ -232,7 +261,21 @@ export default function Home() {
             <span style={{ fontSize: 11, fontWeight: 700, color: CR, letterSpacing: 1.8, textTransform: 'uppercase' }}>For Couples</span>
           </div>
           <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: DK, fontFamily: 'Georgia, serif', margin: '0 0 8px', lineHeight: 1.2 }}>Everything for your big day</h2>
-          <p style={{ fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 540, margin: '0 0 44px' }}>From finding the perfect venue to ticking off the last task — uMshado keeps your wedding journey organised and stress-free.</p>
+          <p style={{ fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>From finding the perfect venue to ticking off the last task — uMshado keeps your wedding journey organised and stress-free.</p>
+
+          {/* Couple photo */}
+          <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 36, height: 'clamp(200px, 32vw, 380px)', position: 'relative' }}>
+            <img
+              src="https://images.pexels.com/photos/33737505/pexels-photo-33737505.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop&crop=top"
+              alt="Beautiful Nigerian wedding couple"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.55) 0%, transparent 55%)' }} />
+            <div style={{ position: 'absolute', bottom: 20, left: 24, right: 24 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>Your love story deserves to be celebrated — perfectly.</p>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
             {COUPLE_FEATURES.map(({ icon, title, desc }) => (
               <div key={title} style={{ padding: '28px 22px', borderRadius: 20, background: '#fff', border: `1.5px solid ${BOR}`, transition: 'box-shadow 0.2s' }}>
@@ -259,7 +302,21 @@ export default function Home() {
             <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>For Vendors</span>
           </div>
           <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', margin: '0 0 8px', lineHeight: 1.2 }}>Grow your wedding business</h2>
-          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 44px' }}>List your business for free and get in front of couples actively planning their weddings right now.</p>
+          <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>List your business for free and get in front of couples actively planning their weddings right now.</p>
+
+          {/* Vendor photo */}
+          <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 36, height: 'clamp(180px, 28vw, 320px)', position: 'relative' }}>
+            <img
+              src="https://images.pexels.com/photos/34597461/pexels-photo-34597461.jpeg?auto=compress&cs=tinysrgb&w=1200&h=500&fit=crop"
+              alt="Elegant wedding reception setup by a South African vendor"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.65) 0%, transparent 50%)' }} />
+            <div style={{ position: 'absolute', bottom: 20, left: 24, right: 24 }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>Your craft on display — to couples who are ready to book.</p>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
             {VENDOR_FEATURES.map(({ icon, title, desc }) => (
               <div key={title} style={{ padding: '28px 22px', borderRadius: 20, background: 'rgba(255,255,255,0.04)', border: '1.5px solid rgba(255,255,255,0.08)' }}>
