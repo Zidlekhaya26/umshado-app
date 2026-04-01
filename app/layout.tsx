@@ -19,11 +19,32 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "uMshado",
-  description: "Plan your dream wedding with uMshado",
+  title: "uMshado — African Wedding Platform",
+  description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
   icons: {
     apple: '/apple-touch-icon.png',
-  }
+  },
+  openGraph: {
+    title: "uMshado — African Wedding Platform",
+    description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
+    url: "https://www.umshadohub.co.za",
+    siteName: "uMshado",
+    images: [
+      {
+        url: "https://www.umshadohub.co.za/logo-full.png",
+        width: 512,
+        height: 512,
+        alt: "uMshado — African Wedding Platform",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "uMshado — African Wedding Platform",
+    description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
+    images: ["https://www.umshadohub.co.za/logo-full.png"],
+  },
 };
 
 // ✅ This helps iPhone Safari render at true device width
@@ -54,6 +75,15 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         {/* VAPID key injected server-side so it's always available to the client */}
         <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''} />
+        {/* Open Graph — WhatsApp, iMessage, Telegram read these */}
+        <meta property="og:title" content="uMshado — African Wedding Platform" />
+        <meta property="og:description" content="Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform." />
+        <meta property="og:image" content="https://www.umshadohub.co.za/logo-full.png" />
+        <meta property="og:image:width" content="512" />
+        <meta property="og:image:height" content="512" />
+        <meta property="og:url" content="https://www.umshadohub.co.za" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="uMshado" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         <ErrorBoundary>
