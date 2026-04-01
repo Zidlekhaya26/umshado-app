@@ -139,7 +139,7 @@ export default function CoupleOnboarding() {
 
   const [formData, setFormData] = useState({
     weddingDate: '', yourName: '', partnerName: '', weddingLocation: '',
-    country: '', culturalPreferences: '',
+    country: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -160,7 +160,7 @@ export default function CoupleOnboarding() {
         wedding_date: formData.weddingDate || null,
         location: formData.weddingLocation || null,
         country: formData.country || null,
-        cultural_preferences: formData.culturalPreferences || null,
+
         currency,
       });
       if (!res.success) { alert('Failed to save: ' + (res.error || 'unknown')); return; }
@@ -235,16 +235,6 @@ export default function CoupleOnboarding() {
             />
           </div>
 
-          {/* Cultural preferences */}
-          <div className="co4">
-            <TextareaField
-              label="Cultural & traditional preferences"
-              id="culturalPreferences" name="culturalPreferences"
-              value={formData.culturalPreferences} onChange={handleChange}
-              placeholder="Tell us about any cultural or traditional elements you'd like to include — lobola, umabo, church ceremony, etc."
-              hint="This helps us recommend vendors who specialise in your traditions"
-            />
-          </div>
 
           {/* What you get card */}
           <div className="co5" style={{ background: '#fff', borderRadius: 16, border: `1.5px solid ${BOR}`, overflow: 'hidden' }}>
