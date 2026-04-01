@@ -155,42 +155,44 @@ export default function Home() {
           aria-hidden="true"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', pointerEvents: 'none' }}
         />
-        {/* Gradient overlay — brand colours on top of photo */}
-        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, rgba(26,13,18,0.88) 0%, rgba(77,15,33,0.80) 50%, rgba(154,33,67,0.70) 100%)`, pointerEvents: 'none' }} />
+        {/* Gradient overlay — dark enough that white text is always legible over any photo */}
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(180deg, rgba(20,8,14,0.72) 0%, rgba(26,13,18,0.82) 35%, rgba(26,13,18,0.88) 65%, rgba(20,8,14,0.75) 100%)`, pointerEvents: 'none', zIndex: 1 }} />
         {/* Abstract decorative rings */}
-        <div style={{ position: 'absolute', top: '10%', left: '-10%', width: '50vw', height: '50vw', maxWidth: 500, maxHeight: 500, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.05)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: '5%', right: '-15%', width: '60vw', height: '60vw', maxWidth: 600, maxHeight: 600, borderRadius: '50%', border: '1px solid rgba(189,152,63,0.08)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '30%', right: '5%', width: '20vw', height: '20vw', maxWidth: 200, maxHeight: 200, borderRadius: '50%', background: 'rgba(189,152,63,0.06)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '10%', left: '-10%', width: '50vw', height: '50vw', maxWidth: 500, maxHeight: 500, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.05)', pointerEvents: 'none', zIndex: 1 }} />
+        <div style={{ position: 'absolute', bottom: '5%', right: '-15%', width: '60vw', height: '60vw', maxWidth: 600, maxHeight: 600, borderRadius: '50%', border: '1px solid rgba(189,152,63,0.08)', pointerEvents: 'none', zIndex: 1 }} />
 
-        {/* Badge */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 16px', borderRadius: 20, background: 'rgba(189,152,63,0.15)', border: '1px solid rgba(189,152,63,0.3)', marginBottom: 28, position: 'relative' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: GD, display: 'inline-block' }} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>South Africa&apos;s Wedding Platform</span>
-        </div>
+        {/* Content wrapper — z-index 2 ensures it always sits above photo + overlay */}
+        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+          {/* Badge */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 16px', borderRadius: 20, background: 'rgba(189,152,63,0.15)', border: '1px solid rgba(189,152,63,0.3)', marginBottom: 28 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: GD, display: 'inline-block' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: GD, letterSpacing: 1.8, textTransform: 'uppercase' }}>South Africa&apos;s Wedding Platform</span>
+          </div>
 
-        {/* Headline */}
-        <h1 style={{ margin: '0 0 20px', fontSize: 'clamp(36px, 7vw, 72px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1.1, maxWidth: 820, letterSpacing: -1 }}>
-          Your dream wedding,<br />
-          <span style={{ color: GD }}>perfectly planned.</span>
-        </h1>
-        <p style={{ margin: '0 0 44px', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65, maxWidth: 560 }}>
-          Discover trusted vendors, manage every detail, and celebrate your love story — all in one place. Built for South African couples and wedding businesses.
-        </p>
+          {/* Headline */}
+          <h1 style={{ margin: '0 0 20px', fontSize: 'clamp(36px, 7vw, 72px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1.1, maxWidth: 820, letterSpacing: -1, textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
+            Your dream wedding,<br />
+            <span style={{ color: GD }}>perfectly planned.</span>
+          </h1>
+          <p style={{ margin: '0 0 44px', fontSize: 'clamp(15px, 2.5vw, 19px)', color: 'rgba(255,255,255,0.80)', lineHeight: 1.65, maxWidth: 560, textShadow: '0 1px 8px rgba(0,0,0,0.3)' }}>
+            Discover trusted vendors, manage every detail, and celebrate your love story — all in one place. Built for South African couples and wedding businesses.
+          </p>
 
-        {/* CTAs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-          <Link href="/auth/sign-up?role=couple" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 28px', borderRadius: 30, background: `linear-gradient(135deg, ${CR}, ${CR2})`, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(154,33,67,0.5)' }}>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-            Plan My Wedding
-          </Link>
-          <Link href="/auth/sign-up?role=vendor" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 28px', borderRadius: 30, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)' }}>
-            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-            List My Business
-          </Link>
+          {/* CTAs */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+            <Link href="/auth/sign-up?role=couple" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 28px', borderRadius: 30, background: `linear-gradient(135deg, ${CR}, ${CR2})`, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', boxShadow: '0 4px 20px rgba(154,33,67,0.5)' }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+              Plan My Wedding
+            </Link>
+            <Link href="/auth/sign-up?role=vendor" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '15px 28px', borderRadius: 30, color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none', border: '1.5px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)' }}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+              List My Business
+            </Link>
+          </div>
         </div>
 
         {/* Scroll cue */}
-        <div style={{ position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.4 }}>
+        <div style={{ position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, opacity: 0.45, zIndex: 2 }}>
           <span style={{ fontSize: 11, color: '#fff', letterSpacing: 1.5, textTransform: 'uppercase' }}>Scroll</span>
           <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
         </div>
