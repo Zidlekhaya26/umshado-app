@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAuthRole } from '@/app/providers/AuthRoleProvider';
 
 const STORAGE_KEY = 'umshado_push_prompted';
 
 export default function PushPermissionPrompt() {
+  const { user, loading: authLoading } = useAuthRole();
   const { permission, isSubscribed, isLoading, subscribe } = usePushNotifications();
   const [visible, setVisible] = useState(false);
   const [animateIn, setAnimateIn] = useState(false);
@@ -13,6 +15,8 @@ export default function PushPermissionPrompt() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    // Only show to authenticated users — unauthenticated users have no token to save the subscription
+    if (authLoading || !user) return;
     if (permission === 'unsupported' || permission === 'denied') return;
     if (isSubscribed) return;
     const dismissed = sessionStorage.getItem(STORAGE_KEY);
@@ -23,7 +27,7 @@ export default function PushPermissionPrompt() {
       requestAnimationFrame(() => setAnimateIn(true));
     }, 2500);
     return () => clearTimeout(timer);
-  }, [permission, isSubscribed]);
+  }, [authLoading, user, permission, isSubscribed]);
 
   const handleEnable = async () => {
     setError(null);
