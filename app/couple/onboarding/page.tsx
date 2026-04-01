@@ -137,7 +137,7 @@ export default function CoupleOnboarding() {
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
-    weddingDate: '', partnerName: '', weddingLocation: '',
+    weddingDate: '', yourName: '', partnerName: '', weddingLocation: '',
     country: '', culturalPreferences: '',
   });
 
@@ -150,6 +150,11 @@ export default function CoupleOnboarding() {
     try {
       const user = await getUserOrRedirect();
       if (!user) { alert('Please sign in to continue.'); router.push('/auth/sign-in'); return; }
+      // Save user's own name to profiles.full_name
+      if (formData.yourName.trim()) {
+        const supabase = (await import('@/lib/supabaseClient')).default;
+        await supabase.from('profiles').update({ full_name: formData.yourName.trim() }).eq('id', user.id);
+      }
       const res = await upsertCouple(user.id, {
         partner_name: formData.partnerName || null,
         wedding_date: formData.weddingDate || null,
@@ -198,13 +203,21 @@ export default function CoupleOnboarding() {
             <WeddingCountdown dateStr={formData.weddingDate} />
           </div>
 
-          {/* Partner names */}
+          {/* Your name */}
           <div className="co2">
             <Field
-              label="Your names" id="partnerName" name="partnerName"
+              label="Your name" id="yourName" name="yourName"
+              value={formData.yourName} onChange={handleChange} required
+              placeholder="e.g. Thabi"
+            />
+          </div>
+
+          {/* Partner's name */}
+          <div className="co2">
+            <Field
+              label="Partner's name" id="partnerName" name="partnerName"
               value={formData.partnerName} onChange={handleChange} required
-              placeholder="e.g. Mthabisi & Sthabiso"
-              hint="Enter both names as you'd like them to appear on invites"
+              placeholder="e.g. Mthabi"
             />
           </div>
 
