@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { getUserOrRedirect, upsertCouple } from '@/lib/onboarding';
+import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from "next/navigation";
 import CurrencySelector from '@/components/CurrencySelector';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
@@ -152,7 +153,6 @@ export default function CoupleOnboarding() {
       if (!user) { alert('Please sign in to continue.'); router.push('/auth/sign-in'); return; }
       // Save user's own name to profiles.full_name
       if (formData.yourName.trim()) {
-        const supabase = (await import('@/lib/supabaseClient')).default;
         await supabase.from('profiles').update({ full_name: formData.yourName.trim() }).eq('id', user.id);
       }
       const res = await upsertCouple(user.id, {
