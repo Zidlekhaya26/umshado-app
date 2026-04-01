@@ -171,25 +171,71 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: "'DM Sans', system-ui, sans-serif", background: BG, color: DK, overflowX: 'hidden' }}>
+      <style>{`
+        .um-nav-label { display: inline; }
+        .um-nav-signin { display: inline-flex; }
+        @media (max-width: 600px) {
+          .um-nav-label { display: none; }
+          .um-nav-signin { display: none; }
+        }
+      `}</style>
 
       {/* ── Sticky Nav ────────────────────────────────────────── */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        padding: '0 20px', height: 64,
+        padding: '0 16px', height: 64,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         transition: 'background 0.25s, box-shadow 0.25s',
         background: scrolled ? 'rgba(26,13,18,0.96)' : 'transparent',
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         boxShadow: scrolled ? '0 1px 0 rgba(255,255,255,0.08)' : 'none',
       }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', flexShrink: 0 }}>
           <Image src="/logo-full.png" alt="uMshado" width={180} height={58} style={{ height: 52, width: 'auto', objectFit: 'contain', filter: 'brightness(0) invert(1)' }} />
         </Link>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <Link href="/auth/sign-in" style={{ padding: '8px 18px', borderRadius: 20, fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)', transition: 'border-color 0.2s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+
+          {/* Android install button */}
+          <button
+            onClick={() => installPrompt ? handleAndroidInstall() : document.getElementById('get-app')?.scrollIntoView({ behavior: 'smooth' })}
+            title="Install on Android"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 13px', borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              background: installPrompt ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${installPrompt ? 'rgba(74,222,128,0.5)' : 'rgba(255,255,255,0.18)'}`,
+              color: installPrompt ? '#4ade80' : 'rgba(255,255,255,0.8)',
+              transition: 'all 0.2s',
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5S11 23.33 11 22.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zm-2.5-1C2.67 17 2 16.33 2 15.5v-7C2 7.67 2.67 7 3.5 7S5 7.67 5 8.5v7c0 .83-.67 1.5-1.5 1.5zm17 0c-.83 0-1.5-.67-1.5-1.5v-7c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v7c0 .83-.67 1.5-1.5 1.5zM15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48A5.84 5.84 0 0012 1c-.96 0-1.86.23-2.66.63L7.88.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31A5.983 5.983 0 006 7h12a5.96 5.96 0 00-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/>
+            </svg>
+            <span className="um-nav-label">{installPrompt ? 'Install Now' : 'Android'}</span>
+          </button>
+
+          {/* iPhone install button */}
+          <button
+            onClick={() => setShowIOSModal(true)}
+            title="Add to iPhone"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 13px', borderRadius: 20, fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              color: 'rgba(255,255,255,0.8)',
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            <span className="um-nav-label">iPhone</span>
+          </button>
+
+          <Link href="/auth/sign-in" className="um-nav-signin" style={{ padding: '8px 18px', borderRadius: 20, fontSize: 13.5, fontWeight: 600, color: 'rgba(255,255,255,0.85)', textDecoration: 'none', border: '1px solid rgba(255,255,255,0.2)', alignItems: 'center' }}>
             Sign In
           </Link>
-          <Link href="/auth/sign-up" style={{ padding: '8px 18px', borderRadius: 20, fontSize: 13.5, fontWeight: 700, color: '#fff', textDecoration: 'none', background: CR, boxShadow: '0 2px 10px rgba(154,33,67,0.4)' }}>
+          <Link href="/auth/sign-up" style={{ padding: '8px 16px', borderRadius: 20, fontSize: 13.5, fontWeight: 700, color: '#fff', textDecoration: 'none', background: CR, boxShadow: '0 2px 10px rgba(154,33,67,0.4)', whiteSpace: 'nowrap' }}>
             Get Started
           </Link>
         </div>
@@ -401,7 +447,7 @@ export default function Home() {
 
       {/* ── Install section ───────────────────────────────────── */}
       {!isStandalone && (
-      <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: '#fff' }}>
+      <section id="get-app" style={{ padding: 'clamp(60px,8vw,100px) 24px', background: '#fff' }}>
         <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 44 }}>
             <p style={{ fontSize: 11, fontWeight: 700, color: CR, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>Get the App</p>
