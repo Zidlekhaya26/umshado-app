@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { useToast } from '@/components/ui/ToastProvider';
 import { CR, CR2, CRX, DK, MUT, BOR, BG } from '@/lib/tokens';
 import { LoadingPage } from '@/components/ui/UmshadoLogo';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 
 function ICS(f:boolean):React.CSSProperties{return{width:'100%',padding:'13px 16px',borderRadius:12,outline:'none',boxSizing:'border-box',border:`1.5px solid ${f?CR:BOR}`,background:'#fff',fontSize:14,color:DK,fontFamily:'inherit',boxShadow:f?`0 0 0 3px rgba(154,33,67,0.09)`:'none',transition:'border-color .14s,box-shadow .14s'};}
@@ -124,10 +125,13 @@ export default function VendorOnboarding(){
 
         <div className="obU3" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <div>
-            <FL l="City" req/>
-            <input type="text" value={fd.city} required placeholder="e.g. Cape Town"
-              onFocus={()=>setFocused('ci')} onBlur={()=>setFocused('')}
-              onChange={e=>setFd({...fd,city:e.target.value})} style={ICS(focused==='ci')}/>
+            <PlacesAutocomplete
+              label="City" id="city" required
+              value={fd.city}
+              onChange={val => setFd({ ...fd, city: val })}
+              placeholder="e.g. Cape Town"
+              inputStyle={ICS(focused==='ci')}
+            />
           </div>
           <div>
             <FL l="Country" req/>

@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 import BottomNav from '@/components/BottomNav';
 import PushNotificationsToggle from '@/components/PushNotificationsToggle';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 /* ─── Design tokens ──────────────────────────────────────── */
 const C = {
@@ -712,10 +713,13 @@ function SettingsContent() {
                 </Field>
 
                 <Field label="Wedding Location">
-                  <input value={editLocation} onChange={e => setEditLocation(e.target.value)}
+                  <PlacesAutocomplete
+                    value={editLocation}
+                    onChange={val => setEditLocation(val)}
                     placeholder="e.g., Johannesburg, Sandton"
-                    className="settings-input"
-                    style={inputStyle} />
+                    inputStyle={inputStyle}
+                    inputClassName="settings-input"
+                  />
                 </Field>
 
                 <Field label="Country">

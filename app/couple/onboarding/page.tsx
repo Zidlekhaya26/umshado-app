@@ -5,6 +5,7 @@ import { getUserOrRedirect, upsertCouple } from '@/lib/onboarding';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from "next/navigation";
 import CurrencySelector from '@/components/CurrencySelector';
+import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 import { useCurrency } from '@/app/providers/CurrencyProvider';
 import Image from 'next/image';
 import { CR, CR2, CRX, GD, DK, MUT, BOR, BG } from '@/lib/tokens';
@@ -223,9 +224,10 @@ export default function CoupleOnboarding() {
 
           {/* Location + country */}
           <div className="co3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <Field
-              label="Venue / city" id="weddingLocation" name="weddingLocation"
-              value={formData.weddingLocation} onChange={handleChange} required
+            <PlacesAutocomplete
+              label="Venue / city" id="weddingLocation" required
+              value={formData.weddingLocation}
+              onChange={val => setFormData(f => ({ ...f, weddingLocation: val }))}
               placeholder="e.g. Sandton, Joburg"
             />
             <Field
