@@ -150,10 +150,10 @@ export default function Home() {
       }}>
         {/* Background photo */}
         <img
-          src="https://images.pexels.com/photos/33737505/pexels-photo-33737505.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1280&fit=crop"
+          src="https://images.pexels.com/photos/14988950/pexels-photo-14988950.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1280&fit=crop"
           alt=""
           aria-hidden="true"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%', pointerEvents: 'none' }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', pointerEvents: 'none' }}
         />
         {/* Gradient overlay — brand colours on top of photo */}
         <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, rgba(26,13,18,0.88) 0%, rgba(77,15,33,0.80) 50%, rgba(154,33,67,0.70) 100%)`, pointerEvents: 'none' }} />
@@ -215,20 +215,20 @@ export default function Home() {
 
       {/* ── Photo strip ───────────────────────────────────────── */}
       <section style={{ overflow: 'hidden', lineHeight: 0 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.9fr', height: 'clamp(160px, 26vw, 320px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 0.9fr', height: 'clamp(180px, 28vw, 340px)' }}>
           <img
-            src="https://images.pexels.com/photos/31733150/pexels-photo-31733150.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
-            alt="Traditional Nigerian wedding ceremony"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-          />
-          <img
-            src="https://images.pexels.com/photos/31563146/pexels-photo-31563146.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
-            alt="Nigerian couple in traditional attire"
+            src="https://images.pexels.com/photos/3975613/pexels-photo-3975613.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Wedding couple portrait"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
           />
           <img
-            src="https://images.pexels.com/photos/34597461/pexels-photo-34597461.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
-            alt="Elegant wedding reception table"
+            src="https://images.pexels.com/photos/11618945/pexels-photo-11618945.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Wedding ceremony moment"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+          />
+          <img
+            src="https://images.pexels.com/photos/26502322/pexels-photo-26502322.jpeg?auto=compress&cs=tinysrgb&w=900&h=600&fit=crop"
+            alt="Couple celebrating their wedding"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
           />
         </div>
@@ -264,15 +264,15 @@ export default function Home() {
           <p style={{ fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>From finding the perfect venue to ticking off the last task — uMshado keeps your wedding journey organised and stress-free.</p>
 
           {/* Couple photo */}
-          <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 36, height: 'clamp(200px, 32vw, 380px)', position: 'relative' }}>
+          <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 36, height: 'clamp(220px, 36vw, 420px)', position: 'relative' }}>
             <img
-              src="https://images.pexels.com/photos/33737505/pexels-photo-33737505.jpeg?auto=compress&cs=tinysrgb&w=1200&h=600&fit=crop&crop=top"
-              alt="Beautiful Nigerian wedding couple"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 15%' }}
+              src="https://images.pexels.com/photos/29955684/pexels-photo-29955684.jpeg?auto=compress&cs=tinysrgb&w=1400&h=700&fit=crop"
+              alt="South African wedding couple"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%' }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.55) 0%, transparent 55%)' }} />
-            <div style={{ position: 'absolute', bottom: 20, left: 24, right: 24 }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>Your love story deserves to be celebrated — perfectly.</p>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.6) 0%, transparent 50%)' }} />
+            <div style={{ position: 'absolute', bottom: 22, left: 26, right: 26 }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#fff', letterSpacing: 0.3 }}>Your love story deserves to be celebrated — perfectly.</p>
             </div>
           </div>
 
@@ -304,17 +304,26 @@ export default function Home() {
           <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', margin: '0 0 8px', lineHeight: 1.2 }}>Grow your wedding business</h2>
           <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>List your business for free and get in front of couples actively planning their weddings right now.</p>
 
-          {/* Vendor photo */}
-          <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 36, height: 'clamp(180px, 28vw, 320px)', position: 'relative' }}>
-            <img
-              src="https://images.pexels.com/photos/34597461/pexels-photo-34597461.jpeg?auto=compress&cs=tinysrgb&w=1200&h=500&fit=crop"
-              alt="Elegant wedding reception setup by a South African vendor"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.65) 0%, transparent 50%)' }} />
-            <div style={{ position: 'absolute', bottom: 20, left: 24, right: 24 }}>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.9)', letterSpacing: 0.3 }}>Your craft on display — to couples who are ready to book.</p>
-            </div>
+          {/* Vendor category grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 36, borderRadius: 24, overflow: 'hidden' }}>
+            {[
+              { src: 'https://images.pexels.com/photos/27025523/pexels-photo-27025523.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Catering' },
+              { src: 'https://images.pexels.com/photos/14071388/pexels-photo-14071388.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Photography' },
+              { src: 'https://images.pexels.com/photos/34244969/pexels-photo-34244969.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Makeup & Beauty' },
+              { src: 'https://images.pexels.com/photos/33485957/pexels-photo-33485957.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Venues' },
+            ].map(({ src, label }) => (
+              <div key={label} style={{ position: 'relative', height: 'clamp(120px, 18vw, 220px)', borderRadius: 16, overflow: 'hidden' }}>
+                <img
+                  src={src}
+                  alt={label}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.72) 0%, rgba(26,13,18,0.1) 55%)' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 14px' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: GD, letterSpacing: 1.2, textTransform: 'uppercase' }}>{label}</span>
+                </div>
+              </div>
+            ))}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
