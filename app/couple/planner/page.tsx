@@ -629,7 +629,7 @@ function CouplePlannerContent() {
     }
   };
 
-  const inviteViaWhatsapp = async (guest: DbGuest) => {
+  const inviteViaWhatsapp = (guest: DbGuest) => {
     let phone = guest.phone;
     if (!phone) {
       const p = window.prompt('Enter guest phone number (include country code, e.g. +27831234567)');
@@ -640,33 +640,32 @@ function CouplePlannerContent() {
         return;
       }
       phone = norm;
-      try {
-        const result = await supabase.from('couple_guests').update({ phone }).eq('id', guest.id).select('id, phone, rsvp_token').single();
-        if (!result.error && result.data) {
-          setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, phone: result.data.phone, rsvp_token: result.data.rsvp_token } : g));
-        }
-      } catch (e) {
-        console.error('Failed to save phone for guest', e);
-      }
     }
 
-    // ensure rsvp_token exists
+    // Generate token synchronously — window.open must happen in the same
+    // user-gesture tick or browsers will block it as a popup.
     let token: string | null = (guest as any).rsvp_token ?? null;
     if (!token) {
-      token = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : String(Date.now());
-      try {
-        const save = await supabase.from('couple_guests').update({ rsvp_token: token }).eq('id', guest.id).select('rsvp_token').single();
-        if (!save.error && save.data?.rsvp_token) token = save.data.rsvp_token;
-        setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_token: token } : g));
-      } catch (e) {
-        console.error('Failed to save rsvp token', e);
-      }
+      token = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+        ? (crypto as any).randomUUID()
+        : String(Date.now());
     }
 
-    if (!phone) return;
-
+    // Open WhatsApp immediately (synchronous — no awaits before this point)
     const url = generateWhatsappInviteLink({ phone, guestId: guest.id, coupleName, guestName: guest.full_name, token, coupleDate, coupleVenue });
     window.open(url, '_blank', 'noopener');
+
+    // Fire-and-forget DB saves in background
+    if (!guest.phone) {
+      supabase.from('couple_guests').update({ phone }).eq('id', guest.id).then(({ error }) => {
+        if (!error) setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, phone: phone! } : g));
+      });
+    }
+    if (!(guest as any).rsvp_token) {
+      supabase.from('couple_guests').update({ rsvp_token: token }).eq('id', guest.id).then(({ error }) => {
+        if (!error) setGuests(prev => prev.map(g => g.id === guest.id ? { ...g, rsvp_token: token } : g));
+      });
+    }
   };
 
   const nudgeViaWhatsapp = (guest: DbGuest) => {
