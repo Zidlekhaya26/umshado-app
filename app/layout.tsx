@@ -65,6 +65,9 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://www.umshadohub.co.za",
   },
+  verification: {
+    google: "r_DBnzqRD5OZxR94I1P06EirXgJ5BVDI1nNT",
+  },
   icons: {
     icon: "/logo-icon.png",
     apple: "/apple-touch-icon.png",
