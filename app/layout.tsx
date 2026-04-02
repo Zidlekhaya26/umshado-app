@@ -19,31 +19,82 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "uMshado — African Wedding Platform",
-  description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
+  metadataBase: new URL("https://www.umshadohub.co.za"),
+  title: {
+    default: "uMshado — Africa's #1 Wedding Planning Platform",
+    template: "%s | uMshado",
+  },
+  description:
+    "Plan your perfect African wedding with uMshado. Find photographers, caterers, décor artists, DJs, venues and more across South Africa, Zimbabwe, Nigeria, Kenya and Ghana. 100% free for couples.",
+  keywords: [
+    "wedding planning South Africa",
+    "wedding vendors South Africa",
+    "African wedding platform",
+    "wedding photographers Johannesburg",
+    "wedding venues Cape Town",
+    "wedding caterers Durban",
+    "wedding décor South Africa",
+    "African wedding app",
+    "uMshado",
+    "umshado hub",
+    "wedding planning app Africa",
+    "wedding vendors Zimbabwe",
+    "wedding vendors Nigeria",
+    "wedding planner online",
+    "RSVP wedding website",
+    "wedding marketplace Africa",
+    "South African wedding",
+    "lobola wedding",
+    "traditional African wedding",
+  ],
+  authors: [{ name: "uMshado", url: "https://www.umshadohub.co.za" }],
+  creator: "uMshado",
+  publisher: "uMshado",
+  category: "Wedding Planning",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://www.umshadohub.co.za",
+  },
   icons: {
-    apple: '/apple-touch-icon.png',
+    icon: "/logo-icon.png",
+    apple: "/apple-touch-icon.png",
+    shortcut: "/logo-icon.png",
   },
   openGraph: {
-    title: "uMshado — African Wedding Platform",
-    description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
+    title: "uMshado — Africa's #1 Wedding Planning Platform",
+    description:
+      "Find trusted wedding photographers, venues, caterers, DJs, décor artists and more across Africa. Free for couples. List your business free.",
     url: "https://www.umshadohub.co.za",
     siteName: "uMshado",
+    locale: "en_ZA",
+    type: "website",
     images: [
       {
-        url: "https://www.umshadohub.co.za/logo-full.png",
-        width: 512,
-        height: 512,
-        alt: "uMshado — African Wedding Platform",
+        url: "https://www.umshadohub.co.za/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "uMshado — Africa's #1 Wedding Planning Platform",
       },
     ],
-    type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "uMshado — African Wedding Platform",
-    description: "Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform.",
-    images: ["https://www.umshadohub.co.za/logo-full.png"],
+    title: "uMshado — Africa's #1 Wedding Planning Platform",
+    description:
+      "Find trusted wedding photographers, venues, caterers, DJs, décor artists and more across Africa. Free for couples.",
+    images: ["https://www.umshadohub.co.za/og-image.jpg"],
+    creator: "@umshadohub",
+    site: "@umshadohub",
   },
 };
 
@@ -73,18 +124,70 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.webmanifest?v=1" />
         <link rel="icon" href="/logo-icon.png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="canonical" href="https://www.umshadohub.co.za" />
         {/* VAPID key injected server-side so it's always available to the client */}
         <meta name="vapid-public-key" content={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''} />
-        {/* Open Graph — WhatsApp, iMessage, Telegram read these */}
-        <meta property="og:title" content="uMshado — African Wedding Platform" />
-        <meta property="og:description" content="Plan your dream wedding or grow your wedding business. Africa's #1 wedding platform." />
-        <meta property="og:image" content="https://www.umshadohub.co.za/logo-full.png" />
-        <meta property="og:image:width" content="512" />
-        <meta property="og:image:height" content="512" />
-        <meta property="og:url" content="https://www.umshadohub.co.za" />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="uMshado" />
-
+        {/* JSON-LD — WebSite + Organization structured data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": "https://www.umshadohub.co.za/#website",
+                  "url": "https://www.umshadohub.co.za",
+                  "name": "uMshado",
+                  "description": "Africa's #1 Wedding Planning Platform — find trusted wedding vendors, manage RSVPs, build your wedding website and plan every detail in one place.",
+                  "publisher": { "@id": "https://www.umshadohub.co.za/#organization" },
+                  "inLanguage": "en-ZA",
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": {
+                      "@type": "EntryPoint",
+                      "urlTemplate": "https://www.umshadohub.co.za/marketplace?q={search_term_string}"
+                    },
+                    "query-input": "required name=search_term_string"
+                  }
+                },
+                {
+                  "@type": "Organization",
+                  "@id": "https://www.umshadohub.co.za/#organization",
+                  "name": "uMshado",
+                  "url": "https://www.umshadohub.co.za",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://www.umshadohub.co.za/logo-full.png",
+                    "width": 512,
+                    "height": 512
+                  },
+                  "sameAs": [],
+                  "contactPoint": {
+                    "@type": "ContactPoint",
+                    "email": "support@umshadohub.co.za",
+                    "contactType": "customer support"
+                  },
+                  "areaServed": ["ZA", "ZW", "NG", "KE", "GH", "BW"],
+                  "description": "uMshado connects African couples with trusted wedding vendors. Plan your perfect wedding — free for couples."
+                },
+                {
+                  "@type": "SoftwareApplication",
+                  "name": "uMshado",
+                  "operatingSystem": "Android, iOS, Web",
+                  "applicationCategory": "LifestyleApplication",
+                  "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "ZAR"
+                  },
+                  "url": "https://www.umshadohub.co.za",
+                  "screenshot": "https://www.umshadohub.co.za/og-image.jpg"
+                }
+              ]
+            })
+          }}
+        />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         <ErrorBoundary>

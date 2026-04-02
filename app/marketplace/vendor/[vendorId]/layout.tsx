@@ -46,11 +46,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: `${name} — ${category} | uMshado`,
       description: desc,
+      keywords: [
+        `${name}`,
+        `${category} South Africa`,
+        `${category}${location ? ` ${location}` : ''}`,
+        `wedding ${category.toLowerCase()}`,
+        `${location} wedding vendor`,
+        'African wedding vendor',
+        'uMshado',
+      ].filter(Boolean),
+      alternates: {
+        canonical: `https://www.umshadohub.co.za/marketplace/vendor/${vendorId}`,
+      },
       openGraph: {
         title: `${name} — ${category}`,
         description: desc,
         images: ogImages,
         type: 'website',
+        url: `https://www.umshadohub.co.za/marketplace/vendor/${vendorId}`,
       },
       twitter: {
         card: imageUrl ? 'summary_large_image' : 'summary',

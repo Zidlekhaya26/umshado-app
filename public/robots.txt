@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+Allow: /marketplace
+Allow: /auth/sign-up
+Allow: /auth/sign-in
+
+# Block private app pages from indexing
+Disallow: /couple/
+Disallow: /vendor/
+Disallow: /admin/
+Disallow: /messages/
+Disallow: /notifications/
+Disallow: /settings/
+Disallow: /switch-role/
+Disallow: /debug/
+Disallow: /api/
+Disallow: /w/
+Disallow: /v/
+Disallow: /rsvp/
+Disallow: /playlist/
+Disallow: /quotes/
+
+Sitemap: https://www.umshadohub.co.za/sitemap.xml
