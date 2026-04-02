@@ -750,9 +750,15 @@ input::placeholder, textarea::placeholder {
   }
 
   /* ── Expand page content containers to fill available width ── */
-  body:has(#um-couple-nav) #um-page-wrap > * > div:first-child,
-  body:has(#um-vendor-nav) #um-page-wrap > * > div:first-child {
+  /* first-of-type handles pages where a <style> tag precedes the main div  */
+  body:has(#um-couple-nav) #um-page-wrap > * > div:first-of-type,
+  body:has(#um-vendor-nav) #um-page-wrap > * > div:first-of-type {
     max-width: 100% !important;
     padding-bottom: 24px !important;
+  }
+  /* nth-of-type(2) handles pages where a header div comes first (e.g. Community feed) */
+  body:has(#um-couple-nav) #um-page-wrap > * > div:nth-of-type(2),
+  body:has(#um-vendor-nav) #um-page-wrap > * > div:nth-of-type(2) {
+    max-width: 100% !important;
   }
 }
