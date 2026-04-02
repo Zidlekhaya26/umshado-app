@@ -52,12 +52,12 @@ interface VendorActivityScore {
 interface Vendor {
   id: string; name: string; category: string; location: string;
   fromPrice: number; services: string[]; score: number;
-  logoUrl?: string | null; coverUrl?: string | null; verified?: boolean;
+  logoUrl?: string | null; verified?: boolean;
   preferredCurrency?: string | null; isDemo?: boolean;
-  rating: number; reviewCount: number; packageCount: number;
+  rating: number; reviewCount: number;
   city: string; country: string; countryCode: string;
   lat?: number | null; lng?: number | null;
-  distanceKm?: number | null; createdAt?: string | null;
+  distanceKm?: number | null;
 }
 type SortOption = 'recommended' | 'nearest' | 'price_low' | 'price_high' | 'top_rated';
 type LocationScope = 'nearby' | 'city' | 'country' | 'all';
@@ -201,12 +201,77 @@ function LocationPill({
 }
 
 /* ─── Scope sheet ────────────────────────────────────────── */
+declare global { interface Window { google: any; __googleMapsPromise?: Promise<void>; __googleMapsReady?: () => void; } }
+
+function loadGoogleMapsForMarketplace(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.google?.maps?.places) return Promise.resolve();
+  if (window.__googleMapsPromise) return window.__googleMapsPromise;
+  window.__googleMapsPromise = new Promise<void>((resolve, reject) => {
+    window.__googleMapsReady = resolve;
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places,geocoding&callback=__googleMapsReady`;
+    script.async = true;
+    script.onerror = () => { window.__googleMapsPromise = undefined; reject(); };
+    document.head.appendChild(script);
+  });
+  return window.__googleMapsPromise;
+}
+
 function ScopeSheet({
-  scope, setScope, location, onClose, onDetect,
+  scope, setScope, location, onClose, onDetect, onManualLocation,
 }: {
   scope: LocationScope; setScope: (s: LocationScope) => void;
   location: UserLocation | null; onClose: () => void; onDetect: () => void;
+  onManualLocation: (loc: UserLocation) => void;
 }) {
+  const [cityInput, setCityInput] = useState('');
+  const [suggestions, setSuggestions] = useState<{ place_id: string; description: string }[]>([]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [geocoding, setGeocoding] = useState(false);
+  const autocompleteRef = useRef<any>(null);
+
+  useEffect(() => {
+    loadGoogleMapsForMarketplace().then(() => {
+      autocompleteRef.current = new window.google.maps.places.AutocompleteService();
+    }).catch(() => {});
+  }, []);
+
+  const fetchCitySuggestions = (input: string) => {
+    if (!input || input.length < 2 || !autocompleteRef.current) { setSuggestions([]); setSuggestOpen(false); return; }
+    autocompleteRef.current.getPlacePredictions(
+      { input, types: ['(cities)'] },
+      (results: any[], status: string) => {
+        if (status === 'OK' && results) { setSuggestions(results.slice(0, 5)); setSuggestOpen(true); }
+        else { setSuggestions([]); setSuggestOpen(false); }
+      }
+    );
+  };
+
+  const selectCity = async (placeId: string, description: string) => {
+    setSuggestOpen(false);
+    setCityInput(description);
+    setGeocoding(true);
+    try {
+      await loadGoogleMapsForMarketplace();
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ placeId }, (results: any[], status: string) => {
+        setGeocoding(false);
+        if (status !== 'OK' || !results?.[0]) return;
+        const r = results[0];
+        const lat = r.geometry.location.lat();
+        const lng = r.geometry.location.lng();
+        const parts = description.split(',');
+        const city = parts[0]?.trim() || description;
+        const country = parts[parts.length - 1]?.trim() || '';
+        const loc: UserLocation = { city, country, countryCode: '', lat, lng, label: description };
+        onManualLocation(loc);
+        setScope('city');
+        onClose();
+      });
+    } catch { setGeocoding(false); }
+  };
+
   const opts: { key: LocationScope; icon: string; label: string; sub: string }[] = [
     { key: 'nearby',  icon: '📍', label: 'Nearby',                          sub: `Within ${NEARBY_RADIUS_KM} km of me` },
     { key: 'city',    icon: '🏙️', label: location?.city || 'My city',       sub: 'Vendors in my city' },
@@ -220,7 +285,36 @@ function ScopeSheet({
         <div style={{ width: 36, height: 4, background: '#e5e7eb', borderRadius: 2, margin: '12px auto 0' }} />
         <div style={{ padding: '20px 20px 24px' }}>
           <p style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 800, color: '#111827', fontFamily: 'Georgia,serif' }}>📍 Location filter</p>
-          <p style={{ margin: '0 0 18px', fontSize: 12, color: '#9ca3af' }}>How far should we search for vendors?</p>
+          <p style={{ margin: '0 0 14px', fontSize: 12, color: '#9ca3af' }}>How far should we search for vendors?</p>
+
+          {/* City search */}
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <div style={{ position: 'relative' }}>
+              <svg style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" fill="none" stroke="#8b2040" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <input
+                value={cityInput}
+                onChange={e => { setCityInput(e.target.value); fetchCitySuggestions(e.target.value); }}
+                placeholder="Search a city or area…"
+                style={{ width: '100%', height: 44, paddingLeft: 36, paddingRight: 12, borderRadius: 12, border: '1.5px solid #e5e7eb', fontSize: 14, boxSizing: 'border-box', outline: 'none', color: '#111827' }}
+              />
+              {geocoding && <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 11, color: '#9ca3af' }}>…</span>}
+            </div>
+            {suggestOpen && suggestions.length > 0 && (
+              <ul style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1.5px solid #e5e7eb', borderRadius: 12, padding: 0, margin: '4px 0 0', listStyle: 'none', zIndex: 999, boxShadow: '0 8px 24px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+                {suggestions.map((s, i) => (
+                  <li key={s.place_id}
+                    onMouseDown={e => { e.preventDefault(); selectCity(s.place_id, s.description); }}
+                    style={{ padding: '10px 14px', cursor: 'pointer', fontSize: 13, color: '#111827', borderBottom: i < suggestions.length - 1 ? '1px solid #f3f4f6' : 'none', display: 'flex', alignItems: 'center', gap: 8 }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#faf8f5')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                  >
+                    <span style={{ fontSize: 14 }}>📍</span> {s.description}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {opts.map(o => (
               <button key={o.key} onClick={() => { setScope(o.key); onClose(); }}
@@ -240,7 +334,7 @@ function ScopeSheet({
           </div>
           {!location && (
             <button onClick={() => { onDetect(); onClose(); }} style={{ width: '100%', marginTop: 14, padding: '13px', borderRadius: 13, border: 'none', background: 'linear-gradient(135deg,#6b1a2e,#8b2040)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer' }}>
-              📍 Enable location access
+              📍 Use my GPS location
             </button>
           )}
         </div>
@@ -396,134 +490,97 @@ function SponsoredAdCard({ ad }: { ad: SponsoredAd }) {
 }
 
 /* ─── Vendor Card ───────────────────────────────────────── */
-function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc, saved, onSaveToggle }: {
+function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc }: {
   vendor: Vendor; isVendor: boolean;
   format: (n: number) => string;
   onLogoClick: (src: string, alt: string) => void;
   userLoc: UserLocation | null;
-  saved: boolean;
-  onSaveToggle: (vendorId: string) => void;
 }) {
   const router = useRouter();
   const isFeatured = vendor.score > 240;
   const catCfg = CAT_CONFIG[vendor.category] ?? { icon: '🏢', color: '#9ca3af' };
-  const isNew = vendor.createdAt
-    ? (Date.now() - new Date(vendor.createdAt).getTime()) < 30 * 24 * 60 * 60 * 1000
-    : false;
 
   const distLabel = useMemo(() => {
     if (!userLoc || vendor.distanceKm == null) return null;
     if (vendor.distanceKm < 1) return '< 1 km';
-    if (vendor.distanceKm < 10) return `${Math.round(vendor.distanceKm)} km`;
-    return `~${Math.round(vendor.distanceKm / 10) * 10} km`;
+    if (vendor.distanceKm < 10) return `${Math.round(vendor.distanceKm)} km away`;
+    return `~${Math.round(vendor.distanceKm / 10) * 10} km away`;
   }, [userLoc, vendor.distanceKm]);
 
   return (
-    <Link href={'/marketplace/vendor/' + vendor.id} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+    <Link href={'/v/' + vendor.id} style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
       <div
-        className="vendor-card"
         style={{
-          background: '#fff',
+          background: isFeatured ? '#fff' : `${catCfg.color}09`,
           borderRadius: 20, overflow: 'hidden',
-          border: isFeatured ? '1.5px solid rgba(184,151,62,0.35)' : '1px solid #f0ece6',
-          boxShadow: isFeatured ? '0 6px 28px rgba(184,151,62,0.14)' : '0 2px 12px rgba(0,0,0,0.05)',
-          transition: 'transform 0.18s, box-shadow 0.18s',
+          border: isFeatured ? '1.5px solid rgba(184,151,62,0.4)' : `1px solid ${catCfg.color}22`,
+          boxShadow: isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.04)',
+          transition: 'transform 0.15s, box-shadow 0.15s',
           display: 'flex', flexDirection: 'column', height: '100%', cursor: 'pointer',
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
-          (e.currentTarget as HTMLDivElement).style.boxShadow = '0 16px 40px rgba(0,0,0,0.11)';
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured ? '0 14px 36px rgba(184,151,62,0.18)' : '0 8px 22px rgba(0,0,0,0.09)';
         }}
         onMouseLeave={e => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured ? '0 6px 28px rgba(184,151,62,0.14)' : '0 2px 12px rgba(0,0,0,0.05)';
+          (e.currentTarget as HTMLDivElement).style.boxShadow = isFeatured ? '0 6px 24px rgba(184,151,62,0.13)' : '0 2px 10px rgba(0,0,0,0.05)';
         }}
       >
-        {/* ── Cover image ── */}
-        <div style={{ position: 'relative', width: '100%', height: 160, background: `linear-gradient(135deg,${catCfg.color}22,${catCfg.color}10)`, flexShrink: 0, overflow: 'hidden' }}>
-          {vendor.coverUrl ? (
-            <Image src={vendor.coverUrl} alt={vendor.name} fill style={{ objectFit: 'cover' }} sizes="(max-width:640px) 100vw,320px" />
-          ) : (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 52, opacity: 0.18 }}>{catCfg.icon}</div>
-          )}
-          {/* gradient overlay for readability */}
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.04) 0%, transparent 40%, rgba(0,0,0,0.22) 100%)' }} />
-
-          {/* Top badges */}
-          <div style={{ position: 'absolute', top: 10, left: 10, display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            {isFeatured && (
-              <span style={{ fontSize: 9.5, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: 'linear-gradient(135deg,#b8973e,#e8c84a)', color: '#fff', letterSpacing: 0.6, boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>★ FEATURED</span>
-            )}
+        {/* ── Top bar: category + badges ── */}
+        <div style={{ padding: '13px 14px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: `${catCfg.color}12`, fontSize: 11, fontWeight: 700, color: catCfg.color }}>
+            <span style={{ fontSize: 13 }}>{catCfg.icon}</span>
+            <span>{vendor.category.split('&')[0].trim()}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             {vendor.verified && (
-              <span style={{ fontSize: 9.5, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: 'rgba(37,99,235,0.88)', color: '#fff', backdropFilter: 'blur(4px)', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}>✓ Verified</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, padding: '3px 8px', borderRadius: 20, background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.2)' }}>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="#2563eb"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
+                <span style={{ fontSize: 9, fontWeight: 800, color: '#2563eb', letterSpacing: 0.3 }}>Verified</span>
+              </div>
             )}
-            {isNew && !isFeatured && (
-              <span style={{ fontSize: 9.5, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: 'rgba(22,163,74,0.88)', color: '#fff', backdropFilter: 'blur(4px)' }}>New</span>
+            {isFeatured && (
+              <div style={{ padding: '3px 9px', borderRadius: 20, background: 'linear-gradient(135deg,#b8973e,#e8c84a)', color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 0.8 }}>★ Featured</div>
             )}
           </div>
+        </div>
 
-          {/* Save button */}
-          {!isVendor && (
-            <button
-              type="button"
-              onClick={e => { e.preventDefault(); e.stopPropagation(); onSaveToggle(vendor.id); }}
-              style={{ position: 'absolute', top: 8, right: 10, width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.14)', backdropFilter: 'blur(4px)', zIndex: 2 }}
-              aria-label={saved ? 'Unsave vendor' : 'Save vendor'}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill={saved ? '#9A2143' : 'none'} stroke={saved ? '#9A2143' : '#6b7280'} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
+        {/* ── Logo + Name + Location ── */}
+        <div style={{ padding: '12px 14px 10px', display: 'flex', alignItems: 'center', gap: 12 }}>
+          {vendor.logoUrl ? (
+            <button type="button"
+              onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
+              style={{ width: 56, height: 56, borderRadius: 14, overflow: 'hidden', border: '1.5px solid #f1f0ee', background: '#fafafa', flexShrink: 0, cursor: 'zoom-in', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', position: 'relative' }}>
+              <Image src={vendor.logoUrl!} alt={vendor.name} fill style={{ objectFit: 'contain', padding: 6 }} />
             </button>
+          ) : (
+            <div style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0, background: `linear-gradient(135deg,${catCfg.color}cc,${catCfg.color}88)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 18, fontFamily: 'Georgia,serif', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+              {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
+            </div>
           )}
-
-          {/* Logo floated on cover */}
-          <div style={{ position: 'absolute', bottom: -20, left: 14, width: 52, height: 52, borderRadius: 14, overflow: 'hidden', border: '2.5px solid #fff', background: '#fff', boxShadow: '0 3px 10px rgba(0,0,0,0.12)', flexShrink: 0 }}>
-            {vendor.logoUrl ? (
-              <button type="button"
-                onClick={e => { e.preventDefault(); e.stopPropagation(); onLogoClick(vendor.logoUrl!, vendor.name); }}
-                style={{ width: '100%', height: '100%', border: 'none', padding: 0, cursor: 'zoom-in', background: 'transparent', position: 'relative', display: 'block' }}>
-                <Image src={vendor.logoUrl} alt={vendor.name} fill sizes="52px" style={{ objectFit: 'contain', padding: 5 }} />
-              </button>
-            ) : (
-              <div style={{ width: '100%', height: '100%', background: `linear-gradient(135deg,${catCfg.color}dd,${catCfg.color}99)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 16, fontFamily: 'Georgia,serif' }}>
-                {vendor.name.split(' ').map((s: string) => s[0]).slice(0, 2).join('').toUpperCase()}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h3 style={{ margin: '0 0 3px', fontSize: 15, fontWeight: 800, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: -0.2 }}>{vendor.name}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
+              </svg>
+              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vendor.location}</span>
+              {distLabel && (
+                <span style={{ flexShrink: 0, fontSize: 10, fontWeight: 700, color: '#7a5c30', background: 'rgba(184,151,62,0.1)', padding: '1px 6px', borderRadius: 20, border: '1px solid rgba(184,151,62,0.2)' }}>{distLabel}</span>
+              )}
+            </div>
+            {vendor.rating > 0 && (
+              <div style={{ marginTop: 4 }}>
+                <StarRating rating={vendor.rating} count={vendor.reviewCount} />
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Name + Location (account for floated logo) ── */}
-        <div style={{ padding: '26px 14px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 }}>
-            <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: '#111827', lineHeight: 1.2, letterSpacing: -0.2, flex: 1, minWidth: 0, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{vendor.name}</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 20, background: `${catCfg.color}12`, fontSize: 11, fontWeight: 700, color: catCfg.color, flexShrink: 0 }}>
-              <span style={{ fontSize: 12 }}>{catCfg.icon}</span>
-              <span style={{ whiteSpace: 'nowrap' }}>{vendor.category.split('&')[0].trim()}</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth={2.5} strokeLinecap="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" /><circle cx="12" cy="10" r="3" />
-              </svg>
-              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>{vendor.city || vendor.location}</span>
-            </div>
-            {distLabel && (
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#7a5c30', background: 'rgba(184,151,62,0.1)', padding: '2px 7px', borderRadius: 20, border: '1px solid rgba(184,151,62,0.2)' }}>📍 {distLabel}</span>
-            )}
-          </div>
-
-          {vendor.rating > 0 && (
-            <div style={{ marginTop: 2 }}>
-              <StarRating rating={vendor.rating} count={vendor.reviewCount} size={11} />
-            </div>
-          )}
-        </div>
-
         {/* ── Service tags ── */}
         {vendor.services.length > 0 && (
-          <div style={{ padding: '4px 14px 10px', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+          <div style={{ padding: '0 14px 12px', display: 'flex', flexWrap: 'wrap', gap: 5 }}>
             {vendor.services.slice(0, 3).map((s, i) => (
               <span key={i} style={{ fontSize: 10.5, padding: '4px 10px', borderRadius: 20, background: '#f7f6f3', color: '#4b5563', border: '1px solid #edecea', fontWeight: 500 }}>{s}</span>
             ))}
@@ -547,9 +604,6 @@ function VendorCard({ vendor, isVendor, format, onLogoClick, userLoc, saved, onS
               </>
             ) : (
               <div style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Contact for pricing</div>
-            )}
-            {vendor.packageCount > 0 && (
-              <div style={{ fontSize: 10, color: catCfg.color, fontWeight: 600, marginTop: 1 }}>{vendor.packageCount} package{vendor.packageCount !== 1 ? 's' : ''}</div>
             )}
           </div>
           <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -598,40 +652,18 @@ export default function Marketplace() {
   const [scopeOpen, setScopeOpen]           = useState(false);
   const [logoOpen, setLogoOpen]             = useState(false);
   const [logoSrc, setLogoSrc]               = useState<string | null>(null);
+  const [manualLocation, setManualLocation] = useState<UserLocation | null>(null);
+
+  // Use manualLocation (from Places search) if GPS location not available or overridden
+  const effectiveLocation = manualLocation || location;
   const [logoAlt, setLogoAlt]               = useState<string | undefined>(undefined);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const [liveAds, setLiveAds] = useState<SponsoredAd[]>([]);
-  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const categories = Array.from(LOCKED_CATEGORIES);
 
   const handleLogoClick = useCallback((src: string, alt: string) => {
     setLogoSrc(src); setLogoAlt(alt); setLogoOpen(true);
   }, []);
-
-  const handleSaveToggle = useCallback(async (vendorId: string) => {
-    if (!user) return;
-    const isSaved = savedIds.has(vendorId);
-    // Optimistic update
-    setSavedIds(prev => {
-      const next = new Set(prev);
-      if (isSaved) next.delete(vendorId); else next.add(vendorId);
-      return next;
-    });
-    try {
-      if (isSaved) {
-        await supabase.from('saved_vendors').delete().eq('user_id', user.id).eq('vendor_id', vendorId);
-      } else {
-        await supabase.from('saved_vendors').insert({ user_id: user.id, vendor_id: vendorId });
-      }
-    } catch {
-      // Revert on failure
-      setSavedIds(prev => {
-        const next = new Set(prev);
-        if (isSaved) next.add(vendorId); else next.delete(vendorId);
-        return next;
-      });
-    }
-  }, [user, savedIds]);
 
   useEffect(() => { detect(); }, []);
 
@@ -641,8 +673,8 @@ export default function Marketplace() {
     }).catch(() => {});
   }, []);
 
-  useEffect(() => { loadData(); }, [user, location]);
-  useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, scope, allVendors, location, verifiedOnly, budgetMax]);
+  useEffect(() => { loadData(); }, [user, effectiveLocation]);
+  useEffect(() => { applyFiltersAndSort(); setDisplayedCount(12); }, [searchQuery, categoryFilter, serviceFilter, sortBy, scope, allVendors, effectiveLocation, verifiedOnly, budgetMax]);
   useEffect(() => { setServiceFilter([]); }, [categoryFilter]);
   useEffect(() => { if (scope === 'nearby' && sortBy === 'recommended') setSortBy('nearest'); }, [scope]);
 
@@ -693,31 +725,10 @@ export default function Marketplace() {
       const actMap = new Map<string, VendorActivityScore>();
       (actData || []).forEach((r: VendorActivityScore) => actMap.set(r.vendor_id, r));
 
-      const vendorIds = (data || []).map((v: MarketplaceVendor) => v.vendor_id);
-
-      // Batch-fetch cover images and saved state in parallel
-      const [coverRes, savedRes] = await Promise.all([
-        vendorIds.length
-          ? supabase.from('vendors').select('id, cover_url, portfolio_urls, created_at').in('id', vendorIds)
-          : Promise.resolve({ data: [] }),
-        user
-          ? supabase.from('saved_vendors').select('vendor_id').eq('user_id', user.id)
-          : Promise.resolve({ data: [] }),
-      ]);
-
-      const coverMap = new Map<string, { cover_url: string | null; portfolio_urls: string[] | null; created_at: string | null }>(
-        (coverRes.data || []).map((r: any) => [r.id, r]),
-      );
-      if (savedRes.data) {
-        setSavedIds(new Set((savedRes.data as any[]).map(r => r.vendor_id)));
-      }
-
       const mapped: Vendor[] = (data || []).map((v: MarketplaceVendor) => {
         const vLat = v.vendor_lat ?? null;
         const vLng = v.vendor_lng ?? null;
-        const dist = (location && vLat && vLng) ? distanceKm(location.lat, location.lng, vLat, vLng) : null;
-        const extra = coverMap.get(v.vendor_id);
-        const coverUrl = extra?.cover_url || (extra?.portfolio_urls as string[] | null)?.[0] || null;
+        const dist = (effectiveLocation && vLat && vLng) ? distanceKm(effectiveLocation.lat, effectiveLocation.lng, vLat, vLng) : null;
         return {
           id: v.vendor_id,
           name: v.business_name || 'Unnamed Vendor',
@@ -728,18 +739,15 @@ export default function Marketplace() {
           countryCode: v.country_code || '',
           fromPrice: v.min_from_price || 0,
           services: v.services || [],
-          score: calculateScore(v, actMap.get(v.vendor_id), location),
+          score: calculateScore(v, actMap.get(v.vendor_id), effectiveLocation),
           logoUrl: v.logo_url,
-          coverUrl,
           verified: v.verified,
           isDemo: !!(v.plan === 'demo' || /\b(test|demo|sample|seed)\b/i.test(v.business_name || '')),
           rating: v.rating || 0,
           reviewCount: v.review_count || 0,
-          packageCount: v.package_count || 0,
           lat: vLat,
           lng: vLng,
           distanceKm: dist,
-          createdAt: extra?.created_at || null,
         };
       });
       const live = mapped.filter(v => !v.isDemo);
@@ -751,19 +759,19 @@ export default function Marketplace() {
   const applyFiltersAndSort = () => {
     let f = [...allVendors];
 
-    if (location && scope !== 'all') {
+    if (effectiveLocation && scope !== 'all') {
       if (scope === 'nearby') {
         // Filter to vendors within radius; fall back to same city if no coords
         f = f.filter(v => v.lat != null && v.lng != null
-          ? distanceKm(location.lat, location.lng, v.lat!, v.lng!) <= NEARBY_RADIUS_KM
-          : v.city.toLowerCase() === location.city.toLowerCase());
+          ? distanceKm(effectiveLocation.lat, effectiveLocation.lng, v.lat!, v.lng!) <= NEARBY_RADIUS_KM
+          : v.city.toLowerCase() === effectiveLocation.city.toLowerCase());
       } else if (scope === 'city') {
-        const uc = location.city.toLowerCase();
+        const uc = effectiveLocation.city.toLowerCase();
         f = f.filter(v => v.city.toLowerCase().includes(uc) || uc.includes(v.city.toLowerCase()));
       } else if (scope === 'country') {
         // Exact ISO code match first, then exact country name — no substring (prevents cross-country bleed)
-        const uCC = location.countryCode.toUpperCase();
-        const uCN = location.country.toLowerCase();
+        const uCC = effectiveLocation.countryCode.toUpperCase();
+        const uCN = effectiveLocation.country.toLowerCase();
         f = f.filter(v => {
           if (v.countryCode && v.countryCode.toUpperCase() === uCC) return true;
           if (v.country.toLowerCase() === uCN) return true;
@@ -774,7 +782,7 @@ export default function Marketplace() {
 
     // When showing all vendors and location is known: sort by nearest (Uber-style)
     // so the most relevant vendors bubble up without hiding anyone
-    const effectiveSortBy = (scope === 'all' && location && sortBy === 'recommended') ? 'nearest' : sortBy;
+    const effectiveSortBy = (scope === 'all' && effectiveLocation && sortBy === 'recommended') ? 'nearest' : sortBy;
 
     const q = searchQuery.toLowerCase().trim();
     if (q) f = f.filter(v =>
@@ -801,12 +809,12 @@ export default function Marketplace() {
   const featuredCount = vendors.filter(v => v.score > 240).length;
 
   const locationLabel = useMemo(() => {
-    if (!location) return null;
-    if (scope === 'nearby')  return `Vendors near ${location.label || location.city}`;
-    if (scope === 'city')    return `Vendors in ${location.city}`;
-    if (scope === 'country') return `Vendors in ${location.country}`;
+    if (!effectiveLocation) return null;
+    if (scope === 'nearby')  return `Vendors near ${effectiveLocation.label || effectiveLocation.city}`;
+    if (scope === 'city')    return `Vendors in ${effectiveLocation.city}`;
+    if (scope === 'country') return `Vendors in ${effectiveLocation.country}`;
     return null;
-  }, [location, scope]);
+  }, [effectiveLocation, scope]);
 
   return (
     <div style={{ minHeight: '100svh', background: '#f8f7f4' }}>
@@ -840,13 +848,13 @@ export default function Marketplace() {
                 <h1 style={{ margin: '0 0 3px', fontSize: 28, fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1, letterSpacing: -0.5 }}>uMshado Marketplace</h1>
                 <p style={{ margin: '0 0 5px', fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.55)' }}>Find your vendors</p>
                 <p style={{ margin: 0, fontSize: 11.5, color: 'rgba(255,255,255,0.38)' }}>
-                  {loading ? '…' : locationLabel || (location ? `Sorted by distance · ${allVendors.length} vendors` : `${allVendors.length} trusted vendors`)}
+                  {loading ? '…' : locationLabel || (effectiveLocation ? `Sorted by distance · ${allVendors.length} vendors` : `${allVendors.length} trusted vendors`)}
                 </p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 7, flexShrink: 0 }}>
-                <div onClick={() => setScopeOpen(true)} style={{ cursor: 'pointer' }}>
-                  <LocationPill location={location} loading={locLoading} permission={permission} scope={scope} onDetect={() => detect(true)} />
-                </div>
+                <button onClick={() => setScopeOpen(true)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+                  <LocationPill location={effectiveLocation} loading={locLoading} permission={permission} scope={scope} onDetect={() => detect(true)} />
+                </button>
                 {!loading && featuredCount > 0 && (
                   <div style={{ padding: '4px 10px', borderRadius: 20, background: 'rgba(184,151,62,0.18)', border: '1px solid rgba(184,151,62,0.35)', fontSize: 10.5, color: '#e8c84a', fontWeight: 700, letterSpacing: 0.3 }}>
                     ★ {featuredCount} Featured
@@ -888,7 +896,7 @@ export default function Marketplace() {
                 style={{ flex: 1, height: 40, borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.08)', color: '#fff', fontSize: 12, padding: '0 12px', outline: 'none', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>
                 <option value="recommended" style={{ color: '#18100a', background: '#fff' }}>⭐ Recommended</option>
                 <option value="top_rated"   style={{ color: '#18100a', background: '#fff' }}>⭐ Top Rated</option>
-                {location && <option value="nearest" style={{ color: '#18100a', background: '#fff' }}>📍 Nearest first</option>}
+                {effectiveLocation && <option value="nearest" style={{ color: '#18100a', background: '#fff' }}>📍 Nearest first</option>}
                 <option value="price_low"   style={{ color: '#18100a', background: '#fff' }}>↑ Price: Low → High</option>
                 <option value="price_high"  style={{ color: '#18100a', background: '#fff' }}>↓ Price: High → Low</option>
               </select>
@@ -999,7 +1007,7 @@ export default function Marketplace() {
                   return (
                     <Fragment key={v.id}>
                       <div style={{ animationDelay: `${Math.min(idx, 8) * 0.05}s` }}>
-                        <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} saved={savedIds.has(v.id)} onSaveToggle={handleSaveToggle} />
+                        <VendorCard vendor={v} isVendor={isVendor} format={format} onLogoClick={handleLogoClick} userLoc={location} />
                       </div>
                       {showAdAfter && (
                         <SponsoredAdCard key={`ad-${idx}`} ad={inFeedAds[adIndex]} />
@@ -1117,8 +1125,9 @@ export default function Marketplace() {
       {/* Scope sheet */}
       {scopeOpen && (
         <ScopeSheet
-          scope={scope} setScope={setScope} location={location}
+          scope={scope} setScope={setScope} location={effectiveLocation}
           onClose={() => setScopeOpen(false)} onDetect={() => detect(true)}
+          onManualLocation={(loc) => { setManualLocation(loc); }}
         />
       )}
 
