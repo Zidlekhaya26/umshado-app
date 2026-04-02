@@ -15,13 +15,12 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
-      `img-src 'self' ${supabaseHostname ? `https://${supabaseHostname}` : ''} https://img.youtube.com https://i.ytimg.com https://images.pexels.com data: blob:`,
-      "font-src 'self'",
-      "frame-src 'self' https://www.youtube.com https://youtube.com",
-      // Added Sentry ingest endpoints to connect-src
-      `connect-src 'self' https://*.supabase.co wss://*.supabase.co${supabaseHostname ? ` https://${supabaseHostname}` : ''} https://*.ingest.sentry.io https://*.ingest.us.sentry.io`,
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      `img-src 'self' ${supabaseHostname ? `https://${supabaseHostname}` : ''} https://maps.googleapis.com https://maps.gstatic.com data: blob:`,
+      "font-src 'self' https://fonts.gstatic.com",
+      // Added Sentry ingest + Google Maps endpoints to connect-src
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co${supabaseHostname ? ` https://${supabaseHostname}` : ''} https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://maps.googleapis.com`,
       "media-src 'self' blob:",
       "worker-src 'self' blob:",
       "frame-ancestors 'none'",
