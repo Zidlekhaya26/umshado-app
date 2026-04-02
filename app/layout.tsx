@@ -84,6 +84,7 @@ export default function RootLayout({
         <meta property="og:url" content="https://www.umshadohub.co.za" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="uMshado" />
+
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#F7F0EA]`}>
         <ErrorBoundary>

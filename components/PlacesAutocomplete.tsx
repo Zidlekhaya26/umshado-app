@@ -1,6 +1,36 @@
 'use client';
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CR, BOR, DK, MUT } from '@/lib/tokens';
+
+declare global {
+  interface Window {
+    google: any;
+    __googleMapsReady?: () => void;
+    __googleMapsPromise?: Promise<void>;
+  }
+}
+
+// Module-level singleton — loads only once, shared across all instances
+function loadGoogleMaps(): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (window.google?.maps?.places) return Promise.resolve();
+  if (window.__googleMapsPromise) return window.__googleMapsPromise;
+
+  window.__googleMapsPromise = new Promise<void>((resolve, reject) => {
+    window.__googleMapsReady = resolve;
+    const script = document.createElement('script');
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=__googleMapsReady`;
+    script.async = true;
+    script.onerror = () => {
+      window.__googleMapsPromise = undefined;
+      reject(new Error('Google Maps failed to load'));
+    };
+    document.head.appendChild(script);
+  });
+
+  return window.__googleMapsPromise;
+}
 
 interface Prediction {
   place_id: string;
@@ -21,39 +51,6 @@ interface Props {
   labelStyle?: React.CSSProperties;
 }
 
-declare global { interface Window { google: any; } }
-
-const CALLBACK = '__googleMapsPlacesReady';
-
-function loadGoogleMaps(key: string): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window === 'undefined') return resolve();
-
-    // Already loaded
-    if (window.google?.maps?.places) return resolve();
-
-    // Already loading — poll until ready
-    if (document.querySelector('script[data-gmaps]')) {
-      const poll = setInterval(() => {
-        if (window.google?.maps?.places) {
-          clearInterval(poll);
-          resolve();
-        }
-      }, 100);
-      return;
-    }
-
-    // First load — use Google's callback mechanism
-    (window as any)[CALLBACK] = () => resolve();
-    const script = document.createElement('script');
-    script.setAttribute('data-gmaps', '1');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=${CALLBACK}`;
-    script.async = true;
-    script.onerror = () => resolve(); // fail silently
-    document.head.appendChild(script);
-  });
-}
-
 export default function PlacesAutocomplete({
   value, onChange, placeholder, label, id, required, hint,
   inputStyle, inputClassName, labelStyle,
@@ -61,17 +58,17 @@ export default function PlacesAutocomplete({
   const [suggestions, setSuggestions] = useState<Prediction[]>([]);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [ready, setReady] = useState(false);
   const serviceRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) return;
-    loadGoogleMaps(key).then(() => {
-      if (window.google?.maps?.places) {
+    loadGoogleMaps()
+      .then(() => {
         serviceRef.current = new window.google.maps.places.AutocompleteService();
-      }
-    });
+        setReady(true);
+      })
+      .catch(() => {/* silently degrade to plain text input */});
   }, []);
 
   // Close on outside click
@@ -85,9 +82,10 @@ export default function PlacesAutocomplete({
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const fetchSuggestions = useCallback((input: string) => {
-    if (!input || input.length < 2) { setSuggestions([]); return; }
-    if (!serviceRef.current) return;
+  const fetchSuggestions = (input: string) => {
+    if (!input || input.length < 2 || !ready || !serviceRef.current) {
+      setSuggestions([]); setOpen(false); return;
+    }
 
     serviceRef.current.getPlacePredictions(
       { input, types: ['geocode'] },
@@ -101,11 +99,6 @@ export default function PlacesAutocomplete({
         }
       }
     );
-  }, []);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-    fetchSuggestions(e.target.value);
   };
 
   const handleSelect = (p: Prediction) => {
@@ -135,8 +128,8 @@ export default function PlacesAutocomplete({
       {label && (
         <label htmlFor={id} style={{
           display: 'block', fontSize: 10.5, fontWeight: 800,
-          letterSpacing: 1.1, textTransform: 'uppercase', color: MUT,
-          marginBottom: 7, ...labelStyle,
+          letterSpacing: 1.1, textTransform: 'uppercase',
+          color: MUT, marginBottom: 7, ...labelStyle,
         }}>
           {label}{required && <span style={{ color: CR, marginLeft: 3 }}>*</span>}
         </label>
@@ -147,7 +140,7 @@ export default function PlacesAutocomplete({
           id={id}
           type="text"
           value={value}
-          onChange={handleChange}
+          onChange={e => { onChange(e.target.value); fetchSuggestions(e.target.value); }}
           onFocus={() => { setFocused(true); if (suggestions.length) setOpen(true); }}
           onBlur={() => setFocused(false)}
           placeholder={placeholder}
@@ -172,12 +165,11 @@ export default function PlacesAutocomplete({
         }}>
           {suggestions.map((s, i) => (
             <li key={s.place_id}
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+              onMouseDown={e => { e.preventDefault(); handleSelect(s); }}
               style={{
                 padding: '10px 14px', cursor: 'pointer', display: 'flex',
-                alignItems: 'flex-start', gap: 10,
+                alignItems: 'flex-start', gap: 10, background: '#fff',
                 borderBottom: i < suggestions.length - 1 ? `1px solid ${BOR}` : 'none',
-                background: '#fff',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#faf8f5')}
               onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
