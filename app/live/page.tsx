@@ -163,6 +163,10 @@ function LivePageContent() {
   const [replyingTo, setReplyingTo] = useState<{ commentId: string; author: string; postId: string } | null>(null);
   const [replyContent, setReplyContent] = useState('');
 
+  // Delete confirmations
+  const [confirmDeletePostId, setConfirmDeletePostId] = useState<string | null>(null);
+  const [confirmDeleteComment, setConfirmDeleteComment] = useState<{ id: string; postId: string } | null>(null);
+
   // Share sheet
   const [sharePost, setSharePost] = useState<CommunityPost | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
@@ -593,9 +597,12 @@ function LivePageContent() {
                               </div>
                               <p style={{ margin: '1px 0 0', fontSize: 11, color: 'var(--um-muted)' }}>{timeAgo(post.created_at)}</p>
                             </div>
-                            {post.user_id === userId && (
-                            <button onClick={() => deletePost(post.id)} style={{ padding: 4, color: '#ccc', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-                              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          {post.user_id === userId && (
+                            <button
+                              onClick={() => setConfirmDeletePostId(post.id)}
+                              title="Delete post"
+                              style={{ padding: '4px 6px', color: 'var(--um-muted)', background: 'rgba(154,33,67,0.06)', border: 'none', borderRadius: 8, cursor: 'pointer', flexShrink: 0, fontSize: 16, lineHeight: 1 }}>
+                              ···
                             </button>
                           )}
                           </div>
@@ -686,8 +693,10 @@ function LivePageContent() {
                                                     {isReplyingToThis ? 'Cancel' : 'Reply'}
                                                   </button>
                                                   {topComment.user_id === userId && (
-                                                    <button onClick={() => deleteComment(topComment.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                                      <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    <button onClick={() => setConfirmDeleteComment({ id: topComment.id, postId: post.id })}
+                                                      title="Delete comment"
+                                                      style={{ padding: '2px 5px', color: '#e04444', background: 'rgba(224,68,68,0.08)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>
+                                                      Delete
                                                     </button>
                                                   )}
                                                 </div>
@@ -732,8 +741,10 @@ function LivePageContent() {
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                                                       <span style={{ fontSize: 10, color: 'var(--um-muted)' }}>{timeAgo(reply.created_at)}</span>
                                                       {reply.user_id === userId && (
-                                                        <button onClick={() => deleteComment(reply.id, post.id)} style={{ padding: 2, color: '#ddd', background: 'none', border: 'none', cursor: 'pointer' }}>
-                                                          <svg width="9" height="9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                        <button onClick={() => setConfirmDeleteComment({ id: reply.id, postId: post.id })}
+                                                          title="Delete reply"
+                                                          style={{ padding: '2px 5px', color: '#e04444', background: 'rgba(224,68,68,0.08)', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 10, fontWeight: 700, lineHeight: 1 }}>
+                                                          Delete
                                                         </button>
                                                       )}
                                                     </div>
@@ -1064,6 +1075,51 @@ function LivePageContent() {
                 style={{ flex: 1, padding: '12px', borderRadius: 14, background: 'rgba(154,33,67,0.06)', color: 'var(--um-muted)', fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer' }}>Cancel</button>
               <button onClick={saveEditEvent} disabled={!editTime || !editTitle.trim()}
                 style={{ flex: 1, padding: '12px', borderRadius: 14, background: editTime && editTitle.trim() ? `linear-gradient(135deg,${G},${G2})` : '#e8e0d0', color: editTime && editTitle.trim() ? '#fff' : '#9a8a70', fontSize: 14, fontWeight: 700, border: 'none', cursor: editTime && editTitle.trim() ? 'pointer' : 'default' }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Post Confirmation ── */}
+      {confirmDeletePostId && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={() => setConfirmDeletePostId(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 20, padding: '28px 24px', maxWidth: 320, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(224,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <svg width="26" height="26" fill="none" stroke="#e04444" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </div>
+            <p style={{ margin: '0 0 6px', fontSize: 17, fontWeight: 800, color: DK, fontFamily: 'Georgia,serif' }}>Delete Post?</p>
+            <p style={{ margin: '0 0 22px', fontSize: 13, color: MUT, lineHeight: 1.5 }}>This will permanently remove your post and all its comments. This cannot be undone.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmDeletePostId(null)}
+                style={{ flex: 1, padding: 12, borderRadius: 12, border: '1.5px solid rgba(0,0,0,0.12)', background: '#f9f6f2', color: DK, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={() => { deletePost(confirmDeletePostId); setConfirmDeletePostId(null); }}
+                style={{ flex: 1, padding: 12, borderRadius: 12, border: 'none', background: '#e04444', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 3px 12px rgba(224,68,68,0.35)' }}>
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Comment Confirmation ── */}
+      {confirmDeleteComment && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={() => setConfirmDeleteComment(null)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: 20, padding: '24px 22px', maxWidth: 300, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <p style={{ margin: '0 0 6px', fontSize: 16, fontWeight: 800, color: DK }}>Delete Comment?</p>
+            <p style={{ margin: '0 0 18px', fontSize: 13, color: MUT }}>This will permanently remove your comment.</p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirmDeleteComment(null)}
+                style={{ flex: 1, padding: 11, borderRadius: 12, border: '1.5px solid rgba(0,0,0,0.12)', background: '#f9f6f2', color: DK, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button onClick={() => { deleteComment(confirmDeleteComment.id, confirmDeleteComment.postId); setConfirmDeleteComment(null); }}
+                style={{ flex: 1, padding: 11, borderRadius: 12, border: 'none', background: '#e04444', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                Delete
+              </button>
             </div>
           </div>
         </div>

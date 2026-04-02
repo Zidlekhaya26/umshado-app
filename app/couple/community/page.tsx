@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabaseClient';
 /* ── Types ───────────────────────────────────────────── */
 interface CommunityPost {
   id: string;
+  user_id?: string;
   author: string;
   avatar: string;
   avatarColor: string;
@@ -86,7 +87,10 @@ const FALLBACK_ADS: SponsoredAd[] = [
 ];
 
 /* ── Post card ───────────────────────────────────────── */
-function PostCard({ post, onLike }: { post: CommunityPost; onLike: (id: string) => void }) {
+function PostCard({ post, onLike, userId, onDelete }: { post: CommunityPost; onLike: (id: string) => void; userId: string | null; onDelete: (id: string) => void }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const isOwn = post.fromDb && post.user_id === userId;
+
   return (
     <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #f1efec', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -100,8 +104,32 @@ function PostCard({ post, onLike }: { post: CommunityPost; onLike: (id: string) 
         <span style={{ fontSize: 10.5, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: `${post.tagColor}18`, color: post.tagColor, border: `1px solid ${post.tagColor}30` }}>
           {TAG_ICONS[post.tag]} {post.tag}
         </span>
+        {isOwn && (
+          <button onClick={() => setConfirmDelete(true)} title="Delete post"
+            style={{ marginLeft: 4, padding: '4px 8px', background: 'rgba(154,33,67,0.06)', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#9ca3af', fontSize: 18, lineHeight: 1, flexShrink: 0 }}>
+            ···
+          </button>
+        )}
       </div>
       <p style={{ margin: '10px 16px 14px', fontSize: 13.5, color: '#374151', lineHeight: 1.6 }}>{post.content}</p>
+
+      {/* Delete confirmation inline */}
+      {confirmDelete && (
+        <div style={{ margin: '0 14px 14px', padding: '14px 16px', background: 'rgba(224,68,68,0.06)', borderRadius: 12, border: '1.5px solid rgba(224,68,68,0.2)' }}>
+          <p style={{ margin: '0 0 10px', fontSize: 13, fontWeight: 700, color: '#b91c1c' }}>Delete this post?</p>
+          <p style={{ margin: '0 0 12px', fontSize: 12, color: '#6b7280' }}>This cannot be undone.</p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setConfirmDelete(false)}
+              style={{ flex: 1, padding: '9px', borderRadius: 10, border: '1.5px solid rgba(0,0,0,0.1)', background: '#f9f6f2', color: '#374151', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Cancel
+            </button>
+            <button onClick={() => { setConfirmDelete(false); onDelete(post.id); }}
+              style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: '#e04444', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
       <div style={{ padding: '10px 16px 14px', borderTop: '1px solid #f5f3f0', display: 'flex', alignItems: 'center', gap: 18 }}>
         <button onClick={() => onLike(post.id)} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: post.liked ? '#9A2143' : '#9ca3af', fontWeight: post.liked ? 700 : 500, fontSize: 13, fontFamily: 'inherit' }}>
           <svg width="16" height="16" fill={post.liked ? '#9A2143' : 'none'} stroke={post.liked ? '#9A2143' : '#9ca3af'} strokeWidth={2} viewBox="0 0 24 24">
@@ -221,6 +249,7 @@ export default function CommunityPage() {
 
     const mapped: CommunityPost[] = data.map(p => ({
       id: p.id,
+      user_id: p.user_id,
       author: p.author || 'Anonymous',
       avatar: initials(p.author || 'A'),
       avatarColor: avatarColor(p.user_id),
@@ -246,7 +275,12 @@ export default function CommunityPage() {
       if (j.ads?.length) setAds(j.ads);
     }).catch(() => {});
   }, []);
-
+  /* ── Delete post ─────────────────────────────────── */
+  const handleDeletePost = async (id: string) => {
+    if (!userId) return;
+    await supabase.from('community_posts').delete().eq('id', id).eq('user_id', userId);
+    setPosts(prev => prev.filter(p => p.id !== id));
+  };
   /* ── Like toggle ──────────────────────────────────── */
   const handleLike = async (id: string) => {
     const post = posts.find(p => p.id === id);
@@ -287,6 +321,7 @@ export default function CommunityPage() {
     if (!error && data) {
       const newPost: CommunityPost = {
         id: data.id,
+        user_id: data.user_id,
         author: data.author,
         avatar: initials(data.author),
         avatarColor: avatarColor(data.user_id),
@@ -355,7 +390,7 @@ export default function CommunityPage() {
         )}
         {feed.map((item, i) =>
           item.type === 'post'
-            ? <PostCard key={item.data.id} post={item.data} onLike={handleLike} />
+            ? <PostCard key={item.data.id} post={item.data} onLike={handleLike} userId={userId} onDelete={handleDeletePost} />
             : <AdCard key={`ad-${i}`} ad={item.data} />
         )}
       </div>
