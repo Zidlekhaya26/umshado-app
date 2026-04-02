@@ -5,10 +5,7 @@ import { CR, BOR, DK, MUT } from '@/lib/tokens';
 interface Prediction {
   place_id: string;
   description: string;
-  structured_formatting: {
-    main_text: string;
-    secondary_text: string;
-  };
+  structured_formatting: { main_text: string; secondary_text: string };
 }
 
 interface Props {
@@ -19,42 +16,47 @@ interface Props {
   id?: string;
   required?: boolean;
   hint?: string;
-  /** inline style overrides for the input */
   inputStyle?: React.CSSProperties;
-  /** className for the input */
   inputClassName?: string;
   labelStyle?: React.CSSProperties;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    __gmapsLoading?: Promise<void>;
-  }
-}
+declare global { interface Window { google: any; } }
 
-function loadGoogleMaps(): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
-  if (window.google?.maps?.places) return Promise.resolve();
-  if (window.__gmapsLoading) return window.__gmapsLoading;
+const CALLBACK = '__googleMapsPlacesReady';
 
-  window.__gmapsLoading = new Promise((resolve) => {
-    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    if (!key) { resolve(); return; }
+function loadGoogleMaps(key: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve();
+
+    // Already loaded
+    if (window.google?.maps?.places) return resolve();
+
+    // Already loading — poll until ready
+    if (document.querySelector('script[data-gmaps]')) {
+      const poll = setInterval(() => {
+        if (window.google?.maps?.places) {
+          clearInterval(poll);
+          resolve();
+        }
+      }, 100);
+      return;
+    }
+
+    // First load — use Google's callback mechanism
+    (window as any)[CALLBACK] = () => resolve();
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places`;
+    script.setAttribute('data-gmaps', '1');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=${CALLBACK}`;
     script.async = true;
-    script.defer = true;
-    script.onload = () => resolve();
-    script.onerror = () => resolve();
+    script.onerror = () => resolve(); // fail silently
     document.head.appendChild(script);
   });
-
-  return window.__gmapsLoading;
 }
 
 export default function PlacesAutocomplete({
-  value, onChange, placeholder, label, id, required, hint, inputStyle, inputClassName, labelStyle,
+  value, onChange, placeholder, label, id, required, hint,
+  inputStyle, inputClassName, labelStyle,
 }: Props) {
   const [suggestions, setSuggestions] = useState<Prediction[]>([]);
   const [open, setOpen] = useState(false);
@@ -63,23 +65,35 @@ export default function PlacesAutocomplete({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadGoogleMaps().then(() => {
+    const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!key) return;
+    loadGoogleMaps(key).then(() => {
       if (window.google?.maps?.places) {
         serviceRef.current = new window.google.maps.places.AutocompleteService();
       }
     });
   }, []);
 
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   const fetchSuggestions = useCallback((input: string) => {
-    if (!input || input.length < 2 || !serviceRef.current) {
-      setSuggestions([]);
-      return;
-    }
+    if (!input || input.length < 2) { setSuggestions([]); return; }
+    if (!serviceRef.current) return;
+
     serviceRef.current.getPlacePredictions(
       { input, types: ['geocode'] },
-      (predictions: Prediction[] | null, status: string) => {
-        if (status === 'OK' && predictions) {
-          setSuggestions(predictions.slice(0, 5));
+      (results: Prediction[] | null, status: string) => {
+        if (status === 'OK' && results) {
+          setSuggestions(results.slice(0, 5));
           setOpen(true);
         } else {
           setSuggestions([]);
@@ -90,9 +104,8 @@ export default function PlacesAutocomplete({
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    onChange(val);
-    fetchSuggestions(val);
+    onChange(e.target.value);
+    fetchSuggestions(e.target.value);
   };
 
   const handleSelect = (p: Prediction) => {
@@ -101,18 +114,7 @@ export default function PlacesAutocomplete({
     setOpen(false);
   };
 
-  // Close on outside click
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const baseInputStyle: React.CSSProperties = {
+  const inputBaseStyle: React.CSSProperties = {
     width: '100%',
     padding: '11px 36px 11px 14px',
     border: `1.5px solid ${focused ? CR : BOR}`,
@@ -131,21 +133,12 @@ export default function PlacesAutocomplete({
   return (
     <div ref={containerRef} style={{ position: 'relative', width: '100%' }}>
       {label && (
-        <label
-          htmlFor={id}
-          style={{
-            display: 'block',
-            fontSize: 10.5,
-            fontWeight: 800,
-            letterSpacing: 1.1,
-            textTransform: 'uppercase',
-            color: MUT,
-            marginBottom: 7,
-            ...labelStyle,
-          }}
-        >
-          {label}
-          {required && <span style={{ color: CR, marginLeft: 3 }}>*</span>}
+        <label htmlFor={id} style={{
+          display: 'block', fontSize: 10.5, fontWeight: 800,
+          letterSpacing: 1.1, textTransform: 'uppercase', color: MUT,
+          marginBottom: 7, ...labelStyle,
+        }}>
+          {label}{required && <span style={{ color: CR, marginLeft: 3 }}>*</span>}
         </label>
       )}
 
@@ -161,13 +154,10 @@ export default function PlacesAutocomplete({
           autoComplete="off"
           required={required}
           className={inputClassName}
-          style={baseInputStyle}
+          style={inputBaseStyle}
         />
-        {/* Pin icon */}
-        <svg
-          style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.35 }}
-          width="16" height="16" fill="none" stroke={CR} strokeWidth={2} viewBox="0 0 24 24"
-        >
+        <svg style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.4 }}
+          width="16" height="16" fill="none" stroke={CR} strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
@@ -175,31 +165,19 @@ export default function PlacesAutocomplete({
 
       {open && suggestions.length > 0 && (
         <ul style={{
-          position: 'absolute',
-          top: 'calc(100% + 4px)',
-          left: 0,
-          right: 0,
-          background: '#fff',
-          border: `1.5px solid ${BOR}`,
-          borderRadius: 12,
-          padding: 0,
-          margin: 0,
-          listStyle: 'none',
-          zIndex: 9999,
-          boxShadow: '0 8px 24px rgba(26,13,18,0.12)',
-          overflow: 'hidden',
+          position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+          background: '#fff', border: `1.5px solid ${BOR}`, borderRadius: 12,
+          padding: 0, margin: 0, listStyle: 'none', zIndex: 9999,
+          boxShadow: '0 8px 24px rgba(26,13,18,0.12)', overflow: 'hidden',
         }}>
           {suggestions.map((s, i) => (
-            <li
-              key={s.place_id}
+            <li key={s.place_id}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
               style={{
-                padding: '10px 14px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 10,
+                padding: '10px 14px', cursor: 'pointer', display: 'flex',
+                alignItems: 'flex-start', gap: 10,
                 borderBottom: i < suggestions.length - 1 ? `1px solid ${BOR}` : 'none',
+                background: '#fff',
               }}
               onMouseEnter={e => (e.currentTarget.style.background = '#faf8f5')}
               onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
@@ -214,16 +192,13 @@ export default function PlacesAutocomplete({
               </div>
             </li>
           ))}
-          <li style={{ padding: '6px 14px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, background: '#faf8f5' }}>
-            <span style={{ fontSize: 9, color: '#9ca3af' }}>powered by</span>
-            <svg height="12" viewBox="0 0 67 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.5 }}>
-              <text x="0" y="15" fontSize="14" fill="#5f6368" fontFamily="sans-serif">Google</text>
-            </svg>
+          <li style={{ padding: '5px 14px', background: '#faf8f5', display: 'flex', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 9, color: '#9ca3af' }}>powered by Google</span>
           </li>
         </ul>
       )}
 
-      {hint && <p style={{ fontSize: 11, color: '#9ca3af', marginTop: 5, margin: '5px 0 0' }}>{hint}</p>}
+      {hint && <p style={{ fontSize: 11, color: '#9ca3af', margin: '5px 0 0' }}>{hint}</p>}
     </div>
   );
 }
