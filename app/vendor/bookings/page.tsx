@@ -120,8 +120,10 @@ export default function VendorBookingsPage(){
     try{
       const{data:{session}}=await supabase.auth.getSession();
       if(!session)throw new Error('No session');
-      const res=await fetch('/api/vendor/review-request',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({bookingId:b.id,coupleId:b.couple_id})});
+      const res=await fetch('/api/vendor/review-request',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({booking_id:b.id})});
       if(!res.ok)throw new Error('Request failed');
+      const json=await res.json();
+      if(json.whatsapp_url&&json.couple_phone)window.open(json.whatsapp_url,'_blank');
       showOk('Review request sent!');
     }catch(e:any){
       setBookings(prev=>prev.map(bk=>bk.id===b.id?{...bk,review_requested:false}:bk));

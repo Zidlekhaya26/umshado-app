@@ -12,10 +12,24 @@ import { z } from 'zod'
  */
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
 
+  // Authenticate via Bearer token (service client has no user session)
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const token = authHeader.slice(7)
+  const userRes = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    },
+  })
+  if (!userRes.ok) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const authUser = await userRes.json()
+  const user = authUser?.id ? authUser : null
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -31,9 +45,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Vendor not found' }, { status: 404 })
   }
 
-  const { data: bodyData, error: bodyError } = await validateBody(req, z.object({ booking_id: z.string().uuid('booking_id must be a valid UUID') }))
+  const { data: bodyData, error: bodyError } = await validateBody(req, z.object({
+    booking_id: z.string().uuid().optional(),
+    bookingId: z.string().uuid().optional(),
+  }))
   if (bodyError) return bodyError
-  const { booking_id } = bodyData
+  const booking_id = bodyData.booking_id || bodyData.bookingId
+  if (!booking_id) return NextResponse.json({ error: 'booking_id is required' }, { status: 400 })
 
   // Get booking + couple details
   const { data: booking, error: bookingErr } = await supabase
