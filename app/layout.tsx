@@ -6,6 +6,7 @@ import { CurrencyProvider } from "./providers/CurrencyProvider";
 import { ToastProvider } from '@/components/ui/ToastProvider';
 import RoleGate from "@/components/RoleGate";
 import PushPermissionPrompt from '@/components/PushPermissionPrompt';
+import AppInstallBanner from '@/components/AppInstallBanner';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const geistSans = Geist({
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | uMshado",
   },
   description:
-    "Plan your perfect African wedding with uMshado. Find photographers, caterers, décor artists, DJs, venues and more across South Africa, Zimbabwe, Nigeria, Kenya and Ghana. 100% free for couples.",
+    "Download the free uMshado app — Africa's #1 wedding planning platform. Find photographers, caterers, venues, DJs & décor across South Africa, Zimbabwe, Nigeria, Kenya and Ghana. Install now on Android or iOS.",
   keywords: [
     "wedding planning South Africa",
     "wedding vendors South Africa",
@@ -46,6 +47,10 @@ export const metadata: Metadata = {
     "South African wedding",
     "lobola wedding",
     "traditional African wedding",
+    "free wedding app download",
+    "wedding planning app Android",
+    "wedding planning app iOS",
+    "install wedding app",
   ],
   authors: [{ name: "uMshado", url: "https://www.umshadohub.co.za" }],
   creator: "uMshado",
@@ -76,7 +81,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "uMshado — Africa's #1 Wedding Planning Platform",
     description:
-      "Find trusted wedding photographers, venues, caterers, DJs, décor artists and more across Africa. Free for couples. List your business free.",
+      "Download the free uMshado app — find trusted wedding photographers, venues, caterers, DJs, décor artists and more across Africa. Install on Android or iOS, free for couples.",
     url: "https://www.umshadohub.co.za",
     siteName: "uMshado",
     locale: "en_ZA",
@@ -94,7 +99,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "uMshado — Africa's #1 Wedding Planning Platform",
     description:
-      "Find trusted wedding photographers, venues, caterers, DJs, décor artists and more across Africa. Free for couples.",
+      "Download the free uMshado app — plan your wedding, find vendors, manage RSVPs, all from your phone. Install on Android or iOS.",
     images: ["https://www.umshadohub.co.za/og-image.jpg"],
     creator: "@umshadohub",
     site: "@umshadohub",
@@ -201,6 +206,7 @@ export default function RootLayout({
               <RoleGate>
                 <div id="um-page-wrap" className="min-h-screen w-full">{children}</div>
                 <PushPermissionPrompt />
+                <AppInstallBanner />
               </RoleGate>
             </div>
             </ToastProvider>
