@@ -178,6 +178,21 @@ export default function Home() {
           .um-nav-label { display: none; }
           .um-nav-signin { display: none; }
         }
+        .svc-tile { overflow: hidden; border-radius: 18px; position: relative; cursor: pointer; display: block; }
+        .svc-tile img { transition: transform 0.45s ease; display: block; }
+        .svc-tile:hover img { transform: scale(1.07); }
+        .svc-showcase { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .vcat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 36px; }
+        @media (max-width: 640px) {
+          .svc-showcase { grid-template-columns: repeat(2, 1fr) !important; }
+          .vcat-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+        .hero-content > * { animation: fadeSlideUp 0.7s ease both; }
+        .hero-content > *:nth-child(2) { animation-delay: 0.1s; }
+        .hero-content > *:nth-child(3) { animation-delay: 0.18s; }
+        .hero-content > *:nth-child(4) { animation-delay: 0.26s; }
+        .hero-content > *:nth-child(5) { animation-delay: 0.34s; }
       `}</style>
 
       {/* ── Sticky Nav ────────────────────────────────────────── */}
@@ -261,7 +276,7 @@ export default function Home() {
         <div style={{ position: 'absolute', bottom: '5%', right: '-15%', width: '60vw', height: '60vw', maxWidth: 600, maxHeight: 600, borderRadius: '50%', border: '1px solid rgba(189,152,63,0.08)', pointerEvents: 'none', zIndex: 1 }} />
 
         {/* Content wrapper — z-index 2 ensures it always sits above photo + overlay */}
-        <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+        <div className="hero-content" style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
           {/* Badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '6px 16px', borderRadius: 20, background: 'rgba(189,152,63,0.15)', border: '1px solid rgba(189,152,63,0.3)', marginBottom: 28 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: GD, display: 'inline-block' }} />
@@ -288,6 +303,14 @@ export default function Home() {
               List My Business
             </Link>
           </div>
+
+          {/* Countries trust strip */}
+          <div style={{ marginTop: 30, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '5px 20px' }}>
+            {['🇿🇦 South Africa', '🇿🇼 Zimbabwe', '🇳🇬 Nigeria', '🇰🇪 Kenya', '🇬🇭 Ghana', '🇧🇼 Botswana'].map(c => (
+              <span key={c} style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.52)', fontWeight: 500 }}>{c}</span>
+            ))}
+          </div>
+          <p style={{ margin: '6px 0 0', fontSize: 10.5, color: 'rgba(255,255,255,0.27)', letterSpacing: 1.2, textTransform: 'uppercase' }}>Trusted by couples across Africa</p>
         </div>
 
         {/* Scroll cue */}
@@ -332,6 +355,45 @@ export default function Home() {
             alt="Couple celebrating their wedding"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
           />
+        </div>
+      </section>
+
+      {/* ── Vendor Services Showcase ──────────────────────────── */}
+      <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: BG }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <p style={{ textAlign: 'center', fontSize: 11, fontWeight: 700, color: CR, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 12 }}>Vendor Services</p>
+          <h2 style={{ textAlign: 'center', fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: DK, fontFamily: 'Georgia, serif', margin: '0 0 10px', lineHeight: 1.2 }}>Every vendor you need, in one place</h2>
+          <p style={{ textAlign: 'center', fontSize: 15.5, color: '#7a5060', lineHeight: 1.65, maxWidth: 540, margin: '0 auto 36px' }}>From décor to DJs, attire to honeymoon travel — browse trusted vendors across every wedding category.</p>
+          <div className="svc-showcase">
+            {[
+              { src: 'https://images.pexels.com/photos/14071388/pexels-photo-14071388.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Photography & Video', icon: '📸' },
+              { src: 'https://images.pexels.com/photos/27025523/pexels-photo-27025523.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Catering & Food', icon: '🍽️' },
+              { src: 'https://images.pexels.com/photos/32994477/pexels-photo-32994477.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Décor & Styling', icon: '💐' },
+              { src: 'https://images.pexels.com/photos/10106030/pexels-photo-10106030.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Music & DJ Services', icon: '🎵' },
+              { src: 'https://images.pexels.com/photos/19581285/pexels-photo-19581285.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Attire & Fashion', icon: '👗' },
+              { src: 'https://images.pexels.com/photos/33485957/pexels-photo-33485957.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Wedding Venues', icon: '🏛️' },
+              { src: 'https://images.pexels.com/photos/34244969/pexels-photo-34244969.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Makeup & Hair', icon: '💄' },
+              { src: 'https://images.pexels.com/photos/31365430/pexels-photo-31365430.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Transport', icon: '🚗' },
+              { src: 'https://images.pexels.com/photos/13114704/pexels-photo-13114704.jpeg?auto=compress&cs=tinysrgb&w=700&h=500&fit=crop', label: 'Honeymoon & Travel', icon: '✈️' },
+            ].map(({ src, label, icon }) => (
+              <Link key={label} href="/marketplace" style={{ textDecoration: 'none' }}>
+                <div className="svc-tile" style={{ height: 'clamp(120px, 14vw, 200px)' }}>
+                  <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.84) 0%, rgba(26,13,18,0.06) 52%)' }} />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 14px' }}>
+                    <span style={{ fontSize: 17, display: 'block', marginBottom: 3 }}>{icon}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: 0.5, display: 'block', lineHeight: 1.3 }}>{label}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <Link href="/marketplace" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 26px', borderRadius: 24, background: DK, color: '#fff', fontSize: 13.5, fontWeight: 700, textDecoration: 'none', boxShadow: '0 3px 14px rgba(26,13,18,0.18)' }}>
+              Browse all vendors
+              <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -395,6 +457,35 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Testimonial ───────────────────────────────────────── */}
+      <section style={{ position: 'relative', overflow: 'hidden' }}>
+        <img
+          src="https://images.pexels.com/photos/11618945/pexels-photo-11618945.jpeg?auto=compress&cs=tinysrgb&w=1400&h=600&fit=crop"
+          alt=""
+          aria-hidden="true"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%' }}
+        />
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(20,8,14,0.82)' }} />
+        <div style={{ position: 'relative', padding: 'clamp(56px,8vw,90px) 24px', textAlign: 'center', maxWidth: 680, margin: '0 auto' }}>
+          <div style={{ fontSize: 56, color: GD, fontFamily: 'Georgia, serif', lineHeight: 0.7, marginBottom: 20 }}>&ldquo;</div>
+          <p style={{ margin: '0 0 28px', fontSize: 'clamp(18px,3vw,24px)', fontWeight: 700, color: '#fff', fontFamily: 'Georgia, serif', lineHeight: 1.55, fontStyle: 'italic' }}>
+            uMshado made planning our dream wedding so easy. We found our photographer, caterer and d&eacute;cor team all in one place &mdash; couldn&apos;t have done it without them.
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+            <div style={{ width: 46, height: 46, borderRadius: '50%', background: `linear-gradient(135deg, ${CR}, ${CR2})`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 14px rgba(154,33,67,0.4)' }}>
+              <span style={{ fontSize: 17, color: '#fff', fontWeight: 700 }}>T</span>
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <p style={{ margin: 0, fontSize: 14.5, fontWeight: 700, color: '#fff' }}>Thandeka &amp; Sipho</p>
+              <p style={{ margin: '2px 0 0', fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Married in Johannesburg &middot; 2025</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 4, marginTop: 20 }}>
+            {[1,2,3,4,5].map(i => <span key={i} style={{ color: GD, fontSize: 17 }}>&#9733;</span>)}
+          </div>
+        </div>
+      </section>
+
       {/* ── For Vendors ───────────────────────────────────────── */}
       <section style={{ padding: 'clamp(60px,8vw,100px) 24px', background: DK }}>
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
@@ -405,23 +496,24 @@ export default function Home() {
           <h2 style={{ fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800, color: '#fff', fontFamily: 'Georgia, serif', margin: '0 0 8px', lineHeight: 1.2 }}>Grow your wedding business</h2>
           <p style={{ fontSize: 15.5, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65, maxWidth: 540, margin: '0 0 32px' }}>List your business for free and get in front of couples across Africa who are actively planning their weddings right now.</p>
 
-          {/* Vendor category grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 36, borderRadius: 24, overflow: 'hidden' }}>
+          {/* Vendor category grid — 8 services */}
+          <div className="vcat-grid">
             {[
-              { src: 'https://images.pexels.com/photos/27025523/pexels-photo-27025523.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Catering' },
-              { src: 'https://images.pexels.com/photos/14071388/pexels-photo-14071388.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Photography' },
-              { src: 'https://images.pexels.com/photos/34244969/pexels-photo-34244969.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Makeup & Beauty' },
-              { src: 'https://images.pexels.com/photos/33485957/pexels-photo-33485957.jpeg?auto=compress&cs=tinysrgb&w=800&h=500&fit=crop', label: 'Venues' },
-            ].map(({ src, label }) => (
-              <div key={label} style={{ position: 'relative', height: 'clamp(120px, 18vw, 220px)', borderRadius: 16, overflow: 'hidden' }}>
-                <img
-                  src={src}
-                  alt={label}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
-                />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.72) 0%, rgba(26,13,18,0.1) 55%)' }} />
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 14px' }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: GD, letterSpacing: 1.2, textTransform: 'uppercase' }}>{label}</span>
+              { src: 'https://images.pexels.com/photos/14071388/pexels-photo-14071388.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Photography', icon: '📸' },
+              { src: 'https://images.pexels.com/photos/32994477/pexels-photo-32994477.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Décor', icon: '💐' },
+              { src: 'https://images.pexels.com/photos/10106030/pexels-photo-10106030.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'DJ & Music', icon: '🎵' },
+              { src: 'https://images.pexels.com/photos/19581285/pexels-photo-19581285.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Attire', icon: '👗' },
+              { src: 'https://images.pexels.com/photos/27025523/pexels-photo-27025523.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Catering', icon: '🍽️' },
+              { src: 'https://images.pexels.com/photos/33485957/pexels-photo-33485957.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Venues', icon: '🏛️' },
+              { src: 'https://images.pexels.com/photos/31365430/pexels-photo-31365430.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Transport', icon: '🚗' },
+              { src: 'https://images.pexels.com/photos/13114704/pexels-photo-13114704.jpeg?auto=compress&cs=tinysrgb&w=600&h=400&fit=crop', label: 'Honeymoon', icon: '✈️' },
+            ].map(({ src, label, icon }) => (
+              <div key={label} className="svc-tile" style={{ height: 'clamp(100px, 12vw, 165px)' }}>
+                <img src={src} alt={label} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(26,13,18,0.8) 0%, rgba(26,13,18,0.05) 55%)' }} />
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '8px 11px' }}>
+                  <span style={{ fontSize: 14, display: 'block', marginBottom: 1 }}>{icon}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: GD, letterSpacing: 1, textTransform: 'uppercase', display: 'block', lineHeight: 1.2 }}>{label}</span>
                 </div>
               </div>
             ))}
