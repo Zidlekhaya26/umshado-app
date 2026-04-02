@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabaseServer';
+import { notifyUsers } from '@/lib/server/notify';
 
 async function assertAdmin(req: NextRequest) {
   const supabase = createServiceClient();
@@ -37,7 +38,40 @@ export async function PATCH(req: NextRequest) {
   const update = action === 'approve'
     ? { verified: true, verification_status: 'approved' }
     : { verified: false, verification_status: 'rejected' };
+
+  // Fetch vendor details before updating so we have user_id + business_name
+  const { data: vendor } = await supabase
+    .from('vendors')
+    .select('user_id, business_name')
+    .eq('id', vendorId)
+    .maybeSingle();
+
   const { error } = await supabase.from('vendors').update(update).eq('id', vendorId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Notify the vendor
+  if (vendor?.user_id) {
+    const name = vendor.business_name || 'Your profile';
+    if (action === 'approve') {
+      await notifyUsers({
+        userIds: [vendor.user_id],
+        type: 'verification_approved',
+        title: '✅ Verification approved!',
+        body: `${name} has been verified on uMshado. Your blue badge is now live and you'll appear higher in search results.`,
+        link: '/vendor/dashboard',
+        meta: { vendorId },
+      });
+    } else {
+      await notifyUsers({
+        userIds: [vendor.user_id],
+        type: 'verification_rejected',
+        title: 'Verification update',
+        body: `Your verification request for ${name} could not be approved at this time. Please contact support for more information.`,
+        link: '/vendor/billing',
+        meta: { vendorId },
+      });
+    }
+  }
+
   return NextResponse.json({ ok: true });
 }

@@ -129,6 +129,7 @@ function LivePageContent() {
     (['community', 'day', 'wishes'].includes(urlTab) ? urlTab : 'community') as 'community' | 'day' | 'wishes'
   );
   const [userId, setUserId] = useState<string | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   // Live day data
@@ -243,6 +244,15 @@ function LivePageContent() {
     }
   };
 
+  const communityNotify = (payload: object) => {
+    if (!authToken) return;
+    fetch('/api/community/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  };
+
   const toggleLike = async (postId: string) => {
     if (!userId) return;
     const liked = myLikes.has(postId);
@@ -255,8 +265,9 @@ function LivePageContent() {
       await supabase.from('community_likes').delete().eq('post_id', postId).eq('user_id', userId);
     } else {
       await supabase.from('community_likes').insert({ post_id: postId, user_id: userId });
+      communityNotify({ type: 'post_liked', postId });
     }
-  };
+  ;
 
   const toggleRepost = async (postId: string) => {
     if (!userId) return;
@@ -301,6 +312,8 @@ function LivePageContent() {
     if (!error && data) {
       setComments(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), data] }));
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p));
+      const preview = newComment.trim().length > 80 ? newComment.trim().slice(0, 77) + '…' : newComment.trim();
+      communityNotify({ type: 'post_commented', postId, commentPreview: preview });
       setNewComment('');
     }
     setSubmittingComment(false);
@@ -309,6 +322,8 @@ function LivePageContent() {
   const addReply = async (postId: string, parentId: string) => {
     if (!replyContent.trim() || !userId || submittingComment) return;
     setSubmittingComment(true);
+    // Find the parent comment's author user_id before inserting
+    const parentComment = (comments[postId] ?? []).find(c => c.id === parentId);
     const { data, error } = await supabase.from('community_comments').insert({
       post_id: postId,
       user_id: userId,
@@ -318,6 +333,13 @@ function LivePageContent() {
     if (!error && data) {
       setComments(prev => ({ ...prev, [postId]: [...(prev[postId] ?? []), data] }));
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: p.comments_count + 1 } : p));
+      const preview = replyContent.trim().length > 80 ? replyContent.trim().slice(0, 77) + '…' : replyContent.trim();
+      communityNotify({
+        type: 'comment_replied',
+        postId,
+        commentPreview: preview,
+        parentCommentUserId: parentComment?.user_id,
+      });
       setReplyContent('');
       setReplyingTo(null);
     }
@@ -355,6 +377,7 @@ function LivePageContent() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) { router.replace('/auth/sign-in'); return; }
       setUserId(session.user.id);
+      setAuthToken(session.access_token);
       // Resolve the logged-in user's display name (profile → couples)
       try {
         const [profileRes, coupleRes] = await Promise.all([
