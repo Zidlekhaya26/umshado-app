@@ -70,7 +70,20 @@ export async function getPostAuthRedirect(
 
     // If vendor wasn't detected via vendors table, fall back to existing logic:
     if (!activeRole) {
-      if (profile.active_role === 'vendor' || profile.active_role === 'couple') {
+      // Fresh signup: profile was auto-created by DB trigger with default
+      // active_role='couple', but user hasn't completed any onboarding yet.
+      // In this case, honour the intendedRole the user chose on the sign-up page.
+      const isBlankProfile = !profile.has_couple && !profile.has_vendor;
+
+      if (isBlankProfile && intendedRole) {
+        activeRole = intendedRole;
+        // Persist the chosen role so subsequent loads are consistent
+        await supabase.from('profiles').update({
+          active_role: intendedRole,
+          has_couple: intendedRole === 'couple',
+          has_vendor: intendedRole === 'vendor',
+        }).eq('id', user.id);
+      } else if (profile.active_role === 'vendor' || profile.active_role === 'couple') {
         activeRole = profile.active_role;
       } else if (profile.has_vendor) {
         activeRole = 'vendor';
