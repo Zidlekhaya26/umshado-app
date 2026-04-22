@@ -133,6 +133,13 @@ function SignUpContent() {
 
   const effectiveRole = useMemo(() => inviteData?.role || role || intendedRole, [inviteData, role, intendedRole]);
 
+  // Persist intended role to localStorage so it survives OAuth redirects on mobile
+  useEffect(() => {
+    if (effectiveRole) {
+      try { localStorage.setItem('umshado_intended_role', effectiveRole); } catch {}
+    }
+  }, [effectiveRole]);
+
   useEffect(() => {
     if (inviteData?.role) setRole(inviteData.role);
     else setRole(intendedRole);
@@ -355,7 +362,7 @@ function SignUpContent() {
               <p style={{ margin: '0 0 8px', fontSize: 10.5, fontWeight: 800, color: MUT, letterSpacing: 1.1, textTransform: 'uppercase' }}>I am a…</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 {(['couple', 'vendor'] as const).map(r => (
-                  <button key={r} type="button" className="role-btn" onClick={() => setRole(r)} style={{
+                  <button key={r} type="button" className="role-btn" onClick={() => { setRole(r); try { localStorage.setItem('umshado_intended_role', r); } catch {} }} style={{
                     flex: 1, padding: '11px', borderRadius: 12, fontSize: 13.5, fontWeight: 700,
                     border: `1.5px solid ${role === r ? CR : BOR}`,
                     background: role === r ? `rgba(154,33,67,0.06)` : '#fff',

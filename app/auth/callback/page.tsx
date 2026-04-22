@@ -36,8 +36,17 @@ function CallbackHandler() {
         } catch { /* non-fatal */ }
       }
 
+      // Read role from URL param; fall back to localStorage (survives mobile OAuth redirects)
       const role = searchParams?.get('role');
-      const intendedRole = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
+      let intendedRole: 'vendor' | 'couple' | null = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
+      if (!intendedRole) {
+        try {
+          const stored = localStorage.getItem('umshado_intended_role');
+          if (stored === 'vendor' || stored === 'couple') intendedRole = stored;
+        } catch {}
+      }
+      // Clear after consuming so it doesn't affect future sign-ins
+      try { localStorage.removeItem('umshado_intended_role'); } catch {}
 
       // Check if there's a specific redirect path from sign-in
       const redirectParam = searchParams?.get('redirect');
@@ -60,7 +69,14 @@ function CallbackHandler() {
         setAuthCookies(session);
 
         const role = searchParams?.get('role');
-        const intendedRole = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
+        let intendedRole: 'vendor' | 'couple' | null = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
+        if (!intendedRole) {
+          try {
+            const stored = localStorage.getItem('umshado_intended_role');
+            if (stored === 'vendor' || stored === 'couple') intendedRole = stored;
+          } catch {}
+        }
+        try { localStorage.removeItem('umshado_intended_role'); } catch {}
 
         const redirectParam = searchParams?.get('redirect');
         if (redirectParam && (redirectParam.startsWith('/couple') || redirectParam.startsWith('/vendor'))) {

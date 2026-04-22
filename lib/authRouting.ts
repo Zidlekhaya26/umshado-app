@@ -11,6 +11,16 @@ import { supabase } from './supabaseClient';
 export async function getPostAuthRedirect(
   intendedRole?: 'couple' | 'vendor' | null
 ): Promise<string> {
+  // If caller didn't pass a role, try reading from localStorage as a fallback.
+  // The sign-up page persists the chosen role there so it survives mobile
+  // OAuth redirects that may strip URL query parameters.
+  if (!intendedRole && typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('umshado_intended_role');
+      if (stored === 'vendor' || stored === 'couple') intendedRole = stored;
+    } catch {}
+  }
+
   try {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return '/auth/sign-in';
