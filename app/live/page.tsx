@@ -267,7 +267,7 @@ function LivePageContent() {
       await supabase.from('community_likes').insert({ post_id: postId, user_id: userId });
       communityNotify({ type: 'post_liked', postId });
     }
-  ;
+  };
 
   const toggleRepost = async (postId: string) => {
     if (!userId) return;
@@ -620,14 +620,14 @@ function LivePageContent() {
                               </div>
                               <p style={{ margin: '1px 0 0', fontSize: 11, color: 'var(--um-muted)' }}>{timeAgo(post.created_at)}</p>
                             </div>
-                          {post.user_id === userId && (
-                            <button
-                              onClick={() => setConfirmDeletePostId(post.id)}
-                              title="Delete post"
-                              style={{ padding: '4px 6px', color: 'var(--um-muted)', background: 'rgba(154,33,67,0.06)', border: 'none', borderRadius: 8, cursor: 'pointer', flexShrink: 0, fontSize: 16, lineHeight: 1 }}>
-                              ···
-                            </button>
-                          )}
+                            {post.user_id === userId && (
+                              <button
+                                onClick={() => setConfirmDeletePostId(post.id)}
+                                title="Delete post"
+                                style={{ padding: '4px 6px', color: 'var(--um-muted)', background: 'rgba(154,33,67,0.06)', border: 'none', borderRadius: 8, cursor: 'pointer', flexShrink: 0, fontSize: 16, lineHeight: 1 }}>
+                                ···
+                              </button>
+                            )}
                           </div>
 
                           <p style={{ margin: '0 0 10px', fontSize: 14, color: 'var(--um-dark)', lineHeight: 1.6 }}>{post.content}</p>
