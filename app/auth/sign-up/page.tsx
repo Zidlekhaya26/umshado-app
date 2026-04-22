@@ -98,9 +98,14 @@ function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken  = useMemo(() => searchParams?.get('invite') || null, [searchParams]);
-  const intendedRole = useMemo(() => (searchParams?.get('role') === 'vendor' ? 'vendor' : 'couple') as 'couple' | 'vendor', [searchParams]);
+  const intendedRole = useMemo(() => {
+    const r = searchParams?.get('role');
+    if (r === 'vendor') return 'vendor';
+    if (r === 'couple') return 'couple';
+    return null;
+  }, [searchParams]);
 
-  const [role, setRole]               = useState<'couple' | 'vendor'>(intendedRole);
+  const [role, setRole]               = useState<'couple' | 'vendor' | null>(intendedRole);
   const [email, setEmail]             = useState('');
   const [password, setPassword]       = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -167,6 +172,7 @@ function SignUpContent() {
   // ── Main form logic ──────────────────────────────────────
   const validate = () => {
     const e: Record<string, string> = {};
+    if (!effectiveRole) e.role = 'Please select if you are a couple or vendor';
     if (!email) e.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(email)) e.email = 'Enter a valid email';
     if (!password) e.password = 'Password is required';
@@ -360,6 +366,7 @@ function SignUpContent() {
                   </button>
                 ))}
               </div>
+              {errors.role && <p style={{ margin: '5px 0 0', fontSize: 12, color: '#c0392b' }}>{errors.role}</p>}
             </div>
           )}
 
