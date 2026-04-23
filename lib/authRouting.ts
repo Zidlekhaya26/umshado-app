@@ -25,6 +25,14 @@ export async function getPostAuthRedirect(
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return '/auth/sign-in';
 
+    // Last-resort fallback: read intended_role from user_metadata.
+    // This is set during email/password sign-up and persisted server-side,
+    // so it survives Safari ITP, cross-browser email confirmations, etc.
+    if (!intendedRole) {
+      const meta = user.user_metadata?.intended_role;
+      if (meta === 'vendor' || meta === 'couple') intendedRole = meta;
+    }
+
     // Check if profile exists
     const { data: profile } = await supabase
       .from('profiles')

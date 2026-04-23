@@ -209,7 +209,10 @@ function SignUpContent() {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.umshado-app.vercel.app';
       const { data, error } = await supabase.auth.signUp({
         email, password,
-        options: { emailRedirectTo: `${origin}/auth/callback?role=${effectiveRole}` },
+        options: {
+          emailRedirectTo: `${origin}/auth/callback?role=${effectiveRole}`,
+          data: { intended_role: effectiveRole || 'couple' },
+        },
       });
       if (error) { setErrors({ password: error.message }); setIsLoading(false); return; }
       if (data.user) {

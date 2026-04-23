@@ -36,7 +36,7 @@ function CallbackHandler() {
         } catch { /* non-fatal */ }
       }
 
-      // Read role from URL param; fall back to localStorage (survives mobile OAuth redirects)
+      // Read role from URL param → localStorage → user_metadata (survives Safari ITP)
       const role = searchParams?.get('role');
       let intendedRole: 'vendor' | 'couple' | null = role === 'vendor' ? 'vendor' : role === 'couple' ? 'couple' : null;
       if (!intendedRole) {
@@ -45,8 +45,18 @@ function CallbackHandler() {
           if (stored === 'vendor' || stored === 'couple') intendedRole = stored;
         } catch {}
       }
-      // Clear after consuming so it doesn't affect future sign-ins
+      if (!intendedRole) {
+        const meta = session.user?.user_metadata?.intended_role;
+        if (meta === 'vendor' || meta === 'couple') intendedRole = meta;
+      }
+      // Clear localStorage after consuming so it doesn't affect future sign-ins
       try { localStorage.removeItem('umshado_intended_role'); } catch {}
+
+      // For Google OAuth users, persist intended role to user_metadata so it
+      // survives across browsers (email confirmation opening in Safari etc.)
+      if (intendedRole && !session.user?.user_metadata?.intended_role) {
+        try { await supabase.auth.updateUser({ data: { intended_role: intendedRole } }); } catch {}
+      }
 
       // Check if there's a specific redirect path from sign-in
       const redirectParam = searchParams?.get('redirect');
@@ -76,7 +86,15 @@ function CallbackHandler() {
             if (stored === 'vendor' || stored === 'couple') intendedRole = stored;
           } catch {}
         }
+        if (!intendedRole) {
+          const meta = session.user?.user_metadata?.intended_role;
+          if (meta === 'vendor' || meta === 'couple') intendedRole = meta;
+        }
         try { localStorage.removeItem('umshado_intended_role'); } catch {}
+
+        if (intendedRole && !session.user?.user_metadata?.intended_role) {
+          try { await supabase.auth.updateUser({ data: { intended_role: intendedRole } }); } catch {}
+        }
 
         const redirectParam = searchParams?.get('redirect');
         if (redirectParam && (redirectParam.startsWith('/couple') || redirectParam.startsWith('/vendor'))) {
